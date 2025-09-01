@@ -68,7 +68,7 @@ export class SuperMapClient {
     return this.executeWithRetry(async () => {
       try {
         // 使用服务根URL进行健康检查
-        const testUrl = `${this.config.baseUrl}/iserver/services/map-WuHan/rest/maps/武汉`
+        const testUrl = `${this.config.baseUrl}/iserver/services/map-guanlifenxipingtai/rest/maps/wuhan_map`
         const response = await fetch(testUrl, { 
           method: 'HEAD',
           signal: AbortSignal.timeout(this.config.timeout)

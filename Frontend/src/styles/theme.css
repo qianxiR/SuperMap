@@ -5,47 +5,47 @@
   --border: #dee2e6;
   --text: #212529;
   --sub: #6c757d;
-  --accent: #0d6efd;
-  --accent-rgb: 13, 110, 253;
+  --accent: #000000;
+  --accent-rgb: 0, 0, 0;
   --glow: 0 2px 8px rgba(0, 0, 0, 0.08);
   --radius: 10px;
 
   /* ===== 按钮颜色 ===== */
-  --btn-primary-bg: #0d6efd;
+  --btn-primary-bg: #000000;
   --btn-primary-color: #ffffff;
   --btn-secondary-bg: #e0e0e0;
   --btn-secondary-color: #212529;
 
   /* ===== 链接颜色 ===== */
-  --link-color: #0d6efd;
-  --link-hover-color: rgba(13, 110, 253, 0.8);
+  --link-color: #000000;
+  --link-hover-color: rgba(0, 0, 0, 0.8);
 
   /* ===== 交互颜色 ===== */
   --surface: rgba(0, 0, 0, 0.03);
   --surface-hover: rgba(0, 0, 0, 0.06);
   --divider: #dee2e6;
   --splitter-bg: rgba(0, 0, 0, 0.1);
-  --splitter-hover: #0d6efd;
-  --selection-bg: rgba(13, 110, 253, 0.1);
+  --splitter-hover: #000000;
+  --selection-bg: rgba(0, 0, 0, 0.1);
   
   /* ===== 地图相关颜色 ===== */
   --map-hover-fill: rgba(0, 0, 0, 0.06);
-  --map-select-fill: rgba(13, 110, 253, 0.15);
-  --map-highlight-color: #0d6efd; /* 浅色模式使用蓝色边界 */
-  --measure-line-color: #0d6efd;
-  --measure-line-rgb: 13, 110, 253;
-  --overview-extent-color: #0d6efd;
-  --overview-extent-rgb: 13, 110, 253;
-  --coordinate-color: #0d6efd;
-  --scale-color: #0d6efd;
+  --map-select-fill: rgba(0, 0, 0, 0.15);
+  --map-highlight-color: #000000; /* 浅色模式使用深黑色边界 */
+  --measure-line-color: #000000;
+  --measure-line-rgb: 0, 0, 0;
+  --overview-extent-color: #000000;
+  --overview-extent-rgb: 0, 0, 0;
+  --coordinate-color: #000000;
+  --scale-color: #000000;
 
   /* ===== 弹窗颜色 ===== */
   --field-label-color: #6c757d;
   --field-value-color: #212529;
   
   /* ===== 头像颜色 ===== */
-  --avatar-ai-bg: #0d6efd;
-  --avatar-user-bg: #0d6efd;
+  --avatar-ai-bg: #000000;
+  --avatar-user-bg: #000000;
 
   /* ===== 悬浮功能按钮（固定） ===== */
   --fixed-btn-bg: rgba(249, 249, 249, 0.9); /* 与 --panel 对齐的 rgba 版本 */
@@ -70,12 +70,12 @@ html {
   --border: #3c3c3c;
   --text: #ffffff;
   --sub: #cccccc;
-  --accent: #0d6efd;
-  --accent-rgb: 13, 110, 253;
+  --accent: #000000;
+  --accent-rgb: 0, 0, 0;
   --glow: 0 2px 8px rgba(0, 0, 0, 0.4);
 
   /* ===== 按钮颜色 ===== */
-  --btn-primary-bg: #0d6efd;
+  --btn-primary-bg: #000000;
   --btn-primary-color: #ffffff;
   --btn-secondary-bg: #373737;
   --btn-secondary-color: #ffffff;
@@ -89,7 +89,7 @@ html {
   --surface-hover: rgba(255, 255, 255, 0.06);
   --divider: #484848;
   --splitter-bg: rgba(255, 255, 255, 0.1);
-  --splitter-hover: #0d6efd;
+  --splitter-hover: #000000;
   --selection-bg: rgba(255, 255, 255, 0.15);
   
   /* 滚动条颜色 */
@@ -105,16 +105,16 @@ html {
   --measure-line-rgb: 255, 255, 255;
   --overview-extent-color: #cccccc;
   --overview-extent-rgb: 204, 204, 204;
-  --coordinate-color: #0d6efd;
-  --scale-color: #0d6efd;
+  --coordinate-color: #000000;
+  --scale-color: #000000;
 
   /* ===== 弹窗颜色 ===== */
   --field-label-color: #cccccc;
   --field-value-color: #ffffff;
   
   /* ===== 头像颜色 ===== */
-  --avatar-ai-bg: #0d6efd;
-  --avatar-user-bg: #0d6efd;
+  --avatar-ai-bg: #000000;
+  --avatar-user-bg: #000000;
 
   /* ===== 悬浮功能按钮（固定）- 深色 ===== */
   --fixed-btn-bg: rgba(38, 38, 38, 0.9); /* 与 --panel(#262626) 对齐的 rgba 版本 */
@@ -237,26 +237,27 @@ html {
   color: inherit;
 }
 
-/* 确保黑色主题下标题、坐标、比例尺等使用浅色字体 */
+/* 确保黑色主题下标题、坐标、比例尺等使用深黑色主题色 */
 [data-theme="dark"] .screen-title {
-  color: var(--accent) !important;
+  color: #ffffff !important;
 }
 
 [data-theme="dark"] .coordinate-text,
 [data-theme="dark"] .scale-text {
-  color: var(--accent) !important;
+  color: #ffffff !important;
 }
 
 [data-theme="dark"] .scale-line,
 [data-theme="dark"] .scale-line::before,
 [data-theme="dark"] .scale-line::after {
-  color: var(--accent) !important;
+  color: #ffffff !important;
 }
 
 [data-theme="dark"] .coordinate-text,
 [data-theme="dark"] .scale-text {
   background: var(--panel) !important;
   border-color: var(--border) !important;
+  color: #ffffff !important;
 }
 
 [data-theme="dark"] .scale-line,

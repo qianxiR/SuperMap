@@ -260,15 +260,44 @@ npm run build
 
 ### 环境变量
 
+详细的环境变量配置说明请参考 [ENV_CONFIG.md](./ENV_CONFIG.md)
+
+#### 基础配置示例
+
 ```bash
 # SuperMap iServer 服务地址
-VITE_SUPERMAP_BASE_URL=http://your-server:8090
+VITE_SUPERMAP_BASE_URL=http://localhost:8090
 
-# API 超时时间
-VITE_API_TIMEOUT=30000
+# 地图服务路径
+VITE_SUPERMAP_MAP_SERVICE=iserver/services/map-WuHan/rest
 
-# 重试次数
+# 数据服务路径
+VITE_SUPERMAP_DATA_SERVICE=iserver/services/data-WuHan/rest/data
+
+# 工作空间和地图名称
+VITE_SUPERMAP_WORKSPACE=wuhan
+VITE_SUPERMAP_MAP_NAME=武汉
+
+# 地图边界配置（可选）
+VITE_SUPERMAP_MAP_EXTENT=113.7,29.97,115.08,31.36
+VITE_SUPERMAP_MAP_CENTER=114.37,30.69
+VITE_SUPERMAP_MAP_ZOOM=8
+
+# API 配置
+VITE_API_TIMEOUT=10000
 VITE_API_RETRY_COUNT=3
+```
+
+#### 快速切换服务配置
+
+要使用不同的 SuperMap 服务，只需修改环境变量：
+
+```bash
+# 使用 data-WuHan 服务
+VITE_SUPERMAP_DATA_SERVICE=iserver/services/data-WuHan/rest/data
+
+# 使用 data-guanlifenxipingtai 服务（默认）
+VITE_SUPERMAP_DATA_SERVICE=iserver/services/data-guanlifenxipingtai/rest/data
 ```
 
 ## 🤝 贡献指南

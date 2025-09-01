@@ -23,6 +23,11 @@ export interface APIConfig {
   timeout: number
   retryCount: number
   devMode: boolean
+  mapBounds: {
+    extent: [number, number, number, number] // [minLon, minLat, maxLon, maxLat]
+    center: [number, number] // [lon, lat]
+    zoom: number
+  }
 }
 
 export interface MapConfig {

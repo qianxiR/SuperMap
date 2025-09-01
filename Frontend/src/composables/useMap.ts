@@ -292,13 +292,18 @@ export function useMap() {
     const computedFromIndexBounds: number = startIndexDefaultBounds;
     const computedToIndexBounds: number = startIndexDefaultBounds + featureCountBounds - 1;
 
-    // 定义武汉地区边界范围，用于空间过滤
-    const wuhanBounds = new ol.geom.Polygon([[
-      [113.7, 29.97],
-      [115.08, 29.97],
-      [115.08, 31.36],
-      [113.7, 31.36],
-      [113.7, 29.97]
+    // ===== 从配置中获取地图边界范围 =====
+    // 调用者: loadVectorLayer()
+    // 配置来源: createAPIConfig().mapBounds.extent
+    // 作用: 使用配置的地图边界范围进行空间过滤，避免硬编码
+    const apiConfig = createAPIConfig()
+    const mapExtent = apiConfig.mapBounds.extent
+    const mapBounds = new ol.geom.Polygon([[
+      [mapExtent[0], mapExtent[1]], // 左下角 [minLon, minLat]
+      [mapExtent[2], mapExtent[1]], // 右下角 [maxLon, minLat]
+      [mapExtent[2], mapExtent[3]], // 右上角 [maxLon, maxLat]
+      [mapExtent[0], mapExtent[3]], // 左上角 [minLon, maxLat]
+      [mapExtent[0], mapExtent[1]]  // 闭合 [minLon, minLat]
     ]]);
 
     const pageSize = 10000;
@@ -313,7 +318,7 @@ export function useMap() {
     // 作用: 获取指定边界范围内的第一页矢量要素数据，使用优化的参数配置
     const getFeaturesByBoundsParams = new ol.supermap.GetFeaturesByBoundsParameters({
       datasetNames: datasetNames,
-      bounds: ol.extent.boundingExtent(wuhanBounds.getCoordinates()[0]),
+      bounds: ol.extent.boundingExtent(mapBounds.getCoordinates()[0]),
       returnContent: true,
       returnFeaturesOnly: true, // ✅ 官方推荐：设置为true提升性能
       maxFeatures: -1,
@@ -338,7 +343,7 @@ export function useMap() {
         const addPage = (from: number, to: number): Promise<void> => new Promise(resolve => {
           const pageParams = new ol.supermap.GetFeaturesByBoundsParameters({
             datasetNames: datasetNames,
-            bounds: ol.extent.boundingExtent(wuhanBounds.getCoordinates()[0]),
+            bounds: ol.extent.boundingExtent(mapBounds.getCoordinates()[0]),
             returnContent: true,
             returnFeaturesOnly: true, // ✅ 官方推荐：设置为true提升性能
             maxFeatures: -1,

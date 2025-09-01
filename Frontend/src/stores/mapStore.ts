@@ -226,11 +226,11 @@ const useMapStore = defineStore('map', () => {
       vectorLayers: vectorLayerConfigs,
       
       // ===== 地图显示配置 =====
-      // 作用: 定义地图的初始显示参数
-      center: [114.37, 30.69], // 武汉市中心坐标
-      zoom: 8,                 // 初始缩放级别
-      projection: 'EPSG:4326', // 坐标系
-      extent: [113.7, 29.97, 115.08, 31.36] // 武汉地区边界范围
+      // 作用: 定义地图的初始显示参数，从配置中读取避免硬编码
+      center: apiConfig.mapBounds.center, // 地图中心点坐标
+      zoom: apiConfig.mapBounds.zoom,     // 初始缩放级别
+      projection: 'EPSG:4326',           // 坐标系
+      extent: apiConfig.mapBounds.extent  // 地图边界范围
     }
   }
   
@@ -367,8 +367,8 @@ const useMapStore = defineStore('map', () => {
         const distanceMeasureParam = new ol.supermap.MeasureParameters(geometry)
         console.log('MeasureParameters对象:', distanceMeasureParam)
         
-        // 获取地图服务URL - 直接使用正确的URL
-        const url = 'http://localhost:8090/iserver/services/map-WuHan/rest/maps/武汉'
+        // 获取地图服务URL - 使用配置中的正确URL
+        const url = `${createAPIConfig().baseUrl}/iserver/services/map-guanlifenxipingtai/rest/maps/wuhan_map`
         console.log('SuperMap服务URL:', url)
         
         // 直接调用SuperMap MeasureService API
@@ -514,9 +514,9 @@ const useMapStore = defineStore('map', () => {
       const areaMeasureParam = new ol.supermap.MeasureParameters(geometry)
       console.log('MeasureParameters对象:', areaMeasureParam)
       
-      // 获取地图服务URL - 直接使用正确的URL
-      const url = 'http://localhost:8090/iserver/services/map-WuHan/rest/maps/武汉'
-      console.log('SuperMap服务URL:', url)
+             // 获取地图服务URL - 使用配置中的正确URL
+       const url = `${createAPIConfig().baseUrl}/iserver/services/map-guanlifenxipingtai/rest/maps/wuhan_map`
+       console.log('SuperMap服务URL:', url)
       
       // 直接调用SuperMap MeasureService API
       const measureService = new ol.supermap.MeasureService(url)
