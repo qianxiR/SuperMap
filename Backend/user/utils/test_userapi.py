@@ -17,8 +17,13 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(CURRENT_DIR))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
+# 现在可以安全导入user模块
+from user.core.config import get_settings
+
 # API基础URL
-BASE_URL = "http://localhost:8000"
+settings = get_settings()
+BASE_URL = "http://localhost:8000"  # 直接使用服务器地址
+API_PREFIX = settings.api_v1_prefix  # 单独获取API前缀
 
 # 测试用户数据
 TEST_USER = {
@@ -28,6 +33,32 @@ TEST_USER = {
     "password": "password",
     "confirm_password": "password"
 }
+
+async def verify_config():
+    """验证配置文件读取"""
+    print("🔍 验证配置文件读取...")
+    
+    try:
+        settings = get_settings()
+        print(f"✅ 配置读取成功:")
+        print(f"  应用名称: {settings.app_name}")
+        print(f"  应用版本: {settings.app_version}")
+        print(f"  调试模式: {settings.debug}")
+        print(f"  环境: {settings.environment}")
+        print(f"  API前缀: {settings.api_v1_prefix}")
+        print(f"  数据库: {settings.postgres_db}")
+        print(f"  数据库主机: {settings.postgres_host}")
+        print(f"  数据库端口: {settings.postgres_port}")
+        print(f"  数据库用户: {settings.postgres_user}")
+        print(f"  数据库密码: {'*' * len(settings.postgres_password) if settings.postgres_password else '(未设置)'}")
+        print(f"  BASE_URL: {BASE_URL}")
+        print(f"  API_PREFIX: {API_PREFIX}")
+        print(f"  完整API地址: {BASE_URL}{API_PREFIX}")
+        return True
+    except Exception as e:
+        print(f"❌ 配置读取失败: {e}")
+        return False
+
 
 async def test_health_check():
     """测试健康检查"""
@@ -55,7 +86,7 @@ async def test_user_register():
     async with httpx.AsyncClient() as client:
         try:
             response = await client.post(
-                f"{BASE_URL}/api/v1/user/register",
+                f"{BASE_URL}{API_PREFIX}/user/register",
                 json=TEST_USER,
                 headers={"Content-Type": "application/json"}
             )
@@ -85,7 +116,7 @@ async def test_user_login():
     async with httpx.AsyncClient() as client:
         try:
             response = await client.post(
-                f"{BASE_URL}/api/v1/user/login",
+                f"{BASE_URL}{API_PREFIX}/user/login",
                 json=login_data,
                 headers={"Content-Type": "application/json"}
             )
@@ -103,6 +134,36 @@ async def test_user_login():
             return None
 
 
+async def test_user_login_wrong_password():
+    """测试用户登录密码错误"""
+    print(f"\n🔍 测试用户登录密码错误: {TEST_USER['username']}...")
+    
+    login_data = {
+        "login_identifier": TEST_USER["username"],
+        "password": "wrong_password_123"
+    }
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(
+                f"{BASE_URL}{API_PREFIX}/user/login",
+                json=login_data,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if response.status_code == 401:
+                data = response.json()
+                print(f"✅ 密码错误测试成功: {data}")
+                return True
+            else:
+                print(f"❌ 密码错误测试失败: 期望401，实际{response.status_code}")
+                print(f"响应内容: {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ 密码错误测试异常: {e}")
+            return False
+
+
 async def test_user_profile(token):
     """测试获取用户资料"""
     print(f"\n🔍 测试获取用户资料...")
@@ -115,7 +176,7 @@ async def test_user_profile(token):
             }
             
             response = await client.get(
-                f"{BASE_URL}/api/v1/user/profile",
+                f"{BASE_URL}{API_PREFIX}/user/profile",
                 headers=headers
             )
             
@@ -144,7 +205,7 @@ async def test_get_user_info(token):
             }
             
             response = await client.get(
-                f"{BASE_URL}/api/v1/user/me",
+                f"{BASE_URL}{API_PREFIX}/user/me",
                 headers=headers
             )
             
@@ -173,7 +234,7 @@ async def test_get_user_stats(token):
             }
             
             response = await client.get(
-                f"{BASE_URL}/api/v1/user/stats",
+                f"{BASE_URL}{API_PREFIX}/user/stats",
                 headers=headers
             )
             
@@ -204,7 +265,7 @@ async def test_update_user_profile(token):
             }
             
             response = await client.get(
-                f"{BASE_URL}/api/v1/user/profile",
+                f"{BASE_URL}{API_PREFIX}/user/profile",
                 headers=headers
             )
             
@@ -235,7 +296,7 @@ async def test_update_user_profile(token):
             }
             
             response = await client.post(
-                f"{BASE_URL}/api/v1/user/update-profile",
+                f"{BASE_URL}{API_PREFIX}/user/update-profile",
                 json=update_data,
                 headers=headers
             )
@@ -271,7 +332,7 @@ async def test_change_password(token):
             }
             
             response = await client.post(
-                f"{BASE_URL}/api/v1/user/change-password",
+                f"{BASE_URL}{API_PREFIX}/user/change-password",
                 json=password_data,
                 headers=headers
             )
@@ -303,7 +364,7 @@ async def test_user_logout(token):
             }
             
             response = await client.post(
-                f"{BASE_URL}/api/v1/user/logout",
+                f"{BASE_URL}{API_PREFIX}/user/logout",
                 headers=headers
             )
             
@@ -357,10 +418,18 @@ async def main():
     print("SuperMap GIS + AI Backend 用户认证系统完整测试")
     print("=" * 60)
     
+    # 0. 验证配置读取
+    print("\n📋 测试步骤 0/12: 配置验证")
+    if not await verify_config():
+        print("❌ 配置验证失败，请检查.env文件")
+        return
+    
     test_results = {
+        "config_verification": True,
         "health_check": False,
         "user_register": False,
         "user_login": False,
+        "user_login_wrong_password": False,
         "user_profile": False,
         "user_info": False,
         "user_stats": False,
@@ -371,71 +440,78 @@ async def main():
     }
     
     # 1. 测试健康检查
-    print("\n📋 测试步骤 1/10: 系统健康检查")
+    print("\n📋 测试步骤 1/12: 系统健康检查")
     test_results["health_check"] = await test_health_check()
     if not test_results["health_check"]:
         print("❌ 健康检查失败，请确保服务器正在运行")
         return
     
     # 2. 测试用户注册
-    print("\n📋 测试步骤 2/10: 用户注册")
+    print("\n📋 测试步骤 2/12: 用户注册")
     test_results["user_register"] = await test_user_register()
     if not test_results["user_register"]:
         print("❌ 用户注册失败")
         return
     
     # 3. 测试用户登录
-    print("\n📋 测试步骤 3/10: 用户登录")
+    print("\n📋 测试步骤 3/12: 用户登录")
     token = await test_user_login()
     if not token:
         print("❌ 用户登录失败")
         return
     test_results["user_login"] = True
     
+    # 3.5. 测试用户登录密码错误
+    print("\n📋 测试步骤 3.5/12: 用户登录密码错误")
+    test_results["user_login_wrong_password"] = await test_user_login_wrong_password()
+    if not test_results["user_login_wrong_password"]:
+        print("❌ 密码错误测试失败")
+        return
+    
     # 4. 测试获取用户资料
-    print("\n📋 测试步骤 4/10: 获取用户资料")
+    print("\n📋 测试步骤 4/12: 获取用户资料")
     test_results["user_profile"] = await test_user_profile(token)
     if not test_results["user_profile"]:
         print("❌ 获取用户资料失败")
         return
     
     # 5. 测试获取当前用户信息
-    print("\n📋 测试步骤 5/10: 获取当前用户信息")
+    print("\n📋 测试步骤 5/12: 获取当前用户信息")
     test_results["user_info"] = await test_get_user_info(token)
     if not test_results["user_info"]:
         print("❌ 获取用户信息失败")
         return
     
     # 6. 测试获取用户统计信息
-    print("\n📋 测试步骤 6/10: 获取用户统计信息")
+    print("\n📋 测试步骤 6/12: 获取用户统计信息")
     test_results["user_stats"] = await test_get_user_stats(token)
     if not test_results["user_stats"]:
         print("❌ 获取用户统计失败")
         return
     
     # 7. 测试修改用户资料
-    print("\n📋 测试步骤 7/10: 修改用户资料")
+    print("\n📋 测试步骤 7/12: 修改用户资料")
     test_results["update_profile"] = await test_update_user_profile(token)
     if not test_results["update_profile"]:
         print("❌ 修改用户资料失败")
         return
     
     # 8. 测试修改密码
-    print("\n📋 测试步骤 8/10: 修改密码")
+    print("\n📋 测试步骤 8/12: 修改密码")
     test_results["change_password"] = await test_change_password(token)
     if not test_results["change_password"]:
         print("❌ 修改密码失败")
         return
     
     # 9. 测试用户登出
-    print("\n📋 测试步骤 9/10: 用户登出")
+    print("\n📋 测试步骤 9/12: 用户登出")
     test_results["user_logout"] = await test_user_logout(token)
     if not test_results["user_logout"]:
         print("❌ 用户登出失败")
         return
     
     # 10. 验证数据库中的数据
-    print("\n📋 测试步骤 10/10: 数据库验证")
+    print("\n📋 测试步骤 10/12: 数据库验证")
     test_results["database_verification"] = await test_database_verification()
     if not test_results["database_verification"]:
         print("❌ 数据库验证失败")
@@ -454,6 +530,7 @@ async def main():
     print("  ✅ 系统健康检查")
     print("  ✅ 用户注册 (POST /register)")
     print("  ✅ 用户登录 (POST /login)")
+    print("  ✅ 密码错误验证 (POST /login)")
     print("  ✅ 获取用户资料 (GET /profile)")
     print("  ✅ 获取用户信息 (GET /me)")
     print("  ✅ 获取用户统计 (GET /stats)")

@@ -8,7 +8,7 @@
   >
     <!-- 服务中心点选择 -->
     <div class="analysis-section">
-      <div class="section-title">服务中心点（支持多中心，按选择顺序递增半径）</div>
+      <div class="section-title">服务中心点选择</div>
       <SecondaryButton 
         text="选择中心点"
         @click="selectCenters"

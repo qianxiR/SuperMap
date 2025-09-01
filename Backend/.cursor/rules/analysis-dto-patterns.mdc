@@ -1,0 +1,229 @@
+# 分析服务DTO设计模式
+
+## 1. 基础DTO结构
+
+### 所有分析DTO必须继承的基础类
+```python
+from pydantic import BaseModel, Field
+from typing import Dict, Any, Optional, List
+from uuid import UUID
+
+class BaseAnalysisDTO(BaseModel):
+    """分析DTO基类"""
+    name: str = Field(..., min_length=1, max_length=100, description="任务名称")
+    description: Optional[str] = Field(None, max_length=500, description="任务描述")
+    supermap_config: Dict[str, Any] = Field(..., description="SuperMap服务配置")
+```
+
+## 2. SuperMap配置DTO
+
+### SuperMapConfigDTO
+```python
+class SuperMapConfigDTO(BaseModel):
+    """SuperMap服务配置DTO"""
+    service_url: str = Field(..., description="SuperMap服务URL")
+    dataset: Optional[str] = Field(None, description="数据集名称")
+    weight_field: Optional[str] = Field(None, description="权重字段名")
+    timeout: int = Field(default=30000, description="超时时间(毫秒)")
+    result_setting: Optional[Dict[str, Any]] = Field(None, description="结果设置参数")
+```
+
+### ResultSettingDTO
+```python
+class ResultSettingDTO(BaseModel):
+    """结果设置DTO"""
+    returnEdgeFeatures: bool = Field(default=True, description="返回弧段要素")
+    returnEdgeGeometry: bool = Field(default=True, description="返回弧段几何")
+    returnEdgeIDs: bool = Field(default=True, description="返回弧段ID")
+    returnNodeFeatures: bool = Field(default=True, description="返回节点要素")
+    returnNodeGeometry: bool = Field(default=True, description="返回节点几何")
+    returnNodeIDs: bool = Field(default=True, description="返回节点ID")
+    returnPathGuides: bool = Field(default=True, description="返回行驶导引")
+    returnRoutes: bool = Field(default=True, description="返回路由对象")
+```
+
+## 3. 几何数据DTO
+
+### GeometryDTO
+```python
+class GeometryDTO(BaseModel):
+    """几何数据DTO"""
+    type: str = Field(..., description="几何类型")
+    coordinates: List[Any] = Field(..., description="坐标数组")
+
+class PointDTO(BaseModel):
+    """点数据DTO"""
+    geometry: GeometryDTO = Field(..., description="点几何")
+    attributes: Dict[str, Any] = Field(default_factory=dict, description="属性数据")
+    id: Optional[str] = Field(None, description="要素ID")
+    name: Optional[str] = Field(None, description="要素名称")
+```
+
+## 4. 服务区分析DTO
+
+### ServiceAreaAnalysisDTO
+```python
+class ServiceAreaAnalysisDTO(BaseAnalysisDTO):
+    """服务区分析DTO"""
+    facility_points: List[PointDTO] = Field(..., min_items=1, description="设施点列表")
+    break_values: List[float] = Field(..., min_items=1, description="断点值列表")
+    break_units: str = Field(default="minutes", description="断点单位")
+    impedance: str = Field(default="time", description="阻抗类型")
+    travel_mode: str = Field(default="driving", description="出行方式")
+    include_geometry: bool = Field(default=True, description="是否包含几何数据")
+    include_attributes: bool = Field(default=True, description="是否包含属性数据")
+```
+
+## 5. 最优路径分析DTO
+
+### PathAnalysisDTO
+```python
+class PathAnalysisDTO(BaseAnalysisDTO):
+    """最优路径分析DTO"""
+    origin: PointDTO = Field(..., description="起点")
+    destination: PointDTO = Field(..., description="终点")
+    waypoints: List[PointDTO] = Field(default_factory=list, description="途经点列表")
+    impedance: str = Field(default="time", description="阻抗类型")
+    travel_mode: str = Field(default="driving", description="出行方式")
+    optimization: str = Field(default="fastest", description="优化目标")
+    include_geometry: bool = Field(default=True, description="是否包含几何数据")
+    include_guide: bool = Field(default=True, description="是否包含行驶导引")
+```
+
+## 6. 缓冲区分析DTO
+
+### BufferSettingsDTO
+```python
+class BufferSettingsDTO(BaseModel):
+    """缓冲区设置DTO"""
+    distance: float = Field(..., gt=0, description="缓冲距离")
+    unit: str = Field(default="meters", description="距离单位")
+    end_type: str = Field(default="round", description="端点类型")
+    join_type: str = Field(default="round", description="连接类型")
+    semicircle_line_segment: int = Field(default=10, description="圆弧线段数")
+    left_distance: Optional[float] = Field(None, description="左侧缓冲距离")
+    right_distance: Optional[float] = Field(None, description="右侧缓冲距离")
+```
+
+### BufferAnalysisDTO
+```python
+class BufferAnalysisDTO(BaseAnalysisDTO):
+    """缓冲区分析DTO"""
+    input_geometry: GeometryDTO = Field(..., description="输入几何")
+    buffer_settings: BufferSettingsDTO = Field(..., description="缓冲区设置")
+    coordinate_system: str = Field(default="EPSG:4326", description="坐标系")
+    include_attributes: bool = Field(default=True, description="是否包含属性数据")
+    output_format: str = Field(default="geojson", description="输出格式")
+```
+
+## 7. 响应DTO
+
+### AnalysisTaskResponseDTO
+```python
+class AnalysisTaskResponseDTO(BaseModel):
+    """分析任务响应DTO"""
+    task_id: str = Field(..., description="任务ID")
+    task_name: str = Field(..., description="任务名称")
+    status: str = Field(..., description="任务状态")
+    progress: float = Field(default=0.0, description="任务进度")
+    created_at: str = Field(..., description="创建时间")
+    supermap_request: Optional[Dict[str, Any]] = Field(None, description="SuperMap请求参数")
+```
+
+### AnalysisResultResponseDTO
+```python
+class AnalysisResultResponseDTO(BaseModel):
+    """分析结果响应DTO"""
+    task_id: str = Field(..., description="任务ID")
+    result_type: str = Field(..., description="结果类型")
+    data: Dict[str, Any] = Field(..., description="结果数据")
+    metadata: Optional[Dict[str, Any]] = Field(None, description="元数据")
+    created_at: str = Field(..., description="创建时间")
+```
+
+## 8. 任务管理DTO
+
+### TaskListResponseDTO
+```python
+class TaskListResponseDTO(BaseModel):
+    """任务列表响应DTO"""
+    tasks: List[AnalysisTaskResponseDTO] = Field(..., description="任务列表")
+    total: int = Field(..., description="总数量")
+    limit: int = Field(..., description="限制数量")
+    offset: int = Field(..., description="偏移量")
+```
+
+### TaskStatusDTO
+```python
+class TaskStatusDTO(BaseModel):
+    """任务状态DTO"""
+    task_id: str = Field(..., description="任务ID")
+    name: str = Field(..., description="任务名称")
+    type: str = Field(..., description="任务类型")
+    status: str = Field(..., description="任务状态")
+    progress: float = Field(..., description="任务进度")
+    created_at: str = Field(..., description="创建时间")
+    started_at: Optional[str] = Field(None, description="开始时间")
+    completed_at: Optional[str] = Field(None, description="完成时间")
+    supermap_result: Optional[Dict[str, Any]] = Field(None, description="SuperMap结果")
+```
+
+## 9. 错误响应DTO
+
+### ErrorResponseDTO
+```python
+class ErrorResponseDTO(BaseModel):
+    """错误响应DTO"""
+    success: bool = Field(default=False, description="是否成功")
+    message: str = Field(..., description="错误消息")
+    error_code: str = Field(..., description="错误代码")
+    details: Optional[Dict[str, Any]] = Field(None, description="错误详情")
+    supermap_error: Optional[str] = Field(None, description="SuperMap错误信息")
+```
+
+## 10. 验证规则
+
+### 必需字段验证
+```python
+# 所有DTO必须包含的验证规则
+- name: 长度1-100字符
+- supermap_config: 必须包含service_url
+- geometry: 必须包含type和coordinates
+- break_values: 必须至少包含一个值
+- distance: 必须大于0
+```
+
+### 枚举值验证
+```python
+from enum import Enum
+
+class ImpedanceType(str, Enum):
+    TIME = "time"
+    DISTANCE = "distance"
+    COST = "cost"
+
+class TravelMode(str, Enum):
+    DRIVING = "driving"
+    WALKING = "walking"
+    TRANSIT = "transit"
+
+class BufferEndType(str, Enum):
+    ROUND = "round"
+    FLAT = "flat"
+```
+
+## 11. 开发检查清单
+
+在创建新的DTO时，必须检查：
+- [ ] 是否继承自BaseAnalysisDTO
+- [ ] 是否包含SuperMap配置参数
+- [ ] 是否定义完整的字段验证
+- [ ] 是否包含字段描述
+- [ ] 是否使用正确的数据类型
+- [ ] 是否包含默认值设置
+- [ ] 是否定义枚举值验证
+- [ ] 是否包含必需字段验证
+description:
+globs:
+alwaysApply: true
+---

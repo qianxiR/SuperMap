@@ -1,0 +1,210 @@
+# SuperMap服务集成规范
+
+## 1. SuperMap服务调用模式
+
+### 网络分析服务 (NetworkAnalystService)
+```python
+# 服务区分析
+var parameter = new ol.supermap.FindServiceAreasParameters({
+    centers: [point],
+    isAnalyzeById: false,
+    parameter: analystParameter
+});
+
+new ol.supermap.NetworkAnalystService(serviceUrl).findServiceAreas(parameter)
+
+# 最优路径分析
+var findPathParameter = new ol.supermap.FindPathParameters({
+    isAnalyzeById: false,
+    nodes: [originPoint, waypoint, destinationPoint],
+    hasLeastEdgeCount: false,
+    parameter: analystParameter
+});
+
+new ol.supermap.NetworkAnalystService(serviceUrl).findPath(findPathParameter)
+```
+
+### 空间分析服务 (SpatialAnalystService)
+```python
+# 缓冲区分析
+var dsBufferAnalystParameters = new ol.supermap.DatasetBufferAnalystParameters({
+    dataset: "RoadLine2@Changchun",
+    filterQueryParameter: new ol.supermap.FilterParameter({
+        attributeFilter: "NAME='团结路'"
+    }),
+    bufferSetting: new ol.supermap.BufferSetting({
+        endType: ol.supermap.BufferEndType.ROUND,
+        leftDistance: {value: 100},
+        rightDistance: {value: 100},
+        semicircleLineSegment: 10
+    })
+});
+
+new ol.supermap.SpatialAnalystService(serviceUrl).bufferAnalysis(dsBufferAnalystParameters)
+```
+
+## 2. 必需的结果设置参数
+
+### TransportationAnalystResultSetting
+```python
+resultSetting = {
+    "returnEdgeFeatures": True,      # 返回弧段要素
+    "returnEdgeGeometry": True,      # 返回弧段几何
+    "returnEdgeIDs": True,           # 返回弧段ID
+    "returnNodeFeatures": True,      # 返回节点要素
+    "returnNodeGeometry": True,      # 返回节点几何
+    "returnNodeIDs": True,           # 返回节点ID
+    "returnPathGuides": True,        # 返回行驶导引
+    "returnRoutes": True             # 返回路由对象
+}
+```
+
+## 3. 分析参数配置
+
+### TransportationAnalystParameter
+```python
+analystParameter = {
+    "resultSetting": resultSetting,
+    "weightFieldName": "length"      # 权重字段名
+}
+```
+
+### BufferSetting
+```python
+bufferSetting = {
+    "endType": "ROUND",              # 端点类型：ROUND/FLAT
+    "leftDistance": {"value": 100},  # 左侧缓冲距离
+    "rightDistance": {"value": 100}, # 右侧缓冲距离
+    "semicircleLineSegment": 10      # 圆弧线段数
+}
+```
+
+## 4. 服务配置规范
+
+### 网络分析服务配置
+```python
+network_analyst_config = {
+    "service_url": "https://iserver.supermap.io/iserver/services/networkanalyst-changchun/restjsr/networkanalyst",
+    "dataset": "RoadNet@Changchun",
+    "weight_field": "length",
+    "timeout": 30000
+}
+```
+
+### 空间分析服务配置
+```python
+spatial_analyst_config = {
+    "service_url": "https://iserver.supermap.io/iserver/services/spatialanalyst-changchun/restjsr/spatialanalyst",
+    "timeout": 30000
+}
+```
+
+## 5. 错误处理规范
+
+### SuperMap服务错误处理
+```python
+try:
+    # SuperMap服务调用
+    result = await supermap_service.analyze(parameters)
+    return {
+        "success": True,
+        "data": result
+    }
+except SuperMapServiceError as e:
+    return {
+        "success": False,
+        "error_code": "SUPERMAP_SERVICE_ERROR",
+        "supermap_error": str(e)
+    }
+except Exception as e:
+    return {
+        "success": False,
+        "error_code": "ANALYSIS_FAILED",
+        "message": "分析失败"
+    }
+```
+
+## 6. 数据转换规范
+
+### GeoJSON到SuperMap格式转换
+```python
+def convert_geojson_to_supermap(geojson_data):
+    """将GeoJSON格式转换为SuperMap格式"""
+    if geojson_data["type"] == "Point":
+        return {
+            "x": geojson_data["coordinates"][0],
+            "y": geojson_data["coordinates"][1]
+        }
+    # 其他几何类型转换...
+```
+
+### SuperMap结果到GeoJSON转换
+```python
+def convert_supermap_to_geojson(supermap_result):
+    """将SuperMap结果转换为GeoJSON格式"""
+    return {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "geometry": convert_geometry(supermap_geometry),
+                "properties": supermap_attributes
+            }
+        ]
+    }
+```
+
+## 7. 异步任务处理
+
+### 任务状态管理
+```python
+class AnalysisTask:
+    def __init__(self):
+        self.status = "pending"
+        self.progress = 0
+        self.supermap_request = None
+        self.supermap_result = None
+    
+    async def execute_supermap_analysis(self):
+        self.status = "processing"
+        self.progress = 10
+        
+        # 调用SuperMap服务
+        result = await self.call_supermap_service()
+        
+        self.status = "completed"
+        self.progress = 100
+        self.supermap_result = result
+```
+
+## 8. 必需的文件和类
+
+### 服务类
+- `SuperMapNetworkAnalystService` - 网络分析服务
+- `SuperMapSpatialAnalystService` - 空间分析服务
+- `SuperMapServiceFactory` - 服务工厂类
+
+### 配置类
+- `SuperMapConfig` - SuperMap配置管理
+- `AnalysisTaskConfig` - 分析任务配置
+
+### 数据类
+- `SuperMapRequest` - SuperMap请求数据
+- `SuperMapResponse` - SuperMap响应数据
+- `AnalysisResult` - 分析结果数据
+
+## 9. 开发检查清单
+
+在实现SuperMap服务集成时，必须检查：
+- [ ] 是否正确配置SuperMap服务URL
+- [ ] 是否包含完整的结果设置参数
+- [ ] 是否实现数据格式转换
+- [ ] 是否包含错误处理机制
+- [ ] 是否支持异步任务处理
+- [ ] 是否保存SuperMap请求和结果
+- [ ] 是否实现任务状态跟踪
+- [ ] 是否包含超时处理
+description:
+globs:
+alwaysApply: true
+---

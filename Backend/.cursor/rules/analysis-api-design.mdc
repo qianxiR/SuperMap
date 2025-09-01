@@ -1,0 +1,153 @@
+# 分析服务API设计规范
+
+## 核心设计原则
+
+### 1. SuperMap服务集成
+- 所有分析功能必须通过SuperMap iServer服务实现
+- 通过我们的API接口封装SuperMap分析功能
+- 提供统一的REST API接口给前端调用
+- 支持异步任务处理和状态跟踪
+
+### 2. API接口设计模式
+所有分析API必须遵循以下模式：
+
+#### 请求结构
+```json
+{
+  "name": "分析任务名称",
+  "description": "任务描述",
+  "supermap_config": {
+    "service_url": "SuperMap服务URL",
+    "dataset": "数据集名称",
+    "weight_field": "权重字段",
+    "result_setting": {...}
+  },
+  "analysis_parameters": {...}
+}
+```
+
+#### 响应结构
+```json
+{
+  "success": true,
+  "message": "任务创建成功",
+  "data": {
+    "task_id": "任务ID",
+    "task_name": "任务名称",
+    "status": "pending",
+    "supermap_request": {...}
+  }
+}
+```
+
+### 3. 必需的分析类型
+
+#### 服务区分析 (Service Area Analysis)
+- **接口**: `POST /api/v1/analysis/service-area`
+- **输入**: facility_points, break_values, impedance
+- **输出**: 服务区范围、可达路径、统计信息
+
+#### 最优路径分析 (Optimal Path Analysis)
+- **接口**: `POST /api/v1/analysis/path`
+- **输入**: origin, destination, waypoints, impedance
+- **输出**: 最优路径、行驶导引、统计信息
+
+#### 缓冲区分析 (Buffer Analysis)
+- **接口**: `POST /api/v1/analysis/buffer`
+- **输入**: input_geometry, buffer_settings
+- **输出**: 缓冲区几何、面积、属性信息
+
+### 4. 任务管理规范
+
+#### 任务状态查询
+- **接口**: `GET /api/v1/analysis/tasks/{task_id}`
+- **必需字段**: task_id, name, type, status, progress, created_at
+
+#### 任务列表查询
+- **接口**: `GET /api/v1/analysis/tasks`
+- **查询参数**: status, type, limit, offset
+- **分页支持**: 必需
+
+### 5. 错误处理规范
+
+#### 错误响应格式
+```json
+{
+  "success": false,
+  "message": "错误描述",
+  "error_code": "ERROR_CODE",
+  "details": {
+    "field": "错误字段",
+    "reason": "具体错误原因",
+    "supermap_error": "SuperMap服务错误信息"
+  }
+}
+```
+
+#### 必需错误码
+- `INVALID_GEOMETRY`: 几何数据无效
+- `INVALID_PARAMETERS`: 参数无效
+- `ANALYSIS_FAILED`: 分析失败
+- `SUPERMAP_SERVICE_ERROR`: SuperMap服务错误
+- `TASK_NOT_FOUND`: 任务不存在
+- `SERVICE_UNAVAILABLE`: 服务不可用
+
+### 6. 代码实现规范
+
+#### DTO设计
+- 所有请求参数必须定义对应的DTO类
+- 使用Pydantic进行数据验证
+- 包含SuperMap配置参数
+
+#### 服务层设计
+- 实现SuperMap服务调用逻辑
+- 支持异步任务处理
+- 完整的错误处理和日志记录
+
+#### 数据库设计
+- 存储任务状态和进度
+- 保存SuperMap请求和结果数据
+- 支持任务历史查询
+
+### 7. 文件结构规范
+
+参考以下文件结构：
+- [analysis/api/v1/analysis/analysis.py](mdc:analysis/api/v1/analysis/analysis.py) - API接口实现
+- [analysis/application/dto/analysis_dto.py](mdc:analysis/application/dto/analysis_dto.py) - DTO定义
+- [analysis/domains/analysis/services.py](mdc:analysis/domains/analysis/services.py) - 领域服务
+- [analysis/infrastructure/database/postgres/models.py](mdc:analysis/infrastructure/database/postgres/models.py) - 数据模型
+
+### 8. 配置管理
+
+#### SuperMap服务配置
+```json
+{
+  "supermap_services": {
+    "network_analyst": {
+      "service_url": "https://iserver.supermap.io/iserver/services/networkanalyst-changchun/restjsr/networkanalyst",
+      "dataset": "RoadNet@Changchun",
+      "weight_field": "length",
+      "timeout": 30000
+    },
+    "spatial_analyst": {
+      "service_url": "https://iserver.supermap.io/iserver/services/spatialanalyst-changchun/restjsr/spatialanalyst",
+      "timeout": 30000
+    }
+  }
+}
+```
+
+### 9. 开发检查清单
+
+在实现新的分析功能时，必须检查：
+- [ ] 是否包含SuperMap服务配置
+- [ ] 是否实现异步任务处理
+- [ ] 是否包含完整的错误处理
+- [ ] 是否定义对应的DTO类
+- [ ] 是否更新数据库模型
+- [ ] 是否添加任务状态查询接口
+- [ ] 是否包含SuperMap请求和结果存储
+description:
+globs:
+alwaysApply: true
+---

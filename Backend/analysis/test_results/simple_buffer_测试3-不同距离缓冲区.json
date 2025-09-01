@@ -1,0 +1,89 @@
+{
+  "success": true,
+  "data": {
+    "features": [
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                116.3974,
+                39.9093
+              ],
+              [
+                116.4074,
+                39.9093
+              ],
+              [
+                116.4074,
+                39.9193
+              ],
+              [
+                116.3974,
+                39.9193
+              ],
+              [
+                116.3974,
+                39.9093
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "id": 1,
+          "name": "缓冲区1",
+          "buffer_distance": 100.0,
+          "end_type": "ROUND",
+          "area": 1000000.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                116.4074,
+                39.9193
+              ],
+              [
+                116.4174,
+                39.9193
+              ],
+              [
+                116.4174,
+                39.9293
+              ],
+              [
+                116.4074,
+                39.9293
+              ],
+              [
+                116.4074,
+                39.9193
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "id": 2,
+          "name": "缓冲区2",
+          "buffer_distance": 200.0,
+          "end_type": "ROUND",
+          "area": 1500000.0
+        }
+      }
+    ],
+    "total_count": 2,
+    "area": 2500000.0,
+    "buffer_distance": 100.0,
+    "config": {
+      "service_url": "https://iserver.supermap.io/iserver/services/spatialanalyst-changchun/restjsr/spatialanalyst",
+      "dataset": "TestDataset@Changchun",
+      "filter_query": "TYPE='highway'"
+    }
+  }
+}

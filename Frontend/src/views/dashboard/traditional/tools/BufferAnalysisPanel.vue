@@ -6,24 +6,10 @@
     :height="'100%'"
     class="buffer-analysis-panel"
   >
-    <!-- 选择分析区域和图层 -->
+    <!-- 选择分析图层 -->
     <div class="analysis-section">
-      <div class="section-title">选择分析区域</div>
-      <div class="button-row">
-        <SecondaryButton 
-          text="选择分析区域"
-          @click="selectFeatureFromMap"
-          :active="isSelectingFeature"
-        />
-        <SecondaryButton 
-          text="选择分析图层"
-          @click="showLayerSelector = true"
-          :active="showLayerSelector"
-        />
-      </div>
-      
-      <!-- 图层选择下拉框 -->
-      <div v-if="showLayerSelector" class="layer-selector">
+      <div class="section-title">选择分析图层</div>
+      <div class="layer-selector">
         <DropdownSelect 
           v-model="selectedAnalysisLayerId"
           :options="layerOptionsWithNone"
@@ -31,19 +17,17 @@
         />
       </div>
       
-      <!-- 显示选中要素信息 -->
-      <div v-if="selectedFeatureInfo" class="feature-info">
+      <!-- 显示选中图层信息 -->
+      <div v-if="selectedAnalysisLayerInfo" class="layer-info">
         <div class="info-item">
-          <span class="info-label">要素名称:</span>
-          <span class="info-value">{{ selectedFeatureInfo?.name }}</span>
+          <span class="info-label">图层名称:</span>
+          <span class="info-value">{{ selectedAnalysisLayerInfo?.name }}</span>
         </div>
         <div class="info-item">
-          <span class="info-label">坐标:</span>
-          <span class="info-value">{{ selectedFeatureInfo?.coordinates }}</span>
+          <span class="info-label">图层类型:</span>
+          <span class="info-value">{{ selectedAnalysisLayerInfo?.type }}</span>
         </div>
       </div>
-      
-
     </div>
     
     <!-- 缓冲区参数 -->
@@ -85,20 +69,14 @@ import PanelWindow from '@/components/UI/PanelWindow.vue'
 const analysisStore = useAnalysisStore()
 
 const {
-  selectedFeature,
   bufferDistance,
   selectedAnalysisLayerId,
-  selectedFeatureInfo,
+  selectedAnalysisLayerInfo,
   layerOptions,
   setSelectedAnalysisLayer,
-  selectFeatureFromMap,
-  clearMapSelection,
   clearAllSelections,
   executeBufferAnalysis
 } = useBufferAnalysis()
-
-// 图层选择相关状态
-const showLayerSelector = ref(false)
 
 // 包含"无"选项的图层选项
 const layerOptionsWithNone = computed(() => {
@@ -108,16 +86,8 @@ const layerOptionsWithNone = computed(() => {
   ]
 })
 
-// 是否正在选择要素
-const isSelectingFeature = computed(() => {
-  return analysisStore.toolPanel.activeTool === 'buffer' && !selectedFeature.value
-})
-
-
-
-// 距离变化时的处理（可以添加实时预览等功能）
+// 距离变化时的处理
 const onDistanceChange = () => {
-  // 这里可以添加实时预览逻辑
   if (bufferDistance.value <= 0) {
     analysisStore.setAnalysisStatus('缓冲距离必须大于0')
   } else {
@@ -125,18 +95,16 @@ const onDistanceChange = () => {
   }
 }
 
-// 监听工具面板变化，自动激活地图选择模式
+// 监听工具面板变化
 watch(() => analysisStore.toolPanel.activeTool, (tool) => {
   if (tool === 'buffer') {
-    // 当进入缓冲区分析时，自动激活地图选择模式
-    selectFeatureFromMap()
+    // 当进入缓冲区分析时，初始化状态
+    analysisStore.setAnalysisStatus('请选择分析图层')
   } else {
-    // 当离开缓冲区分析时，清除选中状态和监听器
+    // 当离开缓冲区分析时，清除选中状态
     clearAllSelections()
-    clearMapSelection()
-    showLayerSelector.value = false
   }
-}, { immediate: true }) // 立即执行，确保初始状态正确
+}, { immediate: true })
 
 // 监听图层选择变化
 watch(selectedAnalysisLayerId, (newLayerId) => {
@@ -154,7 +122,6 @@ watch(selectedAnalysisLayerId, (newLayerId) => {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  /* 使用全局滚动条样式 */
 }
 
 .analysis-section {
@@ -162,21 +129,8 @@ watch(selectedAnalysisLayerId, (newLayerId) => {
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 16px;
-  /* 禁用动画，防止主题切换闪烁 */
   animation: none !important;
   margin-bottom: 16px;
-}
-
-/* 保留fadeIn动画定义但不使用 */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .section-title {
@@ -185,16 +139,6 @@ watch(selectedAnalysisLayerId, (newLayerId) => {
   margin-bottom: 12px;
   font-weight: 600;
   letter-spacing: 0.5px;
-}
-
-.button-row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.button-row .secondary-button {
-  flex: 1;
 }
 
 .layer-selector {
@@ -213,16 +157,21 @@ watch(selectedAnalysisLayerId, (newLayerId) => {
   font-weight: 500;
 }
 
-.feature-info {
+.layer-info {
   margin-top: 12px;
   padding: 16px;
-  background: rgba(66, 165, 245, 0.08);
-  border: 1px solid rgba(66, 165, 245, 0.2);
+  background: var(--panel);
+  border: 1px solid var(--border);
   border-radius: 12px;
-  animation: fadeIn 0.3s ease-out;
+  transition: all 0.2s ease;
+  box-shadow: var(--glow);
 }
 
-
+.layer-info:hover {
+  background: var(--surface-hover);
+  border-color: var(--accent);
+  box-shadow: 0 2px 6px rgba(var(--accent-rgb), 0.15);
+}
 
 .info-item {
   display: flex;
@@ -243,8 +192,7 @@ watch(selectedAnalysisLayerId, (newLayerId) => {
 
 .info-value {
   font-size: 11px;
-  color: var(--accent);
+  color: var(--text);
   font-weight: 600;
 }
-
 </style>
