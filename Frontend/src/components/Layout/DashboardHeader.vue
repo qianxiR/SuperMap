@@ -305,7 +305,7 @@ watch(() => router.currentRoute.value.path, (newPath: string) => {
 .screen-title {
   font-size: clamp(16px, 1.6vw, 20px);
   font-weight: 700;
-  color: var(--text);
+  color: var(--accent);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   font-family: "Segoe UI", PingFang SC, Microsoft YaHei, Arial, sans-serif;
   transition: color 0.2s ease;
