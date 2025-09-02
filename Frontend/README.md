@@ -201,221 +201,160 @@ npm run dev
 # http://localhost:5173
 ```
 
-### 生产构建
+### 构建项目
 
 ```bash
-# 构建生产版本
-npm run build
-
-# 预览生产版本
-npm run preview
+pnpm build
 ```
-
-## 📖 使用指南
-
-### 1. 用户认证
-
-1. 访问应用首页，自动跳转到登录页面
-2. 输入用户名和密码进行登录
-3. 首次使用可点击"注册"创建新账户
-
-### 2. LLM 智能模式
-
-1. 登录后默认进入 LLM 模式
-2. 在聊天界面输入自然语言指令
-3. AI 助手将解析指令并执行相应操作
-4. 支持复杂的地图分析任务
-
-**示例指令:**
-- "显示所有学校"
-- "分析距离地铁站 500 米内的建筑"
-- "计算从 A 点到 B 点的最短路径"
-
-### 3. 传统 GIS 模式
-
-1. 点击模式切换按钮进入传统模式
-2. 使用工具栏选择分析功能：
-   - **图层管理**: 控制图层显示与样式
-   - **要素查询**: 按属性或空间条件查询
-   - **缓冲区分析**: 创建指定距离的缓冲区
-   - **距离分析**: 计算两点间距离
-   - **泰森多边形**: 以点代面
-   - **图层编辑**: 创建和编辑要素
-
-### 4. 地图交互
-
-- **平移**: 鼠标拖拽
-- **缩放**: 鼠标滚轮或缩放控件
-- **选择**: 点击选择要素
-- **测量**: 使用测量工具
+构建产物将生成在 `dist` 目录中。
 
 ## 🔧 开发指南
 
-### 代码规范
+## 🧩 UI 组件库
 
-- 使用 TypeScript 进行类型检查
-- 遵循 Vue 3 Composition API 规范
-- 组件采用 `<script setup>` 语法
-- 使用 ESLint 和 Prettier 保持代码风格
 
-### 状态管理
+- **AutoScrollContainer** (`src/components/UI/AutoScrollContainer.vue`): 自动滚动容器，提供按索引/元素滚动、顶部/底部滚动、滚动信息回传；支持 selectedIndex 联动与居中显示。样式为窄滚动条、平滑滚动、无横向滚动，使用主题变量 `--scrollbar-*`。
+- **ButtonGroup** (`src/components/UI/ButtonGroup.vue`): 分段按钮组，`buttons[{id,text}]` + `activeButton` 控制选中，发射 `select`。样式为圆角容器+透明按钮，激活态使用 `--accent` 高亮。
+- **ConfirmDialog** (`src/components/UI/ConfirmDialog.vue`): 确认对话框，`visible/title/message/confirmText/cancelText`，发射 `confirm/cancel/close`，遮罩点击或 visible=false 均触发关闭。样式为面板+阴影+简化淡入，按钮分 primary/secondary。
+- **DropdownSelect** (`src/components/UI/DropdownSelect.vue`): 轻量下拉选择，`v-model` + `options[{value,label,disabled}]`，键盘 Enter/Escape 支持，失焦/外点关闭。样式为面板边框、聚焦描边、选项滚动条，使用 `--accent`、`--border` 等变量。
+- **EditModal** (`src/components/UI/EditModal.vue`): 多表单编辑弹窗（api-key/preference/prompt/agent），包含表单校验与保存回传 `save(data)`；集成 `DropdownSelect`。样式为圆角面板、分区、页脚主/次按钮。
+- **IconButton** (`src/components/UI/IconButton.vue`): 图标按钮，支持 `size='small|medium|large'` 与禁用态，发射 `click`。样式为方形圆角、悬浮微动效、SVG 图标深度选择器尺寸同步。
+- **LLMInputGroup** (`src/components/UI/LLMInputGroup.vue`): 输入组，`as='input|textarea'`，`v-model`、Enter 事件与自动高度调整（textarea）。样式为透明背景、无边框、细滚动条，使用 `--sub` 占位色。
+- **NotificationManager** (`src/components/UI/NotificationManager.vue`): 通知管理器，暴露 `addNotification/removeNotification`，接管 `NotificationToast` 队列与过渡。
+- **NotificationToast** (`src/components/UI/NotificationToast.vue`): 浮动提示，支持 success/error/info、自动关闭（duration）与手动关闭。样式为左侧色条、面板+边框+阴影、底部固定，过渡从底部滑入/出。
+- **PanelContainer** (`src/components/UI/PanelContainer.vue`): 面板容器，`compact/bordered/shadowed/animated` 可选。样式使用 `--panel/--border/--glow`，带淡入动画与响应式内边距。
+- **PanelWindow** (`src/components/UI/PanelWindow.vue`): 面板窗口/浮窗，支持嵌入模式、位置与尺寸、可聚焦、关闭、滚动持久化。样式为边框+阴影+标题区+可滚动内容，带淡入动画。
+- **PrimaryButton** (`src/components/UI/PrimaryButton.vue`): 按钮（primary/secondary/danger），支持禁用与 active 高亮，发射 `click`。样式遵循主题按钮变量。
+- **QueryConditionRow** (`src/components/UI/QueryConditionRow.vue`): 查询条件行，字段名输入 + 操作符下拉 + 值输入，依据字段类型提示与转换，发射 `update(condition)`。样式为卡片分区布局。
+- **SecondaryButton** (`src/components/UI/SecondaryButton.vue`): 次级按钮（primary/secondary/danger），支持 loading 态与 active，发射 `click`。样式含微动效与 loading spinner。
+- **SplitPanel** (`src/components/UI/SplitPanel.vue`): 面板分割器，封装 splitpanes，支持方向、主题（default/chat/custom）与自定义 slot。样式覆盖 splitter 与 pane。
+- **TipWindow** (`src/components/UI/TipWindow.vue`): 轻提示容器，文本与可选图标，变体 info/warning/success/error。样式为左色条卡片，禁用动画防闪烁。
+- **TraditionalInputGroup** (`src/components/UI/TraditionalInputGroup.vue`): 传统输入组，`type=input|textarea|select`，统一输入样式与交互，发射 `update:modelValue/enter`。
 
-项目使用 Pinia 进行状态管理，主要状态包括：
+## 🔄 数据交互与状态管理
 
-- `mapStore`: 地图相关状态
-- `userStore`: 用户认证状态
-- `analysisStore`: 分析工具状态
-- `selectionStore`: 要素选择状态
+以下为 6 个基础工具（来自 tools 文件）的数据交互逻辑与状态管理要点，均按“输入数据格式 / 调用的函数 / 返回数据格式”列出。
+
+1) 图层管理（layer manager）
+- 输入数据格式: `layerId: string`；操作 `toggle|remove`
+- 调用的函数: `useLayerManager().toggleLayerVisibility(layerId)` / `useLayerManager().removeLayer(layerId)`
+- 返回数据格式: `void | boolean`（移除返回布尔值）
+- 状态管理: `mapStore.vectorLayers`；选择高亮通过 `mapStore.selectLayer` 清理，同步 `selectionStore`/`popupStore`/`featureQueryStore`
+
+### 图层管理：位置、数据接入与自动同步
+
+- 位置:
+  - 面板组件: `src/views/dashboard/traditional/tools/LayerManager.vue`
+  - 业务逻辑: `src/composables/useLayerManager.ts`
+  - 状态源: `src/stores/mapStore.ts` 的 `vectorLayers: MapLayer[]`
+
+- 数据接入方法:
+  - 图层管理面板以 `mapStore.vectorLayers` 为单一数据源；本地保存的图层通过 `useLayerManager().saveFeaturesAsLayer(features, name, sourceType)` 写入，`source='local'`。
+  - SuperMap 服务图层在地图初始化时写入 `vectorLayers`，`source='supermap'`。
+
+- 监听外部数据变化并自动加入列表:
+  - 当其他模块向 `ol.Map` 添加图层（如第三方/外部图层）时，监听 `map.getLayers()` 的 `add`/`remove` 事件，同步到 `mapStore.vectorLayers`，并标记 `source='external'`。
+
+2) 按属性选择要素（attribute selection）
+- 输入数据格式: `QueryConfig`（`{ condition: { fieldName: string, operator: 'eq'|'gt'|'lt'|'gte'|'lte'|'like', value: string|number|boolean } }`），以及 `selectedLayerId: string`
+- 调用的函数: `useFeatureQueryStore().executeQuery()`
+- 返回数据格式: `{ success: boolean, data: ol.Feature[], totalCount: number, queryType: 'frontend', error?: string }`
+- 状态管理: `featureQueryStore.queryResults`、`selectedFeatureIndex`；结果以 `sourceTag='query'` 高亮到 `mapStore.selectLayer`
+
+- 按属性选择 → 另存为图层:
+  - 使用 `useFeatureQueryStore().queryResults`（`ol.Feature[]`）作为输入
+  - 调用 `useLayerManager().saveFeaturesAsLayer(results, layerName, 'query')`
+  - 成功后将以 `source='local'`、`sourceType='query'` 的新矢量图层加入 `mapStore.vectorLayers`
+
+3) 按区域选择要素（area selection）
+- 位置：Frontend\src\composables\useFeatureQuery.ts
+- 输入数据格式: 拉框范围 `extent: [minX, minY, maxX, maxY]`
+- 调用的函数: `useFeatureSelection().selectFeaturesInExtent(extent)`
+- 返回数据格式: `ol.Feature[]`（每个要素 `sourceTag='area'`）
+- 状态管理: `areaSelectionStore.selectedFeatures`、`selectedFeatureIndex`；高亮渲染 `mapStore.selectLayer`
+
+- 按区域选择 → 另存为图层:
+  - 使用 `useAreaSelectionStore().selectedFeatures`（`ol.Feature[]`）作为输入
+  - 调用 `useLayerManager().saveFeaturesAsLayer(results, layerName, 'area')`
+  - 成功后将以 `source='local'`、`sourceType='area'` 的新矢量图层加入 `mapStore.vectorLayers`
+
+
+4) 缓冲区分析（buffer）
+- 输入数据格式: `selectedFeature: ol.Feature`，`bufferDistance: number`，`selectedAnalysisLayerId: string`
+- 调用的函数: `useBufferAnalysis().executeBufferAnalysis()`
+- 返回数据格式: 暂为 UI 演示；实际应为 `GeoJSON Feature | FeatureCollection`
+- 状态管理: 本地 `ref`（`selectedFeature`, `bufferDistance`, `selectedAnalysisLayerId`）；提示通过 `analysisStore`
+
+- 缓冲区分析结果 → 另存为图层:
+  - 输入数据格式: `features: ol.Feature[]`（由缓冲结果 GeoJSON 转换）；`layerName: string`；`sourceType?: 'draw'|'area'|'query'`
+  - 调用的函数: `useLayerManager().saveFeaturesAsLayer(features, layerName, sourceType)`
+  - 返回数据格式: `Promise<boolean>`
+
+5) 最优路径分析（path/distance）
+- 输入数据格式: `startPoint: ol.Feature`，`endPoint: ol.Feature`，`pathType: 'shortest'|'fastest'|'scenic'`，`transportMode: 'walking'|'cycling'|'driving'|'transit'`
+- 调用的函数: `useDistanceAnalysis().executePathAnalysis()`
+- 返回数据格式: `{ distance: number, duration: number, pathType: string } | null`
+- 状态管理: 本地 `ref`（`startPoint`, `endPoint`, `analysisResult`）；提示通过 `analysisStore`
+
+- 最优路径 → 另存为图层:
+  - 输入数据格式: `features: ol.Feature[]`（由起终点构造 `LineString`）; `layerName: string`; `sourceType?: 'draw'|'area'|'query'`
+  - 调用的函数: `useLayerManager().saveFeaturesAsLayer(features, layerName, sourceType)`
+  - 返回数据格式: `Promise<boolean>`
+
+6) 服务区分析（service area）
+- 输入数据格式: `selectedCenters: ol.Feature[]`；参数 `baseRadius: number`，`radiusStep: number`
+- 调用的函数: `useServiceAreaAnalysis().executeServiceArea()`（内部逐中心调用 `analysisAPI.bufferAnalysis({ geometry: Point, distance, unit: 'meters' })`）
+- 返回数据格式: `GeoJSON FeatureCollection`（`{ type: 'FeatureCollection', features: any[] }`）
+- 状态管理: 本地 `ref`（`selectedCenters`, `serviceAreaResult`, `baseRadius`, `radiusStep`）；提示通过 `analysisStore`
+
+- 服务区分析结果 → 另存为图层:
+  - 输入数据格式: `features: ol.Feature[]`（由 `serviceAreaResult` 的 GeoJSON 读取）; `layerName: string`; `sourceType?: 'draw'|'area'|'query'`
+  - 调用的函数: `useLayerManager().saveFeaturesAsLayer(features, layerName, sourceType)`
+  - 返回数据格式: `Promise<boolean>`
 
 ### 组件开发
 
-1. 在 `src/components/` 下创建新组件
-2. 使用 TypeScript 定义 Props 和 Emits
-3. 遵循单一职责原则
-4. 添加适当的注释和文档
+- **组件位置**: 组件根据职责划分存放在 `src/components/` 下的 `UI`, `Map`, `Layout` 目录中。
+- **命名规范**: 组件文件名使用 `PascalCase` (例如: `MapViewer.vue`)。
+- **脚本语法**: 统一使用 `<script setup lang="ts">` 语法糖。
+- **Props & Emits**: 使用 TypeScript 定义 `props` 和 `emits`，确保类型安全。
 
-### API 集成
+### 状态管理 (Pinia)
 
-- API 接口定义在 `src/api/` 目录
-- 使用统一的错误处理机制
-- 支持请求重试和超时处理
-- 遵循 RESTful 设计原则
+- **模块化**: 每个功能模块拥有独立的 store 文件，存放于 `src/stores/`。
+- **命名规范**: store 文件名使用 `camelCase` (例如: `mapStore.ts`)，导出的 store 使用 `use...Store` 格式 (例如: `useMapStore`)。
+- **风格**: 推荐使用 Composition API 风格定义 store，以获得更好的类型推断。
+- **数据解构**: 在组件中使用 `storeToRefs` 来解构 state 和 getters，以保持其响应性。
 
-## 🧪 测试
+### 路由管理
 
-### 运行测试
+- **配置文件**: 路由定义在 `src/router/index.ts` 中。
+- **懒加载**: 页面组件 (`views`) 应使用动态导入 (`() => import(...)`) 实现懒加载。
 
-```bash
-# 路由测试
-npm run test:routing
+## 📜 核心约定
 
-# 构建测试
-npm run test:build
-
-# 运行所有测试
-npm run test:all
-
-# 监听模式
-npm run test:watch
-```
-
-### 测试覆盖
-
-- ✅ 路由配置验证
-- ✅ 组件文件存在性检查
-- ✅ 构建流程测试
-- ✅ 手动测试清单
-
-详细测试指南请参考 [TESTING.md](./TESTING.md)
-
-## 🚀 部署
-
-### 构建生产版本
-
-```bash
-npm run build
-```
-
-构建产物位于 `dist/` 目录
-
-### 部署配置
-
-1. 配置 Web 服务器（Nginx/Apache）
-2. 设置反向代理到 SuperMap iServer
-3. 配置 HTTPS 证书
-4. 设置环境变量
-
-### 环境变量
-
-详细的环境变量配置说明请参考 [ENV_CONFIG.md](./ENV_CONFIG.md)
-
-#### 基础配置示例
-
-```bash
-# SuperMap iServer 服务地址
-VITE_SUPERMAP_BASE_URL=http://localhost:8090
-
-# 地图服务路径
-VITE_SUPERMAP_MAP_SERVICE=iserver/services/map-WuHan/rest
-
-# 数据服务路径
-VITE_SUPERMAP_DATA_SERVICE=iserver/services/data-WuHan/rest/data
-
-# 工作空间和地图名称
-VITE_SUPERMAP_WORKSPACE=wuhan
-VITE_SUPERMAP_MAP_NAME=武汉
-
-# 地图边界配置（可选）
-VITE_SUPERMAP_MAP_EXTENT=113.7,29.97,115.08,31.36
-VITE_SUPERMAP_MAP_CENTER=114.37,30.69
-VITE_SUPERMAP_MAP_ZOOM=8
-
-# API 配置
-VITE_API_TIMEOUT=10000
-VITE_API_RETRY_COUNT=3
-```
-
-#### 快速切换服务配置
-
-要使用不同的 SuperMap 服务，只需修改环境变量：
-
-```bash
-# 使用 data-WuHan 服务
-VITE_SUPERMAP_DATA_SERVICE=iserver/services/data-WuHan/rest/data
-
-# 使用 data-guanlifenxipingtai 服务（默认）
-VITE_SUPERMAP_DATA_SERVICE=iserver/services/data-guanlifenxipingtai/rest/data
-```
+- **API 风格**: 功能实现遵循 “输入 -> 处理 -> 输出” 的三段式模式，不包含回退或校验逻辑。
+- **颜色规范**: 颜色统一使用 `src/styles/theme.css` 中定义的 CSS 变量，禁止硬编码颜色值。
+- **单位标准**:
+  - 面积: 平方千米
+  - 距离: 千米
+  - 坐标: 度 (保留 6 位小数)
+- **选择与IO**:
+  - 不同来源的选择要素存储在各自的 store 中 (`selectionStore`, `areaSelectionStore`, `featureQueryStore`)。
+  - 地图高亮通过 `mapStore.selectLayer` 统一管理。
+  - 使用 `src/utils/selectionIO.ts` 中的工具函数进行要素的保存与读取。
 
 ## 🤝 贡献指南
 
-### 开发流程
+我们欢迎所有形式的贡献！
 
-1. Fork 项目
-2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 创建 Pull Request
+1.  **Fork** 本仓库。
+2.  **创建** 你的特性分支 (`git checkout -b feature/AmazingFeature`)。
+3.  **提交** 你的修改 (`git commit -m 'Add some AmazingFeature'`)。
+4.  **推送** 到分支 (`git push origin feature/AmazingFeature`)。
+5.  **打开** 一个 Pull Request。
 
-### 代码审查
-
-- 所有代码变更需要经过审查
-- 确保测试通过
-- 遵循项目代码规范
-- 添加必要的文档
-
-## 📄 许可证
-
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
-
-## 📞 支持
-
-如有问题或建议，请通过以下方式联系：
-
-- 提交 Issue
-- 发送邮件至项目维护者
-- 查看项目文档
+请确保你的代码遵循项目的开发规范和核心约定。
 
 ---
-
-**开发团队**: qianxi
-**最后更新**: 2025年9月  
-**版本**: 1.0.0
-
-“”“
-
-
-API文件夹用于存储前后端间通信文件、 components用于存储UI主界面、子窗口、组件库文件、composables用于各功能窗口的主要业务逻辑实现的TS文件、stores用于各窗口组件间状态管理及共享数据管理、views用于不同路由界面的存储、router用于路由路径设计及页面导向设计、styles存储项目的主要颜色风格、types定义项目各组件数据类型、tuils用于辅助函数存储、main.js作为Index.html的主界面以挂载App.vue主组件
-graph TD
-  A["src/"]
-  A --> B["api/"]
-  A --> C["components/"]
-  A --> D["composables/"]
-  A --> E["stores/"]
-  A --> F["views/"]
-  A --> G["router/"]
-  A --> H["styles/"]
-  A --> I["types/"]
-  A --> J["utils/"]
-  A --> K["main.js"]
-  A --> L["App.vue"]
+*此 README 文件旨在反映项目的当前状态。如有变更，请及时更新。*
