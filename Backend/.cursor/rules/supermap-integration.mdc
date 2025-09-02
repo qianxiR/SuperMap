@@ -4,16 +4,7 @@
 
 ### 网络分析服务 (NetworkAnalystService)
 ```python
-# 服务区分析
-var parameter = new ol.supermap.FindServiceAreasParameters({
-    centers: [point],
-    isAnalyzeById: false,
-    parameter: analystParameter
-});
-
-new ol.supermap.NetworkAnalystService(serviceUrl).findServiceAreas(parameter)
-
-# 最优路径分析
+# 最短路径分析
 var findPathParameter = new ol.supermap.FindPathParameters({
     isAnalyzeById: false,
     nodes: [originPoint, waypoint, destinationPoint],
@@ -193,7 +184,395 @@ class AnalysisTask:
 - `SuperMapResponse` - SuperMap响应数据
 - `AnalysisResult` - 分析结果数据
 
-## 9. 开发检查清单
+## 9. 实际代码实现参考
+
+### 领域实体
+```python
+# analysis/domains/analysis/entities.py
+@dataclass
+class SuperMapRequest:
+    """SuperMap请求数据"""
+    service_type: str
+    method: str
+    parameters: Dict[str, Any]
+    config: Dict[str, Any]
+    created_at: datetime
+    
+    def __post_init__(self):
+        if not self.created_at:
+            self.created_at = datetime.utcnow()
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """转换为字典格式"""
+        return {
+            "service_type": self.service_type,
+            "method": self.method,
+            "parameters": self.parameters,
+            "config": self.config,
+            "created_at": self.created_at.isoformat()
+        }
+
+@dataclass
+class SuperMapResult:
+    """SuperMap结果数据"""
+    success: bool
+    processed_at: datetime
+    data: Optional[Dict[str, Any]] = None
+    error_message: Optional[str] = None
+    service_response: Optional[Dict[str, Any]] = None
+    
+    def __post_init__(self):
+        if not self.processed_at:
+            self.processed_at = datetime.utcnow()
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """转换为字典格式"""
+        return {
+            "success": self.success,
+            "data": self.data,
+            "error_message": self.error_message,
+            "service_response": self.service_response,
+            "processed_at": self.processed_at.isoformat()
+        }
+```
+
+### 分析任务实体
+```python
+@dataclass
+class AnalysisTask:
+    """分析任务实体"""
+    id: UUID
+    name: str
+    description: Optional[str]
+    analysis_type: AnalysisType
+    parameters: Dict[str, Any]
+    status: AnalysisStatus
+    created_by: str
+    created_at: datetime
+    updated_at: datetime
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    progress: float = 0.0
+    supermap_request: Optional[SuperMapRequest] = None
+    supermap_result: Optional[SuperMapResult] = None
+    error_message: Optional[str] = None
+    
+    def start_processing(self):
+        """开始处理"""
+        self.status = AnalysisStatus.PROCESSING
+        self.started_at = datetime.utcnow()
+        self.progress = 10.0
+        self.updated_at = datetime.utcnow()
+    
+    def complete(self, supermap_result: SuperMapResult):
+        """完成任务"""
+        self.status = AnalysisStatus.COMPLETED
+        self.completed_at = datetime.utcnow()
+        self.progress = 100.0
+        self.supermap_result = supermap_result
+        self.updated_at = datetime.utcnow()
+    
+    def fail(self, error_message: str, supermap_result: Optional[SuperMapResult] = None):
+        """任务失败"""
+        self.status = AnalysisStatus.FAILED
+        self.completed_at = datetime.utcnow()
+        self.error_message = error_message
+        self.supermap_result = supermap_result
+        self.updated_at = datetime.utcnow()
+    
+    def cancel(self):
+        """取消任务"""
+        self.status = AnalysisStatus.CANCELLED
+        self.updated_at = datetime.utcnow()
+    
+    def update_progress(self, progress: float):
+        """更新进度"""
+        self.progress = max(0.0, min(100.0, progress))
+        self.updated_at = datetime.utcnow()
+```
+
+### 数据库模型
+```python
+# analysis/infrastructure/database/postgres/models.py
+class AnalysisTaskModel(Base):
+    """分析任务数据库模型"""
+    __tablename__ = "analysis_tasks"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String(100), nullable=False, index=True)
+    description = Column(Text, nullable=True)
+    analysis_type = Column(String(50), nullable=False, index=True)
+    parameters = Column(JSONB, nullable=False)
+    status = Column(String(20), nullable=False, index=True)
+    created_by = Column(String(100), nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    progress = Column(Float, default=0.0, nullable=False)
+    
+    # SuperMap相关字段
+    supermap_request = Column(JSONB, nullable=True)
+    supermap_result = Column(JSONB, nullable=True)
+    error_message = Column(Text, nullable=True)
+```
+
+### 领域服务
+```python
+# analysis/domains/analysis/services.py
+class AnalysisService:
+    """分析服务"""
+    
+    def __init__(
+        self,
+        task_repository: AnalysisTaskRepository,
+        result_repository: AnalysisResultRepository,
+        spatial_data_repository: SpatialDataRepository
+    ):
+        self.task_repository = task_repository
+        self.result_repository = result_repository
+        self.spatial_data_repository = spatial_data_repository
+    
+    async def update_task_status(
+        self,
+        task_id: UUID,
+        status: AnalysisStatus,
+        supermap_result: Optional[SuperMapResult] = None,
+        error_message: Optional[str] = None
+    ) -> Optional[AnalysisTask]:
+        """更新任务状态"""
+        task = await self.task_repository.get_by_id(task_id)
+        if not task:
+            return None
+        
+        if status == AnalysisStatus.PROCESSING:
+            task.start_processing()
+        elif status == AnalysisStatus.COMPLETED and supermap_result:
+            task.complete(supermap_result)
+        elif status == AnalysisStatus.FAILED:
+            task.fail(error_message or "分析失败", supermap_result)
+        elif status == AnalysisStatus.CANCELLED:
+            task.cancel()
+        
+        return await self.task_repository.update(task)
+    
+    async def update_task_progress(self, task_id: UUID, progress: float) -> Optional[AnalysisTask]:
+        """更新任务进度"""
+        task = await self.task_repository.get_by_id(task_id)
+        if not task:
+            return None
+        
+        task.update_progress(progress)
+        return await self.task_repository.update(task)
+```
+
+## 10. SuperMap服务集成实现
+
+### 服务工厂
+```python
+# analysis/infrastructure/external/supermap/service_factory.py
+class SuperMapServiceFactory:
+    """SuperMap服务工厂"""
+    
+    @staticmethod
+    def create_network_analyst_service(config: Dict[str, Any]):
+        """创建网络分析服务"""
+        return SuperMapNetworkAnalystService(
+            service_url=config["service_url"],
+            dataset=config["dataset"],
+            weight_field=config["weight_field"],
+            timeout=config.get("timeout", 30000)
+        )
+    
+    @staticmethod
+    def create_spatial_analyst_service(config: Dict[str, Any]):
+        """创建空间分析服务"""
+        return SuperMapSpatialAnalystService(
+            service_url=config["service_url"],
+            timeout=config.get("timeout", 30000)
+        )
+```
+
+### 网络分析服务
+```python
+class SuperMapNetworkAnalystService:
+    """SuperMap网络分析服务"""
+    
+    def __init__(self, service_url: str, dataset: str, weight_field: str, timeout: int = 30000):
+        self.service_url = service_url
+        self.dataset = dataset
+        self.weight_field = weight_field
+        self.timeout = timeout
+    
+    async def find_shortest_path(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """查找最短路径"""
+        try:
+            # 构建SuperMap请求参数
+            request_params = self._build_path_params(parameters)
+            
+            # 调用SuperMap服务
+            response = await self._call_supermap_service(
+                method="findPath",
+                parameters=request_params
+            )
+            
+            return {
+                "success": True,
+                "data": response,
+                "service_type": "network_analyst",
+                "method": "findPath"
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error_message": str(e),
+                "service_type": "network_analyst",
+                "method": "findPath"
+            }
+    
+    def _build_path_params(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """构建路径分析参数"""
+        return {
+            "isAnalyzeById": False,
+            "nodes": [
+                parameters.get("origin"),
+                *parameters.get("waypoints", []),
+                parameters.get("destination")
+            ],
+            "hasLeastEdgeCount": False,
+            "parameter": {
+                "resultSetting": {
+                    "returnEdgeFeatures": True,
+                    "returnEdgeGeometry": True,
+                    "returnEdgeIDs": True,
+                    "returnNodeFeatures": True,
+                    "returnNodeGeometry": True,
+                    "returnNodeIDs": True,
+                    "returnPathGuides": True,
+                    "returnRoutes": True
+                },
+                "weightFieldName": self.weight_field
+            }
+        }
+    
+    async def _call_supermap_service(self, method: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """调用SuperMap服务"""
+        # 这里应该实现实际的HTTP请求到SuperMap服务
+        # 使用aiohttp或其他异步HTTP客户端
+        import aiohttp
+        
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=self.timeout/1000)) as session:
+            url = f"{self.service_url}/{method}"
+            async with session.post(url, json=parameters) as response:
+                if response.status == 200:
+                    return await response.json()
+                else:
+                    raise Exception(f"SuperMap服务调用失败: {response.status}")
+```
+
+### 空间分析服务
+```python
+class SuperMapSpatialAnalystService:
+    """SuperMap空间分析服务"""
+    
+    def __init__(self, service_url: str, timeout: int = 30000):
+        self.service_url = service_url
+        self.timeout = timeout
+    
+    async def buffer_analysis(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """缓冲区分析"""
+        try:
+            # 构建SuperMap请求参数
+            request_params = self._build_buffer_params(parameters)
+            
+            # 调用SuperMap服务
+            response = await self._call_supermap_service(
+                method="bufferAnalysis",
+                parameters=request_params
+            )
+            
+            return {
+                "success": True,
+                "data": response,
+                "service_type": "spatial_analyst",
+                "method": "bufferAnalysis"
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error_message": str(e),
+                "service_type": "spatial_analyst",
+                "method": "bufferAnalysis"
+            }
+    
+    async def overlay_analysis(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """叠加分析"""
+        try:
+            # 构建SuperMap请求参数
+            request_params = self._build_overlay_params(parameters)
+            
+            # 调用SuperMap服务
+            response = await self._call_supermap_service(
+                method="overlayAnalysis",
+                parameters=request_params
+            )
+            
+            return {
+                "success": True,
+                "data": response,
+                "service_type": "spatial_analyst",
+                "method": "overlayAnalysis"
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error_message": str(e),
+                "service_type": "spatial_analyst",
+                "method": "overlayAnalysis"
+            }
+    
+    def _build_buffer_params(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """构建缓冲区分析参数"""
+        return {
+            "dataset": parameters.get("dataset", "RoadLine2@Changchun"),
+            "filterQueryParameter": {
+                "attributeFilter": parameters.get("filter", "")
+            },
+            "bufferSetting": {
+                "endType": parameters.get("end_type", "ROUND"),
+                "leftDistance": {"value": parameters.get("distance", 100)},
+                "rightDistance": {"value": parameters.get("distance", 100)},
+                "semicircleLineSegment": parameters.get("semicircle_line_segment", 10)
+            }
+        }
+    
+    def _build_overlay_params(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """构建叠加分析参数"""
+        return {
+            "layer1": parameters.get("layer1"),
+            "layer2": parameters.get("layer2"),
+            "operationType": parameters.get("operation_type"),
+            "tolerance": parameters.get("tolerance", 0.001)
+        }
+    
+    async def _call_supermap_service(self, method: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """调用SuperMap服务"""
+        # 这里应该实现实际的HTTP请求到SuperMap服务
+        import aiohttp
+        
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=self.timeout/1000)) as session:
+            url = f"{self.service_url}/{method}"
+            async with session.post(url, json=parameters) as response:
+                if response.status == 200:
+                    return await response.json()
+                else:
+                    raise Exception(f"SuperMap服务调用失败: {response.status}")
+```
+
+## 11. 开发检查清单
 
 在实现SuperMap服务集成时，必须检查：
 - [ ] 是否正确配置SuperMap服务URL
@@ -204,7 +583,7 @@ class AnalysisTask:
 - [ ] 是否保存SuperMap请求和结果
 - [ ] 是否实现任务状态跟踪
 - [ ] 是否包含超时处理
-description:
-globs:
-alwaysApply: true
----
+- [ ] 是否实现服务工厂模式
+- [ ] 是否包含完整的日志记录
+- [ ] 是否实现重试机制
+- [ ] 是否支持配置管理

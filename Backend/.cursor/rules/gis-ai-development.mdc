@@ -1,730 +1,409 @@
-# GIS + AI 智能分析系统开发规范
+# GIS AI 开发综合规范
 
-## 🏗️ 微服务架构设计
+## 项目概述
 
-### 服务分离策略
+本项目是一个基于SuperMap GIS的空间分析服务，采用DDD清洁架构设计，支持多种空间分析功能，包括缓冲区分析、服务区分析、最优路径分析等。
+
+## 架构设计原则
+
+### 1. 分层架构
+- **API层**: FastAPI路由和请求处理
+- **应用层**: 用例编排和DTO转换
+- **领域层**: 业务逻辑和实体管理
+- **基础设施层**: 数据访问和外部服务集成
+
+### 2. 依赖倒置
+- 内层不依赖外层
+- 外层依赖内层接口
+- 使用依赖注入容器
+
+### 3. 单一职责
+- 每个类只负责一个职责
+- 方法功能单一明确
+- 避免上帝类
+
+## 核心功能模块
+
+### 1. 分析任务管理
+- 任务创建、查询、更新、删除
+- 任务状态跟踪（pending, processing, completed, failed, cancelled）
+- 任务进度管理
+- 异步任务处理
+
+### 2. 空间分析功能
+- 缓冲区分析 (Buffer Analysis)
+- 最短路径分析 (Shortest Path Analysis)
+- 叠加分析 (Overlay Analysis)
+- 自定义分析类型
+
+### 3. SuperMap服务集成
+- 网络分析服务集成
+- 空间分析服务集成
+- 服务配置管理
+- 错误处理和重试机制
+
+## 代码结构规范
+
+### 1. 文件组织
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │    │   API Gateway   │    │   Load Balancer │
-│   (Vue.js)      │◄──►│   (FastAPI)     │◄──►│   (Nginx)       │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                │
-                ┌───────────────┼───────────────┐
-                │               │               │
-        ┌───────▼──────┐ ┌──────▼──────┐ ┌─────▼─────┐
-        │   AI Service │ │ GIS Service │ │ User Auth │
-        │   (Python)   │ │(JavaScript) │ │ (Python)  │
-        │  LangChain   │ │  Node.js    │ │  FastAPI  │
-        └──────────────┘ └─────────────┘ └───────────┘
-```
-
-## 🔧 技术栈规范
-
-### AI服务 (Python + LangChain)
-- **语言**: Python 3.11+
-- **AI框架**: LangChain + OpenAI
-- **Web框架**: FastAPI + Uvicorn
-- **数据库**: PostgreSQL + PostGIS (空间数据)
-- **缓存**: Redis Cluster
-- **向量数据库**: Qdrant/Weaviate
-- **监控**: Prometheus + Grafana
-
-### GIS分析服务 (JavaScript + Node.js)
-- **语言**: JavaScript/TypeScript
-- **运行时**: Node.js 18+
-- **Web框架**: Express.js + Koa.js
-- **GIS库**: Turf.js, JSTS
-- **数据库**: PostgreSQL + PostGIS
-- **缓存**: Redis
-- **任务队列**: Bull/BullMQ
-- **监控**: PM2 + New Relic
-
-### 前端服务 (Vue.js)
-- **框架**: Vue.js 3 + TypeScript
-- **地图**: SuperMap iClient
-- **状态管理**: Pinia
-- **UI组件**: 自定义组件库
-- **构建工具**: Vite
-
-## 🐍 AI服务开发规范 (Python)
-
-### 项目结构
-```
-ai-service/
-├── app/
-│   ├── domains/           # 领域层
-│   │   ├── agent/        # 智能体域
-│   │   ├── knowledge/    # 知识库域
-│   │   └── workflow/     # 工作流域
-│   ├── application/      # 应用层
-│   ├── infrastructure/   # 基础设施层
-│   │   ├── ai/          # AI基础设施
-│   │   ├── database/    # 数据访问
-│   │   └── external/    # 外部服务
-│   └── api/             # API层
-├── requirements.txt
-├── Dockerfile
-└── docker-compose.yml
+analysis/
+├── api/v1/analysis/           # API接口层
+├── application/               # 应用层
+│   ├── dto/                  # 数据传输对象
+│   └── use_cases/            # 用例实现
+├── domains/                   # 领域层
+│   └── analysis/             # 分析领域
+│       ├── entities.py       # 实体定义
+│       ├── services.py       # 领域服务
+│       └── repositories.py   # 仓储接口
+├── infrastructure/            # 基础设施层
+│   ├── database/             # 数据库相关
+│   └── external/             # 外部服务集成
+└── core/                     # 核心配置
+    ├── config.py             # 配置管理
+    ├── database.py           # 数据库连接
+    └── container.py          # 依赖注入容器
 ```
 
-### LangChain集成规范
+### 2. 命名规范
+- 文件名: snake_case
+- 类名: PascalCase
+- 函数名: snake_case
+- 常量: UPPER_CASE
+- 变量: snake_case
+
+## 开发规范
+
+### 1. Python编码标准
+- 遵循PEP 8规范
+- 使用类型注解
+- 异步编程优先
+- 完整的错误处理
+- 详细的文档字符串
+
+### 2. FastAPI开发规范
+- 统一的响应格式
+- 完整的参数验证
+- 错误处理中间件
+- API文档自动生成
+- 依赖注入使用
+
+### 3. 数据库设计规范
+- 使用PostgreSQL + JSONB
+- 异步数据库操作
+- 事务管理
+- 索引优化
+- 数据迁移支持
+
+### 4. 测试规范
+- 单元测试覆盖
+- 集成测试
+- 端到端测试
+- 测试数据管理
+- 测试覆盖率报告
+
+## 实际代码实现参考
+
+### 1. 分析任务创建流程
+
+#### API接口
 ```python
-# infrastructure/ai/agent_hub.py
-from langchain.agents import AgentExecutor, create_openai_functions_agent
-from langchain.tools import BaseTool
-from langchain.schema import BaseMessage
-from typing import List, Dict, Any
+@router.post("/tasks", response_model=Dict[str, Any])
+async def create_analysis_task(
+    task_data: AnalysisTaskCreateDTO,
+    session = Depends(get_db)
+) -> Dict[str, Any]:
+    """创建分析任务"""
+    try:
+        analysis_use_case = build_analysis_use_case(session)
+        created_by = "test_user"  # 从JWT token获取
+        result = await analysis_use_case.create_analysis_task(task_data, created_by)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="创建分析任务失败")
+```
 
-class AgentHub:
-    """智能体协调中心"""
-    
-    def __init__(self):
-        self.coordinator = CoordinatorAgent()
-        self.executor = ExecutorAgent()
-        self.aggregator = AggregatorAgent()
-        self.tools = self._load_tools()
-    
-    def _load_tools(self) -> List[BaseTool]:
-        """加载工具集"""
-        return [
-            GISAnalysisTool(),
-            KnowledgeSearchTool(),
-            DataQueryTool()
-        ]
-    
-    async def process_query(self, query: str, context: Dict[str, Any]) -> Dict[str, Any]:
-        """处理用户查询"""
-        # 1. 协调智能体解析意图
-        intent = await self.coordinator.analyze_intent(query, context)
+#### 用例实现
+```python
+class AnalysisUseCase:
+    async def create_analysis_task(
+        self,
+        task_data: AnalysisTaskCreateDTO,
+        created_by: str
+    ) -> Dict[str, Any]:
+        """创建分析任务"""
+        task = await self.analysis_service.create_analysis_task(
+            name=task_data.name,
+            analysis_type=task_data.analysis_type,
+            parameters=task_data.parameters,
+            created_by=created_by,
+            description=task_data.description
+        )
         
-        # 2. 执行智能体并行处理
-        results = await self.executor.execute_tasks(intent.tasks, self.tools)
-        
-        # 3. 聚合智能体整合结果
-        final_result = await self.aggregator.combine_results(results)
-        
-        return final_result
-
-class CoordinatorAgent:
-    """协调智能体"""
-    
-    async def analyze_intent(self, query: str, context: Dict[str, Any]) -> Dict[str, Any]:
-        """分析用户意图"""
-        prompt = f"""
-        你是一个GIS分析协调智能体，负责解析用户的地理分析需求。
-        
-        用户查询: {query}
-        上下文: {context}
-        
-        请分析用户意图并生成执行计划:
-        1. 识别分析类型 (缓冲区、距离、可达性等)
-        2. 提取关键参数 (半径、目标对象等)
-        3. 生成执行任务列表
-        
-        返回JSON格式的执行计划。
-        """
-        
-        # 调用OpenAI API
-        response = await self.llm_client.chat_completion(prompt)
-        return self._parse_intent(response.content)
-
-class ExecutorAgent:
-    """执行智能体"""
-    
-    async def execute_tasks(self, tasks: List[Dict], tools: List[BaseTool]) -> List[Dict]:
-        """执行任务列表"""
-        results = []
-        
-        for task in tasks:
-            # 选择合适的工具
-            tool = self._select_tool(task, tools)
-            
-            # 执行任务
-            result = await tool.execute(task)
-            results.append(result)
-        
-        return results
-
-class AggregatorAgent:
-    """聚合智能体"""
-    
-    async def combine_results(self, results: List[Dict]) -> Dict[str, Any]:
-        """整合结果"""
-        # 分析结果聚合逻辑
-        combined_result = {
+        return {
             "success": True,
-            "data": results,
-            "summary": self._generate_summary(results),
-            "visualization": self._generate_visualization(results)
+            "message": "分析任务创建成功",
+            "data": AnalysisTaskResponseDTO(**task.to_dict())
         }
-        
-        return combined_result
 ```
 
-### 工具集成
+#### 领域服务
 ```python
-# infrastructure/ai/tools/gis_tools.py
-from langchain.tools import BaseTool
-from typing import Dict, Any
-import httpx
+class AnalysisService:
+    async def create_analysis_task(
+        self,
+        name: str,
+        analysis_type: AnalysisType,
+        parameters: Dict[str, Any],
+        created_by: str,
+        description: Optional[str] = None
+    ) -> AnalysisTask:
+        """创建分析任务"""
+        task = AnalysisTask.create_new(
+            name=name,
+            analysis_type=analysis_type,
+            parameters=parameters,
+            created_by=created_by,
+            description=description
+        )
+        return await self.task_repository.create(task)
+```
 
-class GISAnalysisTool(BaseTool):
-    """GIS分析工具"""
+### 2. 任务状态管理
+
+#### 状态更新
+```python
+async def update_task_status(
+    self,
+    task_id: UUID,
+    status: AnalysisStatus,
+    supermap_result: Optional[SuperMapResult] = None,
+    error_message: Optional[str] = None
+) -> Optional[AnalysisTask]:
+    """更新任务状态"""
+    task = await self.task_repository.get_by_id(task_id)
+    if not task:
+        return None
     
-    name = "gis_analysis"
-    description = "执行GIS空间分析，包括缓冲区、距离、可达性分析"
+    if status == AnalysisStatus.PROCESSING:
+        task.start_processing()
+    elif status == AnalysisStatus.COMPLETED and supermap_result:
+        task.complete(supermap_result)
+    elif status == AnalysisStatus.FAILED:
+        task.fail(error_message or "分析失败", supermap_result)
+    elif status == AnalysisStatus.CANCELLED:
+        task.cancel()
     
-    async def _run(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """执行GIS分析"""
-        # 调用GIS服务API
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                "http://gis-service:3000/api/v1/analysis",
-                json=task,
-                timeout=30.0
+    return await self.task_repository.update(task)
+```
+
+#### 进度更新
+```python
+async def update_task_progress(self, task_id: UUID, progress: float) -> Optional[AnalysisTask]:
+    """更新任务进度"""
+    task = await self.task_repository.get_by_id(task_id)
+    if not task:
+        return None
+    
+    task.update_progress(progress)
+    return await self.task_repository.update(task)
+```
+
+### 3. SuperMap服务集成
+
+#### 服务工厂
+```python
+class SuperMapServiceFactory:
+    @staticmethod
+    def create_network_analyst_service(config: Dict[str, Any]):
+        """创建网络分析服务"""
+        return SuperMapNetworkAnalystService(
+            service_url=config["service_url"],
+            dataset=config["dataset"],
+            weight_field=config["weight_field"],
+            timeout=config.get("timeout", 30000)
+        )
+```
+
+#### 网络分析服务
+```python
+class SuperMapNetworkAnalystService:
+    async def find_service_areas(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """查找服务区"""
+        try:
+            request_params = self._build_service_area_params(parameters)
+            response = await self._call_supermap_service(
+                method="findServiceAreas",
+                parameters=request_params
             )
             
-            if response.status_code == 200:
-                return response.json()
-            else:
-                raise Exception(f"GIS分析失败: {response.text}")
-    
-    async def _arun(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """异步执行"""
-        return await self._run(task)
-
-class KnowledgeSearchTool(BaseTool):
-    """知识库搜索工具"""
-    
-    name = "knowledge_search"
-    description = "搜索GIS相关知识库"
-    
-    async def _run(self, query: str) -> Dict[str, Any]:
-        """搜索知识库"""
-        # 向量数据库搜索
-        results = await self.vector_db.search(query, top_k=5)
-        return {"results": results}
+            return {
+                "success": True,
+                "data": response,
+                "service_type": "network_analyst",
+                "method": "findServiceAreas"
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error_message": str(e),
+                "service_type": "network_analyst",
+                "method": "findServiceAreas"
+            }
 ```
 
-## 🟨 GIS分析服务开发规范 (JavaScript)
+## 配置管理
 
-### 项目结构
-```
-gis-service/
-├── src/
-│   ├── domains/          # 领域层
-│   │   ├── spatial/     # 空间分析域
-│   │   ├── geometry/    # 几何处理域
-│   │   └── data/        # 数据管理域
-│   ├── application/     # 应用层
-│   ├── infrastructure/  # 基础设施层
-│   │   ├── database/   # 数据访问
-│   │   ├── cache/      # 缓存服务
-│   │   └── external/   # 外部服务
-│   ├── api/            # API层
-│   └── utils/          # 工具函数
-├── package.json
-├── Dockerfile
-└── docker-compose.yml
-```
-
-### Express.js应用结构
-```javascript
-// src/app.js
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const compression = require('compression');
-
-const spatialAnalysisRoutes = require('./api/routes/spatial-analysis');
-const geometryRoutes = require('./api/routes/geometry');
-const dataRoutes = require('./api/routes/data');
-
-const app = express();
-
-// 中间件配置
-app.use(helmet());
-app.use(compression());
-app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
-  credentials: true
-}));
-
-// 限流配置
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15分钟
-  max: 100 // 限制每个IP 15分钟内最多100个请求
-});
-app.use('/api/', limiter);
-
-// 路由配置
-app.use('/api/v1/spatial-analysis', spatialAnalysisRoutes);
-app.use('/api/v1/geometry', geometryRoutes);
-app.use('/api/v1/data', dataRoutes);
-
-// 错误处理中间件
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
-    success: false,
-    message: '内部服务器错误',
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined
-  });
-});
-
-module.exports = app;
-```
-
-### 空间分析服务
-```javascript
-// src/domains/spatial/spatial-analysis.service.js
-const turf = require('@turf/turf');
-const { Pool } = require('pg');
-const redis = require('redis');
-
-class SpatialAnalysisService {
-  constructor() {
-    this.db = new Pool({
-      connectionString: process.env.DATABASE_URL
-    });
-    this.redis = redis.createClient({
-      url: process.env.REDIS_URL
-    });
-  }
-
-  async bufferAnalysis(geometry, radius, options = {}) {
-    """缓冲区分析"""
-    try {
-      // 参数验证
-      if (!geometry || !radius || radius <= 0) {
-        throw new Error('无效的几何对象或半径');
-      }
-
-      // 缓存键
-      const cacheKey = `buffer:${JSON.stringify(geometry)}:${radius}`;
-      
-      // 尝试从缓存获取
-      const cached = await this.redis.get(cacheKey);
-      if (cached) {
-        return JSON.parse(cached);
-      }
-
-      // 执行缓冲区分析
-      const buffered = turf.buffer(geometry, radius, options);
-      
-      // 计算面积
-      const area = turf.area(buffered);
-      
-      const result = {
-        geometry: buffered,
-        area: area,
-        radius: radius,
-        unit: options.units || 'kilometers'
-      };
-
-      // 缓存结果
-      await this.redis.setex(cacheKey, 3600, JSON.stringify(result));
-      
-      return result;
-    } catch (error) {
-      throw new Error(`缓冲区分析失败: ${error.message}`);
-    }
-  }
-
-  async distanceAnalysis(point1, point2, options = {}) {
-    """距离分析"""
-    try {
-      const distance = turf.distance(point1, point2, options);
-      
-      return {
-        distance: distance,
-        unit: options.units || 'kilometers',
-        point1: point1,
-        point2: point2
-      };
-    } catch (error) {
-      throw new Error(`距离分析失败: ${error.message}`);
-    }
-  }
-
-  async spatialQuery(geometry, relation, targetLayer, options = {}) {
-    """空间查询"""
-    try {
-      // 构建SQL查询
-      const query = `
-        SELECT id, name, geometry, properties
-        FROM ${targetLayer}
-        WHERE ST_${relation.toUpperCase()}(geometry, ST_GeomFromGeoJSON($1))
-        ${options.limit ? `LIMIT ${options.limit}` : ''}
-      `;
-
-      const result = await this.db.query(query, [JSON.stringify(geometry)]);
-      
-      return {
-        count: result.rowCount,
-        features: result.rows.map(row => ({
-          id: row.id,
-          name: row.name,
-          geometry: row.geometry,
-          properties: row.properties
-        }))
-      };
-    } catch (error) {
-      throw new Error(`空间查询失败: ${error.message}`);
-    }
-  }
-}
-
-module.exports = SpatialAnalysisService;
-```
-
-### API路由
-```javascript
-// src/api/routes/spatial-analysis.js
-const express = require('express');
-const router = express.Router();
-const SpatialAnalysisService = require('../../domains/spatial/spatial-analysis.service');
-const { validateGeometry, validateRadius } = require('../../utils/validators');
-
-const spatialService = new SpatialAnalysisService();
-
-// 缓冲区分析
-router.post('/buffer', async (req, res) => {
-  try {
-    const { geometry, radius, options } = req.body;
-    
-    // 参数验证
-    if (!validateGeometry(geometry)) {
-      return res.status(400).json({
-        success: false,
-        message: '无效的几何对象'
-      });
-    }
-    
-    if (!validateRadius(radius)) {
-      return res.status(400).json({
-        success: false,
-        message: '无效的半径值'
-      });
-    }
-    
-    // 执行分析
-    const result = await spatialService.bufferAnalysis(geometry, radius, options);
-    
-    res.json({
-      success: true,
-      message: '缓冲区分析完成',
-      data: result
-    });
-  } catch (error) {
-    console.error('缓冲区分析错误:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-// 距离分析
-router.post('/distance', async (req, res) => {
-  try {
-    const { point1, point2, options } = req.body;
-    
-    const result = await spatialService.distanceAnalysis(point1, point2, options);
-    
-    res.json({
-      success: true,
-      message: '距离分析完成',
-      data: result
-    });
-  } catch (error) {
-    console.error('距离分析错误:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-// 空间查询
-router.post('/query', async (req, res) => {
-  try {
-    const { geometry, relation, targetLayer, options } = req.body;
-    
-    const result = await spatialService.spatialQuery(
-      geometry, relation, targetLayer, options
-    );
-    
-    res.json({
-      success: true,
-      message: '空间查询完成',
-      data: result
-    });
-  } catch (error) {
-    console.error('空间查询错误:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-module.exports = router;
-```
-
-## 🔄 服务间通信
-
-### API网关配置
+### 1. 环境配置
 ```python
-# api-gateway/main.py
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-import httpx
-from typing import Dict, Any
-
-app = FastAPI(title="SuperMap API Gateway")
-
-# CORS配置
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# 服务发现
-SERVICES = {
-    "ai": "http://ai-service:8001",
-    "gis": "http://gis-service:8090",
-    "auth": "http://auth-service:8000"
-}
-
-@app.post("/api/v1/agent/chat")
-async def chat_with_agent(request: Dict[str, Any]):
-    """智能体对话 - 转发到AI服务"""
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            f"{SERVICES['ai']}/api/v1/chat",
-            json=request,
-            timeout=30.0
-        )
-        return response.json()
-
-@app.post("/api/v1/gis/buffer-analysis")
-async def buffer_analysis(request: Dict[str, Any]):
-    """缓冲区分析 - 转发到GIS服务"""
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            f"{SERVICES['gis']}/api/v1/spatial-analysis/buffer",
-            json=request,
-            timeout=30.0
-        )
-        return response.json()
-
-@app.post("/api/v1/gis/distance-analysis")
-async def distance_analysis(request: Dict[str, Any]):
-    """距离分析 - 转发到GIS服务"""
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            f"{SERVICES['gis']}/api/v1/spatial-analysis/distance",
-            json=request,
-            timeout=30.0
-        )
-        return response.json()
+class Settings(BaseSettings):
+    PROJECT_NAME: str = "SuperMap GIS 分析服务"
+    VERSION: str = "1.0.0"
+    DESCRIPTION: str = "基于SuperMap的空间分析服务"
+    API_V1_STR: str = "/api/v1"
+    DATABASE_URL: str
+    ALLOWED_HOSTS: List[str] = ["*"]
+    SUPERMAP_BASE_URL: str
+    SUPERMAP_API_KEY: str
+    LOG_LEVEL: str = "INFO"
 ```
 
-## 📊 性能监控指标
-
-### AI服务监控
-- **API响应时间**: P95 < 3s (智能体处理较慢)
-- **LangChain处理时间**: P95 < 5s
-- **向量检索延迟**: P99 < 100ms
-- **内存使用**: < 4GB
-
-### GIS服务监控
-- **API响应时间**: P95 < 500ms
-- **空间计算时间**: P95 < 1s
-- **数据库查询时间**: P95 < 200ms
-- **缓存命中率**: > 90%
-
-### 整体系统监控
-- **服务可用性**: > 99.9%
-- **错误率**: < 0.1%
-- **并发处理能力**: 1000+ QPS
-
-## 🐳 Docker部署配置
-
-### AI服务Dockerfile
-```dockerfile
-# ai-service/Dockerfile
-FROM python:3.11-slim
-
-WORKDIR /app
-
-# 安装系统依赖
-RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
-    && rm -rf /var/lib/apt/lists/*
-
-# 复制依赖文件
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# 复制应用代码
-COPY . .
-
-# 暴露端口
-EXPOSE 8000
-
-# 启动命令
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
-```
-
-### GIS服务Dockerfile
-```dockerfile
-# gis-service/Dockerfile
-FROM node:18-alpine
-
-WORKDIR /app
-
-# 复制package文件
-COPY package*.json ./
-RUN npm ci --only=production
-
-# 复制应用代码
-COPY . .
-
-# 暴露端口
-EXPOSE 3000
-
-# 启动命令
-CMD ["npm", "start"]
-```
-
-### Docker Compose配置
-```yaml
-# docker-compose.yml
-version: '3.8'
-
-services:
-  # AI服务
-  ai-service:
-    build: ./ai-service
-    ports:
-      - "8000:8000"
-    environment:
-      - DATABASE_URL=postgresql://user:pass@postgres:5432/ai_db
-      - REDIS_URL=redis://redis:6379
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-    depends_on:
-      - postgres
-      - redis
-      - qdrant
-
-  # GIS服务
-  gis-service:
-    build: ./gis-service
-    ports:
-      - "3000:3000"
-    environment:
-      - DATABASE_URL=postgresql://user:pass@postgres:5432/gis_db
-      - REDIS_URL=redis://redis:6379
-    depends_on:
-      - postgres
-      - redis
-
-  # API网关
-  api-gateway:
-    build: ./api-gateway
-    ports:
-      - "8080:8080"
-    depends_on:
-      - ai-service
-      - gis-service
-
-  # 数据库
-  postgres:
-    image: postgis/postgis:15-3.3
-    environment:
-      - POSTGRES_DB=supermap
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=pass
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-  # Redis缓存
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-
-  # 向量数据库
-  qdrant:
-    image: qdrant/qdrant:latest
-    ports:
-      - "6333:6333"
-    volumes:
-      - qdrant_data:/qdrant/storage
-
-volumes:
-  postgres_data:
-  qdrant_data:
-```
-
-## 🔧 开发工具配置
-
-### AI服务开发环境
-```bash
-# ai-service/requirements.txt
-fastapi==0.104.1
-uvicorn==0.24.0
-langchain==0.1.0
-openai==1.3.0
-psycopg2-binary==2.9.9
-redis==5.0.1
-qdrant-client==1.7.0
-httpx==0.25.2
-pydantic==2.5.0
-python-jose==3.3.0
-passlib==1.7.4
-```
-
-### GIS服务开发环境
+### 2. SuperMap服务配置
 ```json
-// gis-service/package.json
 {
-  "name": "gis-analysis-service",
-  "version": "1.0.0",
-  "main": "src/app.js",
-  "scripts": {
-    "start": "node src/app.js",
-    "dev": "nodemon src/app.js",
-    "test": "jest"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "helmet": "^7.1.0",
-    "express-rate-limit": "^7.1.5",
-    "compression": "^1.7.4",
-    "@turf/turf": "^6.5.0",
-    "pg": "^8.11.3",
-    "redis": "^4.6.10",
-    "bull": "^4.12.0"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.2",
-    "jest": "^29.7.0"
+  "supermap_services": {
+    "network_analyst": {
+      "service_url": "https://iserver.supermap.io/iserver/services/networkanalyst-changchun/restjsr/networkanalyst",
+      "dataset": "RoadNet@Changchun",
+      "weight_field": "length",
+      "timeout": 30000
+    },
+    "spatial_analyst": {
+      "service_url": "https://iserver.supermap.io/iserver/services/spatialanalyst-changchun/restjsr/spatialanalyst",
+      "timeout": 30000
+    }
   }
 }
 ```
 
-这种分离架构的优势：
-1. **技术栈优化**: 每个服务使用最适合的技术栈
-2. **独立部署**: 服务可以独立扩展和部署
-3. **故障隔离**: 单个服务故障不影响整体系统
-4. **团队协作**: 不同团队可以专注于不同服务
-5. **性能优化**: 针对不同服务类型进行专门优化
+## 错误处理
+
+### 1. 错误码定义
+- `INVALID_TASK_ID`: 无效的任务ID
+- `TASK_NOT_FOUND`: 任务不存在
+- `INVALID_STATUS`: 无效的状态值
+- `INVALID_ANALYSIS_TYPE`: 无效的分析类型
+- `ANALYSIS_FAILED`: 分析失败
+- `SUPERMAP_SERVICE_ERROR`: SuperMap服务错误
+- `SERVICE_UNAVAILABLE`: 服务不可用
+
+### 2. 错误响应格式
+```json
+{
+  "success": false,
+  "message": "错误描述",
+  "error_code": "ERROR_CODE",
+  "details": {
+    "field": "错误字段",
+    "reason": "具体错误原因"
+  }
+}
+```
+
+## 性能优化
+
+### 1. 异步处理
+- 支持任务异步处理
+- 实现任务进度实时更新
+- 提供任务队列管理
+- 支持任务优先级设置
+
+### 2. 缓存策略
+- Redis缓存支持
+- 内存缓存优化
+- 缓存失效策略
+- 缓存预热机制
+
+### 3. 数据库优化
+- 连接池管理
+- 查询优化
+- 索引策略
+- 分页查询
+
+## 监控和日志
+
+### 1. 日志记录
+- 结构化日志
+- 日志级别管理
+- 日志文件轮转
+- 日志聚合分析
+
+### 2. 性能监控
+- 请求响应时间
+- 数据库查询性能
+- 外部服务调用性能
+- 系统资源使用情况
+
+### 3. 错误监控
+- 错误率统计
+- 错误分类分析
+- 错误告警机制
+- 错误追踪分析
+
+## 开发检查清单
+
+### 新功能开发
+- [ ] 是否遵循分层架构原则
+- [ ] 是否在正确的层次实现功能
+- [ ] 是否使用依赖注入
+- [ ] 是否定义清晰的接口
+- [ ] 是否实现完整的错误处理
+- [ ] 是否包含单元测试
+- [ ] 是否遵循命名规范
+- [ ] 是否包含完整的文档
+
+### API接口开发
+- [ ] 是否使用正确的HTTP方法
+- [ ] 是否定义完整的请求/响应模型
+- [ ] 是否包含参数验证
+- [ ] 是否实现错误处理
+- [ ] 是否使用依赖注入
+- [ ] 是否包含API文档
+- [ ] 是否支持分页查询
+- [ ] 是否实现异步处理
+
+### SuperMap服务集成
+- [ ] 是否正确配置SuperMap服务URL
+- [ ] 是否包含完整的结果设置参数
+- [ ] 是否实现数据格式转换
+- [ ] 是否包含错误处理机制
+- [ ] 是否支持异步任务处理
+- [ ] 是否保存SuperMap请求和结果
+- [ ] 是否实现任务状态跟踪
+- [ ] 是否包含超时处理
+
+## 部署和运维
+
+### 1. 容器化部署
+- Docker镜像构建
+- 容器编排配置
+- 环境变量管理
+- 健康检查配置
+
+### 2. 数据库管理
+- 数据库初始化
+- 数据迁移脚本
+- 备份恢复策略
+- 性能调优配置
+
+### 3. 监控告警
+- 系统监控配置
+- 告警规则设置
+- 日志收集分析
+- 性能指标监控
+
+## 总结
+
+本规范基于实际代码实现，整合了DDD清洁架构、FastAPI开发、Python编码标准、SuperMap服务集成等多个方面的最佳实践。开发团队应严格遵循这些规范，确保代码质量、系统性能和可维护性。

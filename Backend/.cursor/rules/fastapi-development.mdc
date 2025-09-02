@@ -7,9 +7,9 @@
 # main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1 import api_router
-from app.core.config import settings
-from app.core.middleware import RequestLoggingMiddleware
+from analysis.api.v1.analysis import router as analysis_router
+from analysis.core.config import settings
+from analysis.core.database import engine, Base
 
 def create_application() -> FastAPI:
     """创建FastAPI应用"""
@@ -28,10 +28,9 @@ def create_application() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    app.add_middleware(RequestLoggingMiddleware)
     
     # 路由注册
-    app.include_router(api_router, prefix=settings.API_V1_STR)
+    app.include_router(analysis_router, prefix=settings.API_V1_STR)
     
     return app
 
@@ -40,404 +39,35 @@ app = create_application()
 
 ### 路由组织
 ```python
-# api/v1/__init__.py
-from fastapi import APIRouter
-from app.api.v1.user import auth, profile
-from app.api.v1.gis import analysis, query
-from app.api.v1.agent import chat, workflow
+# analysis/api/v1/analysis/analysis.py
+from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from typing import Dict, Any, Optional
 
-api_router = APIRouter()
+from analysis.application.dto.analysis_dto import (
+    AnalysisTaskCreateDTO, AnalysisTaskUpdateDTO,
+    SpatialDataCreateDTO, SpatialDataUpdateDTO
+)
+from analysis.application.use_cases.analysis.analysis_use_case import AnalysisUseCase
+from analysis.core.database import get_db
+from analysis.core.container import build_analysis_use_case
 
-# 用户相关路由
-api_router.include_router(
-    auth.router,
-    prefix="/user",
-    tags=["用户认证"]
-)
-api_router.include_router(
-    profile.router,
-    prefix="/user",
-    tags=["用户资料"]
-)
-
-# GIS相关路由
-api_router.include_router(
-    analysis.router,
-    prefix="/gis",
-    tags=["空间分析"]
-)
-api_router.include_router(
-    query.router,
-    prefix="/gis",
-    tags=["空间查询"]
-)
-
-# 智能体相关路由
-api_router.include_router(
-    chat.router,
-    prefix="/agent",
-    tags=["智能对话"]
-)
-api_router.include_router(
-    workflow.router,
-    prefix="/agent",
-    tags=["工作流"]
-)
+router = APIRouter()
+security = HTTPBearer()
 ```
 
 ## 依赖注入规范
 
 ### 依赖定义
 ```python
-# api/dependencies.py
-from typing import Generator, Optional
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import JWTError, jwt
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.config import settings
-from app.core.database import get_db
-from app.core.security import verify_token
-from app.domains.user.entities import UserEntity
-from app.domains.user.services import UserService
-from app.application.use_cases.user.auth_use_case import AuthUseCase
-
-# 安全认证
-security = HTTPBearer()
-
-async def get_current_user_id(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: AsyncSession = Depends(get_db)
-) -> str:
-    """获取当前用户ID"""
-    try:
-        payload = verify_token(credentials.credentials)
-        user_id: str = payload.get("sub")
-        if user_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="无效的认证凭据"
-            )
-        return user_id
-    except JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="无效的认证凭据"
-        )
-
-async def get_current_user(
-    user_id: str = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db)
-) -> UserEntity:
-    """获取当前用户"""
-    user_service = UserService(db)
-    user = await user_service.get_user_by_id(user_id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="用户不存在"
-        )
-    return user
-
-# 用例依赖
-def get_auth_use_case(
-    db: AsyncSession = Depends(get_db)
-) -> AuthUseCase:
-    """获取认证用例"""
-    user_service = UserService(db)
-    return AuthUseCase(user_service)
-```
-
-## 请求响应模型规范
-
-### Pydantic模型
-```python
-# application/dto/user_dto.py
-from pydantic import BaseModel, EmailStr, validator
-from typing import Optional
-from datetime import datetime
-
-class UserRegisterDTO(BaseModel):
-    """用户注册请求模型"""
-    username: str
-    email: EmailStr
-    phone: Optional[str] = None
-    password: str
-    confirm_password: str
-    
-    @validator('username')
-    def validate_username(cls, v):
-        if len(v) < 3:
-            raise ValueError('用户名至少3个字符')
-        if len(v) > 20:
-            raise ValueError('用户名最多20个字符')
-        return v
-    
-    @validator('password')
-    def validate_password(cls, v):
-        if len(v) < 6:
-            raise ValueError('密码至少6个字符')
-        return v
-    
-    @validator('confirm_password')
-    def validate_confirm_password(cls, v, values):
-        if 'password' in values and v != values['password']:
-            raise ValueError('密码和确认密码不匹配')
-        return v
-
-class UserLoginDTO(BaseModel):
-    """用户登录请求模型"""
-    login_identifier: str  # 用户名/邮箱/手机号
-    password: str
-
-class UserResponseDTO(BaseModel):
-    """用户响应模型"""
-    id: str
-    username: str
-    email: str
-    phone: Optional[str]
-    is_active: bool
-    created_at: datetime
-    
-    class Config:
-        from_attributes = True
-
-class ApiResponseDTO(BaseModel):
-    """统一API响应模型"""
-    success: bool
-    message: str
-    data: Optional[dict] = None
-    metadata: Optional[dict] = None
-```
-
-## 路由处理规范
-
-### 标准路由模式
-```python
-# api/v1/user/auth.py
-from fastapi import APIRouter, Depends, HTTPException, status
-from typing import Dict, Any
-
-from app.application.dto.user_dto import (
-    UserRegisterDTO, UserLoginDTO, UserResponseDTO, ApiResponseDTO
-)
-from app.application.use_cases.user.auth_use_case import AuthUseCase
-from app.api.dependencies import get_auth_use_case
-
-router = APIRouter()
-
-@router.post("/register", response_model=ApiResponseDTO)
-async def register_user(
-    user_data: UserRegisterDTO,
-    auth_use_case: AuthUseCase = Depends(get_auth_use_case)
-) -> Dict[str, Any]:
-    """
-    用户注册
-    
-    - **username**: 用户名 (3-20字符)
-    - **email**: 邮箱地址
-    - **phone**: 手机号 (可选)
-    - **password**: 密码 (至少6字符)
-    - **confirm_password**: 确认密码
-    """
-    try:
-        result = await auth_use_case.register_user(user_data)
-        return result
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="注册失败，请稍后重试"
-        )
-
-@router.post("/login", response_model=ApiResponseDTO)
-async def login_user(
-    login_data: UserLoginDTO,
-    auth_use_case: AuthUseCase = Depends(get_auth_use_case)
-) -> Dict[str, Any]:
-    """
-    用户登录
-    
-    - **login_identifier**: 登录标识符 (用户名/邮箱/手机号)
-    - **password**: 密码
-    """
-    try:
-        result = await auth_use_case.login_user(login_data)
-        return result
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e)
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="登录失败，请稍后重试"
-        )
-
-@router.get("/profile", response_model=UserResponseDTO)
-async def get_user_profile(
-    current_user: UserEntity = Depends(get_current_user)
-) -> UserResponseDTO:
-    """获取用户资料"""
-    return UserResponseDTO.from_orm(current_user)
-```
-
-## 中间件规范
-
-### 请求日志中间件
-```python
-# core/middleware.py
-import time
-import logging
-from fastapi import Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware
-
-logger = logging.getLogger(__name__)
-
-class RequestLoggingMiddleware(BaseHTTPMiddleware):
-    """请求日志中间件"""
-    
-    async def dispatch(self, request: Request, call_next):
-        # 记录请求开始时间
-        start_time = time.time()
-        
-        # 记录请求信息
-        logger.info(
-            f"开始处理请求: {request.method} {request.url.path} "
-            f"Client: {request.client.host if request.client else 'unknown'}"
-        )
-        
-        # 处理请求
-        response = await call_next(request)
-        
-        # 计算处理时间
-        process_time = time.time() - start_time
-        
-        # 记录响应信息
-        logger.info(
-            f"请求处理完成: {request.method} {request.url.path} "
-            f"Status: {response.status_code} "
-            f"Time: {process_time:.3f}s"
-        )
-        
-        # 添加处理时间到响应头
-        response.headers["X-Process-Time"] = str(process_time)
-        
-        return response
-```
-
-### 错误处理中间件
-```python
-# core/exceptions.py
-from fastapi import HTTPException, Request
-from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
-from starlette.exceptions import HTTPException as StarletteHTTPException
-
-async def http_exception_handler(request: Request, exc: HTTPException):
-    """HTTP异常处理器"""
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={
-            "success": False,
-            "message": exc.detail,
-            "error_code": exc.status_code
-        }
-    )
-
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    """验证异常处理器"""
-    return JSONResponse(
-        status_code=422,
-        content={
-            "success": False,
-            "message": "数据验证失败",
-            "errors": exc.errors()
-        }
-    )
-
-# 在main.py中注册异常处理器
-app.add_exception_handler(HTTPException, http_exception_handler)
-app.add_exception_handler(RequestValidationError, validation_exception_handler)
-```
-
-## 配置管理规范
-
-### 环境配置
-```python
-# core/config.py
-from pydantic_settings import BaseSettings
-from typing import List, Optional
-from functools import lru_cache
-
-class Settings(BaseSettings):
-    """应用配置"""
-    
-    # 基础配置
-    PROJECT_NAME: str = "SuperMap GIS + AI 智能分析系统"
-    VERSION: str = "1.0.0"
-    DESCRIPTION: str = "基于多智能体协作的GIS智能分析平台"
-    
-    # API配置
-    API_V1_STR: str = "/api/v1"
-    
-    # 安全配置
-    SECRET_KEY: str
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    
-    # 数据库配置
-    DATABASE_URL: str
-    DATABASE_POOL_SIZE: int = 20
-    DATABASE_MAX_OVERFLOW: int = 30
-    
-    # Redis配置
-    REDIS_URL: str
-    
-    # CORS配置
-    ALLOWED_HOSTS: List[str] = ["*"]
-    
-    # 外部服务配置
-    SUPERMAP_BASE_URL: str
-    SUPERMAP_API_KEY: str
-    OPENAI_API_KEY: str
-    
-    # 日志配置
-    LOG_LEVEL: str = "INFO"
-    LOG_FILE: Optional[str] = None
-    
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
-
-@lru_cache()
-def get_settings() -> Settings:
-    """获取配置实例"""
-    return Settings()
-
-settings = get_settings()
-```
-
-## 数据库集成规范
-
-### 数据库连接
-```python
-# core/database.py
+# analysis/core/database.py
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import declarative_base
-from app.core.config import settings
+from analysis.core.config import settings
 
 # 创建异步引擎
 engine = create_async_engine(
     settings.DATABASE_URL,
-    pool_size=settings.DATABASE_POOL_SIZE,
-    max_overflow=settings.DATABASE_MAX_OVERFLOW,
     echo=False
 )
 
@@ -460,63 +90,364 @@ async def get_db() -> AsyncSession:
             await session.close()
 ```
 
+### 用例依赖
+```python
+# analysis/core/container.py
+def build_analysis_use_case(session) -> AnalysisUseCase:
+    """构建分析用例"""
+    # 构建仓储
+    task_repository = AnalysisTaskRepository(session)
+    result_repository = AnalysisResultRepository(session)
+    spatial_data_repository = SpatialDataRepository(session)
+    
+    # 构建领域服务
+    analysis_service = AnalysisService(
+        task_repository=task_repository,
+        result_repository=result_repository,
+        spatial_data_repository=spatial_data_repository
+    )
+    
+    # 构建用例
+    return AnalysisUseCase(analysis_service=analysis_service)
+```
+
+## 请求响应模型规范
+
+### Pydantic模型
+```python
+# analysis/application/dto/analysis_dto.py
+from pydantic import BaseModel, Field
+from typing import Optional, Dict, Any, List
+from analysis.domains.analysis.entities import AnalysisType, AnalysisStatus
+
+class GeometryDTO(BaseModel):
+    """几何数据DTO"""
+    type: str = Field(..., description="几何类型：Point/LineString/Polygon")
+    coordinates: List[Any] = Field(..., description="坐标数组")
+
+class AnalysisTaskCreateDTO(BaseModel):
+    """创建分析任务DTO"""
+    name: str = Field(..., min_length=1, max_length=100, description="任务名称")
+    description: Optional[str] = Field(None, max_length=500, description="任务描述")
+    analysis_type: AnalysisType = Field(..., description="分析类型")
+    parameters: Dict[str, Any] = Field(..., description="分析参数")
+
+class AnalysisTaskResponseDTO(BaseModel):
+    """分析任务响应DTO"""
+    task_id: str
+    name: str
+    description: Optional[str]
+    analysis_type: str
+    status: str
+    progress: float
+    created_at: str
+    started_at: Optional[str]
+    completed_at: Optional[str]
+    supermap_request: Optional[Dict[str, Any]]
+    supermap_result: Optional[Dict[str, Any]]
+    error_message: Optional[str]
+```
+
+## 路由处理规范
+
+### 标准路由模式
+```python
+# analysis/api/v1/analysis/analysis.py
+@router.post("/tasks", response_model=Dict[str, Any])
+async def create_analysis_task(
+    task_data: AnalysisTaskCreateDTO,
+    session = Depends(get_db)
+) -> Dict[str, Any]:
+    """
+    创建分析任务
+    
+    - **name**: 任务名称 (1-100字符)
+    - **description**: 任务描述 (可选，最多500字符)
+    - **analysis_type**: 分析类型
+    - **parameters**: 分析参数
+    """
+    try:
+        analysis_use_case = build_analysis_use_case(session)
+        
+        # TODO: 从JWT token中获取用户ID
+        created_by = "test_user"  # 临时使用测试用户
+        
+        result = await analysis_use_case.create_analysis_task(task_data, created_by)
+        return result
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="创建分析任务失败，请稍后重试"
+        )
+
+@router.get("/tasks/{task_id}", response_model=Dict[str, Any])
+async def get_analysis_task(
+    task_id: str,
+    session = Depends(get_db)
+) -> Dict[str, Any]:
+    """获取分析任务"""
+    try:
+        analysis_use_case = build_analysis_use_case(session)
+        result = await analysis_use_case.get_analysis_task(task_id)
+        return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="获取分析任务失败"
+        )
+
+@router.get("/tasks", response_model=Dict[str, Any])
+async def list_analysis_tasks(
+    skip: int = Query(0, ge=0, description="跳过记录数"),
+    limit: int = Query(100, ge=1, le=1000, description="返回记录数"),
+    status: Optional[str] = Query(None, description="任务状态"),
+    analysis_type: Optional[str] = Query(None, description="分析类型"),
+    session = Depends(get_db)
+) -> Dict[str, Any]:
+    """列出分析任务"""
+    try:
+        analysis_use_case = build_analysis_use_case(session)
+        result = await analysis_use_case.list_analysis_tasks(
+            skip=skip,
+            limit=limit,
+            status=status,
+            analysis_type=analysis_type
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="获取任务列表失败"
+        )
+
+@router.put("/tasks/{task_id}/status", response_model=Dict[str, Any])
+async def update_task_status(
+    task_id: str,
+    status: str,
+    supermap_result: Optional[Dict[str, Any]] = None,
+    error_message: Optional[str] = None,
+    session = Depends(get_db)
+) -> Dict[str, Any]:
+    """更新任务状态"""
+    try:
+        analysis_use_case = build_analysis_use_case(session)
+        result = await analysis_use_case.update_task_status(
+            task_id=task_id,
+            status=status,
+            supermap_result=supermap_result,
+            error_message=error_message
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="更新任务状态失败"
+        )
+```
+
+## 错误处理规范
+
+### 异常处理
+```python
+# analysis/api/v1/analysis/analysis.py
+from fastapi import HTTPException, status
+
+# 参数验证错误
+@router.post("/tasks")
+async def create_analysis_task(task_data: AnalysisTaskCreateDTO):
+    try:
+        # 业务逻辑
+        pass
+    except ValueError as e:
+        # 业务验证错误
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        # 系统错误
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="创建分析任务失败，请稍后重试"
+        )
+```
+
+### 统一错误响应
+```python
+# analysis/application/dto/analysis_dto.py
+class AnalysisResponseDTO(BaseModel):
+    """通用分析响应DTO"""
+    success: bool = Field(..., description="是否成功")
+    message: str = Field(..., description="响应消息")
+    data: Optional[Dict[str, Any]] = Field(None, description="响应数据")
+    error_code: Optional[str] = Field(None, description="错误代码")
+    details: Optional[Dict[str, Any]] = Field(None, description="错误详情")
+```
+
+## 配置管理规范
+
+### 环境配置
+```python
+# analysis/core/config.py
+from pydantic_settings import BaseSettings
+from typing import List, Optional
+from functools import lru_cache
+
+class Settings(BaseSettings):
+    """应用配置"""
+    
+    # 基础配置
+    PROJECT_NAME: str = "SuperMap GIS 分析服务"
+    VERSION: str = "1.0.0"
+    DESCRIPTION: str = "基于SuperMap的空间分析服务"
+    
+    # API配置
+    API_V1_STR: str = "/api/v1"
+    
+    # 数据库配置
+    DATABASE_URL: str
+    
+    # CORS配置
+    ALLOWED_HOSTS: List[str] = ["*"]
+    
+    # SuperMap配置
+    SUPERMAP_BASE_URL: str
+    SUPERMAP_API_KEY: str
+    
+    # 日志配置
+    LOG_LEVEL: str = "INFO"
+    LOG_FILE: Optional[str] = None
+    
+    class Config:
+        env_file = ".env"
+        case_sensitive = True
+
+@lru_cache()
+def get_settings() -> Settings:
+    """获取配置实例"""
+    return Settings()
+
+settings = get_settings()
+```
+
+## 数据库集成规范
+
+### 数据库连接
+```python
+# analysis/core/database.py
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.orm import declarative_base
+from analysis.core.config import settings
+
+# 创建异步引擎
+engine = create_async_engine(
+    settings.DATABASE_URL,
+    echo=False
+)
+
+# 创建会话工厂
+AsyncSessionLocal = async_sessionmaker(
+    engine,
+    class_=AsyncSession,
+    expire_on_commit=False
+)
+
+# 基础模型类
+Base = declarative_base()
+
+async def get_db() -> AsyncSession:
+    """获取数据库会话"""
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
+```
+
+### 数据库模型
+```python
+# analysis/infrastructure/database/postgres/models.py
+from sqlalchemy import Column, String, Boolean, DateTime, Text, Integer, Float, ForeignKey, JSON
+from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
+from datetime import datetime
+import uuid
+
+from analysis.core.database import Base
+
+class AnalysisTaskModel(Base):
+    """分析任务数据库模型"""
+    __tablename__ = "analysis_tasks"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String(100), nullable=False, index=True)
+    description = Column(Text, nullable=True)
+    analysis_type = Column(String(50), nullable=False, index=True)
+    parameters = Column(JSONB, nullable=False)
+    status = Column(String(20), nullable=False, index=True)
+    created_by = Column(String(100), nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    progress = Column(Float, default=0.0, nullable=False)
+    
+    # SuperMap相关字段
+    supermap_request = Column(JSONB, nullable=True)
+    supermap_result = Column(JSONB, nullable=True)
+    error_message = Column(Text, nullable=True)
+```
+
 ## 测试规范
 
 ### API测试
 ```python
-# tests/test_api/test_user_auth.py
+# tests/test_api/test_analysis.py
 import pytest
 from httpx import AsyncClient
-from app.main import app
+from analysis.main import app
 
-class TestUserAuthAPI:
-    """用户认证API测试"""
+class TestAnalysisAPI:
+    """分析API测试"""
     
     @pytest.mark.asyncio
-    async def test_register_user_success(self):
-        """测试用户注册成功"""
+    async def test_create_analysis_task_success(self):
+        """测试创建分析任务成功"""
         async with AsyncClient(app=app, base_url="http://test") as client:
-            response = await client.post("/api/v1/user/register", json={
-                "username": "testuser",
-                "email": "test@example.com",
-                "password": "password123",
-                "confirm_password": "password123"
+            response = await client.post("/api/v1/analysis/tasks", json={
+                "name": "测试任务",
+                "description": "测试描述",
+                "analysis_type": "custom",
+                "parameters": {
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [116.4074, 39.9042]
+                    }
+                }
             })
             
             assert response.status_code == 200
             data = response.json()
             assert data["success"] is True
-            assert data["message"] == "用户注册成功"
+            assert data["message"] == "分析任务创建成功"
     
     @pytest.mark.asyncio
-    async def test_register_user_validation_error(self):
-        """测试用户注册验证错误"""
+    async def test_create_analysis_task_validation_error(self):
+        """测试创建分析任务验证错误"""
         async with AsyncClient(app=app, base_url="http://test") as client:
-            response = await client.post("/api/v1/user/register", json={
-                "username": "ab",  # 太短
-                "email": "invalid-email",  # 无效邮箱
-                "password": "123",  # 太短
-                "confirm_password": "456"  # 不匹配
+            response = await client.post("/api/v1/analysis/tasks", json={
+                "name": "",  # 空名称
+                "analysis_type": "invalid_type",  # 无效类型
+                "parameters": {}  # 空参数
             })
             
             assert response.status_code == 422
-            data = response.json()
-            assert data["success"] is False
-            assert "数据验证失败" in data["message"]
-    
-    @pytest.mark.asyncio
-    async def test_login_user_success(self):
-        """测试用户登录成功"""
-        async with AsyncClient(app=app, base_url="http://test") as client:
-            response = await client.post("/api/v1/user/login", json={
-                "login_identifier": "testuser",
-                "password": "password123"
-            })
-            
-            assert response.status_code == 200
-            data = response.json()
-            assert data["success"] is True
-            assert "token" in data
 ```
 
 ## 性能优化规范
@@ -524,66 +455,52 @@ class TestUserAuthAPI:
 ### 异步处理
 ```python
 # 异步路由处理
-@router.post("/gis/buffer-analysis")
-async def buffer_analysis(
-    request: BufferAnalysisRequest,
-    gis_use_case: GISUseCase = Depends(get_gis_use_case)
+@router.post("/tasks")
+async def create_analysis_task(
+    task_data: AnalysisTaskCreateDTO,
+    session = Depends(get_db)
 ) -> Dict[str, Any]:
-    """缓冲区分析 - 异步处理"""
+    """创建分析任务 - 异步处理"""
     try:
+        analysis_use_case = build_analysis_use_case(session)
+        created_by = "test_user"
+        
         # 异步执行分析
-        result = await gis_use_case.buffer_analysis(
-            geometry=request.geometry,
-            radius=request.radius
-        )
+        result = await analysis_use_case.create_analysis_task(task_data, created_by)
         return result
     except Exception as e:
-        logger.error(f"缓冲区分析失败: {e}")
+        logger.error(f"创建分析任务失败: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="分析失败，请稍后重试"
+            detail="创建分析任务失败，请稍后重试"
         )
 ```
 
-### 缓存集成
+### 分页查询
 ```python
-# 缓存装饰器
-from functools import wraps
-import json
-
-def cache_response(expire: int = 3600):
-    """响应缓存装饰器"""
-    def decorator(func):
-        @wraps(func)
-        async def wrapper(*args, **kwargs):
-            # 生成缓存键
-            cache_key = f"{func.__name__}:{hash(str(args) + str(kwargs))}"
-            
-            # 尝试从缓存获取
-            cached_result = await redis_client.get(cache_key)
-            if cached_result:
-                return json.loads(cached_result)
-            
-            # 执行函数
-            result = await func(*args, **kwargs)
-            
-            # 缓存结果
-            await redis_client.setex(
-                cache_key,
-                expire,
-                json.dumps(result)
-            )
-            
-            return result
-        return wrapper
-    return decorator
-
-# 使用缓存
-@router.get("/gis/feature/{feature_id}")
-@cache_response(expire=1800)  # 缓存30分钟
-async def get_feature(feature_id: str):
-    """获取空间要素 - 带缓存"""
-    return await gis_service.get_feature(feature_id)
+@router.get("/tasks")
+async def list_analysis_tasks(
+    skip: int = Query(0, ge=0, description="跳过记录数"),
+    limit: int = Query(100, ge=1, le=1000, description="返回记录数"),
+    status: Optional[str] = Query(None, description="任务状态"),
+    analysis_type: Optional[str] = Query(None, description="分析类型"),
+    session = Depends(get_db)
+) -> Dict[str, Any]:
+    """列出分析任务 - 支持分页和过滤"""
+    try:
+        analysis_use_case = build_analysis_use_case(session)
+        result = await analysis_use_case.list_analysis_tasks(
+            skip=skip,
+            limit=limit,
+            status=status,
+            analysis_type=analysis_type
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="获取任务列表失败"
+        )
 ```
 
 ## 文档规范
@@ -621,38 +538,54 @@ app.openapi = custom_openapi
 ### 路由文档
 ```python
 @router.post(
-    "/gis/buffer-analysis",
-    response_model=BufferAnalysisResponse,
-    summary="缓冲区分析",
-    description="对指定几何对象进行缓冲区分析",
-    response_description="缓冲区分析结果",
+    "/tasks",
+    response_model=Dict[str, Any],
+    summary="创建分析任务",
+    description="创建新的空间分析任务",
+    response_description="分析任务创建结果",
     tags=["空间分析"]
 )
-async def buffer_analysis(
-    request: BufferAnalysisRequest = Body(
+async def create_analysis_task(
+    task_data: AnalysisTaskCreateDTO = Body(
         ...,
         example={
-            "geometry": {
-                "type": "Point",
-                "coordinates": [116.4074, 39.9042]
-            },
-            "radius": 1000,
-            "unit": "meters"
+            "name": "缓冲区分析任务",
+            "description": "对指定点进行100米缓冲区分析",
+            "analysis_type": "buffer",
+            "parameters": {
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [116.4074, 39.9042]
+                },
+                "distance": 100,
+                "unit": "meters"
+            }
         }
     )
 ):
     """
-    缓冲区分析
+    创建分析任务
     
-    - **geometry**: GeoJSON格式的几何对象
-    - **radius**: 缓冲区半径
-    - **unit**: 距离单位 (meters/kilometers)
+    - **name**: 任务名称 (1-100字符)
+    - **description**: 任务描述 (可选，最多500字符)
+    - **analysis_type**: 分析类型
+    - **parameters**: 分析参数，包含几何数据和具体分析设置
     
-    返回缓冲区分析结果，包含缓冲后的几何对象和面积信息。
+    返回创建结果，包含任务ID和状态信息。
     """
     pass
 ```
-description:
-globs:
-alwaysApply: true
----
+
+## 开发检查清单
+
+在实现新的API接口时，必须检查：
+- [ ] 是否使用正确的HTTP方法
+- [ ] 是否定义完整的请求/响应模型
+- [ ] 是否包含参数验证
+- [ ] 是否实现错误处理
+- [ ] 是否使用依赖注入
+- [ ] 是否包含API文档
+- [ ] 是否支持分页查询
+- [ ] 是否实现异步处理
+- [ ] 是否包含单元测试
+- [ ] 是否遵循命名规范

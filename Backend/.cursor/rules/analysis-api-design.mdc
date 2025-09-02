@@ -16,13 +16,12 @@
 {
   "name": "分析任务名称",
   "description": "任务描述",
-  "supermap_config": {
-    "service_url": "SuperMap服务URL",
-    "dataset": "数据集名称",
-    "weight_field": "权重字段",
-    "result_setting": {...}
-  },
-  "analysis_parameters": {...}
+  "analysis_type": "custom",
+  "parameters": {
+    "geometry": {...},
+    "buffer_settings": {...},
+    "supermap_config": {...}
+  }
 }
 ```
 
@@ -33,8 +32,10 @@
   "message": "任务创建成功",
   "data": {
     "task_id": "任务ID",
-    "task_name": "任务名称",
+    "name": "任务名称",
     "status": "pending",
+    "progress": 0.0,
+    "created_at": "创建时间",
     "supermap_request": {...}
   }
 }
@@ -42,31 +43,35 @@
 
 ### 3. 必需的分析类型
 
-#### 服务区分析 (Service Area Analysis)
-- **接口**: `POST /api/v1/analysis/service-area`
-- **输入**: facility_points, break_values, impedance
-- **输出**: 服务区范围、可达路径、统计信息
-
-#### 最优路径分析 (Optimal Path Analysis)
-- **接口**: `POST /api/v1/analysis/path`
-- **输入**: origin, destination, waypoints, impedance
-- **输出**: 最优路径、行驶导引、统计信息
-
 #### 缓冲区分析 (Buffer Analysis)
-- **接口**: `POST /api/v1/analysis/buffer`
-- **输入**: input_geometry, buffer_settings
+- **接口**: `POST /api/v1/analysis/tasks`
+- **输入**: geometry, buffer_settings, supermap_config
 - **输出**: 缓冲区几何、面积、属性信息
+
+#### 最短路径分析 (Shortest Path Analysis)
+- **接口**: `POST /api/v1/analysis/tasks`
+- **输入**: origin, destination, waypoints, impedance
+- **输出**: 最短路径、行驶导引、统计信息
+
+#### 叠加分析 (Overlay Analysis)
+- **接口**: `POST /api/v1/analysis/tasks`
+- **输入**: layer1, layer2, operation_type, tolerance
+- **输出**: 叠加结果几何、属性信息、统计信息
 
 ### 4. 任务管理规范
 
 #### 任务状态查询
 - **接口**: `GET /api/v1/analysis/tasks/{task_id}`
-- **必需字段**: task_id, name, type, status, progress, created_at
+- **必需字段**: task_id, name, analysis_type, status, progress, created_at
 
 #### 任务列表查询
 - **接口**: `GET /api/v1/analysis/tasks`
-- **查询参数**: status, type, limit, offset
+- **查询参数**: status, analysis_type, limit, offset
 - **分页支持**: 必需
+
+#### 任务状态更新
+- **接口**: `PUT /api/v1/analysis/tasks/{task_id}/status`
+- **参数**: status, supermap_result, error_message
 
 ### 5. 错误处理规范
 
@@ -78,18 +83,18 @@
   "error_code": "ERROR_CODE",
   "details": {
     "field": "错误字段",
-    "reason": "具体错误原因",
-    "supermap_error": "SuperMap服务错误信息"
+    "reason": "具体错误原因"
   }
 }
 ```
 
 #### 必需错误码
-- `INVALID_GEOMETRY`: 几何数据无效
-- `INVALID_PARAMETERS`: 参数无效
+- `INVALID_TASK_ID`: 无效的任务ID
+- `TASK_NOT_FOUND`: 任务不存在
+- `INVALID_STATUS`: 无效的状态值
+- `INVALID_ANALYSIS_TYPE`: 无效的分析类型
 - `ANALYSIS_FAILED`: 分析失败
 - `SUPERMAP_SERVICE_ERROR`: SuperMap服务错误
-- `TASK_NOT_FOUND`: 任务不存在
 - `SERVICE_UNAVAILABLE`: 服务不可用
 
 ### 6. 代码实现规范
@@ -97,7 +102,7 @@
 #### DTO设计
 - 所有请求参数必须定义对应的DTO类
 - 使用Pydantic进行数据验证
-- 包含SuperMap配置参数
+- 包含完整的字段描述和验证规则
 
 #### 服务层设计
 - 实现SuperMap服务调用逻辑
@@ -147,7 +152,50 @@
 - [ ] 是否更新数据库模型
 - [ ] 是否添加任务状态查询接口
 - [ ] 是否包含SuperMap请求和结果存储
-description:
-globs:
-alwaysApply: true
----
+- [ ] 是否实现任务进度跟踪
+- [ ] 是否包含用户权限验证
+- [ ] 是否实现任务取消功能
+
+### 10. 实际代码实现参考
+
+#### API路由实现
+```python
+@router.post("/tasks", response_model=Dict[str, Any])
+async def create_analysis_task(
+    task_data: AnalysisTaskCreateDTO,
+    session = Depends(get_db)
+) -> Dict[str, Any]:
+    """创建分析任务"""
+    try:
+        analysis_use_case = build_analysis_use_case(session)
+        created_by = "test_user"  # 从JWT token获取
+        result = await analysis_use_case.create_analysis_task(task_data, created_by)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="创建分析任务失败")
+```
+
+#### 任务状态更新
+```python
+@router.put("/tasks/{task_id}/status", response_model=Dict[str, Any])
+async def update_task_status(
+    task_id: str,
+    status: str,
+    supermap_result: Optional[Dict[str, Any]] = None,
+    error_message: Optional[str] = None,
+    session = Depends(get_db)
+) -> Dict[str, Any]:
+    """更新任务状态"""
+    # 实现状态更新逻辑
+```
+
+### 11. 性能优化要求
+
+- 支持任务异步处理
+- 实现任务进度实时更新
+- 提供任务队列管理
+- 支持任务优先级设置
+- 实现任务超时处理
+- 提供任务重试机制

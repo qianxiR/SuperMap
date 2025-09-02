@@ -14,36 +14,44 @@
 # 标准库导入
 import os
 import sys
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
+from datetime import datetime
+from uuid import UUID, uuid4
 
 # 第三方库导入
 import fastapi
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, status, Query
+from pydantic import BaseModel, Field
+from sqlalchemy import Column, String, Text, DateTime, Float
+from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB
+from sqlalchemy.sql import func
 
 # 本地模块导入
-from app.domains.user.entities import UserEntity
-from app.application.dto.user_dto import UserDTO
+from analysis.domains.analysis.entities import AnalysisTask, AnalysisStatus, AnalysisType
+from analysis.application.dto.analysis_dto import AnalysisTaskCreateDTO
+from analysis.domains.analysis.services import AnalysisService
 ```
 
 ### 类型注解
 ```python
 # 函数类型注解
-async def create_user(
-    email: str,
-    username: str,
-    password: str
-) -> UserEntity:
-    """创建用户"""
+async def create_analysis_task(
+    name: str,
+    analysis_type: AnalysisType,
+    parameters: Dict[str, Any],
+    created_by: str
+) -> AnalysisTask:
+    """创建分析任务"""
     pass
 
 # 变量类型注解
-user_list: List[UserEntity] = []
+task_list: List[AnalysisTask] = []
 config: Dict[str, Any] = {}
 
 # 复杂类型
-from typing import Union, Callable
-OptionalUser = Optional[UserEntity]
-UserCallback = Callable[[UserEntity], None]
+from typing import Union, Callable, Optional
+OptionalTask = Optional[AnalysisTask]
+TaskCallback = Callable[[AnalysisTask], None]
 ```
 
 ## 类设计规范
@@ -53,69 +61,122 @@ UserCallback = Callable[[UserEntity], None]
 from dataclasses import dataclass, field
 from datetime import datetime
 from uuid import UUID, uuid4
+from typing import Optional, Dict, Any
 
 @dataclass
-class UserEntity:
-    """用户实体"""
+class AnalysisTask:
+    """分析任务实体"""
     id: UUID
-    email: str
-    username: str
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    name: str
+    description: Optional[str]
+    analysis_type: AnalysisType
+    parameters: Dict[str, Any]
+    status: AnalysisStatus
+    created_by: str
+    created_at: datetime
+    updated_at: datetime
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    progress: float = 0.0
+    supermap_request: Optional[Dict[str, Any]] = None
+    supermap_result: Optional[Dict[str, Any]] = None
+    error_message: Optional[str] = None
     
     def __post_init__(self):
         """初始化后处理"""
-        if not self.id:
-            self.id = uuid4()
+        if not self.created_at:
+            self.created_at = datetime.utcnow()
+        if not self.updated_at:
+            self.updated_at = datetime.utcnow()
+    
+    @classmethod
+    def create_new(
+        cls,
+        name: str,
+        analysis_type: AnalysisType,
+        parameters: Dict[str, Any],
+        created_by: str,
+        description: Optional[str] = None
+    ) -> "AnalysisTask":
+        """创建新的分析任务"""
+        return cls(
+            id=uuid4(),
+            name=name,
+            description=description,
+            analysis_type=analysis_type,
+            parameters=parameters,
+            status=AnalysisStatus.PENDING,
+            created_by=created_by,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
 ```
 
 ### 抽象基类
 ```python
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, List
+from uuid import UUID
 
-class UserRepository(ABC):
-    """用户仓储接口"""
+class AnalysisTaskRepository(ABC):
+    """分析任务仓储接口"""
     
     @abstractmethod
-    async def save(self, user: UserEntity) -> UserEntity:
-        """保存用户"""
+    async def create(self, task: AnalysisTask) -> AnalysisTask:
+        """创建分析任务"""
         pass
     
     @abstractmethod
-    async def get_by_id(self, user_id: UUID) -> Optional[UserEntity]:
-        """根据ID获取用户"""
+    async def get_by_id(self, task_id: UUID) -> Optional[AnalysisTask]:
+        """根据ID获取分析任务"""
+        pass
+    
+    @abstractmethod
+    async def get_by_user(self, user_id: str) -> List[AnalysisTask]:
+        """获取用户的分析任务列表"""
+        pass
+    
+    @abstractmethod
+    async def update(self, task: AnalysisTask) -> AnalysisTask:
+        """更新分析任务"""
+        pass
+    
+    @abstractmethod
+    async def delete(self, task_id: UUID) -> bool:
+        """删除分析任务"""
         pass
 ```
 
 ### 工厂模式
 ```python
-class UserFactory:
-    """用户工厂"""
+class AnalysisTaskFactory:
+    """分析任务工厂"""
     
     @classmethod
-    def create_user(
+    def create_task(
         cls,
-        email: str,
-        username: str,
-        password: str
-    ) -> UserEntity:
-        """创建用户"""
+        name: str,
+        analysis_type: AnalysisType,
+        parameters: Dict[str, Any],
+        created_by: str,
+        description: Optional[str] = None
+    ) -> AnalysisTask:
+        """创建分析任务"""
         # 验证逻辑
-        if not email or not username:
-            raise ValueError("邮箱和用户名不能为空")
+        if not name or not analysis_type:
+            raise ValueError("任务名称和分析类型不能为空")
         
-        # 创建用户
-        return UserEntity(
-            id=uuid4(),
-            email=email.lower().strip(),
-            username=username.strip(),
-            hashed_password=cls._hash_password(password)
+        if not parameters:
+            raise ValueError("分析参数不能为空")
+        
+        # 创建任务
+        return AnalysisTask.create_new(
+            name=name,
+            analysis_type=analysis_type,
+            parameters=parameters,
+            created_by=created_by,
+            description=description
         )
-    
-    @staticmethod
-    def _hash_password(password: str) -> str:
-        """密码哈希"""
-        return hashlib.sha256(password.encode()).hexdigest()
 ```
 
 ## 异步编程规范
@@ -123,63 +184,85 @@ class UserFactory:
 ### Async/Await 使用
 ```python
 import asyncio
-from typing import List
+from typing import List, Optional
+from uuid import UUID
 
-class UserService:
-    """用户服务"""
+class AnalysisService:
+    """分析服务"""
     
-    def __init__(self, repository: UserRepository):
-        self.repository = repository
+    def __init__(self, task_repository: AnalysisTaskRepository):
+        self.task_repository = task_repository
     
-    async def create_user(self, user_data: UserDTO) -> UserEntity:
-        """创建用户"""
+    async def create_analysis_task(
+        self,
+        name: str,
+        analysis_type: AnalysisType,
+        parameters: Dict[str, Any],
+        created_by: str,
+        description: Optional[str] = None
+    ) -> AnalysisTask:
+        """创建分析任务"""
         # 异步验证
-        await self._validate_user_data(user_data)
+        await self._validate_task_data(name, analysis_type, parameters)
+        
+        # 异步创建任务
+        task = AnalysisTask.create_new(
+            name=name,
+            analysis_type=analysis_type,
+            parameters=parameters,
+            created_by=created_by,
+            description=description
+        )
         
         # 异步保存
-        user = await self.repository.save(user_data.to_entity())
+        saved_task = await self.task_repository.create(task)
         
         # 异步通知
-        await self._notify_user_created(user)
+        await self._notify_task_created(saved_task)
         
-        return user
+        return saved_task
     
-    async def _validate_user_data(self, user_data: UserDTO) -> None:
-        """验证用户数据"""
-        # 检查用户名唯一性
-        if await self.repository.exists_by_username(user_data.username):
-            raise ValueError("用户名已存在")
+    async def _validate_task_data(
+        self,
+        name: str,
+        analysis_type: AnalysisType,
+        parameters: Dict[str, Any]
+    ) -> None:
+        """验证任务数据"""
+        # 检查任务名称唯一性
+        if await self.task_repository.exists_by_name(name):
+            raise ValueError("任务名称已存在")
         
-        # 检查邮箱唯一性
-        if await self.repository.exists_by_email(user_data.email):
-            raise ValueError("邮箱已存在")
+        # 检查参数有效性
+        if not self._validate_parameters(parameters):
+            raise ValueError("分析参数无效")
     
-    async def _notify_user_created(self, user: UserEntity) -> None:
-        """通知用户创建"""
-        # 异步发送邮件
-        await self._send_welcome_email(user.email)
+    async def _notify_task_created(self, task: AnalysisTask) -> None:
+        """通知任务创建"""
+        # 异步发送通知
+        await self._send_task_notification(task)
 ```
 
 ### 并发处理
 ```python
-async def process_multiple_users(user_ids: List[UUID]) -> List[UserEntity]:
-    """并发处理多个用户"""
+async def process_multiple_tasks(task_ids: List[UUID]) -> List[AnalysisTask]:
+    """并发处理多个任务"""
     # 创建任务列表
     tasks = [
-        get_user_by_id(user_id) 
-        for user_id in user_ids
+        get_task_by_id(task_id) 
+        for task_id in task_ids
     ]
     
     # 并发执行
-    users = await asyncio.gather(*tasks, return_exceptions=True)
+    results = await asyncio.gather(*tasks, return_exceptions=True)
     
     # 过滤异常结果
-    valid_users = [
-        user for user in users 
-        if not isinstance(user, Exception)
+    valid_tasks = [
+        task for task in results 
+        if not isinstance(task, Exception)
     ]
     
-    return valid_users
+    return valid_tasks
 ```
 
 ## 错误处理规范
@@ -190,22 +273,27 @@ class DomainException(Exception):
     """领域异常基类"""
     pass
 
-class UserNotFoundException(DomainException):
-    """用户不存在异常"""
+class AnalysisTaskNotFoundException(DomainException):
+    """分析任务不存在异常"""
     pass
 
-class UserAlreadyExistsException(DomainException):
-    """用户已存在异常"""
+class AnalysisTaskAlreadyExistsException(DomainException):
+    """分析任务已存在异常"""
     pass
 
 class ValidationException(DomainException):
     """验证异常"""
+    pass
+
+class SuperMapServiceException(DomainException):
+    """SuperMap服务异常"""
     pass
 ```
 
 ### 异常处理
 ```python
 from contextlib import asynccontextmanager
+from fastapi import HTTPException, status
 
 @asynccontextmanager
 async def database_transaction():
@@ -221,20 +309,26 @@ async def database_transaction():
         await db.rollback()
         raise e
 
-async def create_user_safe(user_data: UserDTO) -> UserEntity:
-    """安全创建用户"""
+async def create_analysis_task_safe(task_data: AnalysisTaskCreateDTO) -> AnalysisTask:
+    """安全创建分析任务"""
     try:
         async with database_transaction():
-            user = await user_service.create_user(user_data)
-            return user
-    except UserAlreadyExistsException as e:
-        logger.warning(f"用户已存在: {e}")
+            task = await analysis_service.create_analysis_task(
+                name=task_data.name,
+                analysis_type=task_data.analysis_type,
+                parameters=task_data.parameters,
+                created_by=task_data.created_by,
+                description=task_data.description
+            )
+            return task
+    except AnalysisTaskAlreadyExistsException as e:
+        logger.warning(f"分析任务已存在: {e}")
         raise HTTPException(status_code=400, detail=str(e))
     except ValidationException as e:
         logger.error(f"数据验证失败: {e}")
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"创建用户失败: {e}")
+        logger.error(f"创建分析任务失败: {e}")
         raise HTTPException(status_code=500, detail="内部服务器错误")
 ```
 
@@ -282,35 +376,44 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class UserService:
-    """用户服务"""
+class AnalysisService:
+    """分析服务"""
     
-    async def create_user(self, user_data: UserDTO) -> UserEntity:
-        """创建用户"""
-        logger.info(f"开始创建用户: {user_data.username}")
+    async def create_analysis_task(
+        self,
+        name: str,
+        analysis_type: AnalysisType,
+        parameters: Dict[str, Any],
+        created_by: str,
+        description: Optional[str] = None
+    ) -> AnalysisTask:
+        """创建分析任务"""
+        logger.info(f"开始创建分析任务: {name}")
         
         try:
             # 验证数据
-            logger.debug("验证用户数据")
-            await self._validate_user_data(user_data)
+            logger.debug("验证任务数据")
+            await self._validate_task_data(name, analysis_type, parameters)
             
-            # 创建用户
-            logger.debug("创建用户实体")
-            user = UserEntity.create_new(
-                email=user_data.email,
-                username=user_data.username,
-                password=user_data.password
+            # 创建任务
+            logger.debug("创建任务实体")
+            task = AnalysisTask.create_new(
+                name=name,
+                analysis_type=analysis_type,
+                parameters=parameters,
+                created_by=created_by,
+                description=description
             )
             
-            # 保存用户
-            logger.debug("保存用户到数据库")
-            saved_user = await self.repository.save(user)
+            # 保存任务
+            logger.debug("保存任务到数据库")
+            saved_task = await self.task_repository.create(task)
             
-            logger.info(f"用户创建成功: {saved_user.id}")
-            return saved_user
+            logger.info(f"分析任务创建成功: {saved_task.id}")
+            return saved_task
             
         except Exception as e:
-            logger.error(f"创建用户失败: {e}", exc_info=True)
+            logger.error(f"创建分析任务失败: {e}", exc_info=True)
             raise
 ```
 
@@ -320,91 +423,106 @@ class UserService:
 ```python
 import pytest
 from unittest.mock import AsyncMock, patch
-from app.domains.user.entities import UserEntity
-from app.application.use_cases.user.auth_use_case import AuthUseCase
+from analysis.domains.analysis.entities import AnalysisTask, AnalysisType, AnalysisStatus
+from analysis.application.use_cases.analysis.analysis_use_case import AnalysisUseCase
 
-class TestAuthUseCase:
-    """认证用例测试"""
+class TestAnalysisUseCase:
+    """分析用例测试"""
     
     @pytest.fixture
-    def mock_user_service(self):
-        """模拟用户服务"""
+    def mock_analysis_service(self):
+        """模拟分析服务"""
         return AsyncMock()
     
     @pytest.fixture
-    def auth_use_case(self, mock_user_service):
-        """认证用例实例"""
-        return AuthUseCase(mock_user_service)
+    def analysis_use_case(self, mock_analysis_service):
+        """分析用例实例"""
+        return AnalysisUseCase(mock_analysis_service)
     
     @pytest.mark.asyncio
-    async def test_register_user_success(self, auth_use_case, mock_user_service):
-        """测试用户注册成功"""
+    async def test_create_analysis_task_success(self, analysis_use_case, mock_analysis_service):
+        """测试创建分析任务成功"""
         # 准备测试数据
-        user_data = UserRegisterDTO(
-            username="testuser",
-            email="test@example.com",
-            password="password123",
-            confirm_password="password123"
+        task_data = AnalysisTaskCreateDTO(
+            name="测试任务",
+            description="测试描述",
+            analysis_type=AnalysisType.CUSTOM,
+            parameters={
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [116.4074, 39.9042]
+                }
+            }
         )
         
-        # 模拟用户服务返回
-        mock_user = UserEntity(
+        # 模拟分析服务返回
+        mock_task = AnalysisTask(
             id=uuid4(),
-            username="testuser",
-            email="test@example.com",
-            hashed_password="hashed_password"
+            name="测试任务",
+            description="测试描述",
+            analysis_type=AnalysisType.CUSTOM,
+            parameters=task_data.parameters,
+            status=AnalysisStatus.PENDING,
+            created_by="test_user",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
         )
-        mock_user_service.create_user.return_value = mock_user
+        mock_analysis_service.create_analysis_task.return_value = mock_task
         
         # 执行测试
-        result = await auth_use_case.register_user(user_data)
+        result = await analysis_use_case.create_analysis_task(task_data, "test_user")
         
         # 验证结果
         assert result["success"] is True
-        assert result["message"] == "用户注册成功"
-        assert result["data"]["username"] == "testuser"
+        assert result["message"] == "分析任务创建成功"
+        assert result["data"]["name"] == "测试任务"
         
         # 验证调用
-        mock_user_service.create_user.assert_called_once()
+        mock_analysis_service.create_analysis_task.assert_called_once()
     
     @pytest.mark.asyncio
-    async def test_register_user_password_mismatch(self, auth_use_case):
-        """测试密码不匹配"""
-        user_data = UserRegisterDTO(
-            username="testuser",
-            email="test@example.com",
-            password="password123",
-            confirm_password="different_password"
+    async def test_create_analysis_task_validation_error(self, analysis_use_case):
+        """测试创建分析任务验证错误"""
+        task_data = AnalysisTaskCreateDTO(
+            name="",  # 空名称
+            description="测试描述",
+            analysis_type=AnalysisType.CUSTOM,
+            parameters={}  # 空参数
         )
         
-        with pytest.raises(ValueError, match="密码和确认密码不匹配"):
-            await auth_use_case.register_user(user_data)
+        with pytest.raises(ValueError, match="任务名称不能为空"):
+            await analysis_use_case.create_analysis_task(task_data, "test_user")
 ```
 
 ### 集成测试
 ```python
 import pytest
 from httpx import AsyncClient
-from app.main import app
+from analysis.main import app
 
-class TestUserAPI:
-    """用户API集成测试"""
+class TestAnalysisAPI:
+    """分析API集成测试"""
     
     @pytest.mark.asyncio
-    async def test_register_user_api(self):
-        """测试用户注册API"""
+    async def test_create_analysis_task_api(self):
+        """测试创建分析任务API"""
         async with AsyncClient(app=app, base_url="http://test") as client:
-            response = await client.post("/api/v1/user/register", json={
-                "username": "testuser",
-                "email": "test@example.com",
-                "password": "password123",
-                "confirm_password": "password123"
+            response = await client.post("/api/v1/analysis/tasks", json={
+                "name": "测试任务",
+                "description": "测试描述",
+                "analysis_type": "custom",
+                "parameters": {
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [116.4074, 39.9042]
+                    }
+                }
             })
             
             assert response.status_code == 200
             data = response.json()
             assert data["success"] is True
-            assert data["message"] == "用户注册成功"
+            assert data["message"] == "分析任务创建成功"
 ```
 
 ## 性能优化规范
@@ -413,42 +531,42 @@ class TestUserAPI:
 ```python
 from functools import lru_cache
 import asyncio
-from typing import Optional
+from typing import Optional, Dict, Any
 
-class UserService:
-    """用户服务"""
+class AnalysisService:
+    """分析服务"""
     
-    def __init__(self, repository: UserRepository, cache: CacheService):
-        self.repository = repository
+    def __init__(self, task_repository: AnalysisTaskRepository, cache: CacheService):
+        self.task_repository = task_repository
         self.cache = cache
     
     @lru_cache(maxsize=128)
-    def get_user_config(self, user_id: str) -> Dict[str, Any]:
-        """获取用户配置（缓存）"""
+    def get_task_config(self, task_id: str) -> Dict[str, Any]:
+        """获取任务配置（缓存）"""
         # 这个方法的结果会被缓存
-        return self._load_user_config(user_id)
+        return self._load_task_config(task_id)
     
-    async def get_user_by_id(self, user_id: UUID) -> Optional[UserEntity]:
-        """根据ID获取用户（Redis缓存）"""
+    async def get_analysis_task_by_id(self, task_id: UUID) -> Optional[AnalysisTask]:
+        """根据ID获取分析任务（Redis缓存）"""
         # 尝试从缓存获取
-        cache_key = f"user:{user_id}"
-        cached_user = await self.cache.get(cache_key)
+        cache_key = f"task:{task_id}"
+        cached_task = await self.cache.get(cache_key)
         
-        if cached_user:
-            return UserEntity.from_dict(cached_user)
+        if cached_task:
+            return AnalysisTask.from_dict(cached_task)
         
         # 从数据库获取
-        user = await self.repository.get_by_id(user_id)
+        task = await self.task_repository.get_by_id(task_id)
         
-        if user:
-            # 缓存用户数据
+        if task:
+            # 缓存任务数据
             await self.cache.set(
                 cache_key, 
-                user.to_dict(), 
+                task.to_dict(), 
                 expire=3600
             )
         
-        return user
+        return task
 ```
 
 ### 数据库优化
@@ -456,26 +574,26 @@ class UserService:
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 
-class UserRepository:
-    """用户仓储"""
+class AnalysisTaskRepository:
+    """分析任务仓储"""
     
-    async def get_users_with_profiles(self, limit: int = 100) -> List[UserEntity]:
-        """获取用户及其资料（优化查询）"""
+    async def get_tasks_with_results(self, limit: int = 100) -> List[AnalysisTask]:
+        """获取任务及其结果（优化查询）"""
         # 使用 selectinload 避免 N+1 查询
         stmt = (
-            select(UserModel)
-            .options(selectinload(UserModel.profile))
+            select(AnalysisTaskModel)
+            .options(selectinload(AnalysisTaskModel.results))
             .limit(limit)
         )
         
         result = await self.session.execute(stmt)
-        users = result.scalars().all()
+        tasks = result.scalars().all()
         
-        return [UserEntity.from_model(user) for user in users]
+        return [AnalysisTask.from_model(task) for task in tasks]
     
-    async def get_user_count(self) -> int:
-        """获取用户数量（优化计数）"""
-        stmt = select(func.count(UserModel.id))
+    async def get_task_count(self) -> int:
+        """获取任务数量（优化计数）"""
+        stmt = select(func.count(AnalysisTaskModel.id))
         result = await self.session.execute(stmt)
         return result.scalar()
 ```
@@ -486,7 +604,7 @@ class UserRepository:
 ```python
 def calculate_buffer_area(
     geometry: Dict[str, Any],
-    radius: float,
+    distance: float,
     unit: str = "meters"
 ) -> float:
     """
@@ -494,7 +612,7 @@ def calculate_buffer_area(
     
     Args:
         geometry: GeoJSON格式的几何对象
-        radius: 缓冲区半径
+        distance: 缓冲区半径
         unit: 距离单位，默认为米
         
     Returns:
@@ -506,10 +624,10 @@ def calculate_buffer_area(
         
     Example:
         >>> geometry = {"type": "Point", "coordinates": [116.4074, 39.9042]}
-        >>> area = calculate_buffer_area(geometry, 1000)
+        >>> area = calculate_buffer_area(geometry, 100)
         >>> print(f"缓冲区面积: {area} 平方米")
     """
-    if radius <= 0:
+    if distance <= 0:
         raise ValueError("缓冲区半径必须大于0")
     
     # 实现逻辑...
@@ -533,20 +651,30 @@ class Repository(Protocol[T]):
         """根据ID获取实体"""
         ...
 
-class UserRepository(Repository[UserEntity]):
-    """用户仓储实现"""
+class AnalysisTaskRepository(Repository[AnalysisTask]):
+    """分析任务仓储实现"""
     
-    async def save(self, user: UserEntity) -> UserEntity:
-        """保存用户"""
+    async def save(self, task: AnalysisTask) -> AnalysisTask:
+        """保存分析任务"""
         # 实现...
         pass
     
-    async def get_by_id(self, user_id: str) -> Optional[UserEntity]:
-        """根据ID获取用户"""
+    async def get_by_id(self, task_id: str) -> Optional[AnalysisTask]:
+        """根据ID获取分析任务"""
         # 实现...
         pass
 ```
-description:
-globs:
-alwaysApply: true
----
+
+## 开发检查清单
+
+在编写Python代码时，必须检查：
+- [ ] 是否遵循PEP 8规范
+- [ ] 是否使用正确的类型注解
+- [ ] 是否包含完整的文档字符串
+- [ ] 是否实现异常处理
+- [ ] 是否使用异步编程（如适用）
+- [ ] 是否包含单元测试
+- [ ] 是否遵循命名规范
+- [ ] 是否实现性能优化
+- [ ] 是否包含日志记录
+- [ ] 是否使用依赖注入

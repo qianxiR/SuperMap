@@ -1,0 +1,336 @@
+# 当前分析功能实现规范
+
+## 概述
+
+基于对实际代码的分析，当前系统实现了以下核心分析功能：
+- 缓冲区分析 (Buffer Analysis)
+- 最短路径分析 (Shortest Path Analysis)  
+- 叠加分析 (Overlay Analysis)
+
+## 1. 缓冲区分析 (Buffer Analysis)
+
+### 前端实现
+- **Composable**: `useBufferAnalysis.ts`
+- **Panel**: `BufferAnalysisPanel.vue`
+- **功能**: 对指定几何对象进行缓冲区分析
+- **参数**: 缓冲区距离、单位、样式设置
+
+### 核心逻辑
+```typescript
+// 使用Turf.js进行缓冲区计算
+const buffered = turf.buffer(geometry, distance, options)
+const area = turf.area(buffered)
+
+const result = {
+  geometry: buffered,
+  area: area,
+  distance: distance,
+  unit: options.units || 'kilometers'
+}
+```
+
+### 后端API
+- **接口**: `POST /api/v1/analysis/tasks`
+- **分析类型**: `"buffer"`
+- **参数结构**:
+```json
+{
+  "name": "缓冲区分析任务",
+  "description": "对指定点进行100米缓冲区分析",
+  "analysis_type": "buffer",
+  "parameters": {
+    "geometry": {
+      "type": "Point",
+      "coordinates": [116.4074, 39.9042]
+    },
+    "distance": 100,
+    "unit": "meters",
+    "end_type": "round",
+    "join_type": "round"
+  }
+}
+```
+
+## 2. 最短路径分析 (Shortest Path Analysis)
+
+### 前端实现
+- **Composable**: `usePathAnalysis.ts`
+- **Panel**: `DistanceAnalysisPanel.vue` (集成)
+- **功能**: 计算两点间的最短路径
+- **参数**: 起点、终点、计算方式
+
+### 核心逻辑
+```typescript
+// 使用Turf.js计算最短路径
+const pathResult = shortestPath(start, end, options)
+
+// 计算距离和时间
+const distance = turf.distance(start, end, { units: 'kilometers' })
+const duration = calculateDuration(distance, transportMode)
+
+const result = {
+  distance: distance,
+  duration: duration,
+  pathType: pathTypeName,
+  geometry: pathResult
+}
+```
+
+### 后端API
+- **接口**: `POST /api/v1/analysis/tasks`
+- **分析类型**: `"shortest_path"`
+- **参数结构**:
+```json
+{
+  "name": "最短路径分析任务",
+  "description": "计算起点到终点的最短路径",
+  "analysis_type": "shortest_path",
+  "parameters": {
+    "origin": {
+      "type": "Point",
+      "coordinates": [116.4074, 39.9042]
+    },
+    "destination": {
+      "type": "Point", 
+      "coordinates": [116.4174, 39.9142]
+    },
+    "impedance": "time",
+    "travel_mode": "driving",
+    "optimization": "shortest"
+  }
+}
+```
+
+## 3. 叠加分析 (Overlay Analysis)
+
+### 前端实现
+- **Composable**: `useOverlayAnalysis.ts`
+- **Panel**: `OverlayAnalysisPanel.vue`
+- **功能**: 空间叠加分析，交集、并集、差集运算
+- **参数**: 输入图层、叠加类型、容差设置
+
+### 核心逻辑
+```typescript
+// 使用Turf.js进行几何叠加分析
+let result: any = null
+
+switch (operation) {
+  case 'intersection':
+    // 与：计算两个要素的交集
+    result = turf.intersect(geojson1, geojson2)
+    break
+  case 'union':
+    // 或：计算两个要素的并集
+    result = turf.union(geojson1, geojson2)
+    break
+  case 'difference':
+    // 非：简单返回第一个要素
+    result = geojson1
+    break
+  case 'symmetricDifference':
+    // 异或：返回并集结果
+    result = turf.union(geojson1, geojson2)
+    break
+}
+
+return {
+  type: 'FeatureCollection',
+  features: resultFeatures
+}
+```
+
+### 后端API
+- **接口**: `POST /api/v1/analysis/tasks`
+- **分析类型**: `"overlay"`
+- **参数结构**:
+```json
+{
+  "name": "叠加分析任务",
+  "description": "计算两个图层的交集",
+  "analysis_type": "overlay",
+  "parameters": {
+    "layer1": "layer_001",
+    "layer2": "layer_002",
+    "operation_type": "intersection",
+    "tolerance": 0.001,
+    "include_attributes": true
+  }
+}
+```
+
+## 4. 分析任务管理
+
+### 任务状态
+- `pending`: 等待处理
+- `processing`: 正在处理
+- `completed`: 已完成
+- `failed`: 处理失败
+- `cancelled`: 已取消
+
+### 任务进度跟踪
+```python
+async def update_task_progress(self, task_id: UUID, progress: float) -> Optional[AnalysisTask]:
+    """更新任务进度"""
+    task = await self.task_repository.get_by_id(task_id)
+    if not task:
+        return None
+    
+    task.update_progress(progress)
+    return await self.task_repository.update(task)
+```
+
+### 任务状态更新
+```python
+async def update_task_status(
+    self,
+    task_id: UUID,
+    status: AnalysisStatus,
+    supermap_result: Optional[SuperMapResult] = None,
+    error_message: Optional[str] = None
+) -> Optional[AnalysisTask]:
+    """更新任务状态"""
+    task = await self.task_repository.get_by_id(task_id)
+    if not task:
+        return None
+    
+    if status == AnalysisStatus.PROCESSING:
+        task.start_processing()
+    elif status == AnalysisStatus.COMPLETED and supermap_result:
+        task.complete(supermap_result)
+    elif status == AnalysisStatus.FAILED:
+        task.fail(error_message or "分析失败", supermap_result)
+    elif status == AnalysisStatus.CANCELLED:
+        task.cancel()
+    
+    return await self.task_repository.update(task)
+```
+
+## 5. SuperMap服务集成
+
+### 网络分析服务
+```python
+class SuperMapNetworkAnalystService:
+    async def find_shortest_path(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """查找最短路径"""
+        try:
+            request_params = self._build_path_params(parameters)
+            response = await self._call_supermap_service(
+                method="findPath",
+                parameters=request_params
+            )
+            
+            return {
+                "success": True,
+                "data": response,
+                "service_type": "network_analyst",
+                "method": "findPath"
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error_message": str(e),
+                "service_type": "network_analyst",
+                "method": "findPath"
+            }
+```
+
+### 空间分析服务
+```python
+class SuperMapSpatialAnalystService:
+    async def overlay_analysis(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """叠加分析"""
+        try:
+            request_params = self._build_overlay_params(parameters)
+            response = await self._call_supermap_service(
+                method="overlayAnalysis",
+                parameters=request_params
+            )
+            
+            return {
+                "success": True,
+                "data": response,
+                "service_type": "spatial_analyst",
+                "method": "overlayAnalysis"
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error_message": str(e),
+                "service_type": "spatial_analyst",
+                "method": "overlayAnalysis"
+            }
+```
+
+## 6. 前端组件结构
+
+### 传统模式工具栏
+```vue
+<!-- TraditionalMode.vue -->
+<div class="button-row">
+  <PrimaryButton text="缓冲区分析" :active="isBufferOpen" @click="toggleBuffer" />
+  <PrimaryButton text="最短路径分析" :active="isDistanceOpen" @click="toggleDistance" />
+  <PrimaryButton text="叠加分析" :active="isOverlayOpen" @click="toggleOverlay" />
+</div>
+```
+
+### 分析面板组件
+- `BufferAnalysisPanel.vue` - 缓冲区分析面板
+- `DistanceAnalysisPanel.vue` - 距离/路径分析面板
+- `OverlayAnalysisPanel.vue` - 叠加分析面板
+
+## 7. 开发检查清单
+
+### 新增分析功能
+- [ ] 是否创建对应的Composable函数
+- [ ] 是否创建对应的Panel组件
+- [ ] 是否在工具栏中添加按钮
+- [ ] 是否实现核心分析逻辑
+- [ ] 是否包含参数验证
+- [ ] 是否实现结果展示
+- [ ] 是否支持结果导出
+- [ ] 是否包含错误处理
+
+### 后端API开发
+- [ ] 是否定义分析类型枚举
+- [ ] 是否创建对应的DTO
+- [ ] 是否实现用例逻辑
+- [ ] 是否集成SuperMap服务
+- [ ] 是否实现任务管理
+- [ ] 是否包含进度跟踪
+- [ ] 是否实现错误处理
+- [ ] 是否包含日志记录
+
+### 测试要求
+- [ ] 是否包含单元测试
+- [ ] 是否包含集成测试
+- [ ] 是否测试异常情况
+- [ ] 是否测试边界条件
+- [ ] 是否测试性能指标
+
+## 8. 性能优化建议
+
+### 前端优化
+- 使用Turf.js进行几何计算
+- 实现结果缓存机制
+- 支持大数据的分块处理
+- 提供进度指示器
+
+### 后端优化
+- 异步任务处理
+- 结果缓存策略
+- 数据库查询优化
+- 外部服务超时控制
+
+### 用户体验优化
+- 实时进度更新
+- 结果可视化展示
+- 支持结果导出
+- 错误信息友好提示
+
+## 总结
+
+当前系统已经实现了三种核心分析功能，每种功能都有完整的前后端实现。开发新功能时应遵循现有的架构模式和代码规范，确保系统的一致性和可维护性。
+description:
+globs:
+alwaysApply: true
+---

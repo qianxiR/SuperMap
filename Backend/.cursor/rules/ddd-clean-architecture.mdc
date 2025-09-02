@@ -12,7 +12,7 @@
 **原则**: 不依赖任何外部技术，只包含业务逻辑
 
 #### 实体 (Entities)
-- 位置: `app/domains/{domain}/entities.py`
+- 位置: `analysis/domains/{domain}/entities.py`
 - 职责: 定义业务核心概念和业务规则
 - 规范:
   - 使用 `@dataclass` 装饰器
@@ -21,7 +21,7 @@
   - 不依赖外部框架
 
 #### 值对象 (Value Objects)
-- 位置: `app/domains/{domain}/value_objects.py`
+- 位置: `analysis/domains/{domain}/value_objects.py`
 - 职责: 封装不可变的值和验证规则
 - 规范:
   - 使用 `@dataclass(frozen=True)`
@@ -29,7 +29,7 @@
   - 提供 `create()` 类方法
 
 #### 仓储接口 (Repository Interface)
-- 位置: `app/domains/{domain}/repositories.py`
+- 位置: `analysis/domains/{domain}/repositories.py`
 - 职责: 定义数据操作契约
 - 规范:
   - 使用抽象基类 `ABC`
@@ -37,7 +37,7 @@
   - 不包含具体实现
 
 #### 领域服务 (Domain Services)
-- 位置: `app/domains/{domain}/services.py`
+- 位置: `analysis/domains/{domain}/services.py`
 - 职责: 复杂业务逻辑协调
 - 规范:
   - 依赖仓储接口
@@ -49,7 +49,7 @@
 **原则**: 协调领域层组件，不包含业务规则
 
 #### 用例 (Use Cases)
-- 位置: `app/application/use_cases/{domain}/`
+- 位置: `analysis/application/use_cases/{domain}/`
 - 职责: 业务流程编排
 - 规范:
   - 依赖领域服务
@@ -58,7 +58,7 @@
   - 返回统一格式结果
 
 #### DTO (Data Transfer Objects)
-- 位置: `app/application/dto/`
+- 位置: `analysis/application/dto/`
 - 职责: 数据传输和验证
 - 规范:
   - 使用 Pydantic BaseModel
@@ -70,7 +70,7 @@
 **原则**: 处理HTTP请求/响应，参数验证，错误处理
 
 #### 路由 (Routes)
-- 位置: `app/api/v1/{domain}/`
+- 位置: `analysis/api/v1/{domain}/`
 - 职责: HTTP接口定义
 - 规范:
   - 使用 FastAPI 路由
@@ -83,7 +83,7 @@
 **原则**: 实现具体技术细节，为内层提供支撑
 
 #### 仓储实现 (Repository Implementation)
-- 位置: `app/infrastructure/database/{database}/repositories.py`
+- 位置: `analysis/infrastructure/database/{database}/repositories.py`
 - 职责: 具体数据访问实现
 - 规范:
   - 实现领域层仓储接口
@@ -91,7 +91,7 @@
   - 实体与模型转换
 
 #### 外部服务集成
-- 位置: `app/infrastructure/external/{service}/`
+- 位置: `analysis/infrastructure/external/{service}/`
 - 职责: 第三方服务封装
 - 规范:
   - 封装外部API调用
@@ -143,7 +143,195 @@
 - **应用层**: 集成测试用例
 - **基础设施层**: 集成测试数据访问
 - **API层**: 端到端测试接口
-description:
-globs:
-alwaysApply: true
----
+
+## 实际代码实现参考
+
+### 领域实体示例
+```python
+# analysis/domains/analysis/entities.py
+@dataclass
+class AnalysisTask:
+    """分析任务实体"""
+    id: UUID
+    name: str
+    description: Optional[str]
+    analysis_type: AnalysisType
+    parameters: Dict[str, Any]
+    status: AnalysisStatus
+    created_by: str
+    created_at: datetime
+    updated_at: datetime
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    progress: float = 0.0
+    supermap_request: Optional[SuperMapRequest] = None
+    supermap_result: Optional[SuperMapResult] = None
+    error_message: Optional[str] = None
+    
+    @classmethod
+    def create_new(
+        cls,
+        name: str,
+        analysis_type: AnalysisType,
+        parameters: Dict[str, Any],
+        created_by: str,
+        description: Optional[str] = None
+    ) -> "AnalysisTask":
+        """创建新的分析任务"""
+        return cls(
+            id=uuid4(),
+            name=name,
+            description=description,
+            analysis_type=analysis_type,
+            parameters=parameters,
+            status=AnalysisStatus.PENDING,
+            created_by=created_by,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+```
+
+### 领域服务示例
+```python
+# analysis/domains/analysis/services.py
+class AnalysisService:
+    """分析服务"""
+    
+    def __init__(
+        self,
+        task_repository: AnalysisTaskRepository,
+        result_repository: AnalysisResultRepository,
+        spatial_data_repository: SpatialDataRepository
+    ):
+        self.task_repository = task_repository
+        self.result_repository = result_repository
+        self.spatial_data_repository = spatial_data_repository
+    
+    async def create_analysis_task(
+        self,
+        name: str,
+        analysis_type: AnalysisType,
+        parameters: Dict[str, Any],
+        created_by: str,
+        description: Optional[str] = None
+    ) -> AnalysisTask:
+        """创建分析任务"""
+        task = AnalysisTask.create_new(
+            name=name,
+            analysis_type=analysis_type,
+            parameters=parameters,
+            created_by=created_by,
+            description=description
+        )
+        return await self.task_repository.create(task)
+```
+
+### 应用用例示例
+```python
+# analysis/application/use_cases/analysis/analysis_use_case.py
+class AnalysisUseCase:
+    """分析用例"""
+    
+    def __init__(self, analysis_service: AnalysisService):
+        self.analysis_service = analysis_service
+    
+    async def create_analysis_task(
+        self,
+        task_data: AnalysisTaskCreateDTO,
+        created_by: str
+    ) -> Dict[str, Any]:
+        """创建分析任务"""
+        task = await self.analysis_service.create_analysis_task(
+            name=task_data.name,
+            analysis_type=task_data.analysis_type,
+            parameters=task_data.parameters,
+            created_by=created_by,
+            description=task_data.description
+        )
+        
+        return {
+            "success": True,
+            "message": "分析任务创建成功",
+            "data": AnalysisTaskResponseDTO(**task.to_dict())
+        }
+```
+
+### API路由示例
+```python
+# analysis/api/v1/analysis/analysis.py
+@router.post("/tasks", response_model=Dict[str, Any])
+async def create_analysis_task(
+    task_data: AnalysisTaskCreateDTO,
+    session = Depends(get_db)
+) -> Dict[str, Any]:
+    """创建分析任务"""
+    try:
+        analysis_use_case = build_analysis_use_case(session)
+        created_by = "test_user"  # 从JWT token获取
+        result = await analysis_use_case.create_analysis_task(task_data, created_by)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="创建分析任务失败")
+```
+
+### 基础设施层示例
+```python
+# analysis/infrastructure/database/postgres/models.py
+class AnalysisTaskModel(Base):
+    """分析任务数据库模型"""
+    __tablename__ = "analysis_tasks"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String(100), nullable=False, index=True)
+    description = Column(Text, nullable=True)
+    analysis_type = Column(String(50), nullable=False, index=True)
+    parameters = Column(JSONB, nullable=False)
+    status = Column(String(20), nullable=False, index=True)
+    created_by = Column(String(100), nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    progress = Column(Float, default=0.0, nullable=False)
+    
+    # SuperMap相关字段
+    supermap_request = Column(JSONB, nullable=True)
+    supermap_result = Column(JSONB, nullable=True)
+    error_message = Column(Text, nullable=True)
+```
+
+## 依赖注入容器
+
+```python
+# analysis/core/container.py
+def build_analysis_use_case(session) -> AnalysisUseCase:
+    """构建分析用例"""
+    # 构建仓储
+    task_repository = AnalysisTaskRepository(session)
+    result_repository = AnalysisResultRepository(session)
+    spatial_data_repository = SpatialDataRepository(session)
+    
+    # 构建领域服务
+    analysis_service = AnalysisService(
+        task_repository=task_repository,
+        result_repository=result_repository,
+        spatial_data_repository=spatial_data_repository
+    )
+    
+    # 构建用例
+    return AnalysisUseCase(analysis_service=analysis_service)
+```
+
+## 开发检查清单
+
+在实现新功能时，必须检查：
+- [ ] 是否遵循分层架构原则
+- [ ] 是否在正确的层次实现功能
+- [ ] 是否使用依赖注入
+- [ ] 是否定义清晰的接口
+- [ ] 是否实现完整的错误处理
+- [ ] 是否包含单元测试
+- [ ] 是否遵循命名规范
+- [ ] 是否包含完整的文档

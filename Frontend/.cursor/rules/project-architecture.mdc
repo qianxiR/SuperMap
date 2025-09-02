@@ -21,7 +21,8 @@ src/
 ├── api/                    # API 接口层
 │   ├── analysis.ts        # 分析相关 API
 │   ├── config.ts          # API 配置
-│   └── supermap.ts        # SuperMap 服务 API
+│   ├── supermap.ts        # SuperMap 服务 API
+│   └── user.ts            # 用户认证 API
 ├── components/            # 组件库
 │   ├── Layout/           # 布局组件
 │   ├── Map/              # 地图相关组件
@@ -29,21 +30,46 @@ src/
 ├── composables/          # 组合式函数
 │   ├── useBufferAnalysis.ts      # 缓冲区分析
 │   ├── useDistanceAnalysis.ts    # 距离分析
+│   ├── usePathAnalysis.ts        # 路径分析
+│   ├── useOverlayAnalysis.ts     # 叠加分析
+│   ├── useThiessenAnalysis.ts    # 泰森多边形分析
 │   ├── useServiceAreaAnalysis.ts # 服务区分析
+│   ├── useAccessibilityAnalysis.ts # 可达性分析
 │   ├── useMap.ts                 # 地图交互
-│   └── useFeatureSelection.ts    # 要素选择
+│   ├── useFeatureSelection.ts    # 要素选择
+│   ├── useFeatureQuery.ts        # 要素查询
+│   └── useLayerManager.ts        # 图层管理
 ├── stores/               # 状态管理
 │   ├── analysisStore.ts  # 分析状态
 │   ├── mapStore.ts       # 地图状态
 │   ├── selectionStore.ts # 选择状态
-│   └── themeStore.ts     # 主题状态
+│   ├── areaSelectionStore.ts # 区域选择状态
+│   ├── featureQueryStore.ts # 要素查询状态
+│   ├── modeStateStore.ts # 工具状态持久化
+│   ├── themeStore.ts     # 主题状态
+│   ├── userStore.ts      # 用户状态
+│   ├── loadingStore.ts   # 加载状态
+│   ├── modalStore.ts     # 模态框状态
+│   ├── popupStore.ts     # 弹窗状态
+│   └── interactionStore.ts # 交互状态
 ├── views/                # 页面组件
 │   ├── dashboard/        # 仪表板页面
 │   │   ├── traditional/  # 传统 GIS 模式
-│   │   └── llm/          # AI 智能模式
-│   └── auth/             # 认证页面
+│   │   │   └── tools/    # 分析工具面板
+│   │   │       ├── BufferAnalysisPanel.vue      # 缓冲区分析
+│   │   │       ├── DistanceAnalysisPanel.vue    # 距离分析
+│   │   │       ├── OverlayAnalysisPanel.vue     # 叠加分析
+│   │   │       ├── ThiessenAnalysisPanel.vue    # 泰森多边形分析
+│   │   │       ├── FeatureQueryPanel.vue        # 要素查询
+│   │   │       ├── LayerManager.vue             # 图层管理
+│   │   │       └── EditTools.vue                # 编辑工具
+│   │   └── LLM/          # AI 智能模式
+│   ├── auth/             # 认证页面
+│   ├── profile/          # 用户资料页面
+│   └── management/       # 管理页面
 ├── types/                # TypeScript 类型定义
 ├── utils/                # 工具函数
+│   └── selectionIO.ts    # 选择要素 IO 工具
 └── styles/               # 样式文件
     └── theme.css         # 主题变量
 ```
@@ -117,7 +143,15 @@ const handleClick = () => {
 - **analysisStore**: 分析工具状态、面板控制
 - **mapStore**: 地图实例、图层管理、交互状态
 - **selectionStore**: 要素选择状态
+- **areaSelectionStore**: 区域选择状态
+- **featureQueryStore**: 要素查询状态
+- **modeStateStore**: 工具状态持久化
 - **themeStore**: 主题切换、UI 状态
+- **userStore**: 用户认证、权限状态
+- **loadingStore**: 全局加载状态管理
+- **modalStore**: 模态框状态管理
+- **popupStore**: 弹窗状态管理
+- **interactionStore**: 地图交互状态
 
 ### 状态访问模式
 ```typescript
@@ -157,6 +191,8 @@ mapStore.removeLayer(layerId)
 - **缓冲区分析**: 基于 `SpatialAnalystService`
 - **路径分析**: 基于 `NetworkAnalystService`
 - **服务区分析**: 基于 `NetworkAnalystService`
+- **叠加分析**: 基于 `SpatialAnalystService`
+- **泰森多边形分析**: 基于 `SpatialAnalystService`
 
 ## API 设计规范
 
@@ -266,7 +302,23 @@ try {
 - SuperMap iServer 服务地址
 - API 代理配置
 - CORS 设置
-description:
-globs:
-alwaysApply: true
----
+
+## 新增功能开发规范
+
+### 分析功能开发
+- 必须遵循 [`analysis-function-pattern.mdc`](mdc:.cursor/rules/analysis-function-pattern.mdc) 中的标准架构
+- 创建对应的组合式函数和面板组件
+- 集成到 `modeStateStore` 进行状态持久化
+- 支持 GeoJSON 导出功能
+
+### 组件开发
+- 使用 Vue 3 Composition API
+- 支持 TypeScript 类型定义
+- 遵循主题色规范，使用 CSS 变量
+- 实现响应式设计
+
+### Store 开发
+- 使用 Pinia 的 Composition API 风格
+- 实现状态持久化（如需要）
+- 提供清晰的 API 接口
+- 支持开发工具调试

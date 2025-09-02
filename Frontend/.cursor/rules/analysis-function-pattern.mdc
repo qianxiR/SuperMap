@@ -234,6 +234,50 @@ const exportGeoJSON = () => {
 - 分析结果缓存机制
 - 图层显示优化
 
+## 已实现的分析功能
+
+### 缓冲区分析 (Buffer Analysis)
+- **Composable**: `useBufferAnalysis.ts`
+- **Panel**: `BufferAnalysisPanel.vue`
+- **功能**: 支持点、线、面要素的缓冲区分析
+- **参数**: 缓冲区距离、单位、样式设置
+
+### 距离分析 (Distance Analysis)
+- **Composable**: `useDistanceAnalysis.ts`
+- **Panel**: `DistanceAnalysisPanel.vue`
+- **功能**: 计算两点间距离，支持多种距离算法
+- **参数**: 起点、终点、计算方式
+
+### 路径分析 (Path Analysis)
+- **Composable**: `usePathAnalysis.ts`
+- **Panel**: 集成在路径分析工具中
+- **功能**: 网络路径分析，最短路径计算
+- **参数**: 起点、终点、网络图层
+
+### 叠加分析 (Overlay Analysis)
+- **Composable**: `useOverlayAnalysis.ts`
+- **Panel**: `OverlayAnalysisPanel.vue`
+- **功能**: 空间叠加分析，交集、并集、差集运算
+- **参数**: 输入图层、叠加类型、容差设置
+
+### 泰森多边形分析 (Thiessen Analysis)
+- **Composable**: `useThiessenAnalysis.ts`
+- **Panel**: `ThiessenAnalysisPanel.vue`
+- **功能**: 基于点要素生成泰森多边形
+- **参数**: 输入点图层、边界设置
+
+### 服务区分析 (Service Area Analysis)
+- **Composable**: `useServiceAreaAnalysis.ts`
+- **Panel**: 集成在服务区分析工具中
+- **功能**: 基于网络的服务范围分析
+- **参数**: 中心点、服务半径、网络图层
+
+### 可达性分析 (Accessibility Analysis)
+- **Composable**: `useAccessibilityAnalysis.ts`
+- **Panel**: 集成在可达性分析工具中
+- **功能**: 分析空间可达性，计算可达范围
+- **参数**: 起点、最大距离、障碍物设置
+
 ## 参考实现
 
 参考以下文件的实现模式：
@@ -241,7 +285,109 @@ const exportGeoJSON = () => {
 - [useBufferAnalysis.ts](mdc:src/composables/useBufferAnalysis.ts)
 - [useLayerManager.ts](mdc:src/composables/useLayerManager.ts)
 - [modeStateStore.ts](mdc:src/stores/modeStateStore.ts)
-description:
-globs:
-alwaysApply: true
----
+
+## 新增分析功能开发流程
+
+### 1. 创建组合式函数
+```typescript
+// src/composables/use[NewAnalysis].ts
+export function use[NewAnalysis]Analysis() {
+  // 响应式状态
+  const analysisSettings = ref({})
+  const analysisResults = ref([])
+  const layerName = ref('')
+  
+  // 分析方法
+  const performAnalysis = async () => {
+    // 实现分析逻辑
+  }
+  
+  // 图层显示
+  const displayResults = () => {
+    // 实现显示逻辑
+  }
+  
+  // 状态管理
+  const { saveState, restoreState } = useModeState('newAnalysis')
+  
+  return {
+    analysisSettings,
+    analysisResults,
+    layerName,
+    performAnalysis,
+    displayResults
+  }
+}
+```
+
+### 2. 创建面板组件
+```vue
+<!-- src/views/dashboard/traditional/tools/[NewAnalysis]Panel.vue -->
+<template>
+  <div class="analysis-panel">
+    <!-- 分析参数设置 -->
+    <!-- 分析结果展示 -->
+    <!-- 操作按钮 -->
+  </div>
+</template>
+
+<script setup lang="ts">
+import { use[NewAnalysis]Analysis } from '@/composables/use[NewAnalysis]Analysis'
+
+const { analysisSettings, analysisResults, performAnalysis } = use[NewAnalysis]Analysis()
+</script>
+```
+
+### 3. 集成到分析Store
+```typescript
+// 在 analysisStore.ts 中添加
+export const useAnalysisStore = defineStore('analysis', () => {
+  const toolPanel = ref({
+    visible: false,
+    currentTool: '',
+    currentToolName: ''
+  })
+  
+  const openTool = (toolId: string, toolName: string) => {
+    toolPanel.value.visible = true
+    toolPanel.value.currentTool = toolId
+    toolPanel.value.currentToolName = toolName
+  }
+  
+  return {
+    toolPanel,
+    openTool
+  }
+})
+```
+
+### 4. 添加路由配置
+```typescript
+// 在路由中添加新工具
+{
+  path: 'newAnalysis',
+  name: 'NewAnalysis',
+  component: () => import('@/views/dashboard/traditional/tools/NewAnalysisPanel.vue'),
+  meta: {
+    title: '新分析工具',
+    requiresAuth: true
+  }
+}
+```
+
+## 测试规范
+
+### 单元测试
+- 测试组合式函数的各个方法
+- 测试状态管理逻辑
+- 测试错误处理机制
+
+### 集成测试
+- 测试组件与Store的交互
+- 测试API调用流程
+- 测试用户交互流程
+
+### 性能测试
+- 测试大量数据的处理性能
+- 测试内存使用情况
+- 测试响应时间

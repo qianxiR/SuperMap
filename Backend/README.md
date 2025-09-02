@@ -65,37 +65,69 @@
 
 文件组织（关键目录）
 ```
-app/
+user/
   api/
     v1/
-      __init__.py              # 汇总路由，仅用户与健康
+      __init__.py              # 路由聚合
       health.py                # 健康检查
       user/
-        auth.py                # 认证 API（依赖容器构建的用例）
-        user_dto.py            # API 层专属 DTO
+        auth.py                # 认证 API（依赖容器用例）
+        user_dto.py            # API 层专属 DTO（如有）
   application/
     dto/
-      user_dto.py             # 应用层 DTO
+      user_dto.py              # 应用层 DTO
     use_cases/
       user/
-        auth_use_case.py      # 认证用例（依赖 UserService）
+        auth_use_case.py       # 认证用例（依赖 UserService）
   domains/
     user/
-      entities.py             # 用户实体
-      repositories.py         # 仓储抽象 + Mock 实现
-      services.py             # 用户领域服务
+      entities.py              # 用户实体
+      repositories.py          # 仓储抽象
+      services.py              # 用户领域服务
   infrastructure/
-    database/postgres/
-      models.py               # SQLAlchemy 模型
-      repositories.py         # PostgreSQL 仓储实现
+    database/
+      postgres/
+        models.py              # SQLAlchemy 模型
+        repositories.py        # PostgreSQL 仓储实现
+    monitoring/                # 监控/日志（如存在）
   core/
-    config.py                 # 配置（Pydantic Settings）
-    database.py               # 数据库会话（AsyncSession）
-    security.py               # 安全/JWT 相关
-    container.py              # 依赖注入容器与构建器
-  main.py                     # FastAPI 应用入口
-utils/
-  user/test_userapi.py        # 认证端到端测试脚本
+    config.py                  # 配置（Pydantic Settings）
+    database.py                # 数据库会话（AsyncSession）
+    security.py                # 安全/JWT 相关
+    container.py               # 依赖注入容器与构建器
+  main.py                      # FastAPI 应用入口（用户服务）
+
+analysis/
+  api/
+    v1/
+      analysis/
+        analysis.py            # 分析任务 API（创建/查询/列表/状态）
+  application/
+    dto/
+      analysis_dto.py          # 分析 DTO（任务/响应/列表/Geometry）
+    use_cases/
+      analysis/
+        analysis_use_case.py   # 分析用例编排
+  domains/
+    analysis/
+      entities.py              # 实体：AnalysisTask/SuperMapRequest/Result/枚举
+      repositories.py          # 仓储抽象（任务/结果/空间数据）
+      services.py              # 领域服务（任务生命周期/进度/删除）
+  infrastructure/
+    database/
+      postgres/
+        models.py              # ORM 模型（analysis_tasks/analysis_results/...）
+        repositories.py        # 仓储实现
+    external/
+      supermap_service.py      # SuperMap 集成（如有）
+  core/
+    config.py                  # 分析模块配置（如独立）
+    container.py               # 分析用依赖注入
+    database.py                # 分析模块数据库（如独立）
+  main.py                      # 分析服务入口（如独立运行）
+
+main.py                         # 聚合入口（如有）
+requirements.txt                # 依赖
 ```
 
 
@@ -176,3 +208,14 @@ python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ## 📜 许可证
 
 本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
+
+
+graph TD
+  A["Backend/"]
+  A --> B["analysis/"]
+  A --> C["user/"]
+  A --> H["agent/"]
+  A --> D["main.py"]
+  A --> E["requirements.txt"]
+  A --> F["package.json"]
+  A --> G[".cursor/"]

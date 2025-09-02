@@ -1,0 +1,565 @@
+# Vue3 组合式函数开发规范
+
+## 概述
+
+组合式函数（Composables）是 Vue 3 的核心特性，用于提取和复用有状态的逻辑。本规范定义了在 SuperMap 前端项目中开发组合式函数的标准。
+
+## 基本结构
+
+### 1. 文件命名
+- 使用 `use` 前缀 + 功能名称 + 可选后缀
+- 示例：`useBufferAnalysis.ts`, `useMap.ts`, `useFeatureSelection.ts`
+
+### 2. 函数命名
+- 使用 camelCase 命名
+- 函数名应该清晰表达其功能
+- 示例：`useBufferAnalysis()`, `useMap()`, `useFeatureSelection()`
+
+### 3. 基本模板
+```typescript
+// src/composables/useExample.ts
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { useMapStore } from '@/stores/mapStore'
+import type { ExampleType } from '@/types/example'
+
+export function useExample() {
+  // 1. 导入必要的 Store
+  const mapStore = useMapStore()
+  
+  // 2. 定义响应式状态
+  const isLoading = ref(false)
+  const data = ref<ExampleType[]>([])
+  const error = ref<string | null>(null)
+  
+  // 3. 定义计算属性
+  const hasData = computed(() => data.value.length > 0)
+  const filteredData = computed(() => {
+    // 计算逻辑
+    return data.value.filter(item => /* 过滤条件 */)
+  })
+  
+  // 4. 定义方法
+  const fetchData = async () => {
+    try {
+      isLoading.value = true
+      error.value = null
+      // 异步操作
+      const result = await api.getData()
+      data.value = result
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : '未知错误'
+    } finally {
+      isLoading.value = false
+    }
+  }
+  
+  const clearData = () => {
+    data.value = []
+    error.value = null
+  }
+  
+  // 5. 监听器
+  watch(data, (newData) => {
+    console.log('数据变化:', newData)
+    // 执行相关逻辑
+  }, { deep: true })
+  
+  // 6. 生命周期钩子
+  onMounted(() => {
+    // 初始化逻辑
+    fetchData()
+  })
+  
+  onUnmounted(() => {
+    // 清理逻辑
+    clearData()
+  })
+  
+  // 7. 返回公共接口
+  return {
+    // 状态
+    isLoading: readonly(isLoading),
+    data: readonly(data),
+    error: readonly(error),
+    
+    // 计算属性
+    hasData,
+    filteredData,
+    
+    // 方法
+    fetchData,
+    clearData
+  }
+}
+```
+
+## 状态管理规范
+
+### 1. 响应式状态
+```typescript
+// 基本类型使用 ref
+const count = ref(0)
+const message = ref('')
+const isVisible = ref(false)
+
+// 对象类型推荐使用 reactive
+const user = reactive({
+  name: '',
+  age: 0,
+  preferences: {}
+})
+
+// 数组类型使用 ref
+const items = ref<Item[]>([])
+```
+
+### 2. 状态暴露
+```typescript
+// 只读状态 - 防止外部直接修改
+const isLoading = ref(false)
+const data = ref<Data[]>([])
+
+return {
+  isLoading: readonly(isLoading),
+  data: readonly(data),
+  // 提供修改方法
+  setLoading: (value: boolean) => isLoading.value = value,
+  updateData: (newData: Data[]) => data.value = newData
+}
+```
+
+### 3. 状态持久化
+```typescript
+// 使用 localStorage 持久化状态
+const usePersistentState = <T>(key: string, defaultValue: T) => {
+  const stored = localStorage.getItem(key)
+  const state = ref<T>(stored ? JSON.parse(stored) : defaultValue)
+  
+  watch(state, (newValue) => {
+    localStorage.setItem(key, JSON.stringify(newValue))
+  }, { deep: true })
+  
+  return state
+}
+
+// 使用示例
+const settings = usePersistentState('user-settings', {
+  theme: 'light',
+  language: 'zh-CN'
+})
+```
+
+## Store 集成规范
+
+### 1. Store 使用
+```typescript
+import { useMapStore } from '@/stores/mapStore'
+import { useAnalysisStore } from '@/stores/analysisStore'
+
+export function useExample() {
+  const mapStore = useMapStore()
+  const analysisStore = useAnalysisStore()
+  
+  // 读取状态
+  const map = computed(() => mapStore.map)
+  const currentTool = computed(() => analysisStore.currentTool)
+  
+  // 调用方法
+  const addLayer = (layer: Layer) => {
+    mapStore.addLayer(layer)
+  }
+  
+  const openTool = (toolId: string) => {
+    analysisStore.openTool(toolId)
+  }
+  
+  return {
+    map,
+    currentTool,
+    addLayer,
+    openTool
+  }
+}
+```
+
+### 2. 状态同步
+```typescript
+// 监听 Store 状态变化
+watch(() => mapStore.currentLayer, (newLayer) => {
+  if (newLayer) {
+    // 执行相关逻辑
+    updateSelection(newLayer)
+  }
+})
+
+// 订阅 Store 变化
+mapStore.$subscribe((mutation, state) => {
+  console.log('Map store 变化:', mutation.type, state)
+})
+```
+
+## 异步操作规范
+
+### 1. 异步方法结构
+```typescript
+const fetchData = async (params: FetchParams) => {
+  try {
+    // 1. 设置加载状态
+    isLoading.value = true
+    error.value = null
+    
+    // 2. 执行异步操作
+    const result = await api.fetchData(params)
+    
+    // 3. 处理结果
+    data.value = result
+    return { success: true, data: result }
+    
+  } catch (err) {
+    // 4. 错误处理
+    const errorMessage = err instanceof Error ? err.message : '请求失败'
+    error.value = errorMessage
+    console.error('获取数据失败:', err)
+    return { success: false, error: errorMessage }
+    
+  } finally {
+    // 5. 清理状态
+    isLoading.value = false
+  }
+}
+```
+
+### 2. 取消请求
+```typescript
+import { ref, onUnmounted } from 'vue'
+
+export function useCancellableRequest() {
+  const abortController = ref<AbortController | null>(null)
+  
+  const makeRequest = async (url: string) => {
+    // 取消之前的请求
+    if (abortController.value) {
+      abortController.value.abort()
+    }
+    
+    // 创建新的 AbortController
+    abortController.value = new AbortController()
+    
+    try {
+      const response = await fetch(url, {
+        signal: abortController.value.signal
+      })
+      return await response.json()
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        console.log('请求被取消')
+        return null
+      }
+      throw err
+    }
+  }
+  
+  const cancelRequest = () => {
+    if (abortController.value) {
+      abortController.value.abort()
+      abortController.value = null
+    }
+  }
+  
+  onUnmounted(() => {
+    cancelRequest()
+  })
+  
+  return {
+    makeRequest,
+    cancelRequest
+  }
+}
+```
+
+## 事件处理规范
+
+### 1. 事件监听器管理
+```typescript
+import { onMounted, onUnmounted } from 'vue'
+
+export function useMapEvents() {
+  const eventHandlers = new Map<string, Function>()
+  
+  const addEventListener = (event: string, handler: Function) => {
+    if (mapStore.map) {
+      mapStore.map.on(event, handler)
+      eventHandlers.set(event, handler)
+    }
+  }
+  
+  const removeEventListener = (event: string) => {
+    const handler = eventHandlers.get(event)
+    if (handler && mapStore.map) {
+      mapStore.map.un(event, handler)
+      eventHandlers.delete(event)
+    }
+  }
+  
+  const removeAllEventListeners = () => {
+    eventHandlers.forEach((handler, event) => {
+      removeEventListener(event)
+    })
+  }
+  
+  onMounted(() => {
+    // 添加事件监听器
+    addEventListener('click', handleMapClick)
+    addEventListener('moveend', handleMapMoveEnd)
+  })
+  
+  onUnmounted(() => {
+    // 清理事件监听器
+    removeAllEventListeners()
+  })
+  
+  return {
+    addEventListener,
+    removeEventListener,
+    removeAllEventListeners
+  }
+}
+```
+
+### 2. 防抖和节流
+```typescript
+import { ref } from 'vue'
+
+// 防抖
+export function useDebounce<T>(value: T, delay = 300) {
+  const debouncedValue = ref<T>(value)
+  let timeoutId: NodeJS.Timeout
+  
+  const updateValue = (newValue: T) => {
+    clearTimeout(timeoutId)
+    timeoutId = setTimeout(() => {
+      debouncedValue.value = newValue
+    }, delay)
+  }
+  
+  return {
+    debouncedValue: readonly(debouncedValue),
+    updateValue
+  }
+}
+
+// 节流
+export function useThrottle<T>(value: T, delay = 300) {
+  const throttledValue = ref<T>(value)
+  let lastUpdate = 0
+  
+  const updateValue = (newValue: T) => {
+    const now = Date.now()
+    if (now - lastUpdate >= delay) {
+      throttledValue.value = newValue
+      lastUpdate = now
+    }
+  }
+  
+  return {
+    throttledValue: readonly(throttledValue),
+    updateValue
+  }
+}
+```
+
+## 类型定义规范
+
+### 1. 接口定义
+```typescript
+// 在 types 目录中定义接口
+export interface AnalysisParams {
+  geometry: Geometry
+  distance: number
+  unit: 'meters' | 'kilometers'
+}
+
+export interface AnalysisResult {
+  id: string
+  geometry: Geometry
+  properties: Record<string, any>
+  createdAt: string
+}
+
+export interface UseAnalysisReturn {
+  // 状态
+  isLoading: Ref<boolean>
+  results: Ref<AnalysisResult[]>
+  error: Ref<string | null>
+  
+  // 方法
+  performAnalysis: (params: AnalysisParams) => Promise<void>
+  clearResults: () => void
+  exportResults: () => void
+}
+```
+
+### 2. 类型使用
+```typescript
+import type { AnalysisParams, AnalysisResult, UseAnalysisReturn } from '@/types/analysis'
+
+export function useAnalysis(): UseAnalysisReturn {
+  const results = ref<AnalysisResult[]>([])
+  
+  const performAnalysis = async (params: AnalysisParams) => {
+    // 实现逻辑
+  }
+  
+  return {
+    // 返回类型
+  }
+}
+```
+
+## 测试规范
+
+### 1. 单元测试
+```typescript
+// __tests__/useExample.test.ts
+import { describe, it, expect, vi } from 'vitest'
+import { renderHook } from '@testing-library/vue'
+import { useExample } from '@/composables/useExample'
+
+describe('useExample', () => {
+  it('should initialize with default values', () => {
+    const { result } = renderHook(() => useExample())
+    
+    expect(result.current.isLoading.value).toBe(false)
+    expect(result.current.data.value).toEqual([])
+    expect(result.current.error.value).toBeNull()
+  })
+  
+  it('should fetch data successfully', async () => {
+    const { result } = renderHook(() => useExample())
+    
+    await result.current.fetchData()
+    
+    expect(result.current.isLoading.value).toBe(false)
+    expect(result.current.data.value).toHaveLength(1)
+    expect(result.current.error.value).toBeNull()
+  })
+})
+```
+
+### 2. 测试工具
+```typescript
+// 模拟 Store
+vi.mock('@/stores/mapStore', () => ({
+  useMapStore: () => ({
+    map: ref(null),
+    addLayer: vi.fn(),
+    removeLayer: vi.fn()
+  })
+}))
+
+// 模拟 API
+vi.mock('@/api/example', () => ({
+  fetchData: vi.fn()
+}))
+```
+
+## 性能优化
+
+### 1. 懒加载
+```typescript
+// 按需导入大型依赖
+const loadHeavyLibrary = async () => {
+  const { default: HeavyLibrary } = await import('heavy-library')
+  return new HeavyLibrary()
+}
+```
+
+### 2. 计算属性优化
+```typescript
+// 避免在计算属性中执行复杂操作
+const expensiveComputation = computed(() => {
+  // 使用缓存或分页处理大量数据
+  return data.value.slice(0, 1000).map(item => /* 处理逻辑 */)
+})
+```
+
+### 3. 内存管理
+```typescript
+onUnmounted(() => {
+  // 清理定时器
+  clearInterval(timerId)
+  
+  // 清理事件监听器
+  removeAllEventListeners()
+  
+  // 清理引用
+  data.value = []
+  eventHandlers.clear()
+})
+```
+
+## 错误处理
+
+### 1. 错误边界
+```typescript
+const handleError = (error: unknown, context: string) => {
+  const errorMessage = error instanceof Error ? error.message : String(error)
+  console.error(`[${context}] 错误:`, error)
+  
+  // 记录错误日志
+  logError(error, context)
+  
+  // 显示用户友好的错误信息
+  showErrorMessage(errorMessage)
+}
+```
+
+### 2. 重试机制
+```typescript
+const retryOperation = async <T>(
+  operation: () => Promise<T>,
+  maxRetries = 3,
+  delay = 1000
+): Promise<T> => {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await operation()
+    } catch (error) {
+      if (i === maxRetries - 1) throw error
+      
+      await new Promise(resolve => setTimeout(resolve, delay * (i + 1)))
+    }
+  }
+  throw new Error('重试次数已用完')
+}
+```
+
+## 最佳实践
+
+### 1. 单一职责
+- 每个组合式函数只负责一个特定功能
+- 避免在一个函数中混合多个不相关的逻辑
+
+### 2. 可组合性
+- 设计可组合的接口
+- 允许组合式函数之间相互调用和组合
+
+### 3. 响应式设计
+- 合理使用 `ref` 和 `reactive`
+- 避免不必要的响应式包装
+
+### 4. 文档和注释
+- 为复杂的逻辑添加注释
+- 提供使用示例和类型说明
+
+### 5. 错误处理
+- 提供有意义的错误信息
+- 实现适当的错误恢复机制
+
+### 6. 性能考虑
+- 避免在组合式函数中创建不必要的闭包
+- 合理使用 `shallowRef` 和 `shallowReactive`
+description:
+globs:
+alwaysApply: true
+---
