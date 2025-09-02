@@ -1,0 +1,272 @@
+# SuperMap Frontend 项目架构指南
+
+## 项目概述
+基于 Vue 3 + SuperMap iServer 的现代化 WebGIS 应用，集成 AI 助手与传统 GIS 分析功能。
+
+## 技术栈
+- **前端框架**: Vue 3.5.18 (Composition API)
+- **构建工具**: Vite 7.0.6
+- **语言**: TypeScript 5.9.2
+- **地图引擎**: OpenLayers 10.6.1
+- **GIS 服务**: SuperMap iClient Leaflet 12.0.0-r
+- **状态管理**: Pinia 3.0.3
+- **路由**: Vue Router 4.5.1
+- **UI 组件**: Ant Design Vue 4.2.6
+
+## 项目结构
+
+### 核心目录
+```
+src/
+├── api/                    # API 接口层
+│   ├── analysis.ts        # 分析相关 API
+│   ├── config.ts          # API 配置
+│   └── supermap.ts        # SuperMap 服务 API
+├── components/            # 组件库
+│   ├── Layout/           # 布局组件
+│   ├── Map/              # 地图相关组件
+│   └── UI/               # 通用 UI 组件
+├── composables/          # 组合式函数
+│   ├── useBufferAnalysis.ts      # 缓冲区分析
+│   ├── useDistanceAnalysis.ts    # 距离分析
+│   ├── useServiceAreaAnalysis.ts # 服务区分析
+│   ├── useMap.ts                 # 地图交互
+│   └── useFeatureSelection.ts    # 要素选择
+├── stores/               # 状态管理
+│   ├── analysisStore.ts  # 分析状态
+│   ├── mapStore.ts       # 地图状态
+│   ├── selectionStore.ts # 选择状态
+│   └── themeStore.ts     # 主题状态
+├── views/                # 页面组件
+│   ├── dashboard/        # 仪表板页面
+│   │   ├── traditional/  # 传统 GIS 模式
+│   │   └── llm/          # AI 智能模式
+│   └── auth/             # 认证页面
+├── types/                # TypeScript 类型定义
+├── utils/                # 工具函数
+└── styles/               # 样式文件
+    └── theme.css         # 主题变量
+```
+
+## 开发规范
+
+### 1. 文件命名
+- **组件**: PascalCase (如 `BufferAnalysisPanel.vue`)
+- **组合式函数**: camelCase (如 `useBufferAnalysis.ts`)
+- **Store**: camelCase + Store (如 `analysisStore.ts`)
+- **类型定义**: camelCase (如 `map.ts`)
+
+### 2. 导入顺序
+```typescript
+// 1. Vue 相关
+import { ref, computed } from 'vue'
+
+// 2. 外部库
+import { useRouter } from 'vue-router'
+
+// 3. 内部模块
+import { useAnalysisStore } from '@/stores/analysisStore'
+
+// 4. 类型定义
+import type { BufferParams } from '@/api/analysis'
+```
+
+### 3. 组件结构
+```vue
+<template>
+  <!-- 模板内容 -->
+</template>
+
+<script setup lang="ts">
+// 导入
+import { ref, computed } from 'vue'
+
+// 类型定义
+interface Props {
+  // ...
+}
+
+// 组件逻辑
+const props = defineProps<Props>()
+const emit = defineEmits<{
+  // ...
+}>()
+
+// 组合式函数
+const { data, methods } = useComposable()
+
+// 计算属性
+const computedValue = computed(() => {
+  // ...
+})
+
+// 方法
+const handleClick = () => {
+  // ...
+}
+</script>
+
+<style scoped>
+/* 样式 */
+</style>
+```
+
+## 状态管理架构
+
+### Store 组织
+- **analysisStore**: 分析工具状态、面板控制
+- **mapStore**: 地图实例、图层管理、交互状态
+- **selectionStore**: 要素选择状态
+- **themeStore**: 主题切换、UI 状态
+
+### 状态访问模式
+```typescript
+// 在组件中使用
+const analysisStore = useAnalysisStore()
+const mapStore = useMapStore()
+
+// 状态读取
+const isVisible = analysisStore.toolPanel.visible
+
+// 状态修改
+analysisStore.openTool('buffer', '缓冲区分析')
+```
+
+## 地图交互规范
+
+### 图层管理
+```typescript
+// 添加图层
+const layer = new ol.layer.Vector({
+  source: new ol.source.Vector({
+    features: features
+  })
+})
+mapStore.addLayer(layer)
+
+// 移除图层
+mapStore.removeLayer(layerId)
+```
+
+### 要素选择
+- **点击选择**: `selectionStore.selectedFeatures`
+- **区域选择**: `areaSelectionStore.selectedFeatures`
+- **属性查询**: `featureQueryStore.queryResults`
+
+### 分析功能
+- **缓冲区分析**: 基于 `SpatialAnalystService`
+- **路径分析**: 基于 `NetworkAnalystService`
+- **服务区分析**: 基于 `NetworkAnalystService`
+
+## API 设计规范
+
+### 接口结构
+```typescript
+// 输入参数
+interface BufferParams {
+  geometry: {
+    type: string
+    coordinates: number[]
+  }
+  distance: number
+  unit: 'meters' | 'kilometers'
+}
+
+// 返回结果
+interface ServiceResponse<T> {
+  success: boolean
+  data?: T
+  error?: string
+}
+```
+
+### 错误处理
+```typescript
+try {
+  const response = await analysisAPI.bufferAnalysis(params)
+  if (response.success) {
+    // 处理成功结果
+  } else {
+    // 处理错误
+    console.error(response.error)
+  }
+} catch (error) {
+  // 处理异常
+}
+```
+
+## 样式规范
+
+### 主题变量
+- 使用 CSS 变量定义主题色
+- 文件位置: [src/styles/theme.css](mdc:src/styles/theme.css)
+- 变量命名: `--primary`, `--secondary`, `--accent` 等
+
+### 组件样式
+```css
+/* 使用主题变量 */
+.component {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .component {
+    /* 移动端样式 */
+  }
+}
+```
+
+## 路由配置
+
+### 路由结构
+- **传统模式**: `/dashboard/traditional/*`
+- **AI 模式**: `/dashboard/llm`
+- **工具路由**: `/dashboard/traditional/buffer`, `/dashboard/traditional/distance` 等
+
+### 路由守卫
+- 认证检查: 检查 `localStorage.authToken`
+- 权限控制: 基于用户角色
+- 重定向逻辑: 未登录用户重定向到登录页
+
+## 性能优化
+
+### 代码分割
+- 路由级别的懒加载
+- 大型依赖的动态导入
+- 组件按需加载
+
+### 内存管理
+- 及时清理事件监听器
+- 移除未使用的图层和要素
+- 避免内存泄漏
+
+## 测试策略
+
+### 单元测试
+- 组合式函数测试
+- Store 状态测试
+- 工具函数测试
+
+### 集成测试
+- 组件交互测试
+- API 调用测试
+- 路由导航测试
+
+## 部署配置
+
+### 构建配置
+- Vite 构建优化
+- 环境变量配置
+- 静态资源处理
+
+### 服务配置
+- SuperMap iServer 服务地址
+- API 代理配置
+- CORS 设置
+description:
+globs:
+alwaysApply: true
+---

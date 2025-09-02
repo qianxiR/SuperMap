@@ -52,57 +52,53 @@
       </div>
     </div>
 
-    <!-- 路径参数 -->
-    <div class="analysis-section">
-      <div class="section-title">路径参数</div>
-      <div class="form-item">
-        <label class="form-label">路径类型</label>
-        <DropdownSelect 
-          v-model="pathType" 
-          placeholder="请选择路径类型"
-          :options="[
-            { value: 'shortest', label: '最短路径' },
-            { value: 'fastest', label: '最快路径' },
-            { value: 'scenic', label: '风景路径' }
-          ]"
-        />
-      </div>
-      <div class="form-item">
-        <label class="form-label">交通方式</label>
-        <DropdownSelect 
-          v-model="transportMode" 
-          placeholder="请选择交通方式"
-          :options="[
-            { value: 'walking', label: '步行' },
-            { value: 'cycling', label: '骑行' },
-            { value: 'driving', label: '驾车' },
-            { value: 'transit', label: '公交' }
-          ]"
-        />
-      </div>
-    </div>
+
 
     <!-- 分析操作 -->
     <div class="analysis-section">
-      <SecondaryButton 
-        text="计算最优路径"
-        @click="executePathAnalysis"
-      />
+      <div class="analysis-actions">
+        <SecondaryButton 
+          text="计算最短路径"
+          @click="executePathAnalysis"
+          :disabled="!canAnalyze"
+        />
+        
+        <SecondaryButton 
+          v-if="currentResult"
+          text="导出路径"
+          @click="exportGeoJSON"
+          style="margin-top: 8px;"
+        />
+
+        <SecondaryButton 
+          v-if="currentResult"
+          text="保存图层"
+          @click="handleSaveLayer"
+          style="margin-top: 8px;"
+        />
+
+        <SecondaryButton 
+          v-if="hasResults || startPointInfo || endPointInfo"
+          text="清除状态"
+          @click="handleClearState"
+          style="margin-top: 8px;"
+        />
+      </div>
       
       <!-- 显示分析结果 -->
-      <div v-if="analysisResult" class="result-section">
+      <div v-if="currentResult" class="result-section">
         <div class="result-title">路径分析结果</div>
         <div class="result-item">
           <span class="result-label">路径长度:</span>
-          <span class="result-value">{{ analysisResult.distance }} 米</span>
+          <span class="result-value">{{ currentResult.distance }} 米</span>
         </div>
         <div class="result-item">
           <span class="result-label">预计时间:</span>
-          <span class="result-value">{{ analysisResult.duration }} 分钟</span>
+          <span class="result-value">{{ currentResult.duration }} 分钟</span>
         </div>
         <div class="result-item">
           <span class="result-label">路径类型:</span>
-          <span class="result-value">{{ analysisResult.pathType }}</span>
+          <span class="result-value">{{ currentResult.pathType }}</span>
         </div>
       </div>
     </div>
@@ -110,9 +106,9 @@
 </template>
 
 <script setup lang="ts">
-import { watch, computed } from 'vue'
+import { watch, computed, onMounted } from 'vue'
 import { useAnalysisStore } from '@/stores/analysisStore'
-import { useDistanceAnalysis } from '@/composables/useDistanceAnalysis'
+import { usePathAnalysis } from '@/composables/usePathAnalysis'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
 import DropdownSelect from '@/components/UI/DropdownSelect.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
@@ -122,35 +118,55 @@ const analysisStore = useAnalysisStore()
 const {
   startPointInfo,
   endPointInfo,
-  pathType,
-  transportMode,
-  analysisResult,
+  analysisResults,
+  layerName,
+  canAnalyze,
+  isSelectingStartPoint,
+  isSelectingEndPoint,
   selectStartPoint,
   selectEndPoint,
-  clearSelection,
-  executePathAnalysis
-} = useDistanceAnalysis()
+  clearResults,
+  executePathAnalysis,
+  saveAnalysisLayer,
+  exportGeoJSON
+} = usePathAnalysis()
 
-// 是否正在选择起始点
-const isSelectingStartPoint = computed(() => {
-  return analysisStore.toolPanel.activeTool === 'distance' && !startPointInfo.value
-})
+// 计算属性
+const hasResults = computed(() => analysisResults.value.length > 0)
+const currentResult = computed(() => analysisResults.value[0] || null)
 
-// 是否正在选择目标点
-const isSelectingEndPoint = computed(() => {
-  return analysisStore.toolPanel.activeTool === 'distance' && startPointInfo.value && !endPointInfo.value
+// 组件挂载时初始化
+onMounted(async () => {
+  // 状态管理已移除，无需初始化
 })
 
 // 监听工具面板变化
-watch(() => analysisStore.toolPanel.activeTool, (tool) => {
+watch(() => analysisStore.toolPanel.activeTool, async (tool) => {
   if (tool === 'distance') {
-    // 当进入路径分析时，自动激活起始点选择模式
-    selectStartPoint()
+    // 进入最短路径分析模式
+    // 状态管理已移除，直接显示提示信息
+    analysisStore.setAnalysisStatus('请点击选择起始点和目标点进行最短路径分析')
   } else {
-    // 当离开路径分析时，清除选中状态
-    clearSelection()
+    // 离开最短路径分析模式
+    // 状态管理已移除，无需特殊处理
   }
 })
+
+// 保存图层
+const handleSaveLayer = async () => {
+  const success = await saveAnalysisLayer()
+  if (success) {
+    analysisStore.setAnalysisStatus('图层保存成功')
+  } else {
+    analysisStore.setAnalysisStatus('图层保存失败')
+  }
+}
+
+// 清除状态
+const handleClearState = () => {
+  clearResults()
+  analysisStore.setAnalysisStatus('状态已清除，可以重新开始分析')
+}
 </script>
 
 <style scoped>
@@ -208,8 +224,8 @@ watch(() => analysisStore.toolPanel.activeTool, (tool) => {
 .feature-info {
   margin-top: 12px;
   padding: 16px;
-  background: rgba(66, 165, 245, 0.08);
-  border: 1px solid rgba(66, 165, 245, 0.2);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
   animation: fadeIn 0.3s ease-out;
 }
@@ -233,7 +249,7 @@ watch(() => analysisStore.toolPanel.activeTool, (tool) => {
 
 .info-value {
   font-size: 11px;
-  color: var(--accent);
+  color: var(--text);
   font-weight: 600;
 }
 
@@ -249,13 +265,50 @@ watch(() => analysisStore.toolPanel.activeTool, (tool) => {
   font-weight: 500;
 }
 
+.analysis-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.obstacle-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-light);
+}
+
+.form-input::-webkit-inner-spin-button,
+.form-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.form-input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
+}
 
 
 .result-section {
   margin-top: 16px;
   padding: 16px;
-  background: rgba(40, 167, 69, 0.05);
-  border: 1px solid rgba(40, 167, 69, 0.2);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
 }
 

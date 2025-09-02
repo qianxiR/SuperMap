@@ -53,7 +53,7 @@
 <script setup lang="ts">
 import { watch, computed, ref } from 'vue'
 import { useAnalysisStore } from '@/stores/analysisStore'
-import { useThiessenAnalysis } from '@/composables/useThiessenAnalysis.ts'
+import { useThiessenAnalysis } from '@/composables/useThiessenAnalysis'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
 import TraditionalInputGroup from '@/components/UI/TraditionalInputGroup.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
@@ -116,8 +116,8 @@ watch(() => analysisStore.toolPanel.activeTool, (tool) => {
 .feature-info {
   margin-top: 12px;
   padding: 16px;
-  background: rgba(66, 165, 245, 0.08);
-  border: 1px solid rgba(66, 165, 245, 0.2);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
 }
 
@@ -159,8 +159,8 @@ watch(() => analysisStore.toolPanel.activeTool, (tool) => {
 .result-section {
   margin-top: 16px;
   padding: 16px;
-  background: rgba(40, 167, 69, 0.05);
-  border: 1px solid rgba(40, 167, 69, 0.2);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
 }
 

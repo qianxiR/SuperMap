@@ -575,12 +575,8 @@ const useMapStore = defineStore('map', () => {
    function updateAreaMeasureStyle() {
      if (areaMeasureLayer.value) {
        const ol = window.ol
-       const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#000000' : '#212529')
-       const hex = highlightColor.replace('#', '')
-       const r = parseInt(hex.substr(0, 2), 16)
-       const g = parseInt(hex.substr(2, 2), 16)
-       const b = parseInt(hex.substr(4, 2), 16)
-       const fillColor = `rgba(${r}, ${g}, ${b}, 0.1)`
+       const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--measure-line-color').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000')
+       const measureRgb = getComputedStyle(document.documentElement).getPropertyValue('--measure-line-rgb').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '255, 255, 255' : '0, 0, 0')
        
        const newStyle = new ol.style.Style({
          stroke: new ol.style.Stroke({
@@ -588,7 +584,7 @@ const useMapStore = defineStore('map', () => {
            width: 2
          }),
          fill: new ol.style.Fill({
-           color: fillColor
+           color: `rgba(${measureRgb}, 0.1)`
          })
        })
        

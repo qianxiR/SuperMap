@@ -264,7 +264,7 @@ onMounted(() => {
       import('@/views/dashboard/traditional/tools/EditTools.vue'),
       import('@/views/dashboard/traditional/tools/BufferAnalysisPanel.vue'),
       import('@/views/dashboard/traditional/tools/DistanceAnalysisPanel.vue'),
-      import('@/views/dashboard/traditional/tools/ServiceAreaAnalysisPanel.vue'),
+      import('@/views/dashboard/traditional/tools/OverlayAnalysisPanel.vue'),
       import('ol')
     ]).catch(() => {})
   }, 0)

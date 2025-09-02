@@ -118,14 +118,14 @@ const router = createRouter({
                       const state = JSON.parse(savedState)
                       if (state.activeTool) {
                         // 根据activeTool找到对应的路径
-                        const toolPathMap: { [key: string]: string } = {
-                          'layer': 'layer',
-                          'query': 'query',
-                          'bianji': 'edit',
-                          'buffer': 'buffer',
-                          'distance': 'distance',
-                          'servicearea': 'service-area'
-                        }
+                                                 const toolPathMap: { [key: string]: string } = {
+                           'layer': 'layer',
+                           'query': 'query',
+                           'bianji': 'edit',
+                           'buffer': 'buffer',
+                           'distance': 'distance',
+                           'overlay': 'overlay'
+                         }
                         const path = toolPathMap[state.activeTool]
                         if (path) {
                           return `/dashboard/traditional/${path}`
@@ -193,17 +193,17 @@ const router = createRouter({
                 requiresAuth: true
               }
             },
-            // 服务区分析
-            {
-              path: 'service-area',
-              name: 'service-area-analysis',
-              component: () => import('@/views/dashboard/traditional/tools/ServiceAreaAnalysisPanel.vue'),
-              meta: {
-                title: '服务区分析',
-                tool: 'servicearea',
-                requiresAuth: true
-              }
-            }
+                         // 叠加分析
+             {
+               path: 'overlay',
+               name: 'overlay-analysis',
+               component: () => import('@/views/dashboard/traditional/tools/OverlayAnalysisPanel.vue'),
+               meta: {
+                 title: '叠加分析',
+                 tool: 'overlay',
+                 requiresAuth: true
+               }
+             }
           ]
         }
       ]

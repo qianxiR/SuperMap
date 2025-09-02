@@ -221,12 +221,12 @@ watch(() => props.condition.operator, () => {
 
 .validation-success {
   color: var(--text);
-  background: rgba(40, 167, 69, 0.1);
+  background: var(--surface);
 }
 
 .validation-warning {
   color: var(--text);
-  background: rgba(255, 193, 7, 0.1);
+  background: var(--surface);
 }
 
 /* 响应式设计 */

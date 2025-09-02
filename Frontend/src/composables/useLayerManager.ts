@@ -355,7 +355,7 @@ export function useLayerManager() {
   const saveFeaturesAsLayer = async (
     features: any[], 
     layerName: string, 
-    sourceType: 'draw' | 'area' | 'query' = 'draw'
+    sourceType: 'draw' | 'area' | 'query' | 'buffer' | 'overlay' | 'path' = 'draw'
   ) => {
     console.log(`开始保存${sourceType}要素为图层: ${layerName}`)
     
@@ -445,22 +445,22 @@ export function useLayerManager() {
 
       // 根据来源类型设置不同的样式
       const getLayerStyle = () => {
-        const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#000000' : '#212529')
+        const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--draw-color').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000')
         
         switch (sourceType) {
           case 'draw':
             return new ol.style.Style({
               stroke: new ol.style.Stroke({
-                color: '#ff0000',
+                color: highlightColor,
                 width: 2
               }),
               fill: new ol.style.Fill({
-                color: 'rgba(255, 0, 0, 0.1)'
+                color: `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--draw-rgb').trim() || '0, 0, 0'}, 0.1)`
               }),
               image: new ol.style.Circle({
                 radius: 6,
                 fill: new ol.style.Fill({
-                  color: '#ff0000'
+                  color: highlightColor
                 }),
                 stroke: new ol.style.Stroke({
                   color: getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || '#ffffff',
@@ -471,11 +471,51 @@ export function useLayerManager() {
           case 'area':
             return new ol.style.Style({
               stroke: new ol.style.Stroke({
-                color: '#ff0000',
+                color: highlightColor,
                 width: 2
               }),
               fill: new ol.style.Fill({
-                color: 'rgba(255, 0, 0, 0.1)'
+                color: `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').trim() || '0, 0, 0'}, 0.1)`
+              }),
+              image: new ol.style.Circle({
+                radius: 6,
+                fill: new ol.style.Fill({
+                  color: highlightColor
+                }),
+                stroke: new ol.style.Stroke({
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || '#ffffff',
+                  width: 2
+                })
+              })
+            })
+          case 'query':
+            return new ol.style.Style({
+              stroke: new ol.style.Stroke({
+                color: highlightColor,
+                width: 2
+              }),
+              fill: new ol.style.Fill({
+                color: `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').trim() || '0, 0, 0'}, 0.1)`
+              }),
+              image: new ol.style.Circle({
+                radius: 6,
+                fill: new ol.style.Fill({
+                  color: highlightColor
+                }),
+                stroke: new ol.style.Stroke({
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || '#ffffff',
+                  width: 2
+                })
+              })
+            })
+          case 'buffer':
+            return new ol.style.Style({
+              stroke: new ol.style.Stroke({
+                color: '#ff0000',
+                width: 3
+              }),
+              fill: new ol.style.Fill({
+                color: 'rgba(255, 255, 255, 0.0)' // 完全透明，实现空心效果
               }),
               image: new ol.style.Circle({
                 radius: 6,
@@ -488,19 +528,19 @@ export function useLayerManager() {
                 })
               })
             })
-          case 'query':
+          case 'overlay':
             return new ol.style.Style({
               stroke: new ol.style.Stroke({
-                color: '#0000ff',
-                width: 2
+                color: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#3b82f6',
+                width: 3
               }),
               fill: new ol.style.Fill({
-                color: 'rgba(0, 0, 255, 0.1)'
+                color: `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').trim() || '59, 130, 246'}, 0.2)`
               }),
               image: new ol.style.Circle({
                 radius: 6,
                 fill: new ol.style.Fill({
-                  color: '#0000ff'
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#3b82f6'
                 }),
                 stroke: new ol.style.Stroke({
                   color: getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || '#ffffff',
@@ -515,7 +555,7 @@ export function useLayerManager() {
                 width: 2
               }),
               fill: new ol.style.Fill({
-                color: `rgba(0, 123, 255, 0.1)`
+                color: `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').trim() || '0, 0, 0'}, 0.1)`
               }),
               image: new ol.style.Circle({
                 radius: 6,

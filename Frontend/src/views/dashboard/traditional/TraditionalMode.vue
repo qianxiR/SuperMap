@@ -10,8 +10,8 @@
         </div>
         <div class="button-row">
           <PrimaryButton text="缓冲区分析" :active="isBufferOpen" @click="toggleBuffer" />
-          <PrimaryButton text="最优路径分析" :active="isDistanceOpen" @click="toggleDistance" />
-          <PrimaryButton text="服务区分析" :active="isServiceAreaOpen" @click="toggleServiceArea" />
+          <PrimaryButton text="最短路径分析" :active="isDistanceOpen" @click="toggleDistance" />
+          <PrimaryButton text="叠加分析" :active="isOverlayOpen" @click="toggleOverlay" />
         </div>
       </div>
     </div>
@@ -23,7 +23,7 @@
       <EditTools v-if="analysisStore.toolPanel.activeTool === 'bianji'" />
       <BufferAnalysisPanel v-if="analysisStore.toolPanel.activeTool === 'buffer'" />
       <DistanceAnalysisPanel v-if="analysisStore.toolPanel.activeTool === 'distance'" />
-      <ServiceAreaAnalysisPanel v-if="analysisStore.toolPanel.activeTool === 'servicearea'" />
+      <OverlayAnalysisPanel v-if="analysisStore.toolPanel.activeTool === 'overlay'" />
       <LayerManager v-if="analysisStore.toolPanel.activeTool === 'layer'" />
       
       <!-- 新增：路由视图（不影响现有逻辑） -->
@@ -47,7 +47,7 @@ import FeatureQueryPanel from '@/views/dashboard/traditional/tools/FeatureQueryP
 import EditTools from '@/views/dashboard/traditional/tools/EditTools.vue'
 import BufferAnalysisPanel from '@/views/dashboard/traditional/tools/BufferAnalysisPanel.vue'
 import DistanceAnalysisPanel from '@/views/dashboard/traditional/tools/DistanceAnalysisPanel.vue'
-import ServiceAreaAnalysisPanel from '@/views/dashboard/traditional/tools/ServiceAreaAnalysisPanel.vue'
+import OverlayAnalysisPanel from '@/views/dashboard/traditional/tools/OverlayAnalysisPanel.vue'
 import LayerManager from '@/views/dashboard/traditional/tools/LayerManager.vue'
 import PrimaryButton from '@/components/UI/PrimaryButton.vue'
 import PanelContainer from '@/components/UI/PanelContainer.vue'
@@ -62,8 +62,8 @@ const toolConfigs = {
   bianji: { id: 'bianji', title: '图层编辑', path: 'edit' },
   buffer: { id: 'buffer', title: '缓冲区分析', path: 'buffer' },
   layer: { id: 'layer', title: '图层管理', path: 'layer' },
-  distance: { id: 'distance', title: '最优路径分析', path: 'distance' },
-  servicearea: { id: 'servicearea', title: '服务区分析', path: 'service-area' },
+  distance: { id: 'distance', title: '最短路径分析', path: 'distance' },
+  overlay: { id: 'overlay', title: '叠加分析', path: 'overlay' },
   query: { id: 'query', title: '要素查询', path: 'query' }
 } as const
 
@@ -77,7 +77,7 @@ const isBufferOpen = computed(() => analysisStore.toolPanel.visible && analysisS
 const isLayerOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'layer')
 const isbianji = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'bianji')
 const isDistanceOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'distance')
-const isServiceAreaOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'servicearea')
+const isOverlayOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'overlay')
 const isQueryOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'query')
 
 // 路由导航函数
@@ -102,7 +102,9 @@ const toggleTool = (toolKey: keyof typeof toolConfigs) => {
     analysisStore.closeTool()
     router.push('/dashboard/traditional')
   } else {
-    // 否则导航到对应工具
+    // 否则导航到对应工具，使用 switchTool 确保状态清理
+    const prevTool = analysisStore.toolPanel.activeTool
+    analysisStore.switchTool(config.id as any, prevTool)
     navigateToTool(toolKey)
   }
 }
@@ -112,7 +114,7 @@ const togglebianji = () => toggleTool('bianji')
 const toggleBuffer = () => toggleTool('buffer')
 const toggleLayerManager = () => toggleTool('layer')
 const toggleDistance = () => toggleTool('distance')
-const toggleServiceArea = () => toggleTool('servicearea')
+const toggleOverlay = () => toggleTool('overlay')
 const toggleQuery = () => toggleTool('query')
 
 // 监听路由变化，同步到状态管理
@@ -124,7 +126,9 @@ watch(() => route.path, (newPath) => {
     const toolKey = Object.entries(toolConfigs).find(([, config]) => config.path === pathSegment)?.[0] as keyof typeof toolConfigs
     if (toolKey) {
       const config = toolConfigs[toolKey]
-      analysisStore.openTool(config.id, config.title)
+      const prevTool = analysisStore.toolPanel.activeTool
+      // 使用 switchTool 确保状态清理
+      analysisStore.switchTool(config.id as any, prevTool)
       
       // 同步到模式状态管理
       modeStateStore.saveTraditionalState({
@@ -135,7 +139,7 @@ watch(() => route.path, (newPath) => {
 }, { immediate: true })
 
 // 监听状态变化，同步到路由
-watch(() => analysisStore.toolPanel.activeTool, (newTool) => {
+watch(() => analysisStore.toolPanel.activeTool, (newTool, oldTool) => {
   if (newTool && !isRouteMode.value) {
     const toolKey = Object.entries(toolConfigs).find(([, config]) => config.id === newTool)?.[0] as keyof typeof toolConfigs
     if (toolKey) {
@@ -166,7 +170,7 @@ onMounted(() => {
         'bianji': '图层编辑',
         'buffer': '缓冲区分析',
         'distance': '距离分析',
-        'servicearea': '服务区分析'
+        'overlay': '叠加分析'
       }
       analysisStore.openTool(activeTool as any, toolTitleMap[activeTool] || '图层管理')
     }

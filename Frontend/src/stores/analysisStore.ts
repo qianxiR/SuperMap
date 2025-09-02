@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-type ToolId = 'draw' | 'buffer' | 'distance' | 'servicearea' | 'layer' | 'bianji' | 'llm' | 'query' | 'thiessen' | '';
+type ToolId = 'draw' | 'buffer' | 'distance' | 'overlay' | 'layer' | 'bianji' | 'llm' | 'query' | 'thiessen' | '';
 
 export const useAnalysisStore = defineStore('analysis', () => {
   // 分析状态
@@ -49,6 +49,42 @@ export const useAnalysisStore = defineStore('analysis', () => {
     toolPanel.activeTool.value = toolId
   }
   
+  // 工具切换时的状态清理
+  function clearToolState(toolId: ToolId) {
+    // 根据工具类型清理相应的状态
+    switch (toolId) {
+      case 'buffer':
+        // 缓冲区分析：清理分析结果和地图显示
+        // 这里会触发 BufferAnalysisPanel 中的清理逻辑
+        break
+      case 'distance':
+        // 距离分析：清理路径和地图显示
+        break
+      case 'overlay':
+        // 叠加分析：清理分析结果
+        break
+      case 'query':
+        // 要素查询：清理查询结果
+        break
+      case 'bianji':
+        // 编辑工具：清理编辑状态
+        break
+      default:
+        break
+    }
+  }
+  
+  // 工具切换时的状态清理（带前一个工具ID）
+  function switchTool(newToolId: ToolId, prevToolId?: ToolId) {
+    // 如果是从某个工具切换，先清理该工具的状态
+    if (prevToolId && prevToolId !== newToolId) {
+      clearToolState(prevToolId)
+    }
+    
+    // 设置新工具
+    setActiveTool(newToolId)
+  }
+  
   // 绘制工具控制
   function setDrawMode(mode: string) {
     drawMode.value = mode
@@ -87,6 +123,8 @@ export const useAnalysisStore = defineStore('analysis', () => {
     openTool,
     closeTool,
     setActiveTool,
+    clearToolState,
+    switchTool,
     setDrawMode,
     setSelectionMode,
     setCurrentLayer,

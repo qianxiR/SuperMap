@@ -234,14 +234,15 @@ const allLayers = computed(() => {
       const sourceTypeNames: Record<string, string> = {
         draw: '绘制',
         area: '区域选择',
-        query: '属性查询'
+        query: '属性查询',
+        buffer: '缓冲区分析'
       }
       item.displayName = `${sourceTypeNames[sourceType] || '本地'}: ${layerName}`
-      item.desc = '用户创建的图层'
+      item.desc = sourceType === 'buffer' ? '缓冲区分析结果图层' : '用户创建的图层'
       
       // 根据sourceType确定分组
-      if (sourceType === 'draw') {
-        item.source = 'draw' // 绘制图层
+      if (sourceType === 'draw' || sourceType === 'buffer') {
+        item.source = 'draw' // 绘制图层和缓冲区分析图层都归类到绘制图层组
       } else if (sourceType === 'area' || sourceType === 'query') {
         item.source = 'query' // 查询图层（区域选择 + 属性查询）
       }

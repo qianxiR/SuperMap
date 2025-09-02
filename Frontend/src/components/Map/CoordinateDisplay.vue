@@ -18,7 +18,7 @@ const mapStore = useMapStore()
   font-family: monospace;
   font-size: 12px;
   color: var(--text);
-  text-shadow: 0 0 8px rgba(66,165,245,0.35);
+  text-shadow: 0 0 8px rgba(var(--accent-rgb),0.35);
   background: transparent;
   padding: 4px 8px;
   border-radius: 4px;

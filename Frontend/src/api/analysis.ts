@@ -31,6 +31,12 @@ export interface BufferParams {
   }
   distance: number
   unit: 'meters' | 'kilometers'
+  settings?: {
+    endType: 'ROUND' | 'FLAT'
+    leftDistance: number
+    rightDistance: number
+    semicircleLineSegment: number
+  }
 }
 
 export interface AnalysisResult {

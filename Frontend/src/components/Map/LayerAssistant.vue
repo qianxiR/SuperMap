@@ -215,9 +215,9 @@ const updateDrawLayerStyle = () => {
   try {
     const ol = window.ol
     
-    // 重新获取绘制线条颜色
-    const drawColor = getComputedStyle(document.documentElement).getPropertyValue('--measure-line-color').trim() || '#212529'
-    const drawRgb = getComputedStyle(document.documentElement).getPropertyValue('--measure-line-rgb').trim() || '33, 37, 41'
+    // 重新获取绘制线条颜色 - 使用专门的绘制颜色变量
+    const drawColor = getComputedStyle(document.documentElement).getPropertyValue('--draw-color').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000')
+    const drawRgb = getComputedStyle(document.documentElement).getPropertyValue('--draw-rgb').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '255, 255, 255' : '0, 0, 0')
     
     console.log('更新绘制图层样式，颜色:', drawColor, 'RGB:', drawRgb)
     
@@ -307,9 +307,9 @@ const initDrawLayer = () => {
     drawSource.value = new ol.source.Vector({ wrapX: false })
     console.log('绘制数据源创建成功:', drawSource.value)
     
-    // 获取绘制线条颜色
-    const drawColor = getComputedStyle(document.documentElement).getPropertyValue('--measure-line-color').trim() || '#212529'
-    const drawRgb = getComputedStyle(document.documentElement).getPropertyValue('--measure-line-rgb').trim() || '33, 37, 41'
+    // 获取绘制线条颜色 - 使用专门的绘制颜色变量
+    const drawColor = getComputedStyle(document.documentElement).getPropertyValue('--draw-color').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000')
+    const drawRgb = getComputedStyle(document.documentElement).getPropertyValue('--draw-rgb').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '255, 255, 255' : '0, 0, 0')
     
     console.log('初始化绘制图层，颜色:', drawColor, 'RGB:', drawRgb)
     

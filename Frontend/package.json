@@ -17,6 +17,8 @@
   },
   "dependencies": {
     "@supermapgis/iclient-leaflet": "^12.0.0-r",
+    "@turf/shortest-path": "^7.2.0",
+    "@turf/turf": "^7.2.0",
     "ant-design-vue": "^4.2.6",
     "axios": "^1.11.0",
     "default-passive-events": "^4.0.0",

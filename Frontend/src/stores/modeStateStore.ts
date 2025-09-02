@@ -118,6 +118,32 @@ export const useModeStateStore = defineStore('modeState', () => {
     return modeState.value.traditional.toolStates[toolId] || {}
   }
 
+  // 清理特定工具状态
+  const clearToolState = (toolId: string) => {
+    if (modeState.value.traditional.toolStates[toolId]) {
+      delete modeState.value.traditional.toolStates[toolId]
+      saveTraditionalState(modeState.value.traditional)
+    }
+  }
+
+  // 清理工具状态中的临时数据（保留配置，清理结果）
+  const clearToolTemporaryData = (toolId: string, keysToKeep: string[] = []) => {
+    if (modeState.value.traditional.toolStates[toolId]) {
+      const currentState = modeState.value.traditional.toolStates[toolId]
+      const newState: any = {}
+      
+      // 只保留指定的配置项
+      keysToKeep.forEach(key => {
+        if (currentState[key] !== undefined) {
+          newState[key] = currentState[key]
+        }
+      })
+      
+      modeState.value.traditional.toolStates[toolId] = newState
+      saveTraditionalState(modeState.value.traditional)
+    }
+  }
+
   // 组件布局持久化（位置/尺寸/滚动等）
   const LAYOUT_KEY_PREFIX = '__layout__'
 
@@ -245,6 +271,8 @@ export const useModeStateStore = defineStore('modeState', () => {
     getTraditionalState,
     saveToolState,
     getToolState,
+    clearToolState,
+    clearToolTemporaryData,
     saveComponentLayout,
     getComponentLayout,
     switchMode,

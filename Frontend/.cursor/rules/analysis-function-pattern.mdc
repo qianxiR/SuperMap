@@ -1,0 +1,247 @@
+# 通用分析功能实现方法
+
+## 功能架构模式
+
+每个分析功能应遵循以下标准架构：
+
+### 1. 状态管理模式
+
+**输入数据格式：**
+- `selectedAnalysisLayerId`: 选中的分析图层ID
+- `analysisSettings`: 分析参数配置对象
+- `analysisResults`: 分析结果数组
+- `layerName`: 图层名称
+
+**数据处理方法：**
+```typescript
+// 状态保存（防抖）
+const saveToolState = () => {
+  const stateToSave = {
+    selectedAnalysisLayerId: selectedAnalysisLayerId.value,
+    analysisSettings: { ...analysisSettings.value },
+    analysisResults: analysisResults.value,
+    layerName: layerName.value
+  }
+  saveState(layerName.value)
+}
+
+// 状态恢复
+const restoreToolState = async () => {
+  const savedLayerName = await restoreState()
+  if (savedLayerName) {
+    layerName.value = savedLayerName
+  }
+}
+```
+
+**输出数据格式：**
+- 状态数据持久化到 `localStorage` 通过 `modeStateStore`
+- 组件挂载时自动恢复状态，状态变化时自动保存
+
+### 2. 图层显示方法
+
+**输入数据格式：**
+- `results`: AnalysisResult[] 分析结果数组
+
+**数据处理方法：**
+```typescript
+const displayAnalysisResults = (results: AnalysisResult[]): void => {
+  // 移除之前的分析图层
+  removeAnalysisLayers()
+  
+  // 创建新的分析图层
+  const analysisFeatures = results.map(result => {
+    let geometry = new GeoJSON().readGeometry(result.geometry)
+    const feature = new Feature({
+      geometry: geometry,
+      properties: {
+        id: result.id,
+        name: result.name,
+        // 其他分析属性...
+        sourceLayer: result.sourceLayerName,
+        createdAt: result.createdAt
+      }
+    })
+    return feature
+  })
+  
+  // 设置分析图层样式
+  const analysisLayer = new VectorLayer({
+    source: new VectorSource({ features: analysisFeatures }),
+    style: getAnalysisLayerStyle() // 根据分析类型设置样式
+  })
+  
+  // 设置图层标识
+  analysisLayer.set('isAnalysisLayer', true)
+  analysisLayer.set('analysisType', 'buffer') // 或其他分析类型
+  analysisLayer.set('analysisResults', results)
+  
+  mapStore.map.addLayer(analysisLayer)
+}
+```
+
+**输出数据格式：**
+- 在地图上显示分析结果图层
+- 自动缩放到分析结果范围
+
+### 3. 保存图层方法
+
+**输入数据格式：**
+- `customLayerName`: 可选的图层名称
+- `analysisResults`: 分析结果
+
+**数据处理方法：**
+```typescript
+const saveAnalysisLayer = async (customLayerName?: string) => {
+  const name = customLayerName || generateLayerNameFromAnalysis()
+  
+  // 创建Feature对象数组
+  const analysisFeatures = analysisResults.value.map(result => {
+    let geometry = new GeoJSON().readGeometry(result.geometry)
+    const feature = new Feature({
+      geometry: geometry,
+      properties: {
+        id: result.id,
+        name: result.name,
+        // 其他分析属性...
+        sourceLayer: result.sourceLayerName,
+        createdAt: result.createdAt
+      }
+    })
+    return feature
+  })
+  
+  // 调用通用保存函数
+  const success = await saveFeaturesAsLayer(
+    analysisFeatures,
+    name,
+    'analysis' // 分析类型标识
+  )
+  
+  if (success) {
+    removeAnalysisLayers() // 移除临时图层
+  }
+}
+```
+
+**输出数据格式：**
+- 保存为永久图层，添加到图层管理列表
+- 使用特定样式标识为分析图层
+- 保存成功后移除临时显示图层
+
+### 4. 清空图层方法
+
+**输入数据格式：**
+- 无参数
+
+**数据处理方法：**
+```typescript
+const clearResults = () => {
+  // 清空结果数组
+  if (analysisResults.value) {
+    analysisResults.value.length = 0
+  }
+  if (currentResult.value) {
+    currentResult.value = null
+  }
+  
+  // 移除地图上的分析图层
+  removeAnalysisLayers()
+  
+  // 清空图层名称
+  layerName.value = ''
+}
+
+const removeAnalysisLayers = (): void => {
+  const layers = mapStore.map.getLayers().getArray()
+  layers.forEach((layer: any) => {
+    if (layer.get('isAnalysisLayer')) {
+      mapStore.map.removeLayer(layer)
+    }
+  })
+}
+```
+
+**输出数据格式：**
+- 清空分析结果数据
+- 移除地图上的临时分析图层
+- 重置图层名称
+
+### 5. 导出为JSON方法
+
+**输入数据格式：**
+- `analysisResults`: 分析结果数组
+
+**数据处理方法：**
+```typescript
+const exportGeoJSON = () => {
+  const geoJSON = {
+    type: 'FeatureCollection',
+    features: analysisResults.value.map(result => ({
+      type: 'Feature',
+      geometry: result.geometry,
+      properties: {
+        id: result.id,
+        name: result.name,
+        // 其他分析属性...
+        sourceLayer: result.sourceLayerName,
+        createdAt: result.createdAt
+      }
+    }))
+  }
+  
+  const blob = new Blob([JSON.stringify(geoJSON, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${analysisType}_analysis_${new Date().toISOString().slice(0, 10)}.geojson`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+```
+
+**输出数据格式：**
+- 生成标准 GeoJSON 格式文件
+- 包含完整的几何信息和属性数据
+- 自动下载为 `.geojson` 文件
+
+## 实现标准
+
+### 文件结构
+- **Composable**: `src/composables/use[AnalysisName]Analysis.ts`
+- **Panel组件**: `src/views/dashboard/traditional/tools/[AnalysisName]AnalysisPanel.vue`
+- **Store集成**: 使用 `analysisStore` 和 `modeStateStore`
+
+### 命名规范
+- 分析功能ID: 小写，如 `buffer`, `distance`, `serviceArea`
+- 图层标识: `isAnalysisLayer`, `analysisType`
+- 状态键: `analysisSettings`, `analysisResults`
+
+### 样式规范
+- 使用主题色变量，禁止硬编码颜色
+- 分析图层样式应区别于普通图层
+- 支持暗色模式适配
+
+### 错误处理
+- 分析失败时提供详细错误信息
+- 网络请求超时处理
+- 数据格式验证
+
+### 性能优化
+- 大量要素分析时显示进度提示
+- 分析结果缓存机制
+- 图层显示优化
+
+## 参考实现
+
+参考以下文件的实现模式：
+- [BufferAnalysisPanel.vue](mdc:src/views/dashboard/traditional/tools/BufferAnalysisPanel.vue)
+- [useBufferAnalysis.ts](mdc:src/composables/useBufferAnalysis.ts)
+- [useLayerManager.ts](mdc:src/composables/useLayerManager.ts)
+- [modeStateStore.ts](mdc:src/stores/modeStateStore.ts)
+description:
+globs:
+alwaysApply: true
+---
