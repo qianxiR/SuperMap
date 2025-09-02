@@ -9,7 +9,7 @@ export interface APIConfig {
 // 环境配置
 const configs: Record<string, APIConfig> = {
   development: {
-    baseUrl: 'http://localhost:3000/api',
+    baseUrl: 'http://localhost:8000/api/v1',
     timeout: 10000,
     retryCount: 3,
   },

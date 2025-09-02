@@ -167,10 +167,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/userStore'
+import { useUserStore, type UserInfo } from '@/stores/userStore'
 import { useThemeStore } from '@/stores/themeStore'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import ButtonGroup from '@/components/UI/ButtonGroup.vue'
+import { userApiService } from '@/api/user'
+import { syncUserInfo, isUserInfoComplete } from '@/utils/userSync'
+import { BACKEND_USER_FIELDS } from '@/utils/fieldMapping'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -199,10 +202,12 @@ const passwordForm = ref({
 const userInfo = computed(() => {
   const info = userStore.userInfo
   return {
+    id: info?.id || 0,
     username: info?.username || '用户',
     email: info?.email || 'user@example.com',
     phone: info?.phone || '',
-    createdAt: info?.createdAt || new Date().toISOString()
+    // 优先使用 registered_at，如果没有则使用 created_at
+    createdAt: info?.registered_at || info?.created_at || new Date().toISOString()
   }
 })
 
@@ -236,26 +241,75 @@ const toggleEditMode = () => {
   isEditing.value = !isEditing.value
 }
 
-const saveUserInfo = () => {
-  // 这里应该调用API保存用户信息
-  console.log('保存用户信息:', editForm.value)
-  
-  // 触发通知
-  window.dispatchEvent(new CustomEvent('showNotification', {
-    detail: {
-      title: '保存成功',
-      message: '用户信息已更新',
-      type: 'success',
-      duration: 3000
+const saveUserInfo = async () => {
+  try {
+    // 检查用户ID是否存在
+    if (!userInfo.value.id) {
+      throw new Error('用户ID不存在，无法更新信息')
     }
-  }))
+
+    // 调用后端API保存用户信息
+    const updateData = {
+      old_username: userInfo.value.username,
+      new_username: editForm.value.username !== userInfo.value.username ? editForm.value.username : undefined,
+      old_email: userInfo.value.email,
+      new_email: editForm.value.email !== userInfo.value.email ? editForm.value.email : undefined,
+      old_phone: userInfo.value.phone || '',
+      new_phone: editForm.value.phone !== userInfo.value.phone ? editForm.value.phone : undefined
+    }
+    
+    const token = userStore.token
+    if (!token) {
+      throw new Error('用户未登录')
+    }
+    
+    const response = await userApiService.updateProfile(token, updateData)
+    
+    if (response.success) {
+      // 更新本地用户信息
+      if (response.data?.new_info) {
+        const newInfo = response.data.new_info
+        const updatedFields: Partial<UserInfo> = {}
+        
+        if (newInfo.username) updatedFields.username = newInfo.username
+        if (newInfo.email) updatedFields.email = newInfo.email
+        if (newInfo.phone) updatedFields.phone = newInfo.phone
+        
+        // 使用store的updateUserInfo方法更新
+        userStore.updateUserInfo(updatedFields)
+      }
+      
+      // 触发通知
+      window.dispatchEvent(new CustomEvent('showNotification', {
+        detail: {
+          title: '保存成功',
+          message: response.message || '用户信息已更新',
+          type: 'success',
+          duration: 3000
+        }
+      }))
+    } else {
+      throw new Error(response.message || '保存失败')
+    }
+  } catch (error: any) {
+    // 触发错误通知
+    window.dispatchEvent(new CustomEvent('showNotification', {
+      detail: {
+        title: '保存失败',
+        message: error.message || '保存用户信息失败',
+        type: 'error',
+        duration: 3000
+      }
+    }))
+    console.error('保存用户信息失败:', error)
+  }
 }
 
 const setTheme = (newTheme: 'light' | 'dark') => {
   themeStore.setTheme(newTheme)
 }
 
-const changePassword = () => {
+const changePassword = async () => {
   if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
     window.dispatchEvent(new CustomEvent('showNotification', {
       detail: {
@@ -268,23 +322,55 @@ const changePassword = () => {
     return
   }
 
-  // 这里应该调用API修改密码
-  console.log('修改密码:', passwordForm.value)
-  
-  window.dispatchEvent(new CustomEvent('showNotification', {
-    detail: {
-      title: '修改成功',
-      message: '密码已成功修改',
-      type: 'success',
-      duration: 3000
+  try {
+    // 检查用户ID是否存在
+    if (!userInfo.value.id) {
+      throw new Error('用户ID不存在，无法修改密码')
     }
-  }))
-  
-  showChangePassword.value = false
-  passwordForm.value = {
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
+
+    // 调用后端API修改密码
+    const passwordData = {
+      current_password: passwordForm.value.currentPassword,
+      new_password: passwordForm.value.newPassword,
+      confirm_new_password: passwordForm.value.confirmPassword
+    }
+    
+    const token = userStore.token
+    if (!token) {
+      throw new Error('用户未登录')
+    }
+    
+    const response = await userApiService.changePassword(token, passwordData)
+    
+    if (response.success) {
+      window.dispatchEvent(new CustomEvent('showNotification', {
+        detail: {
+          title: '修改成功',
+          message: response.message || '密码已成功修改',
+          type: 'success',
+          duration: 3000
+        }
+      }))
+      
+      showChangePassword.value = false
+      passwordForm.value = {
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      }
+    } else {
+      throw new Error(response.message || '修改密码失败')
+    }
+  } catch (error: any) {
+    window.dispatchEvent(new CustomEvent('showNotification', {
+      detail: {
+        title: '修改失败',
+        message: error.message || '修改密码失败',
+        type: 'error',
+        duration: 3000
+      }
+    }))
+    console.error('修改密码失败:', error)
   }
 }
 
@@ -297,7 +383,27 @@ const formatDate = (dateString: string) => {
   })
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // 同步用户信息，确保从数据库获取最新信息
+  try {
+    await syncUserInfo()
+  } catch (error) {
+    console.warn('同步用户信息失败:', error)
+  }
+  
+  // 检查用户信息是否完整
+  if (!isUserInfoComplete()) {
+    window.dispatchEvent(new CustomEvent('showNotification', {
+      detail: {
+        title: '用户信息不完整',
+        message: '无法加载个人中心，请重新登录',
+        type: 'error',
+        duration: 3000
+      }
+    }))
+    return
+  }
+  
   // 初始化编辑表单
   editForm.value = {
     username: userInfo.value.username,

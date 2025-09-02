@@ -100,6 +100,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
+import { userApiService } from '@/api/user'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -193,34 +194,72 @@ const handleRegister = async () => {
   loading.value = true
   
   try {
-    // 模拟注册验证 - 由于前面已经验证过数据完整性，这里直接处理注册逻辑
-    const token = `token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    const userData = {
+    // 调用后端注册API
+    const registerData = {
       username: username.value,
       email: email.value,
       phone: phone.value,
-      registerType: 'phone', // 默认手机号注册
-      role: 'user',
-      registerTime: new Date().toISOString()
+      password: password.value,
+      confirm_password: confirmPassword.value
     }
     
-    // 使用store管理登录状态
-    userStore.login(userData, token)
+    const response = await userApiService.register(registerData)
     
-    // 异步显示注册成功通知
-    setTimeout(() => {
+    if (response.success) {
+      // 注册成功后自动登录
+      const loginData = {
+        login_identifier: username.value,
+        password: password.value
+      }
+      
+      const loginResponse = await userApiService.login(loginData)
+      
+      if (loginResponse.success && loginResponse.token) {
+        const userData = {
+          username: username.value,
+          email: email.value,
+          phone: phone.value,
+          registerType: 'phone',
+          role: 'user',
+          registerTime: new Date().toISOString()
+        }
+        
+        // 使用store管理登录状态
+        userStore.login(userData, loginResponse.token)
+        
+        // 从后端获取完整的用户信息
+        try {
+          await userStore.fetchUserInfo()
+        } catch (error) {
+          console.warn('获取用户信息失败，使用本地数据:', error)
+        }
+        
+        // 异步显示注册成功通知
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('showNotification', {
+            detail: {
+              title: '注册成功',
+              message: `欢迎加入，${username.value}！`,
+              type: 'success',
+              duration: 3000
+            }
+          }))
+        }, 100)
+        
+        // 跳转到地图系统
+        router.push('/dashboard')
+      }
+    } else {
+      // 注册失败
       window.dispatchEvent(new CustomEvent('showNotification', {
         detail: {
-          title: '注册成功',
-          message: `欢迎加入，${username.value}！`,
-          type: 'success',
+          title: '注册失败',
+          message: response.message || '注册失败',
+          type: 'error',
           duration: 3000
         }
       }))
-    }, 100)
-    
-    // 跳转到地图系统
-    router.push('/dashboard')
+    }
   } catch (err) {
     window.dispatchEvent(new CustomEvent('showNotification', {
       detail: {

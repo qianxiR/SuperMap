@@ -65,6 +65,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
+import { userApiService } from '@/api/user'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -166,26 +167,17 @@ const handleLogin = async () => {
       return
     }
     
-    // 模拟登录验证 - 支持多种登录方式
-    const accountType = getAccountType(account.value)
-    let isValidLogin = false
-    let userEmail = ''
-    
-    // 验证登录信息
-    if (account.value === 'admin' && password.value === '123456') {
-      isValidLogin = true
-      userEmail = 'admin@example.com' // 默认邮箱
-    } else if (account.value === 'admin@example.com' && password.value === '123456') {
-      isValidLogin = true
-      userEmail = account.value
-    } else if (account.value === '13800138000' && password.value === '123456') {
-      isValidLogin = true
-      userEmail = 'admin@example.com' // 手机号登录时使用默认邮箱
+    // 调用后端登录API
+    const loginData = {
+      login_identifier: account.value,
+      password: password.value
     }
     
-    if (isValidLogin) {
+    const response = await userApiService.login(loginData)
+    
+    if (response.success && response.token) {
       // 登录成功
-      const token = `token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      const accountType = getAccountType(account.value)
       
       // 根据登录方式设置用户数据
       let userPhone = ''
@@ -198,7 +190,7 @@ const handleLogin = async () => {
       
       const userData = {
         username: accountType === 'username' ? account.value : 'admin',
-        email: userEmail,
+        email: accountType === 'email' ? account.value : 'admin@example.com',
         phone: userPhone,
         accountType: accountType,
         role: 'admin',
@@ -206,7 +198,14 @@ const handleLogin = async () => {
       }
       
       // 使用store管理登录状态
-      userStore.login(userData, token)
+      userStore.login(userData, response.token)
+      
+      // 从后端获取完整的用户信息
+      try {
+        await userStore.fetchUserInfo()
+      } catch (error) {
+        console.warn('获取用户信息失败，使用本地数据:', error)
+      }
       
       // 记住密码功能
       if (rememberPassword.value) {
@@ -265,7 +264,7 @@ const handleLogin = async () => {
       window.dispatchEvent(new CustomEvent('showNotification', {
         detail: {
           title: '登录失败',
-          message: '账号或密码错误',
+          message: response.message || '登录失败',
           type: 'error',
           duration: 3000
         }

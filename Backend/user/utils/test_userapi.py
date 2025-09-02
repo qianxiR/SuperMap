@@ -34,6 +34,15 @@ TEST_USER = {
     "confirm_password": "password"
 }
 
+# 默认账户数据
+DEFAULT_USER = {
+    "username": "admin",
+    "email": "admin@example.com",
+    "phone": "13800138000",
+    "password": "123456",
+    "confirm_password": "123456"
+}
+
 async def verify_config():
     """验证配置文件读取"""
     print("🔍 验证配置文件读取...")
@@ -102,6 +111,64 @@ async def test_user_register():
         except Exception as e:
             print(f"❌ 用户注册异常: {e}")
             return False
+
+
+async def test_default_user_register():
+    """测试默认账户注册"""
+    print(f"\n🔍 测试默认账户注册: {DEFAULT_USER['username']}...")
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(
+                f"{BASE_URL}{API_PREFIX}/user/register",
+                json=DEFAULT_USER,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                print(f"✅ 默认账户注册成功: {data}")
+                return True
+            elif response.status_code == 400 and "already exists" in response.text.lower():
+                print(f"✅ 默认账户已存在，跳过注册")
+                return True
+            else:
+                print(f"❌ 默认账户注册失败: {response.status_code}")
+                print(f"响应内容: {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ 默认账户注册异常: {e}")
+            return False
+
+
+async def test_default_user_login():
+    """测试默认账户登录"""
+    print(f"\n🔍 测试默认账户登录: {DEFAULT_USER['username']}...")
+    
+    login_data = {
+        "login_identifier": DEFAULT_USER["username"],
+        "password": DEFAULT_USER["password"]
+    }
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(
+                f"{BASE_URL}{API_PREFIX}/user/login",
+                json=login_data,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                print(f"✅ 默认账户登录成功: {data}")
+                return data.get("token")
+            else:
+                print(f"❌ 默认账户登录失败: {response.status_code}")
+                print(f"响应内容: {response.text}")
+                return None
+        except Exception as e:
+            print(f"❌ 默认账户登录异常: {e}")
+            return None
 
 
 async def test_user_login():
@@ -427,6 +494,8 @@ async def main():
     test_results = {
         "config_verification": True,
         "health_check": False,
+        "default_user_register": False,
+        "default_user_login": False,
         "user_register": False,
         "user_login": False,
         "user_login_wrong_password": False,
@@ -440,78 +509,93 @@ async def main():
     }
     
     # 1. 测试健康检查
-    print("\n📋 测试步骤 1/12: 系统健康检查")
+    print("\n📋 测试步骤 1/13: 系统健康检查")
     test_results["health_check"] = await test_health_check()
     if not test_results["health_check"]:
         print("❌ 健康检查失败，请确保服务器正在运行")
         return
     
-    # 2. 测试用户注册
-    print("\n📋 测试步骤 2/12: 用户注册")
+    # 2. 测试默认账户注册
+    print("\n📋 测试步骤 2/13: 默认账户注册")
+    test_results["default_user_register"] = await test_default_user_register()
+    if not test_results["default_user_register"]:
+        print("❌ 默认账户注册失败")
+        return
+    
+    # 3. 测试默认账户登录
+    print("\n📋 测试步骤 3/13: 默认账户登录")
+    default_token = await test_default_user_login()
+    if not default_token:
+        print("❌ 默认账户登录失败")
+        return
+    test_results["default_user_login"] = True
+    
+    # 4. 测试用户注册
+    print("\n📋 测试步骤 4/13: 用户注册")
     test_results["user_register"] = await test_user_register()
     if not test_results["user_register"]:
         print("❌ 用户注册失败")
         return
     
-    # 3. 测试用户登录
-    print("\n📋 测试步骤 3/12: 用户登录")
+    # 5. 测试用户登录
+    print("\n📋 测试步骤 5/13: 用户登录")
     token = await test_user_login()
     if not token:
         print("❌ 用户登录失败")
         return
     test_results["user_login"] = True
     
-    # 3.5. 测试用户登录密码错误
-    print("\n📋 测试步骤 3.5/12: 用户登录密码错误")
+    # 6. 测试用户登录密码错误
+    print("\n📋 测试步骤 6/13: 用户登录密码错误")
     test_results["user_login_wrong_password"] = await test_user_login_wrong_password()
     if not test_results["user_login_wrong_password"]:
         print("❌ 密码错误测试失败")
         return
     
-    # 4. 测试获取用户资料
-    print("\n📋 测试步骤 4/12: 获取用户资料")
+    # 7. 测试获取用户资料
+    print("\n📋 测试步骤 7/13: 获取用户资料")
     test_results["user_profile"] = await test_user_profile(token)
     if not test_results["user_profile"]:
         print("❌ 获取用户资料失败")
         return
     
-    # 5. 测试获取当前用户信息
-    print("\n📋 测试步骤 5/12: 获取当前用户信息")
+    # 8. 测试获取当前用户信息
+    print("\n📋 测试步骤 8/13: 获取当前用户信息")
     test_results["user_info"] = await test_get_user_info(token)
     if not test_results["user_info"]:
         print("❌ 获取用户信息失败")
         return
     
-    # 6. 测试获取用户统计信息
-    print("\n📋 测试步骤 6/12: 获取用户统计信息")
+    # 9. 测试获取用户统计信息
+    print("\n📋 测试步骤 9/13: 获取用户统计信息")
     test_results["user_stats"] = await test_get_user_stats(token)
     if not test_results["user_stats"]:
         print("❌ 获取用户统计失败")
         return
     
-    # 7. 测试修改用户资料
-    print("\n📋 测试步骤 7/12: 修改用户资料")
+    # 10. 测试修改用户资料
+    print("\n📋 测试步骤 10/13: 修改用户资料")
     test_results["update_profile"] = await test_update_user_profile(token)
     if not test_results["update_profile"]:
         print("❌ 修改用户资料失败")
         return
     
-    # 8. 测试修改密码
-    print("\n📋 测试步骤 8/12: 修改密码")
+    # 11. 测试修改密码
+    print("\n📋 测试步骤 11/13: 修改密码")
     test_results["change_password"] = await test_change_password(token)
     if not test_results["change_password"]:
         print("❌ 修改密码失败")
         return
     
-    # 9. 测试用户登出
-    print("\n📋 测试步骤 9/12: 用户登出")
+    # 12. 测试用户登出
+    print("\n📋 测试步骤 12/13: 用户登出")
     test_results["user_logout"] = await test_user_logout(token)
     if not test_results["user_logout"]:
         print("❌ 用户登出失败")
         return
     
-    # 10. 验证数据库中的数据
-    print("\n📋 测试步骤 10/12: 数据库验证")
+    # 13. 验证数据库中的数据
+    print("\n📋 测试步骤 13/13: 数据库验证")
     test_results["database_verification"] = await test_database_verification()
     if not test_results["database_verification"]:
         print("❌ 数据库验证失败")
@@ -528,6 +612,8 @@ async def main():
     print(f"📈 成功率: {(passed_tests/total_tests)*100:.1f}%")
     print("\n✅ 已测试的API功能:")
     print("  ✅ 系统健康检查")
+    print("  ✅ 默认账户注册 (POST /register)")
+    print("  ✅ 默认账户登录 (POST /login)")
     print("  ✅ 用户注册 (POST /register)")
     print("  ✅ 用户登录 (POST /login)")
     print("  ✅ 密码错误验证 (POST /login)")
