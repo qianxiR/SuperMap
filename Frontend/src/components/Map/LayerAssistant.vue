@@ -120,7 +120,7 @@
     :visible="layerManager.confirmDialogVisible.value"
     :title="layerManager.confirmDialogConfig.value.title"
     :message="layerManager.confirmDialogConfig.value.message"
-    confirm-text="保存图层"
+    confirm-text="保存为图层"
     cancel-text="直接清除"
     @confirm="layerManager.handleConfirmDialogConfirm"
     @cancel="layerManager.handleConfirmDialogCancel"

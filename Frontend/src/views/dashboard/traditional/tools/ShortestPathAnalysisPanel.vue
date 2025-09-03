@@ -72,7 +72,7 @@
 
         <SecondaryButton 
           v-if="currentResult"
-          text="保存图层"
+          text="保存为图层"
           @click="handleSaveLayer"
           style="margin-top: 8px;"
         />
@@ -162,7 +162,7 @@ watch(() => analysisStore.toolPanel.visible.valueOf?.() ?? analysisStore.toolPan
   }
 })
 
-// 保存图层
+// 保存为图层
 const handleSaveLayer = async () => {
   const success = await saveAnalysisLayer()
   if (success) {

@@ -441,8 +441,8 @@ export function useMap() {
   const handleNormalClick = async (evt: any, selectSource: any): Promise<void> => {
     const map = evt.map;
     
-    const isEditToolActive = analysisStore.toolPanel?.activeTool === 'bianji';
-    const isQueryToolActive = analysisStore.toolPanel?.activeTool === 'query';
+    const isEditToolActive = analysisStore.toolPanel?.activeTool === 'attribute-selection';
+    const isQueryToolActive = analysisStore.toolPanel?.activeTool === 'area-selection';
     const isDistanceMeasureMode = analysisStore.isDistanceMeasureMode;
     const isAreaMeasureMode = analysisStore.isAreaMeasureMode;
     
@@ -960,7 +960,7 @@ export function useMap() {
   });
 
   watch(() => analysisStore.toolPanel?.activeTool, (newTool) => {
-    if (newTool === 'bianji') {
+    if (newTool === 'area-selection') {
       popupStore.hidePopup();
     }
   });

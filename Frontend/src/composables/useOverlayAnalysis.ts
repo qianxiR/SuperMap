@@ -313,7 +313,7 @@ export function useOverlayAnalysis() {
     analysisStore.setAnalysisStatus('结果已导出')
   }
 
-  // ===== 保存图层方法 =====
+  // ===== 保存为图层方法 =====
   
   const saveAnalysisLayer = async (customLayerName?: string): Promise<boolean> => {
     if (!overlayResult.value || !overlayResult.value.result) return false

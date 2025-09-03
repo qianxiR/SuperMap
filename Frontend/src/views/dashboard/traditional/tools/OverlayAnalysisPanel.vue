@@ -171,7 +171,7 @@ watch(() => analysisStore.toolPanel.activeTool, (tool) => {
   }
 })
 
-// 保存图层
+// 保存为图层
 const handleSaveLayer = async () => {
   const success = await saveAnalysisLayer()
   if (success) {

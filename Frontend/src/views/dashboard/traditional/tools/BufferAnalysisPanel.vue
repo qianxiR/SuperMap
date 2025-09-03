@@ -173,8 +173,6 @@ const {
   executeBufferAnalysis,
   removeBufferLayers,
   displayBufferResults,
-  saveState,
-  restoreState,
   clearState
 } = useBufferAnalysis()
 
@@ -197,8 +195,6 @@ const onLayerSelectionChange = (layerId: string) => {
   console.log('图层选择变化:', layerId)
   if (layerId) {
     setSelectedAnalysisLayer(layerId)
-    // 自动保存状态
-    saveToolState()
   }
 }
 
@@ -215,7 +211,6 @@ const onDistanceChange = () => {
 
 // 清除显示
 const clearResults = () => {
-  // 使用composable中的清理方法
   clearState()
   layerName.value = ''
   analysisStore.setAnalysisStatus('已清除缓冲区分析结果')
@@ -340,108 +335,35 @@ const saveBufferLayer = async (customLayerName?: string) => {
   }
 }
 
-// 工具状态管理
-const toolId = 'buffer'
-let isRestoring = false // 防止在恢复状态时触发保存
+// 工具状态管理（已移除持久化）
 
 // 清理缓冲区分析状态（工具切换时调用）
 const clearBufferAnalysisState = () => {
   console.log('清理缓冲区分析状态')
   
-  // 使用 useBufferAnalysis 中的清理方法
   clearState()
-  
-  // 清理本地状态
   layerName.value = ''
   
   analysisStore.setAnalysisStatus('缓冲区分析状态已清理')
 }
 
-// 保存工具状态（防抖）
-let saveTimer: any = null
-const saveToolStateDebounced = () => {
-  if (saveTimer) {
-    clearTimeout(saveTimer)
-  }
-  saveTimer = setTimeout(() => {
-    saveToolState()
-  }, 300)
-}
-
-// 保存工具状态
-const saveToolState = () => {
-  if (isRestoring) {
-    console.log('正在恢复状态，跳过保存')
-    return
-  }
-  
-  console.log('保存缓冲区分析工具状态')
-  // 直接调用composable中的保存方法
-  saveState(layerName.value)
-}
-
-// 恢复工具状态
-const restoreToolState = async () => {
-  try {
-    isRestoring = true // 设置恢复标志
-    console.log('开始恢复缓冲区分析工具状态...')
-    const savedLayerName = await restoreState()
-    console.log('恢复缓冲区分析工具状态完成:', {
-      selectedAnalysisLayerId: selectedAnalysisLayerId.value,
-      bufferSettings: bufferSettings.value,
-      bufferResults: bufferResults.value,
-      layerName: savedLayerName
-    })
-    
-    // 恢复图层名称
-    if (savedLayerName) {
-      layerName.value = savedLayerName
-    }
-    
-    // 如果有分析结果，不自动显示在地图上，只提示用户
-    if (bufferResults.value && bufferResults.value.length > 0) {
-      analysisStore.setAnalysisStatus(`缓冲区分析结果已恢复（${bufferResults.value.length}个结果），点击"执行分析"重新显示`)
-    } else {
-      analysisStore.setAnalysisStatus('请选择分析图层')
-    }
-  } catch (error) {
-    console.error('恢复缓冲区分析工具状态失败:', error)
-    analysisStore.setAnalysisStatus('请选择分析图层')
-  } finally {
-    // 延迟重置恢复标志，确保状态恢复完成后再允许保存
-    setTimeout(() => {
-      isRestoring = false
-      console.log('状态恢复完成，允许保存')
-    }, 100)
-  }
-}
+// 已移除持久化保存/恢复逻辑
 
 // 组件生命周期管理
 onMounted(() => {
-  console.log('缓冲区分析工具组件挂载，恢复状态')
-  // 恢复状态（仅一次）
-  restoreToolState()
+  analysisStore.setAnalysisStatus('请选择分析图层')
 })
 
-onUnmounted(() => {
-  console.log('缓冲区分析工具组件卸载，清理定时器')
-  // 清理定时器，状态已经在变化时实时保存了
-  if (saveTimer) {
-    clearTimeout(saveTimer)
-    saveTimer = null
-  }
-})
+onUnmounted(() => {})
 
 // 监听状态变化，自动保存（防抖）
 watch([
   selectedAnalysisLayerId,
   () => bufferSettings.value.radius,
   () => bufferSettings.value.semicircleLineSegment,
-  // 移除对 bufferResults 的监听，避免结果变化时自动保存
   layerName
 ], () => {
-  console.log('缓冲区分析配置变化，自动保存')
-  saveToolStateDebounced()
+  // 持久化已移除：此处仅更新状态提示
 })
 
 // 监听工具面板变化
@@ -477,10 +399,7 @@ watch(bufferResults, (results) => {
   }
   
   // 结果变化时手动保存状态（避免频繁保存）
-  if (results && results.length > 0) {
-    console.log('分析结果变化，保存状态')
-    saveToolState()
-  }
+  // 持久化已移除
 }, { deep: true })
 </script>
 

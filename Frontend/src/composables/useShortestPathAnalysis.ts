@@ -168,7 +168,7 @@ export function useShortestPathAnalysis() {
     })
   }
   
-  // ===== 保存图层方法 =====
+  // ===== 保存为图层方法 =====
   
   const saveAnalysisLayer = async (customLayerName?: string) => {
     const name = customLayerName || generateLayerNameFromAnalysis()
@@ -237,7 +237,7 @@ export function useShortestPathAnalysis() {
     )
     
     if (success) {
-      console.log('=== 保存图层成功，开始清除分析状态 ===')
+      console.log('=== 保存为图层成功，开始清除分析状态 ===')
       
       // 移除地图上的所有分析图层
       removeAnalysisLayers()
@@ -249,7 +249,7 @@ export function useShortestPathAnalysis() {
       isSelectingStartPoint.value = false
       isSelectingEndPoint.value = false
       
-      // 保存图层名称
+      // 保存为图层名称
       layerName.value = name
       
       console.log('=== 分析状态清除完成 ===')

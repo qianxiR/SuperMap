@@ -46,30 +46,10 @@ export function useBufferAnalysis() {
   const currentResult = computed(() => bufferAnalysisStore.state.currentResult)
   const isAnalyzing = computed(() => bufferAnalysisStore.state.isAnalyzing)
   
-  // 保存状态
-  const saveState = (layerName?: string) => {
-    if (layerName) {
-      bufferAnalysisStore.setLayerName(layerName)
-    }
-    bufferAnalysisStore.saveToLocalStorage()
-  }
-  
-  // 恢复状态
-  const restoreState = () => {
-    bufferAnalysisStore.loadFromLocalStorage()
-    return bufferAnalysisStore.state.layerName || ''
-  }
-
   // 清理状态（工具切换时调用）
   const clearState = () => {
-    // 清理分析结果
     bufferAnalysisStore.clearResults()
-    
-    // 移除地图上的缓冲区图层
     removeBufferLayers()
-    
-    // 保存当前配置到本地存储
-    bufferAnalysisStore.saveToLocalStorage()
   }
   
   // 选中图层信息
@@ -352,8 +332,6 @@ export function useBufferAnalysis() {
     displayBufferResults,
     
     // 状态管理
-    saveState,
-    restoreState,
     clearState
   }
 }

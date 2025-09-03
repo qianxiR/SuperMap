@@ -90,51 +90,6 @@ export const useBufferAnalysisStore = defineStore('bufferAnalysis', () => {
     }
   }
 
-  // 状态持久化
-  const saveToLocalStorage = () => {
-    try {
-      const dataToSave = {
-        selectedAnalysisLayerId: state.selectedAnalysisLayerId,
-        bufferSettings: { ...state.bufferSettings },
-        layerName: state.layerName
-      }
-      localStorage.setItem('bufferAnalysisState', JSON.stringify(dataToSave))
-    } catch (error) {
-      console.warn('保存缓冲区分析状态失败:', error)
-    }
-  }
-
-  const loadFromLocalStorage = () => {
-    try {
-      const savedData = localStorage.getItem('bufferAnalysisState')
-      if (savedData) {
-        const parsedData = JSON.parse(savedData)
-        if (parsedData.selectedAnalysisLayerId) {
-          state.selectedAnalysisLayerId = parsedData.selectedAnalysisLayerId
-        }
-        if (parsedData.bufferSettings) {
-          Object.assign(state.bufferSettings, parsedData.bufferSettings)
-        }
-        if (parsedData.layerName) {
-          state.layerName = parsedData.layerName
-        }
-      }
-    } catch (error) {
-      console.warn('加载缓冲区分析状态失败:', error)
-    }
-  }
-
-  const clearLocalStorage = () => {
-    try {
-      localStorage.removeItem('bufferAnalysisState')
-    } catch (error) {
-      console.warn('清除缓冲区分析状态失败:', error)
-    }
-  }
-
-  // 初始化时加载状态
-  loadFromLocalStorage()
-
   return {
     // State
     state,
@@ -151,11 +106,6 @@ export const useBufferAnalysisStore = defineStore('bufferAnalysis', () => {
     setIsAnalyzing,
     setLayerName,
     clearResults,
-    clearAll,
-    
-    // 持久化方法
-    saveToLocalStorage,
-    loadFromLocalStorage,
-    clearLocalStorage
+    clearAll
   }
 })
