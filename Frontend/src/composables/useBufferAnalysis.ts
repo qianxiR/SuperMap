@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useMapStore } from '@/stores/mapStore'
+import { useBufferAnalysisStore } from '@/stores/bufferAnalysisStore'
 import * as ol from 'ol'
 import { Feature } from 'ol'
 import { Vector as VectorSource } from 'ol/source'
@@ -36,74 +37,39 @@ interface BufferSettings {
 export function useBufferAnalysis() {
   const analysisStore = useAnalysisStore()
   const mapStore = useMapStore()
+  const bufferAnalysisStore = useBufferAnalysisStore()
   
-  // 分析参数
-  const selectedAnalysisLayerId = ref<string>('')
-  
-  // 高级参数
-  const bufferSettings = ref<BufferSettings>({
-    radius: 100,
-    semicircleLineSegment: 10
-  })
-  
-  // 分析结果
-  const bufferResults = ref<BufferResult[]>([])
-  const currentResult = ref<BufferResult | null>(null)
-  const isAnalyzing = ref<boolean>(false)
+  // 从store获取状态
+  const selectedAnalysisLayerId = computed(() => bufferAnalysisStore.state.selectedAnalysisLayerId)
+  const bufferSettings = computed(() => bufferAnalysisStore.state.bufferSettings)
+  const bufferResults = computed(() => bufferAnalysisStore.state.bufferResults)
+  const currentResult = computed(() => bufferAnalysisStore.state.currentResult)
+  const isAnalyzing = computed(() => bufferAnalysisStore.state.isAnalyzing)
   
   // 保存状态
   const saveState = (layerName?: string) => {
-    import('@/stores/modeStateStore').then(({ useModeStateStore }) => {
-      const modeStateStore = useModeStateStore()
-      const stateToSave = {
-        selectedAnalysisLayerId: selectedAnalysisLayerId.value,
-        bufferSettings: { ...bufferSettings.value },
-        // 只在有实际结果时才保存结果数据
-        ...(bufferResults.value && bufferResults.value.length > 0 && {
-          bufferResults: bufferResults.value
-        }),
-        ...(layerName && { layerName })
-      }
-      modeStateStore.saveToolState('buffer', stateToSave)
-    })
+    if (layerName) {
+      bufferAnalysisStore.setLayerName(layerName)
+    }
+    bufferAnalysisStore.saveToLocalStorage()
   }
   
   // 恢复状态
   const restoreState = () => {
-    return import('@/stores/modeStateStore').then(({ useModeStateStore }) => {
-      const modeStateStore = useModeStateStore()
-      const state = modeStateStore.getToolState('buffer')
-      if (state.selectedAnalysisLayerId) {
-        selectedAnalysisLayerId.value = state.selectedAnalysisLayerId
-      }
-      if (state.bufferSettings) {
-        Object.assign(bufferSettings.value, state.bufferSettings)
-      }
-      // 只在有保存的结果时才恢复
-      if (state.bufferResults && state.bufferResults.length > 0) {
-        bufferResults.value = state.bufferResults
-      }
-      return state.layerName || ''
-    })
+    bufferAnalysisStore.loadFromLocalStorage()
+    return bufferAnalysisStore.state.layerName || ''
   }
 
   // 清理状态（工具切换时调用）
   const clearState = () => {
     // 清理分析结果
-    bufferResults.value = []
-    currentResult.value = null
+    bufferAnalysisStore.clearResults()
     
     // 移除地图上的缓冲区图层
     removeBufferLayers()
     
-    // 清理状态存储中的临时数据，只保留配置
-    import('@/stores/modeStateStore').then(({ useModeStateStore }) => {
-      const modeStateStore = useModeStateStore()
-      modeStateStore.clearToolTemporaryData('buffer', [
-        'selectedAnalysisLayerId',
-        'bufferSettings'
-      ])
-    })
+    // 保存当前配置到本地存储
+    bufferAnalysisStore.saveToLocalStorage()
   }
   
   // 选中图层信息
@@ -138,7 +104,7 @@ export function useBufferAnalysis() {
   
   // 设置选中的分析图层
   const setSelectedAnalysisLayer = (layerId: string): void => {
-    selectedAnalysisLayerId.value = layerId
+    bufferAnalysisStore.setSelectedAnalysisLayer(layerId)
     if (layerId) {
       const layer = mapStore.vectorLayers.find(l => l.id === layerId)
       if (layer) {
@@ -168,7 +134,7 @@ export function useBufferAnalysis() {
     }
     
     try {
-      isAnalyzing.value = true
+      bufferAnalysisStore.setIsAnalyzing(true)
       analysisStore.setAnalysisStatus(`正在对图层 "${layer.name}" 执行缓冲区分析...`)
       
       // 获取图层中的所有要素
@@ -244,8 +210,7 @@ export function useBufferAnalysis() {
       }
       
       if (results.length > 0) {
-        bufferResults.value = results
-        currentResult.value = results[0]
+        bufferAnalysisStore.setBufferResults(results)
         
         // 在地图上显示结果
         displayBufferResults(results)
@@ -259,7 +224,7 @@ export function useBufferAnalysis() {
       console.error('缓冲区分析错误:', error)
       analysisStore.setAnalysisStatus(`❌ 缓冲区分析失败: ${error instanceof Error ? error.message : '未知错误'}`)
     } finally {
-      isAnalyzing.value = false
+      bufferAnalysisStore.setIsAnalyzing(false)
     }
   }
   
@@ -361,7 +326,7 @@ export function useBufferAnalysis() {
   
   // 更新缓冲区设置
   const updateBufferSettings = (settings: Partial<BufferSettings>): void => {
-    bufferSettings.value = { ...bufferSettings.value, ...settings }
+    bufferAnalysisStore.updateBufferSettings(settings)
   }
   
   return {

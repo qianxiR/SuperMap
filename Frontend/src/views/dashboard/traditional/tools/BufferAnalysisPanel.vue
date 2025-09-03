@@ -11,9 +11,10 @@
       <div class="section-title">选择分析图层</div>
       <div class="layer-selector">
         <DropdownSelect 
-          v-model="selectedAnalysisLayerId"
+          :model-value="selectedAnalysisLayerId"
           :options="layerOptionsWithNone"
           placeholder="请选择分析图层"
+          @update:model-value="onLayerSelectionChange"
         />
       </div>
       
@@ -41,12 +42,13 @@
         <div class="form-item">
           <label class="form-label">圆弧精度</label>
           <TraditionalInputGroup
-            v-model.number="bufferSettings.semicircleLineSegment"
+            :model-value="bufferSettings.semicircleLineSegment"
             type="number"
             :min="4"
             :max="50"
             :step="2"
             placeholder="圆弧精度 (步数)"
+            @update:model-value="(value) => updateBufferSettings({ semicircleLineSegment: value })"
           />
         </div>
 
@@ -55,11 +57,12 @@
         <div class="form-item">
           <label class="form-label">缓冲距离 (米)</label>
           <TraditionalInputGroup
-            v-model.number="bufferSettings.radius"
+            :model-value="bufferSettings.radius"
             type="number"
             :min="0"
             :step="10"
             placeholder="缓冲距离"
+            @update:model-value="(value) => updateBufferSettings({ radius: value })"
           />
         </div>
       </div>
@@ -145,7 +148,6 @@ import { watch, computed, ref, onMounted, onUnmounted } from 'vue'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useMapStore } from '@/stores/mapStore'
 import { useBufferAnalysis } from '@/composables/useBufferAnalysis'
-import { useModeStateStore } from '@/stores/modeStateStore'
 import { useLayerManager } from '@/composables/useLayerManager'
 import PrimaryButton from '@/components/UI/PrimaryButton.vue'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
@@ -156,7 +158,6 @@ import TipWindow from '@/components/UI/TipWindow.vue'
 
 const analysisStore = useAnalysisStore()
 const mapStore = useMapStore()
-const modeStateStore = useModeStateStore()
 
 const {
   selectedAnalysisLayerId,
@@ -167,6 +168,7 @@ const {
   currentResult,
   isAnalyzing,
   setSelectedAnalysisLayer,
+  updateBufferSettings,
   clearAllSelections,
   executeBufferAnalysis,
   removeBufferLayers,
@@ -190,6 +192,16 @@ const layerOptionsWithNone = computed(() => {
   ]
 })
 
+// 图层选择变化处理
+const onLayerSelectionChange = (layerId: string) => {
+  console.log('图层选择变化:', layerId)
+  if (layerId) {
+    setSelectedAnalysisLayer(layerId)
+    // 自动保存状态
+    saveToolState()
+  }
+}
+
 // 距离变化时的处理
 const onDistanceChange = () => {
   const radius = bufferSettings.value.radius
@@ -203,13 +215,8 @@ const onDistanceChange = () => {
 
 // 清除显示
 const clearResults = () => {
-  if (bufferResults.value) {
-    bufferResults.value.length = 0
-  }
-  if (currentResult.value) {
-    currentResult.value = null
-  }
-  removeBufferLayers()
+  // 使用composable中的清理方法
+  clearState()
   layerName.value = ''
   analysisStore.setAnalysisStatus('已清除缓冲区分析结果')
 }
@@ -347,12 +354,6 @@ const clearBufferAnalysisState = () => {
   // 清理本地状态
   layerName.value = ''
   
-  // 清理状态存储中的临时数据，只保留配置
-  modeStateStore.clearToolTemporaryData('buffer', [
-    'selectedAnalysisLayerId',
-    'bufferSettings'
-  ])
-  
   analysisStore.setAnalysisStatus('缓冲区分析状态已清理')
 }
 
@@ -374,16 +375,8 @@ const saveToolState = () => {
     return
   }
   
-  const stateToSave = {
-    selectedAnalysisLayerId: selectedAnalysisLayerId.value,
-    bufferSettings: { ...bufferSettings.value },
-    // 只在有实际结果时才保存结果数据
-    ...(bufferResults.value && bufferResults.value.length > 0 && {
-      bufferResults: bufferResults.value
-    }),
-    ...(layerName.value && { layerName: layerName.value })
-  }
-  console.log('保存缓冲区分析工具状态:', stateToSave)
+  console.log('保存缓冲区分析工具状态')
+  // 直接调用composable中的保存方法
   saveState(layerName.value)
 }
 
