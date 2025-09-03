@@ -105,7 +105,7 @@ src/
 │   ├── useLayerManager.ts      # 图层增删改/样式/导入导出
 │   ├── useBufferAnalysis.ts    # 缓冲区分析逻辑（Turf + 显示）
 │   ├── useShortestPathAnalysis.ts      # 最短路径分析逻辑（Turf.shortestPath）
-│   ├── useOverlayAnalysis.ts   # 叠加分析逻辑（intersect/union/...）
+│   ├── useOverlayAnalysis.ts   # 叠置分析逻辑（intersect/union/...）
 
 │   ├── useFeatureQuery.ts      # 要素属性/空间查询
 │   ├── useEditing.ts           # 要素编辑（绘制/修改/删除）
@@ -132,7 +132,7 @@ src/
 │   │   └── tools/              # 各类分析/工具面板
 │   │       ├── BufferAnalysisPanel.vue     # 缓冲区分析面板
 │   │       ├── DistanceAnalysisPanel.vue   # 最短路径/距离分析面板
-│   │       ├── OverlayAnalysisPanel.vue    # 叠加分析面板
+│   │       ├── OverlayAnalysisPanel.vue    # 叠置分析面板
 │   │       ├── FeatureQueryPanel.vue       # 要素查询面板
 │   │       └── EditTools.vue               # 编辑工具面板
 │   └── misc/                  # 其他页面（关于/设置/示例）

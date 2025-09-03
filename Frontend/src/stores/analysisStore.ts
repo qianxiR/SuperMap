@@ -69,7 +69,7 @@ export const useAnalysisStore = defineStore('analysis', () => {
         // 最短路径分析：清理路径和地图显示
         break
       case 'overlay':
-        // 叠加分析：清理分析结果
+        // 叠置分析：清理分析结果
         break
       case 'llm':
         // LLM模式：清理AI对话状态

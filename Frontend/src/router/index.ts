@@ -193,13 +193,13 @@ const router = createRouter({
                 requiresAuth: true
               }
             },
-                         // 叠加分析
+                         // 叠置分析
              {
                path: 'overlay',
                name: 'overlay-analysis',
                component: () => import('@/views/dashboard/traditional/tools/OverlayAnalysisPanel.vue'),
                meta: {
-                 title: '叠加分析',
+                 title: '叠置分析',
                  tool: 'overlay',
                  requiresAuth: true
                }

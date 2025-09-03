@@ -62,7 +62,7 @@ export function useOverlayAnalysis() {
     // 移除所有状态提示，保持界面简洁
   }, { immediate: true })
 
-  // 执行叠加分析
+  // 执行叠置分析
   async function executeOverlayAnalysis(): Promise<void> {
     // 检查基本条件，但不阻止执行
     if (!selectedLayer1.value || !selectedLayer2.value || !selectedOperation.value) {
@@ -71,7 +71,7 @@ export function useOverlayAnalysis() {
     }
 
     isAnalyzing.value = true
-    analysisStore.setAnalysisStatus('正在执行叠加分析...')
+    analysisStore.setAnalysisStatus('正在执行叠置分析...')
 
     try {
       // 直接从地图图层获取要素数据
@@ -92,7 +92,7 @@ export function useOverlayAnalysis() {
         throw new Error('选中图层没有要素数据')
       }
 
-      // 执行几何叠加分析
+      // 执行几何叠置分析
       const result = await performGeometryOverlay(
         features1,
         features2,
@@ -110,22 +110,22 @@ export function useOverlayAnalysis() {
       // 在地图上显示分析结果
       displayAnalysisResults(result)
 
-      analysisStore.setAnalysisStatus('叠加分析完成')
+      analysisStore.setAnalysisStatus('叠置分析完成')
     } catch (error) {
-      console.error('叠加分析失败:', error)
-      analysisStore.setAnalysisStatus('叠加分析失败: ' + (error as Error).message)
+      console.error('叠置分析失败:', error)
+      analysisStore.setAnalysisStatus('叠置分析失败: ' + (error as Error).message)
     } finally {
       isAnalyzing.value = false
     }
   }
 
-  // 几何叠加分析核心逻辑
+  // 几何叠置分析核心逻辑
   async function performGeometryOverlay(
     features1: any[],
     features2: any[],
     operation: string
   ): Promise<any> {
-    // 使用Turf.js进行几何叠加分析
+    // 使用Turf.js进行几何叠置分析
     const turf = await import('@turf/turf')
     
     const resultFeatures: any[] = []
@@ -342,7 +342,7 @@ export function useOverlayAnalysis() {
       const success = await saveFeaturesAsLayer(
         analysisFeatures,
         name,
-        'overlay' // 叠加分析类型标识
+        'overlay' // 叠置分析类型标识
       )
       
       if (success) {
@@ -351,7 +351,7 @@ export function useOverlayAnalysis() {
       
       return success
     } catch (error) {
-      console.error('保存叠加分析图层失败:', error)
+      console.error('保存叠置分析图层失败:', error)
       return false
     }
   }
@@ -361,7 +361,7 @@ export function useOverlayAnalysis() {
     const operationLabel = overlayOperations.find(op => op.type === selectedOperation.value)?.label || selectedOperation.value
     const layer1Name = availableLayers.value.find(l => l.id === selectedLayer1.value)?.name || '图层1'
     const layer2Name = availableLayers.value.find(l => l.id === selectedLayer2.value)?.name || '图层2'
-    return `叠加分析_${operationLabel}_${layer1Name}_${layer2Name}_${new Date().toLocaleString()}`
+    return `叠置分析_${operationLabel}_${layer1Name}_${layer2Name}_${new Date().toLocaleString()}`
   }
 
   // 清除所有选择

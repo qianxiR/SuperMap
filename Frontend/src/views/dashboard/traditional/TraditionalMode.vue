@@ -11,7 +11,7 @@
         <div class="button-row">
           <PrimaryButton text="缓冲区分析" :active="isBufferOpen" @click="toggleBuffer" />
           <PrimaryButton text="最短路径分析" :active="isDistanceOpen" @click="toggleDistance" />
-          <PrimaryButton text="叠加分析" :active="isOverlayOpen" @click="toggleOverlay" />
+          <PrimaryButton text="叠置分析" :active="isOverlayOpen" @click="toggleOverlay" />
         </div>
       </div>
     </div>
@@ -66,7 +66,7 @@ const toolConfigs = {
   'area-selection': { id: 'area-selection', title: '按区域选择要素', path: 'area-selection' },
   buffer: { id: 'buffer', title: '缓冲区分析', path: 'buffer' },
   distance: { id: 'distance', title: '最短路径分析', path: 'distance' },
-  overlay: { id: 'overlay', title: '叠加分析', path: 'overlay' }
+  overlay: { id: 'overlay', title: '叠置分析', path: 'overlay' }
 } as const
 
 // 判断是否为路由模式
@@ -168,7 +168,7 @@ onMounted(() => {
       const activeTool = traditionalState.activeTool || 'layer'
       const toolTitleMap: { [key: string]: string } = {
         'layer': '图层管理',
-        'overlay': '叠加分析',
+        'overlay': '叠置分析',
         'attribute-selection': '按属性选择要素',
         'area-selection': '按区域选择要素',
         'buffer': '缓冲区分析',

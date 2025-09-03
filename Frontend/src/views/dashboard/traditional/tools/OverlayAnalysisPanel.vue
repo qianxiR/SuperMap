@@ -45,7 +45,7 @@
     <div class="analysis-section">
       <div class="analysis-actions">
         <SecondaryButton 
-          text="执行叠加分析"
+          text="执行叠置分析"
           @click="executeOverlayAnalysis"
           :disabled="!canAnalyze || isAnalyzing"
           :loading="isAnalyzing"
@@ -83,7 +83,7 @@
       
       <!-- 显示分析结果 -->
       <div v-if="overlayResult" class="result-section">
-        <div class="result-title">叠加分析结果</div>
+        <div class="result-title">叠置分析结果</div>
         <div class="result-item">
           <span class="result-label">操作类型:</span>
           <span class="result-value">{{ getOperationLabel(overlayResult.operation) }}</span>
