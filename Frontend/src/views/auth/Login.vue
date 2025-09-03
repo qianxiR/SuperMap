@@ -260,27 +260,84 @@ const handleLogin = async () => {
       // 跳转到LLM模式
       router.push('/dashboard/llm')
     } else {
-      // 使用全局通知显示错误
+      // 处理登录失败 - 显示后端返回的具体错误信息
+      const errorMessage = response.message || '登录失败'
       window.dispatchEvent(new CustomEvent('showNotification', {
         detail: {
           title: '登录失败',
-          message: response.message || '登录失败',
+          message: errorMessage,
           type: 'error',
-          duration: 3000
+          duration: 5000
         }
       }))
     }
-  } catch (err) {
-    // 使用全局通知显示错误
+  } catch (err: any) {
+    // 智能错误处理 - 解析不同类型的错误
+    let errorTitle = '登录失败'
+    let errorMessage = '登录失败，请重试'
+    
+    if (err instanceof Error) {
+      // 处理标准Error对象
+      errorMessage = err.message
+      
+      // 根据错误消息判断错误类型
+      if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+        errorTitle = '网络连接失败'
+        errorMessage = '无法连接到服务器，请检查网络连接'
+      } else if (err.message.includes('timeout')) {
+        errorTitle = '请求超时'
+        errorMessage = '服务器响应超时，请稍后重试'
+      } else if (err.message.includes('detail')) {
+        // 尝试提取后端返回的详细错误信息
+        try {
+          const errorDetail = JSON.parse(err.message)
+          if (errorDetail.detail) {
+            errorMessage = errorDetail.detail
+          }
+        } catch {
+          // 如果解析失败，使用原始消息
+          errorMessage = err.message
+        }
+      }
+    } else if (typeof err === 'object' && err !== null) {
+      // 处理其他类型的错误对象
+      if ('detail' in err) {
+        errorMessage = String(err.detail)
+      } else if ('message' in err) {
+        errorMessage = String(err.message)
+      } else if ('status' in err) {
+        // 处理HTTP状态码
+        const status = err.status
+        if (status === 401) {
+          errorTitle = '认证失败'
+          errorMessage = '用户名或密码错误'
+        } else if (status === 403) {
+          errorTitle = '账户被禁用'
+          errorMessage = '您的账户已被禁用，请联系管理员'
+        } else if (status === 404) {
+          errorTitle = '用户不存在'
+          errorMessage = '找不到该用户，请检查用户名/邮箱/手机号'
+        } else if (status === 429) {
+          errorTitle = '登录尝试过多'
+          errorMessage = '登录尝试次数过多，请稍后再试'
+        } else if (status >= 500) {
+          errorTitle = '服务器错误'
+          errorMessage = '服务器内部错误，请稍后重试'
+        }
+      }
+    }
+    
+    // 显示具体的错误信息
     window.dispatchEvent(new CustomEvent('showNotification', {
       detail: {
-        title: '登录失败',
-        message: '登录失败，请重试',
+        title: errorTitle,
+        message: errorMessage,
         type: 'error',
-        duration: 3000
+        duration: 5000
       }
     }))
-    console.error('登录错误:', err)
+    
+    console.error('登录错误详情:', err)
   } finally {
     loading.value = false
   }

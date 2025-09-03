@@ -39,47 +39,27 @@
       <div class="section-title">参数设置</div>
       <div class="form-row">
         <div class="form-item">
-          <label class="form-label">端点类型</label>
-          <DropdownSelect 
-            v-model="bufferSettings.endType"
-            :options="[
-              { value: 'ROUND', label: '圆形端点' },
-              { value: 'FLAT', label: '平直端点' }
-            ]"
-            placeholder="选择端点类型"
-          />
-        </div>
-        <div class="form-item">
-          <label class="form-label">半圆弧段数</label>
+          <label class="form-label">圆弧精度</label>
           <TraditionalInputGroup
             v-model.number="bufferSettings.semicircleLineSegment"
             type="number"
             :min="4"
             :max="50"
             :step="2"
-            placeholder="圆弧精度"
+            placeholder="圆弧精度 (步数)"
           />
         </div>
+
       </div>
       <div class="form-row">
         <div class="form-item">
-          <label class="form-label">左侧距离 (米)</label>
+          <label class="form-label">缓冲距离 (米)</label>
           <TraditionalInputGroup
-            v-model.number="bufferSettings.leftDistance"
+            v-model.number="bufferSettings.radius"
             type="number"
             :min="0"
             :step="10"
-            placeholder="左侧缓冲距离"
-          />
-        </div>
-        <div class="form-item">
-          <label class="form-label">右侧距离 (米)</label>
-          <TraditionalInputGroup
-            v-model.number="bufferSettings.rightDistance"
-            type="number"
-            :min="0"
-            :step="10"
-            placeholder="右侧缓冲距离"
+            placeholder="缓冲距离"
           />
         </div>
       </div>
@@ -128,11 +108,11 @@
         </div>
         <div class="info-item">
           <span class="info-label">缓冲距离:</span>
-          <span class="info-value">{{ bufferSettings.leftDistance === bufferSettings.rightDistance ? bufferSettings.leftDistance : `${bufferSettings.leftDistance}/${bufferSettings.rightDistance}` }} 米</span>
+          <span class="info-value">{{ bufferSettings.radius }} 米</span>
         </div>
         <div class="info-item">
-          <span class="info-label">端点类型:</span>
-          <span class="info-value">{{ bufferSettings.endType === 'ROUND' ? '圆形' : '平直' }}</span>
+          <span class="info-label">圆弧精度:</span>
+          <span class="info-value">{{ bufferSettings.semicircleLineSegment }} 步</span>
         </div>
       </div>
       
@@ -212,14 +192,12 @@ const layerOptionsWithNone = computed(() => {
 
 // 距离变化时的处理
 const onDistanceChange = () => {
-  const leftDistance = bufferSettings.value.leftDistance
-  const rightDistance = bufferSettings.value.rightDistance
+  const radius = bufferSettings.value.radius
   
-  if (leftDistance <= 0 || rightDistance <= 0) {
+  if (radius <= 0) {
     analysisStore.setAnalysisStatus('缓冲距离必须大于0')
   } else {
-    const distanceText = leftDistance === rightDistance ? `${leftDistance}米` : `左${leftDistance}米/右${rightDistance}米`
-    analysisStore.setAnalysisStatus(`缓冲距离: ${distanceText}`)
+    analysisStore.setAnalysisStatus(`缓冲距离: ${radius}米`)
   }
 }
 
@@ -283,9 +261,7 @@ const generateLayerNameFromBuffer = () => {
   }
 
   const sourceLayerName = selectedAnalysisLayerInfo.value.name
-  const distanceText = bufferSettings.value.leftDistance === bufferSettings.value.rightDistance 
-    ? `${bufferSettings.value.leftDistance}米` 
-    : `左${bufferSettings.value.leftDistance}米右${bufferSettings.value.rightDistance}米`
+  const distanceText = `${bufferSettings.value.radius}米`
   
   return `缓冲区_${sourceLayerName}_${distanceText}`
 }
@@ -466,9 +442,7 @@ onUnmounted(() => {
 // 监听状态变化，自动保存（防抖）
 watch([
   selectedAnalysisLayerId,
-  () => bufferSettings.value.leftDistance,
-  () => bufferSettings.value.rightDistance,
-  () => bufferSettings.value.endType,
+  () => bufferSettings.value.radius,
   () => bufferSettings.value.semicircleLineSegment,
   // 移除对 bufferResults 的监听，避免结果变化时自动保存
   layerName

@@ -25,8 +25,8 @@
 
 <script setup lang="ts">
 import DashboardHeader from './DashboardHeader.vue'
-import SuperMapViewer from '../Map/SuperMapViewer.vue'
-import RightPanel from './RightPanel.vue'
+import SuperMapViewer from '@/views/dashboard/SuperMapViewer.vue'
+import RightPanel from '@/views/dashboard/RightPanel.vue'
 import { Splitpanes, Pane } from 'splitpanes'
 import 'splitpanes/dist/splitpanes.css'
 import UserProfile from '@/views/profile/UserProfile.vue'

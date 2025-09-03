@@ -108,7 +108,7 @@
 <script setup lang="ts">
 import { watch, computed, onMounted } from 'vue'
 import { useAnalysisStore } from '@/stores/analysisStore'
-import { usePathAnalysis } from '@/composables/usePathAnalysis'
+import { useShortestPathAnalysis } from '@/composables/useShortestPathAnalysis'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
 import DropdownSelect from '@/components/UI/DropdownSelect.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
@@ -129,7 +129,7 @@ const {
   executePathAnalysis,
   saveAnalysisLayer,
   exportGeoJSON
-} = usePathAnalysis()
+} = useShortestPathAnalysis()
 
 // 计算属性
 const hasResults = computed(() => analysisResults.value.length > 0)

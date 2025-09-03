@@ -709,22 +709,25 @@ const startNewConversation = () => {
   bottom: 8px;
   right: 8px;
   z-index: 10;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.3);
 }
 
 .action-button:hover {
-  background: var(--surface-hover);
+  background: var(--accent);
   transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.4);
 }
-
-
 
 .action-button:active:not(:disabled) {
   transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(var(--accent-rgb), 0.3);
 }
 
 .action-button:disabled {
-  background: rgba(0, 123, 255, 0.3);
+  background: rgba(var(--accent-rgb), 0.3);
   cursor: not-allowed;
   opacity: 0.6;
+  box-shadow: none;
 }
 </style>

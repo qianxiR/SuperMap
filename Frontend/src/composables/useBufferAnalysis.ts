@@ -12,6 +12,7 @@ import GeoJSON from 'ol/format/GeoJSON'
 declare global {
   interface Window {
     ol: any
+    turf: any
   }
 }
 
@@ -28,9 +29,7 @@ interface BufferResult {
 
 // 缓冲区参数类型
 interface BufferSettings {
-  endType: 'ROUND' | 'FLAT'
-  leftDistance: number
-  rightDistance: number
+  radius: number
   semicircleLineSegment: number
 }
 
@@ -43,9 +42,7 @@ export function useBufferAnalysis() {
   
   // 高级参数
   const bufferSettings = ref<BufferSettings>({
-    endType: 'ROUND',
-    leftDistance: 100,
-    rightDistance: 100,
+    radius: 100,
     semicircleLineSegment: 10
   })
   
@@ -152,14 +149,14 @@ export function useBufferAnalysis() {
     }
   }
   
-  // 执行缓冲区分析（使用SuperMap SpatialAnalystService）
-  const executeBufferAnalysis = async (): Promise<void> => {
+  // 执行缓冲区分析（使用turf.js）
+  const executeBufferAnalysis = (): void => {
     if (!selectedAnalysisLayerId.value) {
       analysisStore.setAnalysisStatus('请先选择分析图层')
       return
     }
     
-    if (bufferSettings.value.leftDistance <= 0 || bufferSettings.value.rightDistance <= 0) {
+    if (bufferSettings.value.radius <= 0) {
       analysisStore.setAnalysisStatus('缓冲距离必须大于0')
       return
     }
@@ -183,13 +180,13 @@ export function useBufferAnalysis() {
         return
       }
       
-      // 检查SuperMap iClient是否可用
-      if (typeof (window as any).ol?.supermap === 'undefined') {
-        analysisStore.setAnalysisStatus('SuperMap iClient 未加载，无法执行缓冲区分析')
+      // 检查turf.js是否可用
+      if (typeof (window as any).turf === 'undefined') {
+        analysisStore.setAnalysisStatus('turf.js 未加载，无法执行缓冲区分析')
         return
       }
       
-      // 使用SuperMap SpatialAnalystService进行缓冲区分析
+      // 使用turf.js进行缓冲区分析
       const results: BufferResult[] = []
       
       for (let i = 0; i < features.length; i++) {
@@ -203,62 +200,37 @@ export function useBufferAnalysis() {
         analysisStore.setAnalysisStatus(`正在分析要素 ${i + 1}/${features.length} (${progress}%)...`)
         
         try {
-          // 获取当前地图的投影信息
-          const mapView = mapStore.map?.getView()
-          const currentProjection = mapView?.getProjection()?.getCode() || 'EPSG:4326'
-          console.log('当前地图投影:', currentProjection)
-          
-          // 如果当前是地理坐标系，需要转换到投影坐标系
-          let projectedGeometry = geometry
-          if (currentProjection === 'EPSG:4326') {
-            // 转换到Web Mercator投影 (EPSG:3857)
-            const targetProjection = 'EPSG:3857'
-            projectedGeometry = geometry.clone().transform(currentProjection, targetProjection)
-            console.log('几何体已转换到投影坐标系:', targetProjection)
+          // 检查turf.js是否可用
+          if (typeof (window as any).turf === 'undefined') {
+            console.warn('turf.js 未加载，跳过要素:', i)
+            continue
           }
           
-          // 创建缓冲区分析参数
-          const geoBufferAnalystParams = new (window as any).ol.supermap.GeometryBufferAnalystParameters({
-            sourceGeometry: projectedGeometry,
-            bufferSetting: new (window as any).ol.supermap.BufferSetting({
-              endType: bufferSettings.value.endType === 'ROUND' 
-                ? (window as any).ol.supermap.BufferEndType.ROUND 
-                : (window as any).ol.supermap.BufferEndType.FLAT,
-              leftDistance: new (window as any).ol.supermap.BufferDistance({value: bufferSettings.value.leftDistance}),
-              rightDistance: new (window as any).ol.supermap.BufferDistance({value: bufferSettings.value.rightDistance}),
-              semicircleLineSegment: bufferSettings.value.semicircleLineSegment
-            })
-          })
+          // 将OpenLayers几何体转换为GeoJSON格式
+          const geoJSONFormat = new GeoJSON()
+          const geoJSONFeature = geoJSONFormat.writeFeatureObject(feature)
           
-          // 调用SuperMap SpatialAnalystService
-          const serviceUrl = 'https://iserver.supermap.io/iserver/services/spatialanalyst-changchun/restjsr/spatialanalyst'
-          const serviceResult = await new (window as any).ol.supermap.SpatialAnalystService(serviceUrl).bufferAnalysis(geoBufferAnalystParams)
+          // 使用turf.js进行缓冲区分析
+          // 注意：turf.js使用公里作为默认单位，需要将米转换为公里
+          const bufferRadius = bufferSettings.value.radius / 1000 // 转换为公里
           
-          if (serviceResult && serviceResult.result && serviceResult.result.resultGeometry) {
-            console.log('SuperMap服务返回的缓冲区结果:', serviceResult.result.resultGeometry)
-            
-            // 如果输入时进行了坐标系转换，返回结果也需要转换回地理坐标系
-            let resultGeometry = serviceResult.result.resultGeometry
-            if (currentProjection === 'EPSG:4326') {
-              // 将返回的投影坐标系结果转换回地理坐标系
-              try {
-                const resultFeature = new (window as any).ol.format.GeoJSON().readFeature(resultGeometry)
-                const resultGeom = resultFeature.getGeometry()
-                if (resultGeom) {
-                  resultGeom.transform('EPSG:3857', 'EPSG:4326')
-                  resultGeometry = new (window as any).ol.format.GeoJSON().writeFeatureObject(resultFeature)
-                  console.log('缓冲区结果已转换回地理坐标系')
-                }
-              } catch (transformError) {
-                console.warn('坐标系转换失败，使用原始结果:', transformError)
-              }
-            }
+          // 设置turf.js缓冲区选项
+          const bufferOptions = {
+            units: 'kilometers' as const,
+            steps: bufferSettings.value.semicircleLineSegment || 8
+          }
+          
+          // 执行缓冲区分析
+          const bufferedFeature = (window as any).turf.buffer(geoJSONFeature, bufferRadius, bufferOptions)
+          
+          if (bufferedFeature && bufferedFeature.geometry) {
+            console.log('turf.js缓冲区分析结果:', bufferedFeature)
             
             const result: BufferResult = {
               id: `buffer_${Date.now()}_${i}`,
               name: `缓冲区_${layer.name}_${i + 1}`,
-              geometry: resultGeometry,
-              distance: bufferSettings.value.leftDistance === bufferSettings.value.rightDistance ? bufferSettings.value.leftDistance : Math.max(bufferSettings.value.leftDistance, bufferSettings.value.rightDistance),
+              geometry: bufferedFeature,
+              distance: bufferSettings.value.radius,
               unit: '米',
               sourceLayerName: layer.name,
               createdAt: new Date().toISOString()
@@ -278,11 +250,7 @@ export function useBufferAnalysis() {
         // 在地图上显示结果
         displayBufferResults(results)
         
-        const distanceText = bufferSettings.value.leftDistance === bufferSettings.value.rightDistance 
-          ? `${bufferSettings.value.leftDistance}米` 
-          : `左${bufferSettings.value.leftDistance}米/右${bufferSettings.value.rightDistance}米`
-        
-        analysisStore.setAnalysisStatus(`✅ 缓冲区分析完成！生成了 ${results.length} 个缓冲区，距离: ${distanceText}`)
+        analysisStore.setAnalysisStatus(`✅ 缓冲区分析完成！生成了 ${results.length} 个缓冲区，距离: ${bufferSettings.value.radius}米`)
       } else {
         analysisStore.setAnalysisStatus('❌ 缓冲区分析失败，未生成有效结果')
       }

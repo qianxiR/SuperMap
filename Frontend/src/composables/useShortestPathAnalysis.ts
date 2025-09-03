@@ -17,7 +17,7 @@ interface PointInfo {
   geometry: any
 }
 
-interface PathResult {
+interface ShortestPathResult {
   id: string
   name: string
   geometry: any
@@ -28,7 +28,7 @@ interface PathResult {
   createdAt: string
 }
 
-interface PathAnalysisParams {
+interface ShortestPathAnalysisParams {
   startPoint: any
   endPoint: any
   obstacles?: any
@@ -37,13 +37,13 @@ interface PathAnalysisParams {
   resolution?: number
 }
 
-export function usePathAnalysis() {
+export function useShortestPathAnalysis() {
   const mapStore = useMapStore()
   const analysisStore = useAnalysisStore()
   const { saveFeaturesAsLayer } = useLayerManager()
   
   // ===== 核心状态 =====
-  const analysisResults = ref<PathResult[]>([])
+  const analysisResults = ref<ShortestPathResult[]>([])
   const layerName = ref<string>('')
   
   // 地图交互状态
@@ -93,7 +93,7 @@ export function usePathAnalysis() {
   
   // ===== 图层显示方法 =====
   
-  const displayAnalysisResults = (results: PathResult[]): void => {
+  const displayAnalysisResults = (results: ShortestPathResult[]): void => {
     // 只移除之前的路径图层，保留起始点和目标点
     removePathLayersOnly()
     
@@ -642,7 +642,7 @@ export function usePathAnalysis() {
       const distance = calculatePathDistance(pathResult)
       
       // 创建分析结果
-      const result: PathResult = {
+      const result: ShortestPathResult = {
         id: `path_${Date.now()}`,
         name: '最短路径分析',
         geometry: pathResult.geometry,

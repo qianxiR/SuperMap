@@ -11,7 +11,6 @@
     :data-embed="embed"
     :key="animationKey"
     @click="handleClick"
-    @wheel="handleWheel"
     @keydown="handleKeyDown"
     :tabindex="focusable ? 0 : undefined"
     :role="focusable ? 'dialog' : undefined"
@@ -193,12 +192,22 @@ onMounted(() => {
   restoreLayout()
   const content = panelRef.value?.querySelector('.panel-content') as HTMLElement | null
   content?.addEventListener('scroll', saveLayout)
+  
+  // 手动添加滚轮事件监听器，明确指定 passive: false
+  if (panelRef.value) {
+    panelRef.value.addEventListener('wheel', handleWheel, { passive: false })
+  }
 })
 
 onUnmounted(() => {
   saveLayout()
   const content = panelRef.value?.querySelector('.panel-content') as HTMLElement | null
   content?.removeEventListener('scroll', saveLayout)
+  
+  // 清理滚轮事件监听器
+  if (panelRef.value) {
+    panelRef.value.removeEventListener('wheel', handleWheel)
+  }
 })
 </script>
 

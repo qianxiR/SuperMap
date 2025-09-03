@@ -1,6 +1,6 @@
 <template>
   <PanelWindow 
-    :visible="analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'query'"
+    :visible="analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'attribute-selection'"
     :embed="true"
     :width="'100%'"
     :height="'100%'"
@@ -139,9 +139,9 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, watch, ref } from 'vue'
-import { useAnalysisStore } from '@/stores/analysisStore.ts'
-import { useFeatureQueryStore } from '@/stores/featureQueryStore.ts'
-import { useModeStateStore } from '@/stores/modeStateStore.ts'
+import { useAnalysisStore } from '@/stores/analysisStore'
+import { useFeatureQueryStore } from '@/stores/featureQueryStore'
+import { useModeStateStore } from '@/stores/modeStateStore'
 import { useLayerManager } from '@/composables/useLayerManager'
 import { getFeatureCompleteInfo, getFeatureGeometryDescription } from '@/utils/featureUtils'
 import DropdownSelect from '@/components/UI/DropdownSelect.vue'
@@ -291,7 +291,7 @@ watch([
 
 // 监听工具面板状态变化，在面板关闭时保存状态
 watch(() => analysisStore.toolPanel.visible, (newVisible, oldVisible) => {
-  if (oldVisible && !newVisible && analysisStore.toolPanel.activeTool === 'query') {
+  if (oldVisible && !newVisible && analysisStore.toolPanel.activeTool === 'attribute-selection') {
     // 工具面板关闭时保存状态
     saveToolState()
   }
@@ -299,7 +299,7 @@ watch(() => analysisStore.toolPanel.visible, (newVisible, oldVisible) => {
 
 // 监听activeTool变化，在工具切换时保存状态
 watch(() => analysisStore.toolPanel.activeTool, (newTool, oldTool) => {
-  if (oldTool === 'query' && newTool !== 'query') {
+  if (oldTool === 'attribute-selection' && newTool !== 'area-selection') {
     // 从查询工具切换到其他工具时，立即保存状态
     console.log('从查询工具切换到其他工具，保存状态')
     saveToolState()

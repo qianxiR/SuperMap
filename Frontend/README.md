@@ -45,8 +45,7 @@
 - **要素查询**: 属性查询与空间查询
 - **空间分析**: 
   - 缓冲区分析
-  - 距离分析
-  - 可达性分析
+  - 最短路径分析
 - **编辑工具**: 要素创建、修改、删除
 
 ### 🎨 用户界面
@@ -105,9 +104,9 @@ src/
 │   ├── useMap.ts               # 地图实例初始化/视图控制/事件注册
 │   ├── useLayerManager.ts      # 图层增删改/样式/导入导出
 │   ├── useBufferAnalysis.ts    # 缓冲区分析逻辑（Turf + 显示）
-│   ├── usePathAnalysis.ts      # 最短路径分析逻辑（Turf.shortestPath）
+│   ├── useShortestPathAnalysis.ts      # 最短路径分析逻辑（Turf.shortestPath）
 │   ├── useOverlayAnalysis.ts   # 叠加分析逻辑（intersect/union/...）
-│   ├── useDistanceAnalysis.ts  # 距离量算/路线耗时估算
+
 │   ├── useFeatureQuery.ts      # 要素属性/空间查询
 │   ├── useEditing.ts           # 要素编辑（绘制/修改/删除）
 │   ├── useSelection.ts         # 选择交互（点击/框选）
@@ -290,27 +289,18 @@ pnpm build
   - 调用的函数: `useLayerManager().saveFeaturesAsLayer(features, layerName, sourceType)`
   - 返回数据格式: `Promise<boolean>`
 
-5) 最优路径分析（path/distance）
-- 输入数据格式: `startPoint: ol.Feature`，`endPoint: ol.Feature`，`pathType: 'shortest'|'fastest'|'scenic'`，`transportMode: 'walking'|'cycling'|'driving'|'transit'`
-- 调用的函数: `useDistanceAnalysis().executePathAnalysis()`
+5) 最短路径分析（shortest-path）
+- 输入数据格式: `startPoint: ol.Feature`，`endPoint: ol.Feature`
+- 调用的函数: `useShortestPathAnalysis().executePathAnalysis()`
 - 返回数据格式: `{ distance: number, duration: number, pathType: string } | null`
-- 状态管理: 本地 `ref`（`startPoint`, `endPoint`, `analysisResult`）；提示通过 `analysisStore`
+- 状态管理: 本地 `ref`（`startPoint`, `endPoint`, `analysisResults`）；提示通过 `analysisStore`
 
-- 最优路径 → 另存为图层:
+- 最短路径 → 另存为图层:
   - 输入数据格式: `features: ol.Feature[]`（由起终点构造 `LineString`）; `layerName: string`; `sourceType?: 'draw'|'area'|'query'`
   - 调用的函数: `useLayerManager().saveFeaturesAsLayer(features, layerName, sourceType)`
   - 返回数据格式: `Promise<boolean>`
 
-6) 服务区分析（service area）
-- 输入数据格式: `selectedCenters: ol.Feature[]`；参数 `baseRadius: number`，`radiusStep: number`
-- 调用的函数: `useServiceAreaAnalysis().executeServiceArea()`（内部逐中心调用 `analysisAPI.bufferAnalysis({ geometry: Point, distance, unit: 'meters' })`）
-- 返回数据格式: `GeoJSON FeatureCollection`（`{ type: 'FeatureCollection', features: any[] }`）
-- 状态管理: 本地 `ref`（`selectedCenters`, `serviceAreaResult`, `baseRadius`, `radiusStep`）；提示通过 `analysisStore`
 
-- 服务区分析结果 → 另存为图层:
-  - 输入数据格式: `features: ol.Feature[]`（由 `serviceAreaResult` 的 GeoJSON 读取）; `layerName: string`; `sourceType?: 'draw'|'area'|'query'`
-  - 调用的函数: `useLayerManager().saveFeaturesAsLayer(features, layerName, sourceType)`
-  - 返回数据格式: `Promise<boolean>`
 
 ### 组件开发
 

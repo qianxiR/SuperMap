@@ -1,15 +1,7 @@
 import type { ServiceResponse } from '@/types/map'
 
 // 分析相关的类型定义
-export interface AccessibilityParams {
-  centerPoint: {
-    type: string
-    coordinates: number[]
-  }
-  maxDistance: number
-  transportMode: 'walking' | 'cycling' | 'driving' | 'transit'
-  timeLimit: number
-}
+
 
 export interface DistanceParams {
   startPoint: {
@@ -32,9 +24,7 @@ export interface BufferParams {
   distance: number
   unit: 'meters' | 'kilometers'
   settings?: {
-    endType: 'ROUND' | 'FLAT'
-    leftDistance: number
-    rightDistance: number
+    radius: number
     semicircleLineSegment: number
   }
 }
@@ -45,16 +35,7 @@ export interface AnalysisResult {
   error?: string
 }
 
-// 泰森多边形（Thiessen/Voronoi）分析参数
-export interface ThiessenParams {
-  points: Array<{
-    type: string
-    coordinates: number[]
-    properties?: Record<string, any>
-  }>
-  extent?: [number, number, number, number]
-  crs?: string
-}
+
 
 export class AnalysisAPI {
   private baseUrl: string
@@ -105,21 +86,9 @@ export class AnalysisAPI {
     }
   }
 
-  // 可达性分析API
-  async accessibilityAnalysis(params: AccessibilityParams): Promise<ServiceResponse<any>> {
-    return this.request('/analysis/accessibility', {
-      method: 'POST',
-      body: JSON.stringify(params),
-    })
-  }
 
-  // 泰森多边形分析API
-  async thiessenAnalysis(params: ThiessenParams): Promise<ServiceResponse<any>> {
-    return this.request('/analysis/thiessen', {
-      method: 'POST',
-      body: JSON.stringify(params),
-    })
-  }
+
+
 
   // 距离分析API
   async distanceAnalysis(params: DistanceParams): Promise<ServiceResponse<any>> {

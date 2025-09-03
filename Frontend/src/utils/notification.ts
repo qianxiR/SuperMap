@@ -95,14 +95,3 @@ export const handleError = (error: any, context: string = '操作'): void => {
     message
   )
 }
-
-// 网络错误处理
-export const handleNetworkError = (error: any): void => {
-  if (error.type === 'timeout') {
-    notificationManager.error('请求超时', '服务器响应时间过长，请检查网络连接')
-  } else if (error.type === 'network') {
-    notificationManager.error('网络错误', '无法连接到服务器，请检查网络设置')
-  } else {
-    handleError(error, '网络请求')
-  }
-}

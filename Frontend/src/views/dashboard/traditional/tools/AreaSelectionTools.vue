@@ -1,10 +1,10 @@
 <template>
   <PanelWindow 
-    :visible="analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'bianji'"
+    :visible="analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'area-selection'"
     :embed="true"
     :width="'100%'"
     :height="'100%'"
-    class="edit-tools-panel"
+    class="area-selection-tools-panel"
   >
     <!-- 已选中要素列表 -->
     <div class="analysis-section">
@@ -75,8 +75,8 @@
 
 <script setup lang="ts">
 import { watch, computed, onMounted, onUnmounted } from 'vue'
-import { useAnalysisStore } from '@/stores/analysisStore.ts'
-import { useMapStore } from '@/stores/mapStore.ts'
+import { useAnalysisStore } from '@/stores/analysisStore'
+import { useMapStore } from '@/stores/mapStore'
 import { useFeatureSelection } from '@/composables/useFeatureSelection'
 import { useLayerManager } from '@/composables/useLayerManager'
 import { getFeatureCompleteInfo } from '@/utils/featureUtils'
@@ -126,9 +126,9 @@ const selectedFeatureInfo = computed(() => {
   return getFeatureCompleteInfo(feature)
 })
 
-// 监听编辑工具关闭 - 不清除已选择的要素，只清除交互
+// 监听区域选择工具关闭 - 不清除已选择的要素，只清除交互
 watch(() => analysisStore.toolPanel?.activeTool, (tool) => {
-  if (tool !== 'bianji') {
+  if (tool !== 'area-selection') {
     // 只清除交互，不清除已选择的要素
     clearSelectionInteractions()
   }
@@ -157,7 +157,7 @@ defineExpose({
 </script>
 
 <style scoped>
-.edit-tools-panel {
+.area-selection-tools-panel {
   height: 100%;
   overflow-y: auto;
   padding: 8px;

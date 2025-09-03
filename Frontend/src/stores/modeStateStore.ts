@@ -28,8 +28,7 @@ interface TraditionalState {
       bufferUnit?: string
       distanceStart?: any
       distanceEnd?: any
-      accessibilityCenter?: any
-      accessibilityRadius?: number
+
       editMode?: string
       selectedFeatures?: any[]
       [key: string]: any

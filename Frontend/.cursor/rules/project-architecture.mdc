@@ -32,7 +32,7 @@ src/
 │   ├── useDistanceAnalysis.ts    # 距离分析
 │   ├── usePathAnalysis.ts        # 路径分析
 │   ├── useOverlayAnalysis.ts     # 叠加分析
-│   ├── useThiessenAnalysis.ts    # 泰森多边形分析
+
 │   ├── useServiceAreaAnalysis.ts # 服务区分析
 │   ├── useAccessibilityAnalysis.ts # 可达性分析
 │   ├── useMap.ts                 # 地图交互
@@ -59,7 +59,7 @@ src/
 │   │   │       ├── BufferAnalysisPanel.vue      # 缓冲区分析
 │   │   │       ├── DistanceAnalysisPanel.vue    # 距离分析
 │   │   │       ├── OverlayAnalysisPanel.vue     # 叠加分析
-│   │   │       ├── ThiessenAnalysisPanel.vue    # 泰森多边形分析
+│   
 │   │   │       ├── FeatureQueryPanel.vue        # 要素查询
 │   │   │       ├── LayerManager.vue             # 图层管理
 │   │   │       └── EditTools.vue                # 编辑工具

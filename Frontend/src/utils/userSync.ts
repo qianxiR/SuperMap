@@ -3,7 +3,7 @@ import { getRequiredUserFields } from './fieldMapping'
 
 /**
  * 用户信息同步工具
- * 确保前端用户信息与后端数据库保持同步
+ * 保留实际使用的核心功能
  */
 
 /**
@@ -50,27 +50,6 @@ export async function syncUserInfo(): Promise<boolean> {
 }
 
 /**
- * 强制刷新用户信息
- * 忽略本地缓存，直接从后端获取最新信息
- */
-export async function refreshUserInfo(): Promise<boolean> {
-  const userStore = useUserStore()
-  
-  try {
-    if (!userStore.token) {
-      return false
-    }
-    
-    await userStore.fetchUserInfo()
-    localStorage.setItem('userInfoLastUpdate', new Date().toISOString())
-    return true
-  } catch (error) {
-    console.error('刷新用户信息失败:', error)
-    return false
-  }
-}
-
-/**
  * 检查用户信息完整性
  */
 export function isUserInfoComplete(): boolean {
@@ -92,13 +71,4 @@ export function isUserInfoComplete(): boolean {
   }
   
   return true
-}
-
-/**
- * 获取用户ID
- * 如果用户信息不完整，返回null
- */
-export function getUserId(): number | null {
-  const userStore = useUserStore()
-  return userStore.userInfo?.id || null
 }

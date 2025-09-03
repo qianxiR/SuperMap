@@ -260,11 +260,7 @@ const exportGeoJSON = () => {
 - **功能**: 空间叠加分析，交集、并集、差集运算
 - **参数**: 输入图层、叠加类型、容差设置
 
-### 泰森多边形分析 (Thiessen Analysis)
-- **Composable**: `useThiessenAnalysis.ts`
-- **Panel**: `ThiessenAnalysisPanel.vue`
-- **功能**: 基于点要素生成泰森多边形
-- **参数**: 输入点图层、边界设置
+
 
 ### 服务区分析 (Service Area Analysis)
 - **Composable**: `useServiceAreaAnalysis.ts`

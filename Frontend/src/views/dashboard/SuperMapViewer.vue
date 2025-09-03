@@ -22,13 +22,13 @@
 import { onMounted, onUnmounted } from 'vue'
 import { useMap } from '@/composables/useMap'
 import { useMapStore } from '@/stores/mapStore'
-import FeaturePopup from './FeaturePopup.vue'
-import CoordinateDisplay from './CoordinateDisplay.vue'
-import ScaleBar from './ScaleBar.vue'
-import LayerAssistant from './LayerAssistant.vue'
-import OverviewMap from './OverviewMap.vue'
-import DistanceMeasurePanel from './DistanceMeasurePanel.vue'
-import AreaMeasurePanel from './AreaMeasurePanel.vue'
+import FeaturePopup from '@/components/Map/FeaturePopup.vue'
+import CoordinateDisplay from '@/components/Map/CoordinateDisplay.vue'
+import ScaleBar from '@/components/Map/ScaleBar.vue'
+import LayerAssistant from '@/components/Map/LayerAssistant.vue'
+import OverviewMap from '@/components/Map/OverviewMap.vue'
+import DistanceMeasurePanel from '@/components/Map/DistanceMeasurePanel.vue'
+import AreaMeasurePanel from '@/components/Map/AreaMeasurePanel.vue'
 
 
 // 组合式函数
@@ -46,7 +46,7 @@ onMounted(() => {
     setTimeout(initMap, 500)
   }
 
-  // 当容器尺寸变化时，强制更新地图尺寸，避免容器初始为0导致“无地图可见”
+  // 当容器尺寸变化时，强制更新地图尺寸，避免容器初始为0导致"无地图可见"
   const el = mapContainer.value
   if (el && 'ResizeObserver' in window) {
     resizeObserver = new ResizeObserver(() => {

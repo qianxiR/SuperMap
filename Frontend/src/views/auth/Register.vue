@@ -250,26 +250,81 @@ const handleRegister = async () => {
         router.push('/dashboard')
       }
     } else {
-      // 注册失败
+      // 处理注册失败 - 显示后端返回的具体错误信息
+      const errorMessage = response.message || '注册失败'
       window.dispatchEvent(new CustomEvent('showNotification', {
         detail: {
           title: '注册失败',
-          message: response.message || '注册失败',
+          message: errorMessage,
           type: 'error',
-          duration: 3000
+          duration: 5000
         }
       }))
     }
-  } catch (err) {
+  } catch (err: any) {
+    // 智能错误处理 - 解析不同类型的错误
+    let errorTitle = '注册失败'
+    let errorMessage = '注册失败，请重试'
+    
+    if (err instanceof Error) {
+      // 处理标准Error对象
+      errorMessage = err.message
+      
+      // 根据错误消息判断错误类型
+      if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+        errorTitle = '网络连接失败'
+        errorMessage = '无法连接到服务器，请检查网络连接'
+      } else if (err.message.includes('timeout')) {
+        errorTitle = '请求超时'
+        errorMessage = '服务器响应超时，请稍后重试'
+      } else if (err.message.includes('detail')) {
+        // 尝试提取后端返回的详细错误信息
+        try {
+          const errorDetail = JSON.parse(err.message)
+          if (errorDetail.detail) {
+            errorMessage = errorDetail.detail
+          }
+        } catch {
+          // 如果解析失败，使用原始消息
+          errorMessage = err.message
+        }
+      }
+    } else if (typeof err === 'object' && err !== null) {
+      // 处理其他类型的错误对象
+      if ('detail' in err) {
+        errorMessage = String(err.detail)
+      } else if ('message' in err) {
+        errorMessage = String(err.message)
+      } else if ('status' in err) {
+        // 处理HTTP状态码
+        const status = err.status
+        if (status === 400) {
+          errorTitle = '请求参数错误'
+          errorMessage = '请检查输入的注册信息是否正确'
+        } else if (status === 409) {
+          errorTitle = '用户已存在'
+          errorMessage = '用户名、邮箱或手机号已被注册'
+        } else if (status === 422) {
+          errorTitle = '数据验证失败'
+          errorMessage = '输入的数据格式不正确，请检查后重试'
+        } else if (status >= 500) {
+          errorTitle = '服务器错误'
+          errorMessage = '服务器内部错误，请稍后重试'
+        }
+      }
+    }
+    
+    // 显示具体的错误信息
     window.dispatchEvent(new CustomEvent('showNotification', {
       detail: {
-        title: '注册失败',
-        message: '注册失败，请重试',
+        title: errorTitle,
+        message: errorMessage,
         type: 'error',
-        duration: 3000
+        duration: 5000
       }
     }))
-    console.error('注册错误:', err)
+    
+    console.error('注册错误详情:', err)
   } finally {
     loading.value = false
   }
@@ -299,7 +354,7 @@ const handleRegister = async () => {
   width: 400px;
   max-width: 90vw;
   border: 1px solid var(--border);
-  min-height: 600px;
+  min-height: 500px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -307,7 +362,7 @@ const handleRegister = async () => {
 
 .register-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 24px;
 }
 
 .register-header h2 {
@@ -315,40 +370,44 @@ const handleRegister = async () => {
   color: var(--text);
   font-size: 24px;
   font-weight: 600;
+  font-family: "Segoe UI", PingFang SC, Microsoft YaHei, Arial, sans-serif;
 }
 
 .register-header p {
   margin: 0;
   color: var(--sub);
   font-size: 14px;
+  font-family: "Segoe UI", PingFang SC, Microsoft YaHei, Arial, sans-serif;
 }
 
 .register-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .form-group label {
   font-size: 14px;
   font-weight: 500;
   color: var(--text);
+  font-family: "Segoe UI", PingFang SC, Microsoft YaHei, Arial, sans-serif;
 }
 
 .form-group input[type="text"],
 .form-group input[type="email"],
 .form-group input[type="password"],
 .form-group input[type="tel"] {
-  padding: 12px 16px;
+  padding: 10px 14px;
   border: 2px solid var(--border);
   border-radius: 8px;
   font-size: 16px;
+  font-family: "Segoe UI", PingFang SC, Microsoft YaHei, Arial, sans-serif;
   transition: border-color 0.3s ease;
   background: var(--panel);
   color: var(--text);
@@ -406,6 +465,7 @@ const handleRegister = async () => {
   cursor: pointer;
   font-size: 14px;
   color: var(--sub);
+  font-family: "Segoe UI", PingFang SC, Microsoft YaHei, Arial, sans-serif;
 }
 
 .checkbox-label input[type="checkbox"] {
@@ -444,13 +504,14 @@ const handleRegister = async () => {
 }
 
 .register-btn {
-  padding: 14px;
+  padding: 12px;
   background: linear-gradient(135deg, var(--accent) 0%, rgba(var(--accent-rgb), 0.9) 100%);
   color: var(--btn-primary-color);
   border: none;
   border-radius: 8px;
   font-size: 16px;
   font-weight: 600;
+  font-family: "Segoe UI", PingFang SC, Microsoft YaHei, Arial, sans-serif;
   cursor: pointer;
   transition: box-shadow 0.2s ease;
 }
@@ -466,9 +527,9 @@ const handleRegister = async () => {
 }
 
 .register-footer {
-  margin-top: 20px;
+  margin-top: 16px;
   text-align: center;
-  padding-top: 20px;
+  padding-top: 16px;
   border-top: 1px solid var(--border);
 }
 
@@ -476,12 +537,14 @@ const handleRegister = async () => {
   margin: 0;
   color: var(--sub);
   font-size: 14px;
+  font-family: "Segoe UI", PingFang SC, Microsoft YaHei, Arial, sans-serif;
 }
 
 .login-link {
   color: var(--link-color);
   text-decoration: none;
   font-weight: 500;
+  font-family: "Segoe UI", PingFang SC, Microsoft YaHei, Arial, sans-serif;
   transition: color 0.2s ease;
 }
 

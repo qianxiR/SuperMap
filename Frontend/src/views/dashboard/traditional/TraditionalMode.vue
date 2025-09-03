@@ -6,7 +6,7 @@
         <div class="button-row">
           <PrimaryButton text="图层管理" :active="isLayerOpen" @click="toggleLayerManager" />
           <PrimaryButton text="按属性选择要素" :active="isQueryOpen" @click="toggleQuery" />
-          <PrimaryButton text="按区域选择要素" :active="isbianji" @click="togglebianji" />
+          <PrimaryButton text="按区域选择要素" :active="isAreaSelection" @click="toggleAreaSelection" />
         </div>
         <div class="button-row">
           <PrimaryButton text="缓冲区分析" :active="isBufferOpen" @click="toggleBuffer" />
@@ -19,10 +19,11 @@
     <!-- 内容区域 -->
     <div class="content-section">
       <!-- 保持现有条件渲染逻辑 -->
-      <FeatureQueryPanel v-if="analysisStore.toolPanel.activeTool === 'query'" />
-      <EditTools v-if="analysisStore.toolPanel.activeTool === 'bianji'" />
+      <FeatureQueryPanel v-if="analysisStore.toolPanel.activeTool === 'attribute-selection'" />
+              <AreaSelectionTools v-if="analysisStore.toolPanel.activeTool === 'area-selection'" />
+<ShortestPathAnalysisPanel v-if="analysisStore.toolPanel.activeTool === 'distance'" />
       <BufferAnalysisPanel v-if="analysisStore.toolPanel.activeTool === 'buffer'" />
-      <DistanceAnalysisPanel v-if="analysisStore.toolPanel.activeTool === 'distance'" />
+      
       <OverlayAnalysisPanel v-if="analysisStore.toolPanel.activeTool === 'overlay'" />
       <LayerManager v-if="analysisStore.toolPanel.activeTool === 'layer'" />
       
@@ -44,9 +45,10 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useModeStateStore } from '@/stores/modeStateStore'
 import FeatureQueryPanel from '@/views/dashboard/traditional/tools/FeatureQueryPanel.vue'
-import EditTools from '@/views/dashboard/traditional/tools/EditTools.vue'
+import AreaSelectionTools from '@/views/dashboard/traditional/tools/AreaSelectionTools.vue'
+import ShortestPathAnalysisPanel from '@/views/dashboard/traditional/tools/ShortestPathAnalysisPanel.vue'
 import BufferAnalysisPanel from '@/views/dashboard/traditional/tools/BufferAnalysisPanel.vue'
-import DistanceAnalysisPanel from '@/views/dashboard/traditional/tools/DistanceAnalysisPanel.vue'
+
 import OverlayAnalysisPanel from '@/views/dashboard/traditional/tools/OverlayAnalysisPanel.vue'
 import LayerManager from '@/views/dashboard/traditional/tools/LayerManager.vue'
 import PrimaryButton from '@/components/UI/PrimaryButton.vue'
@@ -59,12 +61,12 @@ const modeStateStore = useModeStateStore()
 
 // 工具配置对象
 const toolConfigs = {
-  bianji: { id: 'bianji', title: '图层编辑', path: 'edit' },
-  buffer: { id: 'buffer', title: '缓冲区分析', path: 'buffer' },
   layer: { id: 'layer', title: '图层管理', path: 'layer' },
+  'attribute-selection': { id: 'attribute-selection', title: '按属性选择要素', path: 'attribute-selection' },
+  'area-selection': { id: 'area-selection', title: '按区域选择要素', path: 'area-selection' },
+  buffer: { id: 'buffer', title: '缓冲区分析', path: 'buffer' },
   distance: { id: 'distance', title: '最短路径分析', path: 'distance' },
-  overlay: { id: 'overlay', title: '叠加分析', path: 'overlay' },
-  query: { id: 'query', title: '要素查询', path: 'query' }
+  overlay: { id: 'overlay', title: '叠加分析', path: 'overlay' }
 } as const
 
 // 判断是否为路由模式
@@ -75,10 +77,10 @@ const isRouteMode = computed(() => {
 // 状态检查变量
 const isBufferOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'buffer')
 const isLayerOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'layer')
-const isbianji = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'bianji')
+const isAreaSelection = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'area-selection')
 const isDistanceOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'distance')
 const isOverlayOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'overlay')
-const isQueryOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'query')
+const isQueryOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'attribute-selection')
 
 // 路由导航函数
 const navigateToTool = (toolKey: keyof typeof toolConfigs) => {
@@ -110,12 +112,12 @@ const toggleTool = (toolKey: keyof typeof toolConfigs) => {
 }
 
 // 简化的切换函数
-const togglebianji = () => toggleTool('bianji')
+const toggleAreaSelection = () => toggleTool('area-selection')
 const toggleBuffer = () => toggleTool('buffer')
 const toggleLayerManager = () => toggleTool('layer')
 const toggleDistance = () => toggleTool('distance')
 const toggleOverlay = () => toggleTool('overlay')
-const toggleQuery = () => toggleTool('query')
+const toggleQuery = () => toggleTool('attribute-selection')
 
 // 监听路由变化，同步到状态管理
 watch(() => route.path, (newPath) => {
@@ -166,11 +168,11 @@ onMounted(() => {
       const activeTool = traditionalState.activeTool || 'layer'
       const toolTitleMap: { [key: string]: string } = {
         'layer': '图层管理',
-        'query': '要素查询',
-        'bianji': '图层编辑',
+        'overlay': '叠加分析',
+        'attribute-selection': '按属性选择要素',
+        'area-selection': '按区域选择要素',
         'buffer': '缓冲区分析',
-        'distance': '距离分析',
-        'overlay': '叠加分析'
+        'distance': '最短路径分析'
       }
       analysisStore.openTool(activeTool as any, toolTitleMap[activeTool] || '图层管理')
     }

@@ -118,14 +118,14 @@ const router = createRouter({
                       const state = JSON.parse(savedState)
                       if (state.activeTool) {
                         // 根据activeTool找到对应的路径
-                                                 const toolPathMap: { [key: string]: string } = {
-                           'layer': 'layer',
-                           'query': 'query',
-                           'bianji': 'edit',
-                           'buffer': 'buffer',
-                           'distance': 'distance',
-                           'overlay': 'overlay'
-                         }
+                        const toolPathMap: { [key: string]: string } = {
+                          'layer': 'layer',
+                          'query': 'attribute-selection',
+                          'bianji': 'area-selection',
+                          'buffer': 'buffer',
+                          'distance': 'distance',
+                          'overlay': 'overlay'
+                        }
                         const path = toolPathMap[state.activeTool]
                         if (path) {
                           return `/dashboard/traditional/${path}`
@@ -149,24 +149,24 @@ const router = createRouter({
                 requiresAuth: true
               }
             },
-            // 要素查询
+            // 按属性选择要素
             {
-              path: 'query',
-              name: 'feature-query',
+              path: 'attribute-selection',
+              name: 'attribute-selection',
               component: () => import('@/views/dashboard/traditional/tools/FeatureQueryPanel.vue'),
               meta: {
-                title: '要素查询',
+                title: '按属性选择要素',
                 tool: 'query',
                 requiresAuth: true
               }
             },
-            // 图层编辑
+            // 按区域选择要素
             {
-              path: 'edit',
-              name: 'edit-tools',
-              component: () => import('@/views/dashboard/traditional/tools/EditTools.vue'),
+              path: 'area-selection',
+              name: 'area-selection',
+              component: () => import('@/views/dashboard/traditional/tools/AreaSelectionTools.vue'),
               meta: {
-                title: '图层编辑',
+                title: '按区域选择要素',
                 tool: 'bianji',
                 requiresAuth: true
               }
@@ -182,13 +182,13 @@ const router = createRouter({
                 requiresAuth: true
               }
             },
-            // 距离分析
+            // 最短路径分析
             {
               path: 'distance',
-              name: 'distance-analysis',
-              component: () => import('@/views/dashboard/traditional/tools/DistanceAnalysisPanel.vue'),
+              name: 'shortest-path-analysis',
+              component: () => import('@/views/dashboard/traditional/tools/ShortestPathAnalysisPanel.vue'),
               meta: {
-                title: '距离分析',
+                title: '最短路径分析',
                 tool: 'distance',
                 requiresAuth: true
               }

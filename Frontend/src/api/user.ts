@@ -68,7 +68,12 @@ class UserApiService {
       const result = await response.json()
       
       if (!response.ok) {
-        throw new Error(result.detail || '注册失败')
+        // 创建包含HTTP状态码和详细错误信息的错误对象
+        const error = new Error(result.detail || result.message || '注册失败')
+        ;(error as any).status = response.status
+        ;(error as any).statusText = response.statusText
+        ;(error as any).response = result
+        throw error
       }
 
       return result
@@ -92,7 +97,12 @@ class UserApiService {
       const result = await response.json()
       
       if (!response.ok) {
-        throw new Error(result.detail || '登录失败')
+        // 创建包含HTTP状态码和详细错误信息的错误对象
+        const error = new Error(result.detail || result.message || '登录失败')
+        ;(error as any).status = response.status
+        ;(error as any).statusText = response.statusText
+        ;(error as any).response = result
+        throw error
       }
 
       return result

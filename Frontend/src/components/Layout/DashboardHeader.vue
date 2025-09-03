@@ -225,11 +225,10 @@ const setMode = (modeId: 'traditional' | 'llm') => {
     const traditionalState = modeStateStore.getTraditionalState()
     const toolPathMap: { [key: string]: string } = {
       'layer': 'layer',
-      'query': 'query',
-      'bianji': 'edit',
+      'query': 'attribute-selection',
+      'bianji': 'area-selection',
       'buffer': 'buffer',
       'distance': 'distance',
-      'gotowhere': 'accessibility'
     }
     const path = toolPathMap[traditionalState.activeTool] || 'layer'
     router.push(`/dashboard/traditional/${path}`)
@@ -261,9 +260,9 @@ onMounted(() => {
       import('@/views/dashboard/traditional/TraditionalMode.vue'),
       import('@/views/dashboard/traditional/tools/LayerManager.vue'),
       import('@/views/dashboard/traditional/tools/FeatureQueryPanel.vue'),
-      import('@/views/dashboard/traditional/tools/EditTools.vue'),
+              import('@/views/dashboard/traditional/tools/AreaSelectionTools.vue'),
       import('@/views/dashboard/traditional/tools/BufferAnalysisPanel.vue'),
-      import('@/views/dashboard/traditional/tools/DistanceAnalysisPanel.vue'),
+      import('@/views/dashboard/traditional/tools/ShortestPathAnalysisPanel.vue'),
       import('@/views/dashboard/traditional/tools/OverlayAnalysisPanel.vue'),
       import('ol')
     ]).catch(() => {})
