@@ -106,7 +106,7 @@
 </template>
 
 <script setup lang="ts">
-import { watch, computed, onMounted } from 'vue'
+import { watch, computed, onMounted, onUnmounted } from 'vue'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useShortestPathAnalysis } from '@/composables/useShortestPathAnalysis'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
@@ -137,18 +137,28 @@ const currentResult = computed(() => analysisResults.value[0] || null)
 
 // 组件挂载时初始化
 onMounted(async () => {
-  // 状态管理已移除，无需初始化
+  analysisStore.setAnalysisStatus('请点击选择起始点和目标点进行最短路径分析')
 })
 
-// 监听工具面板变化
+// 切换离开最短路径工具时，清除地图图层与状态
 watch(() => analysisStore.toolPanel.activeTool, async (tool) => {
-  if (tool === 'distance') {
-    // 进入最短路径分析模式
-    // 状态管理已移除，直接显示提示信息
-    analysisStore.setAnalysisStatus('请点击选择起始点和目标点进行最短路径分析')
-  } else {
-    // 离开最短路径分析模式
-    // 状态管理已移除，无需特殊处理
+  if (tool !== 'distance') {
+    clearResults()
+    analysisStore.setAnalysisStatus('已退出最短路径分析，已清除图层与状态')
+  }
+})
+
+// 面板关闭时，清除地图图层与状态
+watch(() => analysisStore.toolPanel.visible.valueOf?.() ?? analysisStore.toolPanel.visible, (newVisible: any, oldVisible: any) => {
+  try {
+    const wasVisible = Boolean(oldVisible)
+    const nowVisible = Boolean(newVisible)
+    if (wasVisible && !nowVisible && (analysisStore.toolPanel.activeTool.valueOf?.() === 'distance' || analysisStore.toolPanel.activeTool === 'distance')) {
+      clearResults()
+      analysisStore.setAnalysisStatus('最短路径面板已关闭，已清除图层与状态')
+    }
+  } catch (_) {
+    clearResults()
   }
 })
 
@@ -167,6 +177,10 @@ const handleClearState = () => {
   clearResults()
   analysisStore.setAnalysisStatus('状态已清除，可以重新开始分析')
 }
+
+onUnmounted(() => {
+  clearResults()
+})
 </script>
 
 <style scoped>

@@ -209,9 +209,6 @@ const getLayersBySource = (source: string): MapLayerItem[] => {
 }
 
 
-
-
-
 // 所有图层的扁平化列表
 const allLayers = computed(() => {
   const layers: MapLayerItem[] = []
@@ -235,13 +232,14 @@ const allLayers = computed(() => {
         draw: '绘制',
         area: '区域选择',
         query: '属性查询',
-        buffer: '缓冲区分析'
+        buffer: '缓冲区分析',
+        path: '最短路径'
       }
       item.displayName = `${sourceTypeNames[sourceType] || '本地'}: ${layerName}`
-      item.desc = sourceType === 'buffer' ? '缓冲区分析结果图层' : '用户创建的图层'
+      item.desc = sourceType === 'buffer' ? '缓冲区分析结果图层' : (sourceType === 'path' ? '最短路径分析结果图层' : '用户创建的图层')
       
       // 根据sourceType确定分组
-      if (sourceType === 'draw' || sourceType === 'buffer') {
+      if (sourceType === 'draw' || sourceType === 'buffer' || sourceType === 'path') {
         item.source = 'draw' // 绘制图层和缓冲区分析图层都归类到绘制图层组
       } else if (sourceType === 'area' || sourceType === 'query') {
         item.source = 'query' // 查询图层（区域选择 + 属性查询）

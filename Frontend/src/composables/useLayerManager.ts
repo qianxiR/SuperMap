@@ -548,6 +548,26 @@ export function useLayerManager() {
                 })
               })
             })
+          case 'path':
+            return new ol.style.Style({
+              stroke: new ol.style.Stroke({
+                color: '#ff0000',
+                width: 4
+              }),
+              fill: new ol.style.Fill({
+                color: 'rgba(255, 0, 0, 0.1)'
+              }),
+              image: new ol.style.Circle({
+                radius: 6,
+                fill: new ol.style.Fill({
+                  color: '#ff0000'
+                }),
+                stroke: new ol.style.Stroke({
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || '#ffffff',
+                  width: 2
+                })
+              })
+            })
           default:
             return new ol.style.Style({
               stroke: new ol.style.Stroke({

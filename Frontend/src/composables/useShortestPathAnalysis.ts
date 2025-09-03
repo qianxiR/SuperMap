@@ -233,7 +233,7 @@ export function useShortestPathAnalysis() {
     const success = await saveFeaturesAsLayer(
       allFeatures,
       name,
-      'draw'
+      'path'
     )
     
     if (success) {
