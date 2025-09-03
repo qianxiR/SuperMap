@@ -8,16 +8,22 @@ import { Vector as VectorSource } from 'ol/source'
 import { Vector as VectorLayer } from 'ol/layer'
 import { Style, Stroke, Fill } from 'ol/style'
 import GeoJSON from 'ol/format/GeoJSON'
+import type OlFeature from 'ol/Feature'
+import { buffer as turfBuffer } from '@turf/turf'
 
-// 声明全局类型
-declare global {
-  interface Window {
-    ol: any
-    turf: any
-  }
+// 后端API接口类型定义
+interface FeatureGeometry {
+  type: string
+  coordinates: any
 }
 
-// 缓冲区分析结果类型
+interface FeatureItem {
+  type: string
+  geometry: FeatureGeometry
+  properties?: Record<string, any>
+}
+
+// 缓冲区分析结果类型（兼容现有代码）
 interface BufferResult {
   id: string
   name: string
@@ -45,6 +51,7 @@ export function useBufferAnalysis() {
   const bufferResults = computed(() => bufferAnalysisStore.state.bufferResults)
   const currentResult = computed(() => bufferAnalysisStore.state.currentResult)
   const isAnalyzing = computed(() => bufferAnalysisStore.state.isAnalyzing)
+  const taskId = computed(() => bufferAnalysisStore.state.taskId)
   
   // 清理状态（工具切换时调用）
   const clearState = () => {
@@ -95,114 +102,80 @@ export function useBufferAnalysis() {
     }
   }
   
-  // 执行缓冲区分析（使用turf.js）
-  const executeBufferAnalysis = (): void => {
-    if (!selectedAnalysisLayerId.value) {
+  const executeBufferAnalysis = async (): Promise<void> => {
+    if (!mapStore.map) {
+      analysisStore.setAnalysisStatus('地图未初始化')
+      return
+    }
+
+    const layerId = selectedAnalysisLayerId.value
+    if (!layerId) {
       analysisStore.setAnalysisStatus('请先选择分析图层')
       return
     }
-    
-    if (bufferSettings.value.radius <= 0) {
-      analysisStore.setAnalysisStatus('缓冲距离必须大于0')
+
+    const target = mapStore.vectorLayers.find(l => l.id === layerId)
+    const olLayer: any = target?.layer
+    if (!olLayer) {
+      analysisStore.setAnalysisStatus('未找到所选图层')
       return
     }
-    
-    const layer = mapStore.vectorLayers.find(l => l.id === selectedAnalysisLayerId.value)
-    if (!layer) {
-      analysisStore.setAnalysisStatus('选中的图层不存在')
+
+    const source = olLayer.getSource?.()
+    const features: OlFeature[] = source?.getFeatures?.() || []
+    if (!features.length) {
+      analysisStore.setAnalysisStatus('所选图层无要素')
       return
     }
-    
+
+    bufferAnalysisStore.setIsAnalyzing(true)
+    analysisStore.setAnalysisStatus('正在执行缓冲区分析...')
+
     try {
-      bufferAnalysisStore.setIsAnalyzing(true)
-      analysisStore.setAnalysisStatus(`正在对图层 "${layer.name}" 执行缓冲区分析...`)
-      
-      // 获取图层中的所有要素
-      const source = layer.layer.getSource()
-      const features = source.getFeatures()
-      
-      if (features.length === 0) {
-        analysisStore.setAnalysisStatus('选中图层没有要素数据')
+      const radiusMeters = Number(bufferSettings.value.radius) || 0
+      const steps = Number(bufferSettings.value.semicircleLineSegment) || 8
+      if (radiusMeters === 0) {
+        analysisStore.setAnalysisStatus('缓冲距离为 0，已取消')
+        bufferAnalysisStore.setIsAnalyzing(false)
         return
       }
-      
-      // 检查turf.js是否可用
-      if (typeof (window as any).turf === 'undefined') {
-        analysisStore.setAnalysisStatus('turf.js 未加载，无法执行缓冲区分析')
-        return
-      }
-      
-      // 使用turf.js进行缓冲区分析
+
+      const format = new GeoJSON()
+      const viewProj = mapStore.map.getView().getProjection().getCode()
+
       const results: BufferResult[] = []
-      
+
       for (let i = 0; i < features.length; i++) {
-        const feature = features[i]
-        const geometry = feature.getGeometry()
-        
-        if (!geometry) continue
-        
-        // 更新进度提示
-        const progress = Math.round(((i + 1) / features.length) * 100)
-        analysisStore.setAnalysisStatus(`正在分析要素 ${i + 1}/${features.length} (${progress}%)...`)
-        
-        try {
-          // 检查turf.js是否可用
-          if (typeof (window as any).turf === 'undefined') {
-            console.warn('turf.js 未加载，跳过要素:', i)
-            continue
-          }
-          
-          // 将OpenLayers几何体转换为GeoJSON格式
-          const geoJSONFormat = new GeoJSON()
-          const geoJSONFeature = geoJSONFormat.writeFeatureObject(feature)
-          
-          // 使用turf.js进行缓冲区分析
-          // 注意：turf.js使用公里作为默认单位，需要将米转换为公里
-          const bufferRadius = bufferSettings.value.radius / 1000 // 转换为公里
-          
-          // 设置turf.js缓冲区选项
-          const bufferOptions = {
-            units: 'kilometers' as const,
-            steps: bufferSettings.value.semicircleLineSegment || 8
-          }
-          
-          // 执行缓冲区分析
-          const bufferedFeature = (window as any).turf.buffer(geoJSONFeature, bufferRadius, bufferOptions)
-          
-          if (bufferedFeature && bufferedFeature.geometry) {
-            console.log('turf.js缓冲区分析结果:', bufferedFeature)
-            
-            const result: BufferResult = {
-              id: `buffer_${Date.now()}_${i}`,
-              name: `缓冲区_${layer.name}_${i + 1}`,
-              geometry: bufferedFeature,
-              distance: bufferSettings.value.radius,
-              unit: '米',
-              sourceLayerName: layer.name,
-              createdAt: new Date().toISOString()
-            }
-            results.push(result)
-          }
-        } catch (error) {
-          console.warn(`要素 ${i} 缓冲区分析失败:`, error)
-          continue
-        }
+        const f = features[i]
+        // 转为 GeoJSON（以 WGS84 提供给 Turf）
+        const gjFeature: any = format.writeFeatureObject(f, {
+          dataProjection: 'EPSG:4326',
+          featureProjection: viewProj
+        })
+
+        // Turf 缓冲（单位米，步数由圆弧精度决定）
+        const buffered: any = turfBuffer(gjFeature, radiusMeters, { units: 'meters', steps })
+        if (!buffered || !buffered.geometry) continue
+
+        results.push({
+          id: `${Date.now()}_${i}`,
+          name: `缓冲_${target?.name || '图层'}_${i + 1}`,
+          geometry: buffered.geometry,
+          distance: radiusMeters,
+          unit: 'meters',
+          sourceLayerName: target?.name || '',
+          createdAt: new Date().toISOString()
+        })
       }
-      
-      if (results.length > 0) {
-        bufferAnalysisStore.setBufferResults(results)
-        
-        // 在地图上显示结果
-        displayBufferResults(results)
-        
-        analysisStore.setAnalysisStatus(`✅ 缓冲区分析完成！生成了 ${results.length} 个缓冲区，距离: ${bufferSettings.value.radius}米`)
+
+      if (!results.length) {
+        analysisStore.setAnalysisStatus('未生成任何缓冲结果')
       } else {
-        analysisStore.setAnalysisStatus('❌ 缓冲区分析失败，未生成有效结果')
+        bufferAnalysisStore.setBufferResults(results as any)
+        displayBufferResults(results as any)
       }
-      
-    } catch (error) {
-      console.error('缓冲区分析错误:', error)
-      analysisStore.setAnalysisStatus(`❌ 缓冲区分析失败: ${error instanceof Error ? error.message : '未知错误'}`)
+    } catch (e: any) {
+      analysisStore.setAnalysisStatus(`缓冲失败: ${e?.message || '未知错误'}`)
     } finally {
       bufferAnalysisStore.setIsAnalyzing(false)
     }
@@ -219,21 +192,26 @@ export function useBufferAnalysis() {
     const bufferFeatures = results.map(result => {
       let geometry
       
-      // 处理不同的GeoJSON格式
-      if (result.geometry.type === 'Feature') {
-        // 如果是Feature类型，提取geometry部分
-        geometry = new GeoJSON().readGeometry(result.geometry.geometry)
-      } else if (result.geometry.type === 'FeatureCollection') {
-        // 如果是FeatureCollection类型，提取第一个feature的geometry
-        const features = new GeoJSON().readFeatures(result.geometry)
-        geometry = features[0]?.getGeometry()
-      } else {
-        // 直接是Geometry类型
-        geometry = new GeoJSON().readGeometry(result.geometry)
+      try {
+        // 后端返回的是标准GeoJSON几何体格式
+        if (result.geometry && result.geometry.type && result.geometry.coordinates) {
+          // 直接是GeoJSON几何体格式
+          geometry = new GeoJSON().readGeometry(result.geometry)
+        } else if (result.geometry.type === 'Feature') {
+          // 如果是Feature类型，提取geometry部分
+          geometry = new GeoJSON().readGeometry(result.geometry.geometry)
+        } else if (result.geometry.type === 'FeatureCollection') {
+          // 如果是FeatureCollection类型，提取第一个feature的geometry
+          const features = new GeoJSON().readFeatures(result.geometry)
+          geometry = features[0]?.getGeometry()
+        } else {
+          return null
+        }
+      } catch (error) {
+        return null
       }
       
       if (!geometry) {
-        console.warn(`无法解析几何体: ${result.id}`)
         return null
       }
       
@@ -297,7 +275,7 @@ export function useBufferAnalysis() {
     })
   }
   
-  // 清除所有选择状态（仅清除显示，不清除保存的状态）
+  // 清除所有选择状态（仅清除结果，不清除保存的状态）
   const clearAllSelections = (): void => {
     // 只清除图层显示，保留状态数据
     removeBufferLayers()
@@ -309,6 +287,16 @@ export function useBufferAnalysis() {
     bufferAnalysisStore.updateBufferSettings(settings)
   }
   
+  const saveBufferAnalysisToDatabase = async (_taskId: string, _layerName: string): Promise<boolean> => {
+    analysisStore.setAnalysisStatus('缓冲区分析结果入库功能已禁用')
+    return false
+  }
+
+  const executeBufferAnalysisAndSave = async (): Promise<void> => {
+    bufferAnalysisStore.setIsAnalyzing(false)
+    analysisStore.setAnalysisStatus('缓冲区分析与入库功能已禁用')
+  }
+
   return {
     // 分析参数
     selectedAnalysisLayerId,
@@ -322,10 +310,13 @@ export function useBufferAnalysis() {
     bufferResults,
     currentResult,
     isAnalyzing,
+    taskId,
     
     // 方法
     setSelectedAnalysisLayer,
     executeBufferAnalysis,
+    executeBufferAnalysisAndSave,
+    saveBufferAnalysisToDatabase,
     clearAllSelections,
     updateBufferSettings,
     removeBufferLayers,

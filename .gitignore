@@ -10,6 +10,7 @@ __pycache__/
 .Python
 *.so
 *.pyc
-llm/
+llm/*
 analysis/
 database/
+node_modules/

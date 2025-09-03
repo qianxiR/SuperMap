@@ -58,6 +58,11 @@
           :disabled="selectedFeatures.length === 0"
         />
         <SecondaryButton 
+          text="导出 GeoJSON"
+          @click="exportSelectedAsGeoJSON"
+          :disabled="selectedFeatures.length === 0"
+        />
+        <SecondaryButton 
           text="清除选择"
           variant="danger"
           @click="clearSelection"
@@ -112,6 +117,33 @@ const saveSelectedAsLayer = async () => {
 
   const layerName = `区域选择_${new Date().toLocaleString()}`
   await saveFeaturesAsLayer(selectedFeatures.value, layerName, 'area')
+}
+
+// 导出区域选择结果为 GeoJSON 文件
+const exportSelectedAsGeoJSON = () => {
+  if (!selectedFeatures.value.length) {
+    return
+  }
+  const ol = (window as any).ol
+  const format = new ol.format.GeoJSON()
+  const featureCollection = format.writeFeaturesObject(selectedFeatures.value, {
+    featureProjection: mapStore.map?.getView()?.getProjection?.(),
+    dataProjection: 'EPSG:4326'
+  })
+
+  const now = new Date()
+  const hh = String(now.getHours()).padStart(2, '0')
+  const mm = String(now.getMinutes()).padStart(2, '0')
+  const ss = String(now.getSeconds()).padStart(2, '0')
+  const blob = new Blob([JSON.stringify(featureCollection, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `area_selection_结果_${hh}${mm}${ss}.geojson`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }
 
 // 选中要素的详细信息

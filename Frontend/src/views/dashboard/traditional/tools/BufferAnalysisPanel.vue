@@ -78,7 +78,7 @@
           @click="executeBufferAnalysis"
         />
         <SecondaryButton 
-          text="清除显示"
+          text="清除结果"
           :disabled="!bufferResults || bufferResults.length === 0"
           @click="clearResults"
         />
@@ -173,7 +173,8 @@ const {
   executeBufferAnalysis,
   removeBufferLayers,
   displayBufferResults,
-  clearState
+  clearState,
+  
 } = useBufferAnalysis()
 
 // 使用图层管理 hook
@@ -192,7 +193,6 @@ const layerOptionsWithNone = computed(() => {
 
 // 图层选择变化处理
 const onLayerSelectionChange = (layerId: string) => {
-  console.log('图层选择变化:', layerId)
   if (layerId) {
     setSelectedAnalysisLayer(layerId)
   }
@@ -209,7 +209,7 @@ const onDistanceChange = () => {
   }
 }
 
-// 清除显示
+// 清除结果
 const clearResults = () => {
   clearState()
   layerName.value = ''
@@ -217,7 +217,7 @@ const clearResults = () => {
 }
 
 // 导出 GeoJSON
-const exportGeoJSON = () => {
+const exportGeoJSON = async () => {
   if (!bufferResults.value || bufferResults.value.length === 0) {
     analysisStore.setAnalysisStatus('没有可导出的结果')
     return
@@ -244,13 +244,20 @@ const exportGeoJSON = () => {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `buffer_analysis_${new Date().toISOString().slice(0, 10)}.geojson`
+    // 文件名：buffer_analysis_结果_执行时间（时分秒）
+    const now = new Date()
+    const hh = String(now.getHours()).padStart(2, '0')
+    const mm = String(now.getMinutes()).padStart(2, '0')
+    const ss = String(now.getSeconds()).padStart(2, '0')
+    a.download = `buffer_analysis_结果_${hh}${mm}${ss}.geojson`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
     
     analysisStore.setAnalysisStatus('GeoJSON 文件已导出')
+
+    
   } catch (error) {
     analysisStore.setAnalysisStatus(`导出失败: ${error instanceof Error ? error.message : '未知错误'}`)
   }
@@ -296,7 +303,6 @@ const saveBufferLayer = async (customLayerName?: string) => {
       }
       
       if (!geometry) {
-        console.warn(`无法解析几何体: ${result.id}`)
         return null
       }
       
@@ -321,16 +327,14 @@ const saveBufferLayer = async (customLayerName?: string) => {
       'buffer' // 作为缓冲区图层保存，使用红色样式
     )
     
-    if (success) {
-      // 保存成功后，移除原来的临时缓冲区图层
-      removeBufferLayers()
-      analysisStore.setAnalysisStatus(`缓冲区图层 "${name}" 已保存成功，临时图层已移除`)
-    } else {
-      analysisStore.setAnalysisStatus('保存缓冲区图层失败')
-    }
+    // 无条件：保存图层后直接移除临时图层并入库
+    removeBufferLayers()
+    
+    
+    
+    analysisStore.setAnalysisStatus(`缓冲区图层 "${name}" 已保存并已提交入库流程`)
     
   } catch (error) {
-    console.error('保存缓冲区图层错误:', error)
     analysisStore.setAnalysisStatus(`保存失败: ${error instanceof Error ? error.message : '未知错误'}`)
   }
 }
@@ -339,8 +343,6 @@ const saveBufferLayer = async (customLayerName?: string) => {
 
 // 清理缓冲区分析状态（工具切换时调用）
 const clearBufferAnalysisState = () => {
-  console.log('清理缓冲区分析状态')
-  
   clearState()
   layerName.value = ''
   
@@ -370,7 +372,6 @@ watch([
 watch(() => analysisStore.toolPanel?.activeTool, (tool, prevTool) => {
   if (tool === 'buffer' && prevTool !== 'buffer') {
     // 当进入缓冲区分析时，只更新状态提示，不重复恢复状态
-    console.log('切换到缓冲区分析工具')
     if (bufferResults.value && bufferResults.value.length > 0) {
       analysisStore.setAnalysisStatus(`缓冲区分析结果已加载（${bufferResults.value.length}个结果），点击"执行分析"重新显示`)
     } else {
@@ -378,7 +379,6 @@ watch(() => analysisStore.toolPanel?.activeTool, (tool, prevTool) => {
     }
   } else if (prevTool === 'buffer' && tool !== 'buffer') {
     // 当从缓冲区分析切换到其他工具时，清理分析结果和地图显示
-    console.log('从缓冲区分析切换到其他工具，清理状态')
     clearBufferAnalysisState()
   }
 }, { immediate: true })

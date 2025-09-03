@@ -26,6 +26,7 @@ interface BufferAnalysisState {
   currentResult: BufferResult | null
   isAnalyzing: boolean
   layerName: string
+  taskId: string
 }
 
 export const useBufferAnalysisStore = defineStore('bufferAnalysis', () => {
@@ -39,7 +40,8 @@ export const useBufferAnalysisStore = defineStore('bufferAnalysis', () => {
     bufferResults: [],
     currentResult: null,
     isAnalyzing: false,
-    layerName: ''
+    layerName: '',
+    taskId: ''
   })
 
   // 计算属性
@@ -70,6 +72,10 @@ export const useBufferAnalysisStore = defineStore('bufferAnalysis', () => {
 
   const setLayerName = (name: string) => {
     state.layerName = name
+  }
+
+  const setTaskId = (taskId: string) => {
+    state.taskId = taskId
   }
 
   const clearResults = () => {
@@ -105,6 +111,7 @@ export const useBufferAnalysisStore = defineStore('bufferAnalysis', () => {
     setCurrentResult,
     setIsAnalyzing,
     setLayerName,
+    setTaskId,
     clearResults,
     clearAll
   }

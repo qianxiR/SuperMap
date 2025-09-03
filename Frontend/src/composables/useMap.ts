@@ -651,11 +651,6 @@ export function useMap() {
           const displayLayerName = feature.layerName || '未知图层'
           
           // 添加调试信息
-          console.log(`要素 ${index + 1} 图层信息:`, {
-            layerName: feature.layerName,
-            displayLayerName: displayLayerName,
-            featureId: feature.id
-          });
           
           content += `<div class="feature-header">要素 ${index + 1} (${displayLayerName})</div>`;
           

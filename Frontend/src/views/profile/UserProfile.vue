@@ -171,13 +171,20 @@ import { useUserStore, type UserInfo } from '@/stores/userStore'
 import { useThemeStore } from '@/stores/themeStore'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import ButtonGroup from '@/components/UI/ButtonGroup.vue'
-import { userApiService } from '@/api/user'
-import { syncUserInfo, isUserInfoComplete } from '@/utils/userSync'
-import { BACKEND_USER_FIELDS } from '@/utils/fieldMapping'
+import { useUserProfile } from '@/composables/useUserProfile'
 
 const router = useRouter()
 const userStore = useUserStore()
 const themeStore = useThemeStore()
+
+// 使用用户资料composable
+const {
+  loading: profileLoading,
+  updateProfile,
+  changePassword: changePasswordApi,
+  syncUserInfo,
+  isUserInfoComplete
+} = useUserProfile()
 
 // 响应式数据
 const isEditing = ref(false)
@@ -263,7 +270,7 @@ const saveUserInfo = async () => {
       throw new Error('用户未登录')
     }
     
-    const response = await userApiService.updateProfile(token, updateData)
+    const response = await updateProfile(token, updateData)
     
     if (response.success) {
       // 更新本地用户信息
@@ -340,7 +347,7 @@ const changePassword = async () => {
       throw new Error('用户未登录')
     }
     
-    const response = await userApiService.changePassword(token, passwordData)
+    const response = await changePasswordApi(token, passwordData)
     
     if (response.success) {
       window.dispatchEvent(new CustomEvent('showNotification', {
@@ -386,7 +393,10 @@ const formatDate = (dateString: string) => {
 onMounted(async () => {
   // 同步用户信息，确保从数据库获取最新信息
   try {
-    await syncUserInfo()
+    const token = userStore.token
+    if (token) {
+      await syncUserInfo(token)
+    }
   } catch (error) {
     console.warn('同步用户信息失败:', error)
   }

@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { userApiService } from '@/api/user'
 
 export interface UserInfo {
   id: number
@@ -42,24 +41,11 @@ export const useUserStore = defineStore('user', () => {
     localStorage.setItem('userInfo', JSON.stringify(userData))
   }
 
-  // 从后端获取用户信息
-  const fetchUserInfo = async () => {
-    if (!token.value) {
-      throw new Error('用户未登录')
-    }
-
-    try {
-      const response = await userApiService.getCurrentUser(token.value)
-      if (response.success && response.data) {
-        userInfo.value = response.data
-        localStorage.setItem('userInfo', JSON.stringify(response.data))
-        return response.data
-      } else {
-        throw new Error(response.message || '获取用户信息失败')
-      }
-    } catch (error) {
-      console.error('获取用户信息失败:', error)
-      throw error
+  // 从本地存储更新用户信息状态
+  const syncUserInfoFromStorage = () => {
+    const storedUserInfo = localStorage.getItem('userInfo')
+    if (storedUserInfo) {
+      userInfo.value = JSON.parse(storedUserInfo)
     }
   }
 
@@ -102,7 +88,7 @@ export const useUserStore = defineStore('user', () => {
     logout,
     checkAuth,
     initUserInfo,
-    fetchUserInfo,
+    syncUserInfoFromStorage,
     updateUserInfo
   }
 })

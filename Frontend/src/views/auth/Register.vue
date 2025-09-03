@@ -98,86 +98,39 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/userStore'
-import { userApiService } from '@/api/user'
+import { useRegister } from '@/composables/useRegister'
 
-const router = useRouter()
-const userStore = useUserStore()
+// 使用注册composable
+const {
+  loading,
+  username,
+  email,
+  phone,
+  password,
+  confirmPassword,
+  handleRegister: handleRegisterComposable,
+  validateForm,
+  resetForm,
+  checkUsernameAvailability,
+  checkEmailAvailability,
+  checkPhoneAvailability
+} = useRegister()
 
-const username = ref('')
-const email = ref('')
-const phone = ref('')
-const password = ref('')
-const confirmPassword = ref('')
+// 本地状态
 const agreeTerms = ref(false)
-const loading = ref(false)
 
-// 验证是否为邮箱格式
+// 使用composable中的验证函数
 const isValidEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   return emailRegex.test(email)
 }
 
-// 验证是否为手机号格式
 const isValidPhone = (phone: string): boolean => {
   const phoneRegex = /^1[3-9]\d{9}$/
   return phoneRegex.test(phone)
 }
 
 const handleRegister = async () => {
-  // 表单验证 - 检查所有必填字段
-  if (!username.value || !email.value || !phone.value || !password.value || !confirmPassword.value) {
-    window.dispatchEvent(new CustomEvent('showNotification', {
-      detail: {
-        title: '注册失败',
-        message: '请填写完整的注册信息',
-        type: 'error',
-        duration: 3000
-      }
-    }))
-    return
-  }
-  
-  // 验证邮箱格式
-  if (!isValidEmail(email.value)) {
-    window.dispatchEvent(new CustomEvent('showNotification', {
-      detail: {
-        title: '注册失败',
-        message: '请输入正确的邮箱格式',
-        type: 'error',
-        duration: 3000
-      }
-    }))
-    return
-  }
-  
-  // 验证手机号格式
-  if (!isValidPhone(phone.value)) {
-    window.dispatchEvent(new CustomEvent('showNotification', {
-      detail: {
-        title: '注册失败',
-        message: '请输入正确的手机号格式',
-        type: 'error',
-        duration: 3000
-      }
-    }))
-    return
-  }
-  
-  // 密码确认验证
-  if (password.value !== confirmPassword.value) {
-    window.dispatchEvent(new CustomEvent('showNotification', {
-      detail: {
-        title: '注册失败',
-        message: '两次输入的密码不一致',
-        type: 'error',
-        duration: 3000
-      }
-    }))
-    return
-  }
-  
   // 服务条款验证
   if (!agreeTerms.value) {
     window.dispatchEvent(new CustomEvent('showNotification', {
@@ -191,142 +144,11 @@ const handleRegister = async () => {
     return
   }
   
-  loading.value = true
-  
-  try {
-    // 调用后端注册API
-    const registerData = {
-      username: username.value,
-      email: email.value,
-      phone: phone.value,
-      password: password.value,
-      confirm_password: confirmPassword.value
-    }
-    
-    const response = await userApiService.register(registerData)
-    
-    if (response.success) {
-      // 注册成功后自动登录
-      const loginData = {
-        login_identifier: username.value,
-        password: password.value
-      }
-      
-      const loginResponse = await userApiService.login(loginData)
-      
-      if (loginResponse.success && loginResponse.token) {
-        const userData = {
-          username: username.value,
-          email: email.value,
-          phone: phone.value,
-          registerType: 'phone',
-          role: 'user',
-          registerTime: new Date().toISOString()
-        }
-        
-        // 使用store管理登录状态
-        userStore.login(userData, loginResponse.token)
-        
-        // 从后端获取完整的用户信息
-        try {
-          await userStore.fetchUserInfo()
-        } catch (error) {
-          console.warn('获取用户信息失败，使用本地数据:', error)
-        }
-        
-        // 异步显示注册成功通知
-        setTimeout(() => {
-          window.dispatchEvent(new CustomEvent('showNotification', {
-            detail: {
-              title: '注册成功',
-              message: `欢迎加入，${username.value}！`,
-              type: 'success',
-              duration: 3000
-            }
-          }))
-        }, 100)
-        
-        // 跳转到地图系统
-        router.push('/dashboard')
-      }
-    } else {
-      // 处理注册失败 - 显示后端返回的具体错误信息
-      const errorMessage = response.message || '注册失败'
-      window.dispatchEvent(new CustomEvent('showNotification', {
-        detail: {
-          title: '注册失败',
-          message: errorMessage,
-          type: 'error',
-          duration: 5000
-        }
-      }))
-    }
-  } catch (err: any) {
-    // 智能错误处理 - 解析不同类型的错误
-    let errorTitle = '注册失败'
-    let errorMessage = '注册失败，请重试'
-    
-    if (err instanceof Error) {
-      // 处理标准Error对象
-      errorMessage = err.message
-      
-      // 根据错误消息判断错误类型
-      if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
-        errorTitle = '网络连接失败'
-        errorMessage = '无法连接到服务器，请检查网络连接'
-      } else if (err.message.includes('timeout')) {
-        errorTitle = '请求超时'
-        errorMessage = '服务器响应超时，请稍后重试'
-      } else if (err.message.includes('detail')) {
-        // 尝试提取后端返回的详细错误信息
-        try {
-          const errorDetail = JSON.parse(err.message)
-          if (errorDetail.detail) {
-            errorMessage = errorDetail.detail
-          }
-        } catch {
-          // 如果解析失败，使用原始消息
-          errorMessage = err.message
-        }
-      }
-    } else if (typeof err === 'object' && err !== null) {
-      // 处理其他类型的错误对象
-      if ('detail' in err) {
-        errorMessage = String(err.detail)
-      } else if ('message' in err) {
-        errorMessage = String(err.message)
-      } else if ('status' in err) {
-        // 处理HTTP状态码
-        const status = err.status
-        if (status === 400) {
-          errorTitle = '请求参数错误'
-          errorMessage = '请检查输入的注册信息是否正确'
-        } else if (status === 409) {
-          errorTitle = '用户已存在'
-          errorMessage = '用户名、邮箱或手机号已被注册'
-        } else if (status === 422) {
-          errorTitle = '数据验证失败'
-          errorMessage = '输入的数据格式不正确，请检查后重试'
-        } else if (status >= 500) {
-          errorTitle = '服务器错误'
-          errorMessage = '服务器内部错误，请稍后重试'
-        }
-      }
-    }
-    
-    // 显示具体的错误信息
-    window.dispatchEvent(new CustomEvent('showNotification', {
-      detail: {
-        title: errorTitle,
-        message: errorMessage,
-        type: 'error',
-        duration: 5000
-      }
-    }))
-    
-    console.error('注册错误详情:', err)
-  } finally {
-    loading.value = false
+  // 使用composable中的注册逻辑
+  const success = await handleRegisterComposable()
+  if (success) {
+    // 注册成功后的处理逻辑已在composable中完成
+    console.log('注册成功')
   }
 }
 </script>

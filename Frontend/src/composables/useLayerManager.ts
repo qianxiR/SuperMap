@@ -22,7 +22,7 @@ export function useLayerManager() {
 
   // 清除特定图层的选择高亮
   const clearLayerSelection = (layerName: string) => {
-    console.log(`清除图层 ${layerName} 的选择高亮和组件状态`)
+    
     
     if (!mapStore.selectLayer || !mapStore.selectLayer.getSource()) return
 
@@ -53,7 +53,7 @@ export function useLayerManager() {
       return false
     })
 
-    console.log(`找到 ${featuresToRemove.length} 个属于图层 ${layerName} 的选择要素，准备移除`)
+    
 
     // 从选择图层中移除这些要素
     featuresToRemove.forEach((feature: any) => {
@@ -68,7 +68,7 @@ export function useLayerManager() {
                             (popupFeature.properties ? popupFeature.properties.layerName : null)
       
       if (popupLayerName === layerName) {
-        console.log(`弹窗中的要素属于被隐藏的图层 ${layerName}，清除弹窗`)
+        
         popupStore.hidePopup()
       }
     }
@@ -94,7 +94,7 @@ export function useLayerManager() {
           })
           
           if (isFromHiddenLayer) {
-            console.log(`当前选中的要素属于被隐藏的图层 ${layerName}，清除选择状态`)
+            
             selectionStore.clearSelection()
           }
         }
@@ -134,7 +134,7 @@ export function useLayerManager() {
       mapStore.selectLayer.changed()
     }
 
-    console.log(`图层 ${layerName} 的选择状态清除完成`)
+    
   }
 
   const toggleLayerVisibility = async (layerId: string) => {
@@ -143,11 +143,11 @@ export function useLayerManager() {
       const currentVisibility = layerInfo.layer.getVisible()
       const newVisibility = !currentVisibility
       
-      console.log(`切换图层 ${layerInfo.name} 可见性: ${currentVisibility} -> ${newVisibility}`)
+      
       
       // 如果图层被隐藏，立即清除该图层的选择高亮和组件状态
       if (!newVisibility) {
-        console.log(`图层 ${layerInfo.name} 被隐藏，立即清除相关选择状态`)
+        
         clearLayerSelection(layerInfo.name)
         
         // 强制清除所有选择状态，确保完全清除
@@ -184,7 +184,7 @@ export function useLayerManager() {
         }
       }
       
-      console.log(`图层 ${layerInfo.name} 可见性切换完成`)
+      
     }
   }
 
@@ -206,22 +206,22 @@ export function useLayerManager() {
 
   // 保留原有的被禁用的函数，以防其他地方有依赖
   const acceptDrawLayer = (_layerData: MapLayer): boolean => {
-    console.log('图层管理功能已禁用')
+    
     return false
   }
 
   const toggleDrawLayerVisibility = (_layerId: string): boolean => {
-    console.log('图层可见性切换功能已禁用')
+    
     return false
   }
 
   const removeDrawLayer = (_layerId: string): boolean => {
-    console.log('图层删除功能已禁用')
+    
     return false
   }
 
   const updateLayerProperties = (_layerId: string, _properties: Partial<MapLayer>): boolean => {
-    console.log('图层属性更新功能已禁用')
+    
     return false
   }
 
@@ -230,12 +230,12 @@ export function useLayerManager() {
   }
 
   const toggleFeatureVisibility = (_layerId:string, _featureId: string): boolean => {
-    console.log('要素可见性切换功能已禁用')
+    
     return false
   }
 
   const removeFeature = (_layerId: string, _featureId: string): boolean => {
-    console.log('要素删除功能已禁用')
+    
     return false
   }
 
@@ -274,31 +274,31 @@ export function useLayerManager() {
 
   // 获取绘制图层的数据源
   const getDrawLayerSource = () => {
-    console.log('开始查找绘制图层...')
+    
     
     // 从地图中查找绘制图层
     if (!mapStore.map) {
-      console.warn('地图实例不存在')
+      
       return null
     }
     
     const layers = mapStore.map.getLayers()
-    console.log('地图图层总数:', layers.getLength())
+    
     
     for (let i = 0; i < layers.getLength(); i++) {
       const layer = layers.item(i)
       const isDrawLayer = layer.get('isDrawLayer')
-      console.log(`图层 ${i}: isDrawLayer = ${isDrawLayer}`)
+      
       
       // 检查是否是绘制图层（通过样式或其他特征识别）
       if (isDrawLayer) {
         const source = layer.getSource()
-        console.log('找到绘制图层，数据源:', source)
+        
         return source
       }
     }
     
-    console.warn('未找到绘制图层')
+    
     return null
   }
 
@@ -357,10 +357,10 @@ export function useLayerManager() {
     layerName: string, 
     sourceType: 'draw' | 'area' | 'query' | 'buffer' | 'overlay' | 'path' = 'draw'
   ) => {
-    console.log(`开始保存${sourceType}要素为图层: ${layerName}`)
+    
     
     if (!features || features.length === 0) {
-      console.warn('没有要素可保存')
+      
       return false
     }
 
@@ -376,16 +376,14 @@ export function useLayerManager() {
         features: features.map((feature: any, index: number) => {
           const geometry = feature.getGeometry()
           if (!geometry) {
-            console.warn(`要素 ${index} 没有几何信息`)
+            
             return null
           }
           
           const properties = feature.getProperties() || {}
           const geometryType = geometry.getType()
           const coordinates = geometry.getCoordinates()
-          
-          console.log(`要素 ${index}: 类型=${geometryType}, 坐标=${JSON.stringify(coordinates)}`)
-          
+
           // 计算几何属性
           let geometricProperties = {}
           
@@ -433,7 +431,7 @@ export function useLayerManager() {
         }).filter(Boolean) // 过滤掉null值
       }
 
-      console.log('GeoJSON数据:', JSON.stringify(geoJsonData, null, 2))
+      
 
       // 创建新的图层
       const ol = window.ol
@@ -617,13 +615,13 @@ export function useLayerManager() {
         source: 'local' as const
       }
       
-      console.log('添加图层到管理列表:', layerInfo)
+      
       mapStore.vectorLayers.push(layerInfo)
       
       // 强制触发响应式更新
       mapStore.vectorLayers = [...mapStore.vectorLayers]
 
-      console.log(`${sourceType}要素保存成功`)
+      
 
       // 显示成功通知
       window.dispatchEvent(new CustomEvent('showNotification', {
@@ -637,9 +635,7 @@ export function useLayerManager() {
 
       return true
     } catch (error: any) {
-      console.error(`保存${sourceType}要素失败:`, error)
-      console.error('错误详情:', error?.message || '未知错误')
-      console.error('错误堆栈:', error?.stack || '无堆栈信息')
+      
       
       // 显示错误通知
       window.dispatchEvent(new CustomEvent('showNotification', {
@@ -657,19 +653,19 @@ export function useLayerManager() {
 
   // 将绘制内容保存为GeoJSON图层（保持向后兼容）
   const saveDrawAsLayer = async () => {
-    console.log('开始保存绘制内容...')
+    
     
     const drawSource = getDrawLayerSource()
     if (!drawSource) {
-      console.warn('未找到绘制图层数据源')
+      
       return false
     }
 
     const features = drawSource.getFeatures()
-    console.log('绘制要素数量:', features.length)
+    
     
     if (features.length === 0) {
-      console.warn('绘制图层中没有要素')
+      
       return false
     }
 
