@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-type ToolId = 'draw' | 'buffer' | 'distance' | 'overlay' | 'layer' | 'area-selection' | 'llm' | 'attribute-selection' | '';
+type ToolId = 'draw' | 'buffer' | 'distance' | 'layer' | 'area-selection' | 'llm' | 'attribute-selection' | 'upload' | '';
 
 export const useAnalysisStore = defineStore('analysis', () => {
   // 分析状态
@@ -68,14 +68,14 @@ export const useAnalysisStore = defineStore('analysis', () => {
       case 'distance':
         // 最短路径分析：清理路径和地图显示
         break
-      case 'overlay':
-        // 叠置分析：清理分析结果
-        break
       case 'llm':
         // LLM模式：清理AI对话状态
         break
       case 'draw':
         // 绘制工具：清理绘制状态
+        break
+      case 'upload':
+        // 数据上传：清理上传状态和文件列表
         break
       default:
         break

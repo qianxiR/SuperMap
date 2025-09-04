@@ -263,7 +263,7 @@ onMounted(() => {
               import('@/views/dashboard/traditional/tools/AreaSelectionTools.vue'),
       import('@/views/dashboard/traditional/tools/BufferAnalysisPanel.vue'),
       import('@/views/dashboard/traditional/tools/ShortestPathAnalysisPanel.vue'),
-      import('@/views/dashboard/traditional/tools/OverlayAnalysisPanel.vue'),
+      import('@/views/dashboard/traditional/tools/DataUploadPanel.vue'),
       import('ol')
     ]).catch(() => {})
   }, 0)

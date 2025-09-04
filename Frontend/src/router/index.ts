@@ -193,17 +193,17 @@ const router = createRouter({
                 requiresAuth: true
               }
             },
-                         // 叠置分析
-             {
-               path: 'overlay',
-               name: 'overlay-analysis',
-               component: () => import('@/views/dashboard/traditional/tools/OverlayAnalysisPanel.vue'),
-               meta: {
-                 title: '叠置分析',
-                 tool: 'overlay',
-                 requiresAuth: true
-               }
-             }
+            // 数据上传
+            {
+              path: 'upload',
+              name: 'data-upload',
+              component: () => import('@/views/dashboard/traditional/tools/DataUploadPanel.vue'),
+              meta: {
+                title: '数据上传',
+                tool: 'upload',
+                requiresAuth: true
+              }
+            }
           ]
         }
       ]

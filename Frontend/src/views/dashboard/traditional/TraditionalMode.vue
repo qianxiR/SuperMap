@@ -9,9 +9,9 @@
           <PrimaryButton text="按区域选择要素" :active="isAreaSelection" @click="toggleAreaSelection" />
         </div>
         <div class="button-row">
+          <PrimaryButton text="数据上传" :active="isUploadOpen" @click="toggleUpload" />
           <PrimaryButton text="缓冲区分析" :active="isBufferOpen" @click="toggleBuffer" />
           <PrimaryButton text="最短路径分析" :active="isDistanceOpen" @click="toggleDistance" />
-          <PrimaryButton text="叠置分析" :active="isOverlayOpen" @click="toggleOverlay" />
         </div>
       </div>
     </div>
@@ -23,8 +23,8 @@
               <AreaSelectionTools v-if="analysisStore.toolPanel.activeTool === 'area-selection'" />
 <ShortestPathAnalysisPanel v-if="analysisStore.toolPanel.activeTool === 'distance'" />
       <BufferAnalysisPanel v-if="analysisStore.toolPanel.activeTool === 'buffer'" />
+      <DataUploadPanel v-if="analysisStore.toolPanel.activeTool === 'upload'" />
       
-      <OverlayAnalysisPanel v-if="analysisStore.toolPanel.activeTool === 'overlay'" />
       <LayerManager v-if="analysisStore.toolPanel.activeTool === 'layer'" />
       
       <!-- 新增：路由视图（不影响现有逻辑） -->
@@ -49,7 +49,7 @@ import AreaSelectionTools from '@/views/dashboard/traditional/tools/AreaSelectio
 import ShortestPathAnalysisPanel from '@/views/dashboard/traditional/tools/ShortestPathAnalysisPanel.vue'
 import BufferAnalysisPanel from '@/views/dashboard/traditional/tools/BufferAnalysisPanel.vue'
 
-import OverlayAnalysisPanel from '@/views/dashboard/traditional/tools/OverlayAnalysisPanel.vue'
+import DataUploadPanel from '@/views/dashboard/traditional/tools/DataUploadPanel.vue'
 import LayerManager from '@/views/dashboard/traditional/tools/LayerManager.vue'
 import PrimaryButton from '@/components/UI/PrimaryButton.vue'
 import PanelContainer from '@/components/UI/PanelContainer.vue'
@@ -62,11 +62,11 @@ const modeStateStore = useModeStateStore()
 // 工具配置对象
 const toolConfigs = {
   layer: { id: 'layer', title: '图层管理', path: 'layer' },
+  upload: { id: 'upload', title: '数据上传', path: 'upload' },
   'attribute-selection': { id: 'attribute-selection', title: '按属性选择要素', path: 'attribute-selection' },
   'area-selection': { id: 'area-selection', title: '按区域选择要素', path: 'area-selection' },
   buffer: { id: 'buffer', title: '缓冲区分析', path: 'buffer' },
   distance: { id: 'distance', title: '最短路径分析', path: 'distance' },
-  overlay: { id: 'overlay', title: '叠置分析', path: 'overlay' }
 } as const
 
 // 判断是否为路由模式
@@ -79,7 +79,7 @@ const isBufferOpen = computed(() => analysisStore.toolPanel.visible && analysisS
 const isLayerOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'layer')
 const isAreaSelection = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'area-selection')
 const isDistanceOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'distance')
-const isOverlayOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'overlay')
+const isUploadOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'upload')
 const isQueryOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'attribute-selection')
 
 // 路由导航函数
@@ -116,7 +116,7 @@ const toggleAreaSelection = () => toggleTool('area-selection')
 const toggleBuffer = () => toggleTool('buffer')
 const toggleLayerManager = () => toggleTool('layer')
 const toggleDistance = () => toggleTool('distance')
-const toggleOverlay = () => toggleTool('overlay')
+const toggleUpload = () => toggleTool('upload')
 const toggleQuery = () => toggleTool('attribute-selection')
 
 // 监听路由变化，同步到状态管理
@@ -168,11 +168,11 @@ onMounted(() => {
       const activeTool = traditionalState.activeTool || 'layer'
       const toolTitleMap: { [key: string]: string } = {
         'layer': '图层管理',
-        'overlay': '叠置分析',
         'attribute-selection': '按属性选择要素',
         'area-selection': '按区域选择要素',
         'buffer': '缓冲区分析',
-        'distance': '最短路径分析'
+        'distance': '最短路径分析',
+        'upload': '数据上传'
       }
       analysisStore.openTool(activeTool as any, toolTitleMap[activeTool] || '图层管理')
     }
