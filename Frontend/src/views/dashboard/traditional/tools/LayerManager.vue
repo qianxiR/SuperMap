@@ -128,6 +128,45 @@
             </div>
           </div>
         </div>
+
+        <!-- 上传图层容器 -->
+        <div class="layer-container">
+          <div class="group-header" @click="toggleGroupCollapse('upload')">
+            <div class="group-title">
+              上传图层
+              <span class="layer-count">({{ getLayerCount('upload') }})</span>
+            </div>
+          </div>
+          
+          <!-- 可折叠的图层列表 -->
+          <div class="group-content" v-show="!collapsedGroups.upload">
+            <div class="group-scroll-container">
+              <div 
+                v-for="item in getLayersBySource('upload')" 
+                :key="item.key"
+                class="layer-item"
+                :class="{ 'active': selectedLayerKey === item.key }"
+                @click="selectLayer(item.key)"
+              >
+                <div class="layer-info">
+                  <div class="layer-name">{{ item.displayName }}</div>
+                  <div class="layer-desc">{{ item.desc }}</div>
+                </div>
+                <div class="layer-operations">
+                  <SecondaryButton
+                    :text="item.visible ? '隐藏' : '显示'"
+                    @click.stop="handleToggleVisibility(item)"
+                  />
+                  <SecondaryButton
+                    text="移除"
+                    :variant="selectedLayerKey === item.key ? 'secondary' : 'danger'"
+                    @click.stop="handleRemove(item)"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </PanelWindow>
@@ -188,7 +227,8 @@ const collapsedGroups = ref<Record<string, boolean>>({
   supermap: true,
   draw: true,
   query: true,
-  external: true
+  external: true,
+  upload: true
 })
 
 // 切换分组折叠状态
@@ -233,16 +273,20 @@ const allLayers = computed(() => {
         area: '区域选择',
         query: '属性查询',
         buffer: '缓冲区分析',
-        path: '最短路径'
+        path: '最短路径',
+        upload: '上传',
+        intersect: '相交分析'
       }
       item.displayName = `${sourceTypeNames[sourceType] || '本地'}: ${layerName}`
-      item.desc = sourceType === 'buffer' ? '缓冲区分析结果图层' : (sourceType === 'path' ? '最短路径分析结果图层' : '用户创建的图层')
+      item.desc = sourceType === 'buffer' ? '缓冲区分析结果图层' : (sourceType === 'path' ? '最短路径分析结果图层' : (sourceType === 'upload' ? '上传的GeoJSON图层' : (sourceType === 'intersect' ? '相交分析结果图层' : '用户创建的图层')))
       
       // 根据sourceType确定分组
-      if (sourceType === 'draw' || sourceType === 'buffer' || sourceType === 'path') {
-        item.source = 'draw' // 绘制图层和缓冲区分析图层都归类到绘制图层组
+      if (sourceType === 'draw' || sourceType === 'buffer' || sourceType === 'path' || sourceType === 'intersect') {
+        item.source = 'draw' // 绘制图层、缓冲区分析图层、相交分析图层都归类到绘制图层组
       } else if (sourceType === 'area' || sourceType === 'query') {
         item.source = 'query' // 查询图层（区域选择 + 属性查询）
+      } else if (sourceType === 'upload') {
+        item.source = 'upload' // 上传图层分组
       }
     }
     

@@ -8,6 +8,7 @@ import { feature, point, lineString, polygon, featureCollection } from '@turf/tu
 declare global {
   interface Window {
     ol: any
+    turf: any
   }
 }
 
@@ -37,6 +38,12 @@ interface ShortestPathAnalysisParams {
   resolution?: number
 }
 
+interface ShortestPathOptions {
+  obstacles?: any
+  units?: 'degrees' | 'radians' | 'miles' | 'kilometers'
+  resolution?: number
+}
+
 export function useShortestPathAnalysis() {
   const mapStore = useMapStore()
   const analysisStore = useAnalysisStore()
@@ -51,6 +58,13 @@ export function useShortestPathAnalysis() {
   const isSelectingEndPoint = ref<boolean>(false)
   const startPoint = ref<any>(null)
   const endPoint = ref<any>(null)
+  
+  // 分析配置选项
+  const analysisOptions = ref<ShortestPathOptions>({
+    obstacles: null,
+    units: 'kilometers',
+    resolution: 1000  // 设置网格分辨率为1000米
+  })
   
   // 分析图层引用
   const analysisLayers = ref({
@@ -121,14 +135,12 @@ export function useShortestPathAnalysis() {
     const analysisLayer = new window.ol.layer.Vector({
       source: new window.ol.source.Vector({ features: analysisFeatures }),
       style: getAnalysisLayerStyle(),
-      zIndex: 999,
-      properties: {
-        isAnalysisLayer: true,
-        id: `path-layer-${Date.now()}`
-      }
+      zIndex: 999
     })
     
-    // 设置额外的图层标识
+    // 设置图层标识属性
+    analysisLayer.set('isAnalysisLayer', true)
+    analysisLayer.set('id', `path-layer-${Date.now()}`)
     analysisLayer.set('analysisType', 'path')
     analysisLayer.set('analysisResults', results)
     
@@ -288,11 +300,14 @@ export function useShortestPathAnalysis() {
     isSelectingStartPoint.value = false
     isSelectingEndPoint.value = false
     
-    console.log('清除后的状态:')
-    console.log('- 起始点:', startPoint.value)
-    console.log('- 目标点:', endPoint.value)
-    console.log('- 分析结果数量:', analysisResults.value.length)
-    console.log('=== 分析结果清除完成 ===')
+    // 重置分析选项
+    analysisOptions.value = {
+      obstacles: null,
+      units: 'kilometers',
+      resolution: 100
+    }
+    
+
   }
   
   // 只移除路径图层，保留起始点和目标点
@@ -301,40 +316,7 @@ export function useShortestPathAnalysis() {
     
     const layers = mapStore.map.getLayers().getArray()
     let removedCount = 0
-    
-    // 调试信息
-    console.log('=== 开始移除路径图层（保留起始点和目标点）===')
-    console.log('当前地图图层数量:', layers.length)
-    
-    // 收集需要移除的路径图层，避免在遍历过程中修改集合
-    const layersToRemove: any[] = []
-    
-    layers.forEach((layer: any, index: number) => {
-      const layerId = layer.get('id')
-      const isAnalysis = layer.get('isAnalysisLayer')
-      
-      console.log(`检查图层[${index}]:`, {
-        layerId,
-        isAnalysis,
-        isPathRef: layer === analysisLayers.value.pathLayer
-      })
-      
-      // 收集需要移除的分析图层（路径图层）
-      if (isAnalysis) {
-        layersToRemove.push(layer)
-      }
-    })
-    
-    // 批量移除收集到的路径图层
-    layersToRemove.forEach((layer: any) => {
-      const layerId = layer.get('id')
-      console.log(`移除路径图层 (ID: ${layerId}):`, layer)
-      mapStore.map.removeLayer(layer)
-      removedCount++
-    })
-    
-    console.log(`总共移除了 ${removedCount} 个路径图层`)
-    console.log('=== 路径图层移除完成 ===')
+  
     
     // 只清空路径图层引用，保留起始点和目标点引用
     analysisLayers.value.pathLayer = null
@@ -346,59 +328,8 @@ export function useShortestPathAnalysis() {
     const layers = mapStore.map.getLayers().getArray()
     let removedCount = 0
     
-    // 调试信息
-    console.log('=== 开始移除所有分析图层 ===')
-    console.log('当前地图图层数量:', layers.length)
-    console.log('起始点图层引用:', analysisLayers.value.startPointLayer)
-    console.log('目标点图层引用:', analysisLayers.value.endPointLayer)
-    console.log('路径图层引用:', analysisLayers.value.pathLayer)
+
     
-    // 收集需要移除的图层，避免在遍历过程中修改集合
-    const layersToRemove: any[] = []
-    
-    layers.forEach((layer: any, index: number) => {
-      const layerId = layer.get('id')
-      const isAnalysis = layer.get('isAnalysisLayer')
-      const isStartPoint = layer.get('isStartPointLayer')
-      const isEndPoint = layer.get('isEndPointLayer')
-      
-      console.log(`检查图层 [${index}]:`, {
-        layerId,
-        isAnalysis,
-        isStartPoint,
-        isEndPoint,
-        isStartPointRef: layer === analysisLayers.value.startPointLayer,
-        isEndPointRef: layer === analysisLayers.value.endPointLayer,
-        isPathRef: layer === analysisLayers.value.pathLayer
-      })
-      
-      // 收集需要移除的图层
-      if (isAnalysis || isStartPoint || isEndPoint) {
-        layersToRemove.push(layer)
-      }
-    })
-    
-    // 批量移除收集到的图层
-    layersToRemove.forEach((layer: any) => {
-      const layerId = layer.get('id')
-      const layerType = layer.get('isAnalysisLayer') ? '分析图层' : 
-                       layer.get('isStartPointLayer') ? '起始点图层' : '目标点图层'
-      
-      console.log(`移除${layerType} (ID: ${layerId}):`, layer)
-      mapStore.map.removeLayer(layer)
-      removedCount++
-    })
-    
-    console.log(`总共移除了 ${removedCount} 个图层`)
-    console.log('=== 所有分析图层移除完成 ===')
-    
-    // 清空所有图层引用
-    analysisLayers.value = {
-      startPointLayer: null,
-      endPointLayer: null,
-      pathLayer: null,
-      obstaclesLayer: null
-    }
   }
   
   // ===== 导出为JSON方法 =====
@@ -577,9 +508,6 @@ export function useShortestPathAnalysis() {
   
   // 执行路径分析
   const executePathAnalysis = async (): Promise<void> => {
-    // 调试：检查起始点和终点状态
-    debugPoints()
-    
     if (!canAnalyze.value) {
       analysisStore.setAnalysisStatus('请先绘制两个分析点')
       return
@@ -591,8 +519,37 @@ export function useShortestPathAnalysis() {
       return
     }
     
+    // 设置加载状态
     analysisStore.setAnalysisStatus('正在计算最短路径...')
     
+    try {
+      // 使用setTimeout让出主线程，避免阻塞UI
+      await new Promise(resolve => setTimeout(resolve, 0))
+      
+      // 更新状态显示进度
+      analysisStore.setAnalysisStatus('正在处理坐标数据...')
+      await new Promise(resolve => setTimeout(resolve, 10))
+      
+      analysisStore.setAnalysisStatus('正在计算最短路径...')
+      await new Promise(resolve => setTimeout(resolve, 10))
+      
+      // 执行计算密集型任务
+      const result = await executePathAnalysisAsync()
+      
+      if (result) {
+        analysisStore.setAnalysisStatus(`路径分析完成: 距离 ${result.distance.toFixed(2)}米`)
+      } else {
+        analysisStore.setAnalysisStatus('路径分析失败')
+      }
+      
+    } catch (error) {
+      console.error('路径分析失败:', error)
+      analysisStore.setAnalysisStatus(`路径分析失败: ${error instanceof Error ? error.message : '未知错误'}`)
+    }
+  }
+  
+  // 异步执行路径分析的核心逻辑
+  const executePathAnalysisAsync = async (): Promise<ShortestPathResult | null> => {
     try {
       // 只移除之前的路径图层，保留起始点和目标点
       removePathLayersOnly()
@@ -618,25 +575,79 @@ export function useShortestPathAnalysis() {
         throw new Error('起始点或终点的坐标格式无效')
       }
       
-      // 按照turf.js的格式创建点要素
-      const start = point(startCoords)
-      const end = point(endCoords)
+      // 验证坐标格式 - turf.js期望 [longitude, latitude] 格式
+      console.log('原始起始点坐标:', startCoords)
+      console.log('原始终点坐标:', endCoords)
       
-      // 构建turf.js选项 - 使用默认设置
-      const options: any = {}
-      
-      console.log('调用turf.shortestPath:', { start, end, options })
-      console.log('start类型:', typeof start, start)
-      console.log('end类型:', typeof end, end)
-      
-      // 直接调用turf.js计算最短路径
-      const pathResult = shortestPath(start, end, options)
-      
-      if (!pathResult) {
-        throw new Error('无法找到有效路径')
+      // 确保坐标格式正确 [longitude, latitude]
+      if (startCoords.length < 2 || endCoords.length < 2) {
+        throw new Error('坐标格式无效，需要至少包含经度和纬度')
       }
       
-      console.log('turf.js返回的路径结果:', pathResult)
+      // 按照test.html验证的格式创建起始点和终点坐标数组
+      const start = [startCoords[0], startCoords[1]]
+      const end = [endCoords[0], endCoords[1]]
+
+      
+      // 构建turf.js选项
+      const options: any = {
+        units: analysisOptions.value.units,
+        resolution: analysisOptions.value.resolution
+      }
+      
+      // 添加障碍物（如果已设置）
+      console.log('=== 检查障碍物设置 ===')
+      console.log('analysisOptions.value:', analysisOptions.value)
+      console.log('analysisOptions.value.obstacles:', analysisOptions.value.obstacles)
+      console.log('analysisOptions.value.obstacles 是否为null:', analysisOptions.value.obstacles === null)
+      console.log('analysisOptions.value.obstacles 是否为undefined:', analysisOptions.value.obstacles === undefined)
+      console.log('analysisOptions.value.obstacles 类型:', typeof analysisOptions.value.obstacles)
+      
+      if (analysisOptions.value.obstacles) {
+        console.log('✅ 检测到障碍物，开始设置到options')
+        
+        // 直接使用turf.js FeatureCollection格式的障碍物
+        options.obstacles = analysisOptions.value.obstacles
+        console.log('✅ 障碍物已设置到options (FeatureCollection格式):', options.obstacles)
+        
+        // 验证障碍物数据格式
+        console.log('=== 障碍物数据格式验证 ===')
+        console.log('障碍物类型:', options.obstacles.type)
+        console.log('是否为FeatureCollection:', options.obstacles.type === 'FeatureCollection')
+        console.log('要素数量:', options.obstacles.features ? options.obstacles.features.length : 0)
+        
+        if (options.obstacles.features && options.obstacles.features.length > 0) {
+          options.obstacles.features.forEach((feature: any, index: number) => {
+            console.log(`障碍物${index} - 类型:`, feature.type, '几何类型:', feature.geometry.type)
+            if (feature.geometry.type === 'Polygon') {
+              const coords = feature.geometry.coordinates[0]
+              console.log(`障碍物${index} - 坐标数量:`, coords.length)
+              console.log(`障碍物${index} - 是否闭合:`, coords[0][0] === coords[coords.length-1][0] && coords[0][1] === coords[coords.length-1][1])
+            }
+          })
+        }
+      } else {
+        console.log('无障碍物，使用直线路径分析')
+        console.log('原因: analysisOptions.value.obstacles 为', analysisOptions.value.obstacles)
+      }
+      
+      console.log('turf.js分析选项:', options)
+      
+      // 异步执行turf.js计算，避免阻塞UI
+      const pathResult = await new Promise<any>((resolve, reject) => {
+        // 使用setTimeout让出主线程
+        setTimeout(() => {
+          try {
+            const result = shortestPath(start, end, options)
+            resolve(result)
+          } catch (error) {
+            reject(error)
+          }
+        }, 0)
+      })
+      
+      // 再次让出主线程
+      await new Promise(resolve => setTimeout(resolve, 0))
       
       // 计算路径距离
       const distance = calculatePathDistance(pathResult)
@@ -653,17 +664,21 @@ export function useShortestPathAnalysis() {
         createdAt: new Date().toISOString()
       }
       
+      // 异步更新结果，避免阻塞UI
+      await new Promise(resolve => setTimeout(resolve, 0))
+      
       // 保存分析结果
       analysisResults.value = [result]
       
-      // 在地图上显示路径结果
+      // 异步显示路径结果
+      await new Promise(resolve => setTimeout(resolve, 0))
       displayAnalysisResults([result])
       
-      analysisStore.setAnalysisStatus(`路径分析完成: 距离 ${distance.toFixed(2)}米`)
+      return result
       
     } catch (error) {
       console.error('路径分析失败:', error)
-      analysisStore.setAnalysisStatus(`路径分析失败: ${error instanceof Error ? error.message : '未知错误'}`)
+      throw error
     }
   }
   
@@ -713,12 +728,12 @@ export function useShortestPathAnalysis() {
     
     const layer = new window.ol.layer.Vector({
       source: source,
-      zIndex: 1000,
-      properties: {
-        isStartPointLayer: true,
-        id: 'start-point-layer'
-      }
+      zIndex: 1000
     })
+    
+    // 设置图层标识属性
+    layer.set('isStartPointLayer', true)
+    layer.set('id', 'start-point-layer')
     
     analysisLayers.value.startPointLayer = layer
     mapStore.map.addLayer(layer)
@@ -744,12 +759,12 @@ export function useShortestPathAnalysis() {
     
     const layer = new window.ol.layer.Vector({
       source: source,
-      zIndex: 1001,
-      properties: {
-        isEndPointLayer: true,
-        id: 'end-point-layer'
-      }
+      zIndex: 1001
     })
+    
+    // 设置图层标识属性
+    layer.set('isEndPointLayer', true)
+    layer.set('id', 'end-point-layer')
     
     analysisLayers.value.endPointLayer = layer
     mapStore.map.addLayer(layer)
@@ -760,37 +775,186 @@ export function useShortestPathAnalysis() {
   
   // ===== 工具方法 =====
   
+  // 将OpenLayers图层转换为turf.js可用的障碍物格式
+  const convertLayerToObstacles = (layerId: string): any => {
+    console.log('=== convertLayerToObstacles 开始 ===')
+    console.log('传入的layerId:', layerId)
+    
+    try {
+      const layerInfo = mapStore.vectorLayers.find(l => l.id === layerId)
+      if (!layerInfo || !layerInfo.layer) {
+        console.warn('未找到指定的图层:', layerId)
+        return null
+      }
+      
+      const source = layerInfo.layer.getSource()
+      if (!source) {
+        console.warn('图层没有数据源:', layerId)
+        return null
+      }
+      
+      const features = source.getFeatures()
+      if (features.length === 0) {
+        console.warn('图层没有要素:', layerId)
+        return null
+      }
+      
+      console.log(`开始转换图层 ${layerId}，包含 ${features.length} 个要素`)
+      
+      const turf = window.turf
+      if (!turf) {
+        console.error('turf.js库未加载')
+        return null
+      }
+      
+      // 转换所有要素为turf多边形Feature（按照test.html的格式）
+      const polygonFeatures = features.map((feature: any, index: number) => {
+        try {
+          const geometry = feature.getGeometry()
+          if (!geometry) {
+            console.warn(`要素 ${index} 没有几何信息`)
+            return null
+          }
+          
+          const geometryType = geometry.getType()
+          console.log(`要素 ${index} 几何类型:`, geometryType)
+          
+          // 获取坐标数据
+          const coordinates = geometry.getCoordinates()
+          if (!coordinates) {
+            console.warn(`要素 ${index} 没有坐标数据`)
+            return null
+          }
+          
+          let polygonFeature
+          
+          if (geometryType === 'Polygon') {
+            // 多边形：直接使用turf.polygon()创建，与test.html格式一致
+            console.log(`要素 ${index} 多边形坐标:`, coordinates)
+            polygonFeature = turf.polygon(coordinates)
+            console.log(`要素 ${index} 使用turf.polygon创建成功`)
+          } else if (geometryType === 'MultiPolygon') {
+            // 多多边形
+            polygonFeature = turf.multiPolygon(coordinates)
+            console.log(`要素 ${index} 使用turf.multiPolygon创建成功`)
+          } else if (geometryType === 'Point') {
+            // 点：创建缓冲区多边形
+            console.log(`要素 ${index} 点坐标:`, coordinates)
+            const pointFeature = turf.point(coordinates)
+            const buffered = turf.buffer(pointFeature, 0.0001, { units: 'kilometers' })
+            polygonFeature = buffered
+            console.log(`要素 ${index} 点转换为多边形成功`)
+          } else if (geometryType === 'LineString') {
+            // 线：创建缓冲区多边形
+            console.log(`要素 ${index} 线坐标:`, coordinates)
+            const lineFeature = turf.lineString(coordinates)
+            const buffered = turf.buffer(lineFeature, 0.0001, { units: 'kilometers' })
+            polygonFeature = buffered
+            console.log(`要素 ${index} 线转换为多边形成功`)
+          } else {
+            console.warn(`要素 ${index} 几何类型不支持:`, geometryType)
+            return null
+          }
+          
+          // 验证转换后的多边形Feature
+          if (!polygonFeature || !polygonFeature.geometry || !polygonFeature.geometry.coordinates) {
+            console.warn(`要素 ${index} 最终转换失败`)
+            return null
+          }
+          
+          console.log(`要素 ${index} 最终转换成功:`, polygonFeature.geometry.type)
+          return polygonFeature
+        } catch (error) {
+          console.error(`转换要素 ${index} 时出错:`, error)
+          return null
+        }
+      }).filter(Boolean)
+      
+      if (polygonFeatures.length === 0) {
+        console.warn('没有有效的要素可以转换为障碍物')
+        return null
+      }
+      
+      console.log(`成功转换 ${polygonFeatures.length} 个要素为多边形障碍物`)
+      
+      // 使用turf.featureCollection()创建FeatureCollection（与test.html格式一致）
+      const obstaclesData = turf.featureCollection(polygonFeatures)
+      
+      console.log('=== 障碍物数据格式 ===')
+      console.log('返回格式: FeatureCollection (使用turf.featureCollection创建)')
+      console.log('要素数量:', obstaclesData.features.length)
+      console.log('turf.js格式验证:', obstaclesData.type === 'FeatureCollection')
+      console.log('障碍物数据:', obstaclesData)
+      
+      return obstaclesData
+    } catch (error) {
+      console.error('转换障碍物图层时出错:', error)
+      return null
+    }
+  }
+  
+  // 设置障碍物图层
+  const setObstacleLayer = (layerId: string | null): void => {
+    console.log('=== 设置障碍物图层 ===')
+    console.log('传入的layerId:', layerId)
+    
+    if (layerId) {
+      // 1. 显示绘制图层的原始JSON格式数据
+      const layerInfo = mapStore.vectorLayers.find(l => l.id === layerId)
+      if (layerInfo && layerInfo.layer) {
+        const source = layerInfo.layer.getSource()
+        if (source) {
+          const features = source.getFeatures()
+          console.log('=== 1. 绘制图层的原始数据 ===')
+          console.log('图层名称:', layerInfo.name)
+          console.log('要素数量:', features.length)
+          
+          // 转换为GeoJSON格式显示原始数据
+          const geoJsonData = {
+            type: 'FeatureCollection',
+            features: features.map((feature: any) => {
+              const format = new window.ol.format.GeoJSON()
+              return format.writeFeatureObject(feature, {
+                dataProjection: 'EPSG:4326',
+                featureProjection: mapStore.map.getView().getProjection().getCode()
+              })
+            })
+          }
+        }
+      }
+      
+      const obstacles = convertLayerToObstacles(layerId)
+      
+      if (obstacles && obstacles.type) {
+        console.log('GeoJSON类型:', obstacles.type)
+      }
+
+      
+      analysisOptions.value.obstacles = obstacles
+      console.log('✅ 障碍物已设置到analysisOptions:', analysisOptions.value.obstacles)
+      console.log('✅ 设置后的analysisOptions.value:', analysisOptions.value)
+    } else {
+      analysisOptions.value.obstacles = null
+      console.log('❌ 清除障碍物')
+    }
+    
+    console.log('=== 障碍物设置完成 ===')
+    console.log('最终analysisOptions.value:', analysisOptions.value)
+
+  }
+  
+  // 更新分析选项
+  const updateAnalysisOptions = (options: Partial<ShortestPathOptions>): void => {
+    analysisOptions.value = { ...analysisOptions.value, ...options }
+  }
+  
   // 清除地图交互
   const clearMapInteractions = (): void => {
     isSelectingStartPoint.value = false
     isSelectingEndPoint.value = false
   }
   
-  // 调试函数：检查起始点和终点的状态
-  const debugPoints = (): void => {
-    console.log('=== 调试起始点和终点状态 ===')
-    console.log('startPoint.value:', startPoint.value)
-    console.log('endPoint.value:', endPoint.value)
-    
-    if (startPoint.value) {
-      const startGeom = startPoint.value.getGeometry()
-      console.log('起始点几何:', startGeom)
-      if (startGeom) {
-        console.log('起始点坐标:', startGeom.getCoordinates())
-      }
-    }
-    
-    if (endPoint.value) {
-      const endGeom = endPoint.value.getGeometry()
-      console.log('终点几何:', endGeom)
-      if (endGeom) {
-        console.log('终点坐标:', endGeom.getCoordinates())
-      }
-    }
-    
-    console.log('canAnalyze.value:', canAnalyze.value)
-    console.log('================================')
-  }
+ 
   
   return {
     // 状态
@@ -801,6 +965,7 @@ export function useShortestPathAnalysis() {
     canAnalyze,
     isSelectingStartPoint,
     isSelectingEndPoint,
+    analysisOptions,
     
     // 方法
     selectStartPoint,
@@ -808,6 +973,8 @@ export function useShortestPathAnalysis() {
     executePathAnalysis,
     clearResults,
     saveAnalysisLayer,
-    exportGeoJSON
+    exportGeoJSON,
+    setObstacleLayer,
+    updateAnalysisOptions
   }
 }

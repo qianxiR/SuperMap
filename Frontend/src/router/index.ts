@@ -124,7 +124,8 @@ const router = createRouter({
                           'bianji': 'area-selection',
                           'buffer': 'buffer',
                           'distance': 'distance',
-                          'overlay': 'overlay'
+                          'overlay': 'overlay',
+                          'erase': 'erase'
                         }
                         const path = toolPathMap[state.activeTool]
                         if (path) {
@@ -190,6 +191,28 @@ const router = createRouter({
               meta: {
                 title: '最短路径分析',
                 tool: 'distance',
+                requiresAuth: true
+              }
+            },
+            // 相交分析
+            {
+              path: 'overlay',
+              name: 'intersection-analysis',
+              component: () => import('@/views/dashboard/traditional/tools/IntersectionAnalysisPanel.vue'),
+              meta: {
+                title: '相交分析',
+                tool: 'overlay',
+                requiresAuth: true
+              }
+            },
+            // 擦除分析
+            {
+              path: 'erase',
+              name: 'erase-analysis',
+              component: () => import('@/views/dashboard/traditional/tools/EraseAnalysisPanel.vue'),
+              meta: {
+                title: '擦除分析',
+                tool: 'erase',
                 requiresAuth: true
               }
             },

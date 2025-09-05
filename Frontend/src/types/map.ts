@@ -78,3 +78,24 @@ export interface ServiceResponse<T = any> {
   error?: string
   code?: number
 }
+
+// GeoJSON 类型定义
+export interface Polygon {
+  type: 'Polygon'
+  coordinates: number[][][]
+}
+
+export interface Feature<G = any> {
+  type: 'Feature'
+  geometry: G
+  properties?: Record<string, any>
+  id?: string | number
+}
+
+export interface FeatureCollection<G = any> {
+  type: 'FeatureCollection'
+  features: Feature<G>[]
+}
+
+// 绘制图层保存类型
+export type DrawLayerSaveType = Polygon | FeatureCollection<Polygon>

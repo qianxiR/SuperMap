@@ -5,13 +5,15 @@
       <div class="buttons-grid">
         <div class="button-row">
           <PrimaryButton text="图层管理" :active="isLayerOpen" @click="toggleLayerManager" />
+          <PrimaryButton text="数据上传" :active="isUploadOpen" @click="toggleUpload" />
           <PrimaryButton text="按属性选择要素" :active="isQueryOpen" @click="toggleQuery" />
           <PrimaryButton text="按区域选择要素" :active="isAreaSelection" @click="toggleAreaSelection" />
         </div>
         <div class="button-row">
-          <PrimaryButton text="数据上传" :active="isUploadOpen" @click="toggleUpload" />
           <PrimaryButton text="缓冲区分析" :active="isBufferOpen" @click="toggleBuffer" />
           <PrimaryButton text="最短路径分析" :active="isDistanceOpen" @click="toggleDistance" />
+          <PrimaryButton text="相交分析" :active="isOverlayOpen" @click="toggleOverlay" />
+          <PrimaryButton text="擦除分析" :active="isEraseOpen" @click="toggleErase" />
         </div>
       </div>
     </div>
@@ -23,6 +25,8 @@
               <AreaSelectionTools v-if="analysisStore.toolPanel.activeTool === 'area-selection'" />
 <ShortestPathAnalysisPanel v-if="analysisStore.toolPanel.activeTool === 'distance'" />
       <BufferAnalysisPanel v-if="analysisStore.toolPanel.activeTool === 'buffer'" />
+      <IntersectionAnalysisPanel v-if="analysisStore.toolPanel.activeTool === 'overlay'" />
+      <EraseAnalysisPanel v-if="analysisStore.toolPanel.activeTool === 'erase'" />
       <DataUploadPanel v-if="analysisStore.toolPanel.activeTool === 'upload'" />
       
       <LayerManager v-if="analysisStore.toolPanel.activeTool === 'layer'" />
@@ -48,7 +52,8 @@ import FeatureQueryPanel from '@/views/dashboard/traditional/tools/FeatureQueryP
 import AreaSelectionTools from '@/views/dashboard/traditional/tools/AreaSelectionTools.vue'
 import ShortestPathAnalysisPanel from '@/views/dashboard/traditional/tools/ShortestPathAnalysisPanel.vue'
 import BufferAnalysisPanel from '@/views/dashboard/traditional/tools/BufferAnalysisPanel.vue'
-
+import IntersectionAnalysisPanel from '@/views/dashboard/traditional/tools/IntersectionAnalysisPanel.vue'
+import EraseAnalysisPanel from '@/views/dashboard/traditional/tools/EraseAnalysisPanel.vue'
 import DataUploadPanel from '@/views/dashboard/traditional/tools/DataUploadPanel.vue'
 import LayerManager from '@/views/dashboard/traditional/tools/LayerManager.vue'
 import PrimaryButton from '@/components/UI/PrimaryButton.vue'
@@ -67,6 +72,8 @@ const toolConfigs = {
   'area-selection': { id: 'area-selection', title: '按区域选择要素', path: 'area-selection' },
   buffer: { id: 'buffer', title: '缓冲区分析', path: 'buffer' },
   distance: { id: 'distance', title: '最短路径分析', path: 'distance' },
+  overlay: { id: 'overlay', title: '相交分析', path: 'overlay' },
+  erase: { id: 'erase', title: '擦除分析', path: 'erase' },
 } as const
 
 // 判断是否为路由模式
@@ -81,6 +88,8 @@ const isAreaSelection = computed(() => analysisStore.toolPanel.visible && analys
 const isDistanceOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'distance')
 const isUploadOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'upload')
 const isQueryOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'attribute-selection')
+const isOverlayOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'overlay')
+const isEraseOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'erase')
 
 // 路由导航函数
 const navigateToTool = (toolKey: keyof typeof toolConfigs) => {
@@ -118,6 +127,8 @@ const toggleLayerManager = () => toggleTool('layer')
 const toggleDistance = () => toggleTool('distance')
 const toggleUpload = () => toggleTool('upload')
 const toggleQuery = () => toggleTool('attribute-selection')
+const toggleOverlay = () => toggleTool('overlay')
+const toggleErase = () => toggleTool('erase')
 
 // 监听路由变化，同步到状态管理
 watch(() => route.path, (newPath) => {
@@ -172,7 +183,9 @@ onMounted(() => {
         'area-selection': '按区域选择要素',
         'buffer': '缓冲区分析',
         'distance': '最短路径分析',
-        'upload': '数据上传'
+        'upload': '数据上传',
+        'overlay': '相交分析',
+        'erase': '擦除分析'
       }
       analysisStore.openTool(activeTool as any, toolTitleMap[activeTool] || '图层管理')
     }

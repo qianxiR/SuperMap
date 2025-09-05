@@ -52,20 +52,50 @@
       </div>
     </div>
 
-
+    <!-- 分析配置选项 -->
+    <div class="analysis-section">
+      <div class="section-title">分析配置</div>
+      
+      <!-- 障碍物选择 -->
+      <div class="form-item">
+        <label class="form-label">障碍物图层（可选）</label>
+        <DropdownSelect
+          :options="obstacleLayerOptions"
+          v-model="selectedObstacleLayer"
+          placeholder="选择障碍物图层"
+        />
+        <div v-if="selectedObstacleLayer" class="obstacle-info">
+          <span class="info-text">已选择障碍物图层: {{ getObstacleLayerName() }}</span>
+        </div>
+      </div>
+      
+      <!-- 分析参数配置 -->
+      <div class="analysis-params">
+        <div class="param-row">
+          <div class="form-item">
+            <label class="form-label">距离单位</label>
+            <DropdownSelect
+              :options="unitOptions"
+              v-model="analysisOptions.units"
+            />
+          </div>
+          
+        </div>
+      </div>
+    </div>
 
     <!-- 分析操作 -->
     <div class="analysis-section">
-      <div class="analysis-actions">
+      <div class="analysis-actions" :class="{ analyzing: isAnalyzing }">
         <SecondaryButton 
-          text="计算最短路径"
-          @click="executePathAnalysis"
-          :disabled="!canAnalyze"
+          :text="isAnalyzing ? '计算中...' : '计算最短路径'"
+          @click="handleExecuteAnalysis"
+          :disabled="!canAnalyze || isAnalyzing"
         />
         
         <SecondaryButton 
           v-if="currentResult"
-          text="导出路径"
+          text="导出为json"
           @click="exportGeoJSON"
           style="margin-top: 8px;"
         />
@@ -106,14 +136,16 @@
 </template>
 
 <script setup lang="ts">
-import { watch, computed, onMounted, onUnmounted } from 'vue'
+import { watch, computed, onMounted, onUnmounted, ref } from 'vue'
 import { useAnalysisStore } from '@/stores/analysisStore'
+import { useMapStore } from '@/stores/mapStore'
 import { useShortestPathAnalysis } from '@/composables/useShortestPathAnalysis'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
 import DropdownSelect from '@/components/UI/DropdownSelect.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 
 const analysisStore = useAnalysisStore()
+const mapStore = useMapStore()
 
 const {
   startPointInfo,
@@ -123,17 +155,103 @@ const {
   canAnalyze,
   isSelectingStartPoint,
   isSelectingEndPoint,
+  analysisOptions,
   selectStartPoint,
   selectEndPoint,
   clearResults,
   executePathAnalysis,
   saveAnalysisLayer,
-  exportGeoJSON
+  exportGeoJSON,
+  setObstacleLayer,
+  updateAnalysisOptions
 } = useShortestPathAnalysis()
 
 // 计算属性
 const hasResults = computed(() => analysisResults.value.length > 0)
 const currentResult = computed(() => analysisResults.value[0] || null)
+
+// 分析状态
+const isAnalyzing = ref(false)
+
+// 障碍物图层选项（参考缓冲区分析的方法）
+const obstacleLayerOptions = computed(() => {
+  const options = [{ value: '', label: '无障碍物' }]
+  
+  // 获取可见的矢量图层
+  const vectorLayers = mapStore.vectorLayers.filter(layer => 
+    layer.layer && 
+    layer.layer.getVisible() && 
+    layer.type === 'vector'
+  )
+  
+  vectorLayers.forEach(layer => {
+    const features = layer.layer.getSource()?.getFeatures() || []
+    const featureCount = features.length
+    
+    // 分析图层中要素的几何类型
+    const geometryTypes = new Set<string>()
+    features.forEach((feature: any) => {
+      const geometry = feature.getGeometry()
+      if (geometry) {
+        geometryTypes.add(geometry.getType())
+      }
+    })
+    
+    const geometryTypeStr = Array.from(geometryTypes).join(', ') || '未知'
+    
+    options.push({
+      value: layer.id,
+      label: `${layer.name} (${featureCount}个要素, ${geometryTypeStr})`
+    })
+  })
+  
+  return options
+})
+
+// 选中的障碍物图层
+const selectedObstacleLayer = ref<string>('')
+
+// 距离单位选项
+const unitOptions = [
+  { value: 'kilometers', label: '千米' },
+  { value: 'miles', label: '英里' },
+  { value: 'degrees', label: '度' },
+  { value: 'radians', label: '弧度' }
+]
+
+// 监听障碍物图层选择变化
+watch(selectedObstacleLayer, (newLayerId) => {
+  console.log('=== 障碍物图层选择变化 ===')
+  console.log('新的layerId:', newLayerId)
+  console.log('当前可用图层数量:', mapStore.vectorLayers.length)
+  console.log('可用图层列表:', mapStore.vectorLayers.map(l => ({ id: l.id, name: l.name, type: l.type })))
+  
+  if (newLayerId === '') {
+    console.log('清除障碍物图层')
+    setObstacleLayer(null)
+  } else {
+    console.log('设置障碍物图层:', newLayerId)
+    setObstacleLayer(newLayerId)
+  }
+})
+
+const getObstacleLayerName = () => {
+  if (!selectedObstacleLayer.value) return ''
+  const layer = mapStore.vectorLayers.find(l => l.id === selectedObstacleLayer.value)
+  return layer ? layer.name : '未知图层'
+}
+
+// 包装执行分析函数，添加加载状态
+const handleExecuteAnalysis = async () => {
+  if (isAnalyzing.value) return
+  
+  isAnalyzing.value = true
+  try {
+    await executePathAnalysis()
+  } finally {
+    isAnalyzing.value = false
+  }
+}
 
 // 组件挂载时初始化
 onMounted(async () => {
@@ -279,10 +397,22 @@ onUnmounted(() => {
   font-weight: 500;
 }
 
+
 .analysis-actions {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+/* 加载状态样式 */
+.analyzing {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.analyzing .secondary-button {
+  background: var(--accent-light);
+  color: var(--accent);
 }
 
 .obstacle-controls {
@@ -310,11 +440,37 @@ onUnmounted(() => {
 .form-input::-webkit-inner-spin-button,
 .form-input::-webkit-outer-spin-button {
   -webkit-appearance: none;
+  appearance: none;
   margin: 0;
+}
+
+.analysis-params {
+  margin-top: 16px;
+}
+
+.param-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.obstacle-info {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.info-text {
+  font-size: 11px;
+  color: var(--text);
+  font-weight: 500;
 }
 
 .form-input[type="number"] {
   -moz-appearance: textfield; /* Firefox */
+  appearance: textfield;
 }
 
 

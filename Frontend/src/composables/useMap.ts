@@ -411,7 +411,7 @@ export function useMap() {
       if (layerConfig.type === 'raster') {
         continue;
       }
-      const isDefaultVisible = layerName === '武汉_县级'
+      const isDefaultVisible = layerName === '武汉_县级' || layerName === '水系面'
       loadTasks.push(loadVectorLayer(map, layerConfig, isDefaultVisible))
     }
     await Promise.allSettled(loadTasks)

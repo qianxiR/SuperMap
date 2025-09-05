@@ -33,6 +33,26 @@
           <span class="info-value">{{ selectedAnalysisLayerInfo?.featureCount }} 个</span>
         </div>
       </div>
+      
+      <!-- 显示已选择要素信息 -->
+      <div v-if="hasSelectedFeatures" class="selected-features-info">
+        <div class="info-item">
+          <span class="info-label">已选择要素:</span>
+          <span class="info-value">{{ selectedFeatures.length }} 个</span>
+        </div>
+        <div v-if="selectedFeatures.length <= 10" class="feature-names">
+          <div class="info-label">要素名称:</div>
+          <div class="feature-name-list">
+            <span 
+              v-for="(feature, index) in selectedFeatures.slice(0, 10)" 
+              :key="index"
+              class="feature-name-tag"
+            >
+              {{ getFeatureDisplayName(feature, index) }}
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
     
     <!-- 参数设置 -->
@@ -149,6 +169,7 @@ import { useAnalysisStore } from '@/stores/analysisStore'
 import { useMapStore } from '@/stores/mapStore'
 import { useBufferAnalysis } from '@/composables/useBufferAnalysis'
 import { useLayerManager } from '@/composables/useLayerManager'
+import { useAreaSelectionStore } from '@/stores/areaSelectionStore'
 import PrimaryButton from '@/components/UI/PrimaryButton.vue'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
 import TraditionalInputGroup from '@/components/UI/TraditionalInputGroup.vue'
@@ -158,6 +179,7 @@ import TipWindow from '@/components/UI/TipWindow.vue'
 
 const analysisStore = useAnalysisStore()
 const mapStore = useMapStore()
+const areaSelectionStore = useAreaSelectionStore()
 
 const {
   selectedAnalysisLayerId,
@@ -182,6 +204,27 @@ const { saveFeaturesAsLayer } = useLayerManager()
 
 // 图层名称
 const layerName = ref<string>('')
+
+// 获取已选择要素信息
+const selectedFeatures = computed(() => areaSelectionStore.selectedFeatures)
+const hasSelectedFeatures = computed(() => selectedFeatures.value.length > 0)
+
+// 获取要素显示名称
+const getFeatureDisplayName = (feature: any, index: number): string => {
+  const properties = feature.getProperties?.() || {}
+  const featureName = properties.name || properties.NAME || properties.Name || 
+                     properties.title || properties.TITLE || properties.Title ||
+                     properties.label || properties.LABEL || properties.Label
+  
+  if (featureName) {
+    return featureName
+  }
+  
+  // 如果没有名称属性，使用几何类型和索引
+  const geometry = feature.getGeometry?.()
+  const geometryType = geometry?.getType?.() || '未知'
+  return `${geometryType}_${index + 1}`
+}
 
 // 包含"无"选项的图层选项
 const layerOptionsWithNone = computed(() => {
@@ -272,6 +315,35 @@ const generateLayerNameFromBuffer = () => {
   const sourceLayerName = selectedAnalysisLayerInfo.value.name
   const distanceText = `${bufferSettings.value.radius}米`
   
+  // 如果有已选择的要素，尝试从要素中获取更详细的名称信息
+  if (hasSelectedFeatures.value && selectedFeatures.value.length > 0) {
+    const featureNames = selectedFeatures.value.map((feature, index) => {
+      // 尝试从要素属性中获取名称
+      const properties = feature.getProperties?.() || {}
+      const featureName = properties.name || properties.NAME || properties.Name || 
+                         properties.title || properties.TITLE || properties.Title ||
+                         properties.label || properties.LABEL || properties.Label
+      
+      if (featureName) {
+        return featureName
+      }
+      
+      // 如果没有名称属性，使用几何类型和索引
+      const geometry = feature.getGeometry?.()
+      const geometryType = geometry?.getType?.() || '未知'
+      return `${geometryType}_${index + 1}`
+    })
+    
+    // 如果要素数量较少，在名称中包含具体要素信息
+    if (selectedFeatures.value.length <= 5) {
+      const featureNamesStr = featureNames.join('_')
+      return `缓冲区_${sourceLayerName}_${featureNamesStr}_${distanceText}`
+    } else {
+      // 如果要素数量较多，只显示数量和主要信息
+      return `缓冲区_${sourceLayerName}_${selectedFeatures.value.length}个要素_${distanceText}`
+    }
+  }
+  
   return `缓冲区_${sourceLayerName}_${distanceText}`
 }
 
@@ -327,12 +399,22 @@ const saveBufferLayer = async (customLayerName?: string) => {
       'buffer' // 作为缓冲区图层保存，使用红色样式
     )
     
-    // 无条件：保存图层后直接移除临时图层并入库
-    removeBufferLayers()
-    
-    
-    
-    analysisStore.setAnalysisStatus(`缓冲区图层 "${name}" 已保存并已提交入库流程`)
+    // 保存成功后自动清空所有缓冲区分析结果
+    if (success) {
+      // 移除地图上的临时缓冲区图层
+      removeBufferLayers()
+      
+      // 清空缓冲区分析状态（包括结果、当前结果等）
+      clearState()
+      
+      // 清空图层名称
+      layerName.value = ''
+      
+      // 重置分析状态
+      analysisStore.setAnalysisStatus(`缓冲区图层 "${name}" 已保存并已提交入库流程，结果已清空`)
+    } else {
+      analysisStore.setAnalysisStatus('保存失败，请重试')
+    }
     
   } catch (error) {
     analysisStore.setAnalysisStatus(`保存失败: ${error instanceof Error ? error.message : '未知错误'}`)
@@ -399,7 +481,18 @@ watch(bufferResults, (results) => {
   }
   
   // 结果变化时手动保存状态（避免频繁保存）
-  // 持久化已移除
+}, { deep: true })
+
+// 监听已选择要素变化，实时更新图层名称
+watch([selectedFeatures, selectedAnalysisLayerId, () => bufferSettings.value.radius], () => {
+  // 如果有分析结果且图层名称为空，或者用户没有手动修改图层名称，则自动更新
+  if (bufferResults.value && bufferResults.value.length > 0) {
+    const newLayerName = generateLayerNameFromBuffer()
+    // 只有在图层名称为空或者是自动生成的名称时才更新
+    if (!layerName.value || layerName.value.includes('缓冲区_')) {
+      layerName.value = newLayerName
+    }
+  }
 }, { deep: true })
 </script>
 
@@ -471,6 +564,46 @@ watch(bufferResults, (results) => {
   background: var(--surface-hover);
   border-color: var(--accent);
   box-shadow: 0 2px 6px rgba(var(--accent-rgb), 0.15);
+}
+
+.selected-features-info {
+  margin-top: 12px;
+  padding: 16px;
+  background: rgba(var(--accent-rgb), 0.05);
+  border: 1px solid rgba(var(--accent-rgb), 0.2);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.selected-features-info:hover {
+  background: rgba(var(--accent-rgb), 0.08);
+  border-color: rgba(var(--accent-rgb), 0.3);
+}
+
+.feature-names {
+  margin-top: 8px;
+}
+
+.feature-name-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.feature-name-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  background: rgba(var(--accent-rgb), 0.1);
+  border: 1px solid rgba(var(--accent-rgb), 0.2);
+  border-radius: 6px;
+  font-size: 10px;
+  color: var(--text);
+  font-weight: 500;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .info-item {

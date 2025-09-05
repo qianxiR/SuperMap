@@ -82,11 +82,27 @@ export function useBufferAnalysis() {
       layer.layer.getVisible() && 
       layer.type === 'vector'
     )
-    return vectorLayers.map(layer => ({ 
-      value: layer.id, 
-      label: `${layer.name} (${layer.layer.getSource()?.getFeatures().length || 0}个要素)`, 
-      disabled: false 
-    }))
+    return vectorLayers.map(layer => {
+      const features = layer.layer.getSource()?.getFeatures() || []
+      const featureCount = features.length
+      
+      // 分析图层中要素的几何类型
+      const geometryTypes = new Set<string>()
+      features.forEach((feature: any) => {
+        const geometry = feature.getGeometry()
+        if (geometry) {
+          geometryTypes.add(geometry.getType())
+        }
+      })
+      
+      const geometryTypeStr = Array.from(geometryTypes).join(', ') || '未知'
+      
+      return { 
+        value: layer.id, 
+        label: `${layer.name} (${featureCount}个要素, 类型: ${geometryTypeStr})`, 
+        disabled: false 
+      }
+    })
   })
   
   // 设置选中的分析图层
@@ -147,30 +163,70 @@ export function useBufferAnalysis() {
 
       for (let i = 0; i < features.length; i++) {
         const f = features[i]
-        // 转为 GeoJSON（以 WGS84 提供给 Turf）
-        const gjFeature: any = format.writeFeatureObject(f, {
-          dataProjection: 'EPSG:4326',
-          featureProjection: viewProj
-        })
+        const geometry = f.getGeometry()
+        
+        // 检查几何类型是否支持缓冲区分析
+        if (!geometry) {
+          console.warn(`要素 ${i + 1} 没有几何信息，跳过`)
+          continue
+        }
+        
+        const geometryType = geometry.getType()
+        console.log(`处理要素 ${i + 1}，几何类型: ${geometryType}`)
+        
+        // 检查几何类型是否支持缓冲区分析
+        const supportedTypes = ['Point', 'MultiPoint', 'LineString', 'MultiLineString', 'Polygon', 'MultiPolygon']
+        if (!supportedTypes.includes(geometryType)) {
+          console.warn(`要素 ${i + 1} 的几何类型 ${geometryType} 不支持缓冲区分析，跳过`)
+          continue
+        }
+        
+        try {
+          // 转为 GeoJSON（以 WGS84 提供给 Turf）
+          const gjFeature: any = format.writeFeatureObject(f, {
+            dataProjection: 'EPSG:4326',
+            featureProjection: viewProj
+          })
+          
+          console.log(`要素 ${i + 1} 转换为GeoJSON:`, gjFeature)
 
-        // Turf 缓冲（单位米，步数由圆弧精度决定）
-        const buffered: any = turfBuffer(gjFeature, radiusMeters, { units: 'meters', steps })
-        if (!buffered || !buffered.geometry) continue
+          // Turf 缓冲（单位米，步数由圆弧精度决定）
+          const buffered: any = turfBuffer(gjFeature, radiusMeters, { units: 'meters', steps })
+          if (!buffered || !buffered.geometry) {
+            console.warn(`要素 ${i + 1} 缓冲区分析失败，跳过`)
+            continue
+          }
+          
+          console.log(`要素 ${i + 1} 缓冲区分析成功:`, buffered)
 
-        results.push({
-          id: `${Date.now()}_${i}`,
-          name: `缓冲_${target?.name || '图层'}_${i + 1}`,
-          geometry: buffered.geometry,
-          distance: radiusMeters,
-          unit: 'meters',
-          sourceLayerName: target?.name || '',
-          createdAt: new Date().toISOString()
-        })
+          // 尝试从要素属性中获取名称
+          const properties = f.getProperties?.() || {}
+          const featureName = properties.name || properties.NAME || properties.Name || 
+                             properties.title || properties.TITLE || properties.Title ||
+                             properties.label || properties.LABEL || properties.Label
+          
+          const elementName = featureName || `要素_${i + 1}`
+          
+          results.push({
+            id: `${Date.now()}_${i}`,
+            name: `缓冲_${target?.name || '图层'}_${elementName}`,
+            geometry: buffered.geometry,
+            distance: radiusMeters,
+            unit: 'meters',
+            sourceLayerName: target?.name || '',
+            createdAt: new Date().toISOString()
+          })
+        } catch (error: any) {
+          console.error(`要素 ${i + 1} 缓冲区分析出错:`, error)
+          console.error(`错误详情:`, error?.message)
+          continue
+        }
       }
 
       if (!results.length) {
-        analysisStore.setAnalysisStatus('未生成任何缓冲结果')
+        analysisStore.setAnalysisStatus(`未生成任何缓冲结果，共处理 ${features.length} 个要素`)
       } else {
+        analysisStore.setAnalysisStatus(`缓冲区分析完成，成功处理 ${results.length}/${features.length} 个要素`)
         bufferAnalysisStore.setBufferResults(results as any)
         displayBufferResults(results as any)
       }

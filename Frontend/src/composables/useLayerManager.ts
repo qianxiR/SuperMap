@@ -3,7 +3,7 @@ import { useMapStore } from '@/stores/mapStore'
 import { useSelectionStore } from '@/stores/selectionStore'
 import { usePopupStore } from '@/stores/popupStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
-import type { MapLayer } from '@/types/map';
+import type { MapLayer, DrawLayerSaveType, Polygon, Feature, FeatureCollection } from '@/types/map';
 
 export function useLayerManager() {
   const mapStore = useMapStore()
@@ -355,7 +355,7 @@ export function useLayerManager() {
   const saveFeaturesAsLayer = async (
     features: any[], 
     layerName: string, 
-    sourceType: 'draw' | 'area' | 'query' | 'buffer' | 'overlay' | 'path' = 'draw'
+    sourceType: 'draw' | 'area' | 'query' | 'buffer' | 'path' | 'upload' | 'intersect' = 'draw'
   ) => {
     
     
@@ -370,16 +370,34 @@ export function useLayerManager() {
         throw new Error('OpenLayers库未加载')
       }
 
+      // 分析要素类型，决定保存格式
+      const geometryTypes = new Set<string>()
+      const validFeatures = features.filter((feature: any) => {
+        const geometry = feature.getGeometry()
+        if (!geometry) return false
+        geometryTypes.add(geometry.getType())
+        return true
+      })
+
+      if (validFeatures.length === 0) {
+        return false
+      }
+
+      // 根据要素类型决定保存格式
+      let saveFormat: 'polygon' | 'featurecollection'
+      if (geometryTypes.size === 1 && geometryTypes.has('Polygon')) {
+        // 只有多边形时，保存为多边形
+        saveFormat = 'polygon'
+      } else {
+        // 其他情况（点、线、面混合或只有点/线）都保存为要素集合
+        saveFormat = 'featurecollection'
+      }
+
       // 创建GeoJSON格式的数据
       const geoJsonData = {
         type: 'FeatureCollection',
-        features: features.map((feature: any, index: number) => {
+        features: validFeatures.map((feature: any, index: number) => {
           const geometry = feature.getGeometry()
-          if (!geometry) {
-            
-            return null
-          }
-          
           const properties = feature.getProperties() || {}
           const geometryType = geometry.getType()
           const coordinates = geometry.getCoordinates()
@@ -425,10 +443,11 @@ export function useLayerManager() {
               ...geometricProperties,
               sourceType: sourceType,
               saveTime: new Date().toISOString(),
-              layerName: layerName
+              layerName: layerName,
+              saveFormat: saveFormat // 添加保存格式标识
             }
           }
-        }).filter(Boolean) // 过滤掉null值
+        })
       }
 
       
@@ -444,6 +463,7 @@ export function useLayerManager() {
       // 根据来源类型设置不同的样式
       const getLayerStyle = () => {
         const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--draw-color').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000')
+        const errorColor = getComputedStyle(document.documentElement).getPropertyValue('--error-color').trim() || '#dc3545'
         
         switch (sourceType) {
           case 'draw':
@@ -526,19 +546,19 @@ export function useLayerManager() {
                 })
               })
             })
-          case 'overlay':
+          case 'upload':
             return new ol.style.Style({
               stroke: new ol.style.Stroke({
-                color: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#3b82f6',
+                color: errorColor,
                 width: 3
               }),
               fill: new ol.style.Fill({
-                color: `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').trim() || '59, 130, 246'}, 0.2)`
+                color: 'rgba(255, 255, 255, 0.0)'
               }),
               image: new ol.style.Circle({
                 radius: 6,
                 fill: new ol.style.Fill({
-                  color: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#3b82f6'
+                  color: errorColor
                 }),
                 stroke: new ol.style.Stroke({
                   color: getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || '#ffffff',
@@ -559,6 +579,26 @@ export function useLayerManager() {
                 radius: 6,
                 fill: new ol.style.Fill({
                   color: '#ff0000'
+                }),
+                stroke: new ol.style.Stroke({
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || '#ffffff',
+                  width: 2
+                })
+              })
+            })
+          case 'intersect':
+            return new ol.style.Style({
+              stroke: new ol.style.Stroke({
+                color: '#00ff00',
+                width: 3
+              }),
+              fill: new ol.style.Fill({
+                color: 'rgba(0, 255, 0, 0.2)'
+              }),
+              image: new ol.style.Circle({
+                radius: 6,
+                fill: new ol.style.Fill({
+                  color: '#00ff00'
                 }),
                 stroke: new ol.style.Stroke({
                   color: getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || '#ffffff',
@@ -651,8 +691,8 @@ export function useLayerManager() {
     }
   }
 
-  // 将绘制内容保存为GeoJSON图层（保持向后兼容）
-  const saveDrawAsLayer = async () => {
+  // 将绘制内容保存为GeoJSON图层（支持多种保存格式）
+  const saveDrawAsLayer = async (): Promise<DrawLayerSaveType | false> => {
     
     
     const drawSource = getDrawLayerSource()
@@ -669,6 +709,63 @@ export function useLayerManager() {
       return false
     }
 
+    // 分析要素类型，决定保存格式
+    const geometryTypes = new Set<string>()
+    const validFeatures = features.filter((feature: any) => {
+      const geometry = feature.getGeometry()
+      if (!geometry) return false
+      geometryTypes.add(geometry.getType())
+      return true
+    })
+
+    if (validFeatures.length === 0) {
+      return false
+    }
+
+    // 根据要素类型决定保存格式
+    let saveFormat: 'polygon' | 'featurecollection'
+    let result: DrawLayerSaveType
+
+    if (geometryTypes.size === 1 && geometryTypes.has('Polygon')) {
+      // 只有多边形时，保存为多边形
+      saveFormat = 'polygon'
+      const polygonFeature = validFeatures.find((f: any) => f.getGeometry().getType() === 'Polygon')
+      if (polygonFeature) {
+        const geometry = polygonFeature.getGeometry()
+        result = {
+          type: 'Polygon',
+          coordinates: geometry.getCoordinates()
+        } as Polygon
+      } else {
+        return false
+      }
+    } else {
+      // 其他情况（点、线、面混合或只有点/线）都保存为要素集合
+      saveFormat = 'featurecollection'
+      result = {
+        type: 'FeatureCollection',
+        features: validFeatures.map((feature: any, index: number) => {
+          const geometry = feature.getGeometry()
+          const properties = feature.getProperties() || {}
+          
+          return {
+            type: 'Feature',
+            id: `draw_${Date.now()}_${index}`,
+            geometry: {
+              type: geometry.getType(),
+              coordinates: geometry.getCoordinates()
+            },
+            properties: {
+              ...properties,
+              sourceType: 'draw',
+              saveTime: new Date().toISOString(),
+              saveFormat: saveFormat
+            }
+          }
+        })
+      } as FeatureCollection<Polygon>
+    }
+
     // 使用通用插槽函数保存绘制要素
     const success = await saveFeaturesAsLayer(
       features, 
@@ -679,9 +776,10 @@ export function useLayerManager() {
     if (success) {
       // 清除原始绘制内容
       drawSource.clear()
+      return result
     }
 
-    return success
+    return false
   }
 
   // 处理绘制模式下的清除操作
