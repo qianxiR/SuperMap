@@ -6,11 +6,12 @@
     </div>
     
           <div class="header-right">
-        <ButtonGroup
+        <!-- 临时移除LLM模式和传统模式切换按钮 -->
+        <!-- <ButtonGroup
           :buttons="modeButtons"
           :active-button="activeMode"
           @select="setMode"
-        />
+        /> -->
         
         <div class="right-controls">
           <div class="theme-toggle">

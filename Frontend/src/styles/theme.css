@@ -45,6 +45,9 @@
   --draw-color: #0078D4;
   --draw-rgb: 0, 120, 212;
   
+  /* ===== 地图容器触摸行为 ===== */
+  --map-touch-action: none;
+  
   /* ===== 分析图层颜色 - 浅色模式 ===== */
   --analysis-color: #0078D4;
   --analysis-rgb: 0, 120, 212;
@@ -536,6 +539,11 @@ html {
 .ol-canvas,
 .ol-control {
   transition: none !important;
+}
+
+/* 修复OpenLayers被动事件监听器问题 */
+.ol-viewport {
+  touch-action: var(--map-touch-action, none);
 }
 
 /* 按钮和交互元素的防闪烁 */

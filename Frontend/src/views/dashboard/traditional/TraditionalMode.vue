@@ -4,8 +4,9 @@
     <div class="function-buttons-container">
       <div class="buttons-grid">
         <div class="button-row">
-          <PrimaryButton text="数据上传" :active="isUploadOpen" @click="toggleUpload" />
+        
           <PrimaryButton text="图层管理" :active="isLayerOpen" @click="toggleLayerManager" />
+          <PrimaryButton text="数据上传" :active="isUploadOpen" @click="toggleUpload" />
           <PrimaryButton text="按属性选择要素" :active="isQueryOpen" @click="toggleQuery" />
           <PrimaryButton text="按区域选择要素" :active="isAreaSelection" @click="toggleAreaSelection" />
         </div>

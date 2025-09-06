@@ -483,7 +483,7 @@ export function useLayerManager() {
               width: width
             }),
             fill: new ol.style.Fill({
-              color: `rgba(${rgb}, 0.1)`
+              color: color + '4D' // 70%透明度
             }),
             image: new ol.style.Circle({
               radius: 6,
@@ -510,19 +510,19 @@ export function useLayerManager() {
           case 'upload':
             return createRedStyle('upload', 3)
           case 'path':
-            // 路径分析保持绿色以区分
+            // 路径分析使用蓝色
             return new ol.style.Style({
               stroke: new ol.style.Stroke({
-                color: '#00ff00',
+                color: '#0078D4',
                 width: 4
               }),
               fill: new ol.style.Fill({
-                color: 'rgba(0, 255, 0, 0.1)'
+                color: '#0078D44D' // 蓝色，70%透明度
               }),
               image: new ol.style.Circle({
                 radius: 8,
                 fill: new ol.style.Fill({
-                  color: '#00ff00'
+                  color: '#0078D4'
                 }),
                 stroke: new ol.style.Stroke({
                   color: panelColor,

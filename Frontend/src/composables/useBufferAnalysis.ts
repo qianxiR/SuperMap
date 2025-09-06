@@ -252,7 +252,7 @@ export function useBufferAnalysis() {
           width: 3
         }),
         fill: new Fill({
-          color: analysisColor + '40' // 25% 不透明度
+          color: analysisColor + '4D' // 蓝色，70%透明度
         })
       })
     })

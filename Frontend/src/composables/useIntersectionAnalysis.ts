@@ -238,7 +238,7 @@ export function useIntersectionAnalysis() {
     const strokeColor = rootStyle.getPropertyValue('--map-highlight-color')?.trim() || '#000000'
     // 使用分析专用颜色，确保复杂几何体正确显示
     const fillColor = rootStyle.getPropertyValue('--analysis-color')?.trim() || '#0078D4'
-    const fillVar = fillColor + '60' // 60% 不透明度
+    const fillVar = fillColor + '4D' // 蓝色，70%透明度
 
     const layer = new VectorLayer({
       source,

@@ -173,11 +173,11 @@ export function useShortestPathAnalysis() {
   const getAnalysisLayerStyle = () => {
     return new window.ol.style.Style({
       stroke: new window.ol.style.Stroke({
-        color: '#ff0000', // 红色
+        color: '#0078D4', // 蓝色
         width: 4
       }),
       fill: new window.ol.style.Fill({
-        color: 'rgba(255, 0, 0, 0.1)' // 红色半透明
+        color: '#0078D44D' // 蓝色，70%透明度
       })
     })
   }
@@ -302,16 +302,29 @@ export function useShortestPathAnalysis() {
   const removeAnalysisLayers = (): void => {
     if (!mapStore.map) return
     
+    // 直接通过图层引用移除图层
+    if (analysisLayers.value.startPointLayer) {
+      mapStore.map.removeLayer(analysisLayers.value.startPointLayer)
+      analysisLayers.value.startPointLayer = null
+    }
+    
+    if (analysisLayers.value.endPointLayer) {
+      mapStore.map.removeLayer(analysisLayers.value.endPointLayer)
+      analysisLayers.value.endPointLayer = null
+    }
+    
+    if (analysisLayers.value.pathLayer) {
+      mapStore.map.removeLayer(analysisLayers.value.pathLayer)
+      analysisLayers.value.pathLayer = null
+    }
+    
+    // 额外检查：通过图层属性移除可能遗漏的图层
     const layers = mapStore.map.getLayers().getArray()
     layers.forEach((layer: any) => {
-      if (layer.get && (layer.get('isAnalysisLayer') || layer.get('isStartPointLayer') || layer.get('isEndPointLayer'))) {
+      if (layer.get && (layer.get('isAnalysisLayer') || layer.get('isStartPointLayer') || layer.get('isEndPointLayer') || layer.get('analysisType') === 'path')) {
         mapStore.map.removeLayer(layer)
       }
     })
-    
-    analysisLayers.value.startPointLayer = null
-    analysisLayers.value.endPointLayer = null
-    analysisLayers.value.pathLayer = null
   }
   
   // ===== 导出为JSON方法 =====

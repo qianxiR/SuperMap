@@ -229,8 +229,8 @@ export function useEraseAnalysis() {
     const strokeColor = rootStyle.getPropertyValue('--map-highlight-color')?.trim() || '#000000'
     // 使用分析专用颜色，确保挖洞效果正确显示
     const fillColor = rootStyle.getPropertyValue('--analysis-color')?.trim() || '#0078D4'
-    // 使用适中的透明度，既能显示挖洞效果，又不会完全遮挡底层地图
-    const fillVar = fillColor + '60' // 60% 不透明度
+    // 使用蓝色，70%透明度
+    const fillVar = fillColor + '4D'
 
     const layer = new VectorLayer({
       source,
