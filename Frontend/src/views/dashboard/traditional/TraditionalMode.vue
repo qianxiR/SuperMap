@@ -5,7 +5,7 @@
       <div class="buttons-grid">
         <div class="button-row">
           <PrimaryButton text="图层管理" :active="isLayerOpen" @click="toggleLayerManager" />
-          <PrimaryButton text="图层上传" :active="isUploadOpen" @click="toggleUpload" />
+          <PrimaryButton text="数据上传" :active="isUploadOpen" @click="toggleUpload" />
           <PrimaryButton text="按区域选择要素" :active="isAreaSelection" @click="toggleAreaSelection" />
           <PrimaryButton text="按属性选择要素" :active="isQueryOpen" @click="toggleQuery" />
         </div>
@@ -67,7 +67,7 @@ const modeStateStore = useModeStateStore()
 // 工具配置对象
 const toolConfigs = {
   layer: { id: 'layer', title: '图层管理', path: 'layer' },
-  upload: { id: 'upload', title: '图层上传', path: 'upload' },
+  upload: { id: 'upload', title: '数据上传', path: 'upload' },
   'attribute-selection': { id: 'attribute-selection', title: '按属性选择要素', path: 'attribute-selection' },
   'area-selection': { id: 'area-selection', title: '按区域选择要素', path: 'area-selection' },
   buffer: { id: 'buffer', title: '缓冲区分析', path: 'buffer' },
@@ -183,7 +183,7 @@ onMounted(() => {
         'area-selection': '按区域选择要素',
         'buffer': '缓冲区分析',
         'distance': '最短路径分析',
-        'upload': '图层上传',
+        'upload': '数据上传',
         'overlay': '相交分析',
         'erase': '擦除分析'
       }

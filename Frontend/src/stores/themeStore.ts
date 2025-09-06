@@ -4,8 +4,8 @@ import { ref, watch } from 'vue'
 export type Theme = 'light' | 'dark'
 
 export const useThemeStore = defineStore('theme', () => {
-  // 从localStorage读取主题设置，默认为深色主题
-  const theme = ref<Theme>((localStorage.getItem('theme') as Theme) || 'dark')
+  // 从localStorage读取主题设置，默认为浅色主题
+  const theme = ref<Theme>((localStorage.getItem('theme') as Theme) || 'light')
   
   // 应用主题到DOM
   const applyTheme = (newTheme: Theme) => {

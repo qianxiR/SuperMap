@@ -6,40 +6,40 @@
   --text: #212529;
   --text-secondary: #495057;
   --sub: #6c757d;
-  --accent: #000000;
-  --accent-rgb: 0, 0, 0;
-  --accent-light: rgba(0, 0, 0, 0.1);
+  --accent: #0078D4;
+  --accent-rgb: 0, 120, 212;
+  --accent-light: rgba(0, 120, 212, 0.1);
   --glow: 0 2px 8px rgba(0, 0, 0, 0.08);
   --radius: 10px;
 
   /* ===== 按钮颜色 ===== */
-  --btn-primary-bg: #000000;
+  --btn-primary-bg: #0078D4;
   --btn-primary-color: #ffffff;
   --btn-secondary-bg: #e0e0e0;
   --btn-secondary-color: #212529;
 
   /* ===== 链接颜色 ===== */
-  --link-color: #000000;
-  --link-hover-color: rgba(0, 0, 0, 0.8);
+  --link-color: #0078D4;
+  --link-hover-color: rgba(0, 120, 212, 0.8);
 
   /* ===== 交互颜色 ===== */
   --surface: rgba(0, 0, 0, 0.03);
   --surface-hover: rgba(0, 0, 0, 0.06);
   --divider: #dee2e6;
   --splitter-bg: rgba(0, 0, 0, 0.1);
-  --splitter-hover: #000000;
+  --splitter-hover: #0078D4;
   --selection-bg: rgba(0, 0, 0, 0.1);
   
   /* ===== 地图相关颜色 ===== */
   --map-hover-fill: rgba(0, 0, 0, 0.06);
   --map-select-fill: rgba(0, 0, 0, 0.15);
-  --map-highlight-color: #000000; /* 浅色模式使用深黑色边界 */
-  --measure-line-color: #000000;
-  --measure-line-rgb: 0, 0, 0;
-  --overview-extent-color: #000000;
-  --overview-extent-rgb: 0, 0, 0;
-  --coordinate-color: #000000;
-  --scale-color: #000000;
+  --map-highlight-color: #0078D4; /* 浅色模式使用深蓝色边界 */
+  --measure-line-color: #0078D4;
+  --measure-line-rgb: 0, 120, 212;
+  --overview-extent-color: #0078D4;
+  --overview-extent-rgb: 0, 120, 212;
+  --coordinate-color: #0078D4;
+  --scale-color: #0078D4;
   
   /* ===== 绘制颜色 - 浅色模式 ===== */
   --draw-color: #dc3545;
@@ -50,16 +50,16 @@
   --analysis-rgb: 220, 53, 69;
   
   /* ===== 上传图层颜色 - 浅色模式 ===== */
-  --upload-color: #dc3545;
-  --upload-rgb: 220, 53, 69;
+  --upload-color: #212529;
+  --upload-rgb: 33, 37, 41;
 
   /* ===== 弹窗颜色 ===== */
   --field-label-color: #6c757d;
   --field-value-color: #212529;
   
   /* ===== 头像颜色 ===== */
-  --avatar-ai-bg: #000000;
-  --avatar-user-bg: #000000;
+  --avatar-ai-bg: #0078D4;
+  --avatar-user-bg: #0078D4;
 
   /* ===== 悬浮功能按钮（固定） ===== */
   --fixed-btn-bg: rgba(249, 249, 249, 0.9); /* 与 --panel 对齐的 rgba 版本 */
@@ -67,14 +67,14 @@
   --fixed-btn-border: #dee2e6; /* 与 --border 对齐 */
   
   /* ===== 武汉市县级图层 - 浅色主题 ===== */
-  --layer-stroke-武汉_县级: #000000;
-  --layer-fill-武汉_县级: rgba(0, 0, 0, 0.1);
+  --layer-stroke-武汉_县级: #0078D4;
+  --layer-fill-武汉_县级: rgba(0, 120, 212, 0.1);
   
   /* ===== 状态颜色 ===== */
   --success-color: #a72846;
   --error-color: #dc3545;
-  --primary-color: #000000;
-  --primary-color-rgb: 0, 0, 0;
+  --primary-color: #0078D4;
+  --primary-color-rgb: 0, 120, 212;
 }
 
 /* Fluid root font-size for responsive scaling */
@@ -91,13 +91,13 @@ html {
   --text: #ffffff;
   --text-secondary: #b0b0b0;
   --sub: #cccccc;
-  --accent: #000000;
-  --accent-rgb: 0, 0, 0;
-  --accent-light: rgba(255, 255, 255, 0.1);
+  --accent: #0078D4;
+  --accent-rgb: 0, 120, 212;
+  --accent-light: rgba(0, 120, 212, 0.1);
   --glow: 0 2px 8px rgba(0, 0, 0, 0.4);
 
   /* ===== 按钮颜色 ===== */
-  --btn-primary-bg: #000000;
+  --btn-primary-bg: #0078D4;
   --btn-primary-color: #ffffff;
   --btn-secondary-bg: #373737;
   --btn-secondary-color: #ffffff;
@@ -111,7 +111,7 @@ html {
   --surface-hover: rgba(255, 255, 255, 0.06);
   --divider: #484848;
   --splitter-bg: rgba(255, 255, 255, 0.1);
-  --splitter-hover: #000000;
+  --splitter-hover: #0078D4;
   --selection-bg: rgba(255, 255, 255, 0.15);
   
   /* 滚动条颜色 */
@@ -120,8 +120,8 @@ html {
   /* ===== 状态颜色 ===== */
   --success-color: #28a745;
   --error-color: #dc3545;
-  --primary-color: #000000;
-  --primary-color-rgb: 0, 0, 0;
+  --primary-color: #0078D4;
+  --primary-color-rgb: 0, 120, 212;
   --scrollbar-thumb: rgba(255, 255, 255, 0.3);
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.5);
   
@@ -133,8 +133,8 @@ html {
   --measure-line-rgb: 255, 255, 255;
   --overview-extent-color: #cccccc;
   --overview-extent-rgb: 204, 204, 204;
-  --coordinate-color: #000000;
-  --scale-color: #000000;
+  --coordinate-color: #0078D4;
+  --scale-color: #0078D4;
   
   /* ===== 绘制颜色 - 深色模式 ===== */
   --draw-color: #dc3545;
@@ -145,16 +145,16 @@ html {
   --analysis-rgb: 220, 53, 69;
   
   /* ===== 上传图层颜色 - 深色模式 ===== */
-  --upload-color: #dc3545;
-  --upload-rgb: 220, 53, 69;
+  --upload-color: #ffffff;
+  --upload-rgb: 255, 255, 255;
 
   /* ===== 弹窗颜色 ===== */
   --field-label-color: #cccccc;
   --field-value-color: #ffffff;
   
   /* ===== 头像颜色 ===== */
-  --avatar-ai-bg: #000000;
-  --avatar-user-bg: #000000;
+  --avatar-ai-bg: #0078D4;
+  --avatar-user-bg: #0078D4;
 
   /* ===== 悬浮功能按钮（固定）- 深色 ===== */
   --fixed-btn-bg: rgba(38, 38, 38, 0.9); /* 与 --panel(#262626) 对齐的 rgba 版本 */

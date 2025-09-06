@@ -65,7 +65,7 @@ export function useShortestPathAnalysis() {
   const analysisOptions = ref<ShortestPathOptions>({
     obstacles: null,
     units: 'kilometers',
-    resolution: 1000  // 设置网格分辨率为1000米
+    resolution: 10000  // 设置网格分辨率为10000米
   })
   
   // 分析图层引用
@@ -517,7 +517,7 @@ export function useShortestPathAnalysis() {
         },
         analysisOptions: {
           units: analysisOptions.value.units || 'kilometers',
-          resolution: analysisOptions.value.resolution || 1000
+          resolution: analysisOptions.value.resolution || 10000
         },
         options: {
           returnGeometry: true,

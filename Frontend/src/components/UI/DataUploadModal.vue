@@ -330,7 +330,7 @@ watch(() => props.externalUploading, (newUploading) => {
 }
 
 .drop-zone {
-  border: 2px dashed var(--border);
+  border: 2px dashed var(--upload-color);
   border-radius: 12px;
   padding: 40px 20px;
   text-align: center;
@@ -341,8 +341,8 @@ watch(() => props.externalUploading, (newUploading) => {
 
 .drop-zone:hover,
 .drop-zone.drag-over {
-  border-color: var(--accent);
-  background: rgba(var(--accent-rgb), 0.05);
+  border-color: var(--upload-color);
+  background: rgba(var(--upload-rgb), 0.05);
 }
 
 .drop-zone-content {

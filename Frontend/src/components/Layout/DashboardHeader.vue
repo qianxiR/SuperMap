@@ -1,7 +1,8 @@
 <template>
   <div class="screen-header">
     <div class="header-left">
-      <div class="screen-title">测智慧——基于LLM-Agent的智慧城市地理空间决策分析系统</div>
+      <img src="/628416edb5b7a1b2136a93f41b6e312b.png" alt="Logo" class="header-logo" />
+      <div class="screen-title">多模态实时态势感知地理空间智能决策平台</div>
     </div>
     
           <div class="header-right">
@@ -315,6 +316,14 @@ watch(() => router.currentRoute.value.path, (newPath: string) => {
   display: flex;
   align-items: center;
   justify-content: flex-start;
+  gap: 12px;
+}
+
+.header-logo {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 

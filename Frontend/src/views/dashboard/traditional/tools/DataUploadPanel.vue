@@ -6,9 +6,9 @@
     :height="'100%'"
     class="data-upload-panel"
   >
-    <!-- 图层上传说明 -->
+    <!-- 数据上传说明 -->
     <div class="upload-section">
-      <div class="section-title">图层上传</div>
+      <div class="section-title">数据上传</div>
       <div class="upload-description">
         <p>支持上传GeoJSON格式的地理数据文件，系统将自动解析并在地图上显示。</p>
         <div class="supported-formats">
@@ -108,7 +108,7 @@
       </div>
     </div>
 
-    <!-- 图层上传模态窗口 -->
+    <!-- 数据上传模态窗口 -->
     <DataUploadModal 
       :visible="showUploadModal"
       :externalUploading="isUploading"
@@ -232,16 +232,16 @@ function getStatusText(status: string): string {
 
 .format-item {
   font-size: 11px;
-  color: var(--accent);
+  color: var(--upload-color);
   font-weight: 600;
   background: var(--surface);
   padding: 2px 6px;
   border-radius: 4px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--upload-color);
 }
 
 .upload-area {
-  border: 2px dashed var(--border);
+  border: 2px dashed var(--upload-color);
   border-radius: 12px;
   padding: 32px 16px;
   text-align: center;
@@ -251,8 +251,8 @@ function getStatusText(status: string): string {
 }
 
 .upload-area:hover {
-  border-color: var(--accent);
-  background: var(--surface);
+  border-color: var(--upload-color);
+  background: rgba(var(--upload-rgb), 0.05);
 }
 
 .upload-content {
