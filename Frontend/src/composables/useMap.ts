@@ -32,20 +32,51 @@ export function useMap() {
     const fillVar = css.getPropertyValue(`--layer-fill-${layerName}`).trim();
     const accentFallback = css.getPropertyValue('--accent').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#666666' : '#212529');
 
-
-    
     // 统一使用CSS变量，如果CSS变量为空则使用主题色作为fallback
     const resolvedStroke = strokeVar || accentFallback;
     const resolvedFill = fillVar || (document.documentElement.getAttribute('data-theme') === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(33,37,41,0.1)');
+    
+    // 根据图层类型和重要性调整样式参数
+    const getStyleParams = (type: string, layerName: string) => {
+      // 重要图层使用更粗的线条和更大的点
+      const isImportant = ['武汉_县级', '公路', '铁路'].includes(layerName);
+      
+      switch (type) {
+        case 'point':
+          return {
+            radius: isImportant ? 8 : 6,
+            strokeWidth: isImportant ? 2.5 : 2,
+            fillOpacity: 0.8
+          };
+        case 'line':
+          return {
+            width: isImportant ? 3 : 2,
+            lineCap: 'round',
+            lineJoin: 'round'
+          };
+        case 'polygon':
+          return {
+            width: isImportant ? 2 : 1.5,
+            fillOpacity: 0.6
+          };
+        default:
+          return {
+            width: 1.5,
+            fillOpacity: 0.6
+          };
+      }
+    };
+    
+    const params = getStyleParams(layerConfig.type, layerName);
     
     switch (layerConfig.type) {
       case 'point':
         return new ol.style.Style({
           image: new ol.style.Circle({
-            radius: 6,
+            radius: params.radius,
             stroke: new ol.style.Stroke({ 
               color: resolvedStroke, 
-              width: 2 
+              width: params.strokeWidth 
             }),
             fill: new ol.style.Fill({ 
               color: resolvedFill 
@@ -56,7 +87,9 @@ export function useMap() {
         return new ol.style.Style({
           stroke: new ol.style.Stroke({ 
             color: resolvedStroke, 
-            width: 2 
+            width: params.width,
+            lineCap: params.lineCap,
+            lineJoin: params.lineJoin
           }),
           fill: new ol.style.Fill({ color: 'rgba(0, 0, 0, 0)' })
         });
@@ -64,7 +97,7 @@ export function useMap() {
         return new ol.style.Style({
           stroke: new ol.style.Stroke({ 
             color: resolvedStroke, 
-            width: 1.5 
+            width: params.width 
           }),
           fill: new ol.style.Fill({ 
             color: resolvedFill 
@@ -74,7 +107,7 @@ export function useMap() {
         return new ol.style.Style({
           stroke: new ol.style.Stroke({ 
             color: resolvedStroke, 
-            width: 1.5 
+            width: params.width 
           }),
           fill: new ol.style.Fill({ 
             color: resolvedFill 

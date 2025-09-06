@@ -267,18 +267,22 @@ const allLayers = computed(() => {
     if (source === 'local') {
       const layerName = vl.layer.get('layerName') || vl.name
       const sourceType = vl.layer.get('sourceType') || 'draw'
-      const sourceTypeNames: Record<string, string> = {
-        draw: '分析',
-        area: '区域选择',
-        query: '属性查询',
-        buffer: '缓冲区分析',
-        path: '最短路径',
-        upload: '上传',
-        intersect: '相交分析',
-        erase: '擦除分析'
+      
+      // 直接显示保存的图层名称，不添加前缀
+      item.displayName = layerName
+      
+      // 根据sourceType设置描述信息
+      const sourceTypeDescs: Record<string, string> = {
+        draw: '用户创建的图层',
+        area: '区域选择图层',
+        query: '属性查询图层',
+        buffer: '缓冲区分析结果图层',
+        path: '最短路径分析结果图层',
+        upload: '上传的GeoJSON图层',
+        intersect: '相交分析结果图层',
+        erase: '擦除分析结果图层'
       }
-      item.displayName = `${sourceTypeNames[sourceType] || '本地'}: ${layerName}`
-      item.desc = sourceType === 'buffer' ? '缓冲区分析结果图层' : (sourceType === 'path' ? '最短路径分析结果图层' : (sourceType === 'upload' ? '上传的GeoJSON图层' : (sourceType === 'intersect' ? '相交分析结果图层' : (sourceType === 'erase' ? '擦除分析结果图层' : '用户创建的图层'))))
+      item.desc = sourceTypeDescs[sourceType] || '用户创建的图层'
       
       // 根据sourceType确定分组
       if (sourceType === 'draw' || sourceType === 'buffer' || sourceType === 'path' || sourceType === 'intersect' || sourceType === 'erase') {

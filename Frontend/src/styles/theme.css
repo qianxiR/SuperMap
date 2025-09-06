@@ -42,8 +42,16 @@
   --scale-color: #000000;
   
   /* ===== 绘制颜色 - 浅色模式 ===== */
-  --draw-color: #000000;
-  --draw-rgb: 0, 0, 0;
+  --draw-color: #dc3545;
+  --draw-rgb: 220, 53, 69;
+  
+  /* ===== 分析图层颜色 - 浅色模式 ===== */
+  --analysis-color: #dc3545;
+  --analysis-rgb: 220, 53, 69;
+  
+  /* ===== 上传图层颜色 - 浅色模式 ===== */
+  --upload-color: #dc3545;
+  --upload-rgb: 220, 53, 69;
 
   /* ===== 弹窗颜色 ===== */
   --field-label-color: #6c757d;
@@ -63,7 +71,7 @@
   --layer-fill-武汉_县级: rgba(0, 0, 0, 0.1);
   
   /* ===== 状态颜色 ===== */
-  --success-color: #28a745;
+  --success-color: #a72846;
   --error-color: #dc3545;
   --primary-color: #000000;
   --primary-color-rgb: 0, 0, 0;
@@ -129,8 +137,16 @@ html {
   --scale-color: #000000;
   
   /* ===== 绘制颜色 - 深色模式 ===== */
-  --draw-color: #ffffff;
-  --draw-rgb: 255, 255, 255;
+  --draw-color: #dc3545;
+  --draw-rgb: 220, 53, 69;
+  
+  /* ===== 分析图层颜色 - 深色模式 ===== */
+  --analysis-color: #dc3545;
+  --analysis-rgb: 220, 53, 69;
+  
+  /* ===== 上传图层颜色 - 深色模式 ===== */
+  --upload-color: #dc3545;
+  --upload-rgb: 220, 53, 69;
 
   /* ===== 弹窗颜色 ===== */
   --field-label-color: #cccccc;
@@ -162,39 +178,82 @@ html {
   background: var(--scale-color);
 }
 
-/* ===== 固定图层颜色 (不受主题影响) ===== */
-:root, [data-theme="dark"] {
-  /* 交通设施 - 公路 */
-  --layer-stroke-公路: #f39c12;
-  --layer-fill-公路: rgba(243, 156, 18, 0.08);
+/* ===== SuperMap图层颜色方案 (浅色主题) ===== */
+:root {
+  /* 行政区划 - 县级边界 */
+  --layer-stroke-武汉_县级: #2c3e50;
+  --layer-fill-武汉_县级: rgba(44, 62, 80, 0.05);
 
-  /* 交通设施 - 铁路 */
+  /* 交通设施 - 公路 (橙色系) */
+  --layer-stroke-公路: #e67e22;
+  --layer-fill-公路: rgba(230, 126, 34, 0.12);
+
+  /* 交通设施 - 铁路 (深紫色) */
   --layer-stroke-铁路: #8e44ad;
-  --layer-fill-铁路: rgba(142, 68, 173, 0.08);
+  --layer-fill-铁路: rgba(142, 68, 173, 0.10);
 
-  /* 水系 - 水系面 */
-  --layer-stroke-水系面: #2980b9;
-  --layer-fill-水系面: rgba(41, 128, 185, 0.18);
+  /* 水系 - 水系面 (蓝色系) */
+  --layer-stroke-水系面: #3498db;
+  --layer-fill-水系面: rgba(52, 152, 219, 0.20);
 
-  /* 水系 - 水系线 */
-  --layer-stroke-水系线: #3498db;
-  --layer-fill-水系线: rgba(52, 152, 219, 0.10);
+  /* 水系 - 水系线 (浅蓝色) */
+  --layer-stroke-水系线: #5dade2;
+  --layer-fill-水系线: rgba(93, 173, 226, 0.15);
 
-  /* 建筑物 - 建筑物面 */
+  /* 建筑物 - 建筑物面 (灰色系) */
   --layer-stroke-建筑物面: #7f8c8d;
-  --layer-fill-建筑物面: rgba(127, 140, 141, 0.20);
+  --layer-fill-建筑物面: rgba(127, 140, 141, 0.15);
 
-  /* 地名点 - 居民地地名点 */
+  /* 地名点 - 居民地地名点 (红色系) */
+  --layer-stroke-居民地地名点: #e74c3c;
+  --layer-fill-居民地地名点: rgba(231, 76, 60, 0.25);
+
+  /* 公共服务 - 学校 (绿色系) */
+  --layer-stroke-学校: #27ae60;
+  --layer-fill-学校: rgba(39, 174, 96, 0.30);
+
+  /* 公共服务 - 医院 (深红色) */
+  --layer-stroke-医院: #c0392b;
+  --layer-fill-医院: rgba(192, 57, 43, 0.30);
+}
+
+/* ===== SuperMap图层颜色方案 (深色主题) ===== */
+[data-theme="dark"] {
+  /* 行政区划 - 县级边界 */
+  --layer-stroke-武汉_县级: #ecf0f1;
+  --layer-fill-武汉_县级: rgba(236, 240, 241, 0.08);
+
+  /* 交通设施 - 公路 (亮橙色) */
+  --layer-stroke-公路: #f39c12;
+  --layer-fill-公路: rgba(243, 156, 18, 0.15);
+
+  /* 交通设施 - 铁路 (亮紫色) */
+  --layer-stroke-铁路: #9b59b6;
+  --layer-fill-铁路: rgba(155, 89, 182, 0.12);
+
+  /* 水系 - 水系面 (亮蓝色) */
+  --layer-stroke-水系面: #3498db;
+  --layer-fill-水系面: rgba(52, 152, 219, 0.25);
+
+  /* 水系 - 水系线 (浅蓝色) */
+  --layer-stroke-水系线: #5dade2;
+  --layer-fill-水系线: rgba(93, 173, 226, 0.20);
+
+  /* 建筑物 - 建筑物面 (浅灰色) */
+  --layer-stroke-建筑物面: #95a5a6;
+  --layer-fill-建筑物面: rgba(149, 165, 166, 0.18);
+
+  /* 地名点 - 居民地地名点 (亮红色) */
   --layer-stroke-居民地地名点: #e74c3c;
   --layer-fill-居民地地名点: rgba(231, 76, 60, 0.35);
 
-  /* 公共服务 - 学校 */
-  --layer-stroke-学校: #27ae60;
-  --layer-fill-学校: rgba(39, 174, 96, 0.35);
+  /* 公共服务 - 学校 (亮绿色) */
+  --layer-stroke-学校: #2ecc71;
+  --layer-fill-学校: rgba(46, 204, 113, 0.35);
 
-  /* 公共服务 - 医院 */
-  --layer-stroke-医院: #c0392b;
-  --layer-fill-医院: rgba(192, 57, 43, 0.35);
+  /* 公共服务 - 医院 (亮深红色) */
+  --layer-stroke-医院: #e74c3c;
+  --layer-fill-医院: rgba(231, 76, 60, 0.35);
 }
 
 /* ===== 深色主题特殊样式 ===== */

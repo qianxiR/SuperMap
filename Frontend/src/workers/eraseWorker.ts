@@ -22,27 +22,19 @@ const prepareTurfAnalysisInput = (geometry1: any, geometry2: any): any => {
 
 // Worker消息类型定义
 interface WorkerMessage {
-  type: 'PROCESS_BATCH' | 'TERMINATE'
+  type: 'PROCESS_ALL' | 'TERMINATE'
   data?: {
-    batchId: string
     targetFeatures: any[]
     eraseFeatures: any[]
-    startTargetIndex: number
-    endTargetIndex: number
-    startEraseIndex: number
-    endEraseIndex: number
     targetLayerName?: string
     eraseLayerName?: string
   }
 }
 
 interface WorkerResult {
-  type: 'BATCH_COMPLETE' | 'ERROR'
-  batchId: string
+  type: 'COMPLETE' | 'ERROR'
   results?: any[]
   error?: string
-  processedPairs: number
-  totalPairs: number
 }
 
 // 处理单个要素对的擦除计算
@@ -81,33 +73,28 @@ const computeErase = (targetFeature: any, eraseFeature: any, targetIndex: number
   }
 }
 
-// 处理一批要素的擦除计算
-const processBatch = (data: WorkerMessage['data']): WorkerResult => {
+// 处理所有要素的擦除计算
+const processAll = (data: WorkerMessage['data']): WorkerResult => {
   if (!data) {
     return {
       type: 'ERROR',
-      batchId: '',
-      error: '无效的批处理数据',
-      processedPairs: 0,
-      totalPairs: 0
+      error: '无效的数据'
     }
   }
 
-  const { batchId, targetFeatures, eraseFeatures, startTargetIndex, endTargetIndex, startEraseIndex, endEraseIndex, targetLayerName, eraseLayerName } = data
+  const { targetFeatures, eraseFeatures, targetLayerName, eraseLayerName } = data
   const results: any[] = []
-  let processedPairs = 0
-  const totalPairs = (endTargetIndex - startTargetIndex) * (endEraseIndex - startEraseIndex)
 
-  console.log(`Worker: 开始处理批次 ${batchId}, 目标范围: [${startTargetIndex}, ${endTargetIndex}), 擦除范围: [${startEraseIndex}, ${endEraseIndex})`)
+  console.log(`Worker: 开始处理擦除分析，目标要素: ${targetFeatures.length} 个，擦除要素: ${eraseFeatures.length} 个`)
 
   try {
-    // 遍历目标要素范围
-    for (let i = startTargetIndex; i < endTargetIndex; i++) {
+    // 遍历所有目标要素
+    for (let i = 0; i < targetFeatures.length; i++) {
       const targetFeature = targetFeatures[i]
       if (!targetFeature) continue
 
-      // 遍历擦除要素范围
-      for (let j = startEraseIndex; j < endEraseIndex; j++) {
+      // 遍历所有擦除要素
+      for (let j = 0; j < eraseFeatures.length; j++) {
         const eraseFeature = eraseFeatures[j]
         if (!eraseFeature) continue
 
@@ -115,28 +102,20 @@ const processBatch = (data: WorkerMessage['data']): WorkerResult => {
         if (result) {
           results.push(result)
         }
-        
-        processedPairs++
       }
     }
 
-    console.log(`Worker: 批次 ${batchId} 完成，处理了 ${processedPairs} 个组合，生成 ${results.length} 个结果`)
+    console.log(`Worker: 擦除分析完成，生成 ${results.length} 个结果`)
 
     return {
-      type: 'BATCH_COMPLETE',
-      batchId,
-      results,
-      processedPairs,
-      totalPairs
+      type: 'COMPLETE',
+      results
     }
   } catch (error: any) {
-    console.error(`Worker: 批次 ${batchId} 处理失败:`, error)
+    console.error('Worker: 擦除分析失败:', error)
     return {
       type: 'ERROR',
-      batchId,
-      error: error?.message || '未知错误',
-      processedPairs,
-      totalPairs
+      error: error?.message || '未知错误'
     }
   }
 }
@@ -146,8 +125,8 @@ self.addEventListener('message', (event: MessageEvent<WorkerMessage>) => {
   const { type, data } = event.data
 
   switch (type) {
-    case 'PROCESS_BATCH':
-      const result = processBatch(data)
+    case 'PROCESS_ALL':
+      const result = processAll(data)
       self.postMessage(result)
       break
     

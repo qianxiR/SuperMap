@@ -443,6 +443,71 @@ export const convertFeatureToTurfGeometry = (feature: any): any => {
   return turfFeature
 }
 
+5.
+
+1. 文件选择和验证阶段
+数据来源： 用户通过DataUploadModal组件选择本地文件
+支持的文件格式：.geojson 和 .json
+文件验证：通过文件扩展名过滤有效文件
+重复检查：避免添加相同名称和大小的文件
+
+2. 文件读取和解析阶段
+核心方法： parseGeoJSONFile(file: File)
+读取的数据：
+使用浏览器原生 FileReader API 读取文件内容
+将文件内容作为文本读取，然后使用 JSON.parse() 解析为JavaScript对象
+返回标准的GeoJSON格式数据
+const parseGeoJSONFile = (file: File): Promise<any> => {
+  return new Promise((resolve) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const content = (e.target as any).result as string
+      const geojson = JSON.parse(content)  // 将文件内容解析为JSON对象
+      resolve(geojson)
+    }
+    reader.readAsText(file)  // 以文本形式读取文件
+  })
+}
 
 
+3. GeoJSON转换为OpenLayers Feature阶段
+核心转换逻辑：
+const ol = (window as any).ol
+const projection = mapStore.map.getView().getProjection()
+const features = new ol.format.GeoJSON().readFeatures(geojson, { 
+  featureProjection: projection 
+})
 
+转换过程：
+使用OpenLayers的 ol.format.GeoJSON().readFeatures() 方法
+将GeoJSON数据转换为OpenLayers Feature对象数组
+自动处理坐标投影转换（从GeoJSON的WGS84坐标系转换到地图当前投影）
+4. 图层保存和增强阶段
+核心方法： saveFeaturesAsLayer(features, layerName, 'upload')
+数据处理流程：
+要素验证和分类：
+   const validFeatures = features.filter((feature: any) => {
+     const geometry = feature.getGeometry()
+     if (!geometry) return false
+     geometryTypes.add(geometry.getType())  // 收集几何类型
+     return true
+   })
+
+  几何属性计算：
+点要素： 添加经纬度坐标
+线要素： 计算长度（千米）
+面要素： 计算面积（平方千米）
+
+   properties: {
+     ...properties,           // 原始GeoJSON属性
+     ...geometricProperties, // 计算的几何属性
+     sourceType: 'upload',   // 数据来源标识
+     saveTime: new Date().toISOString(), // 保存时间
+     layerName: layerName,   // 图层名称
+     saveFormat: saveFormat  // 保存格式
+   }
+
+
+   重新创建GeoJSON数据：
+将增强后的Feature重新转换为GeoJSON格式
+包含所有原始数据和计算属性

@@ -29,7 +29,7 @@
         :show-icon="true"
       >
         <div>
-          <div style="font-weight: 600; margin-bottom: 4px;">正在执行智能相交分析...</div>
+          <div style="font-weight: 600; margin-bottom: 4px;">正在执行相交分析...</div>
           <div style="font-size: 11px; opacity: 0.8;">
             正在对目标要素 ({{ targetFeatureCount }} 个) 和计算要素 ({{ maskFeatureCount }} 个) 进行分析
             <br> 
@@ -92,7 +92,6 @@ const {
   maskFeatureCount,
   isAnalyzing,
   executeIntersectionAnalysis,
-  executeSmartIntersectionAnalysis, // 使用分析方法
   clearState,
   setTargetLayer,
   setMaskLayer,
@@ -156,8 +155,8 @@ const handleExecute = () => {
     maskFirstType: mGeom?.getType?.()
   })
 
-  // 使用分析方法，自动选择传统或分布式计算
-  executeSmartIntersectionAnalysis({
+  // 执行相交分析
+  executeIntersectionAnalysis({
     targetLayerId: targetLayerId.value,
     maskLayerId: maskLayerId.value,
     targetFeatures: targetFeaturesCache.value,

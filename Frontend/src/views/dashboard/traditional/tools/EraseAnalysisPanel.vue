@@ -32,7 +32,6 @@
           <div style="font-weight: 600; margin-bottom: 4px;">正在执行擦除分析...</div>
           <div style="font-size: 11px; opacity: 0.8;">
             正在对目标要素 ({{ targetFeatureCount }} 个) 和擦除要素 ({{ eraseFeatureCount }} 个) 进行Web Worker异步擦除分析
-            <br>系统将根据数据量自动选择最优计算策略和分页渲染
           </div>
         </div>
       </TipWindow>

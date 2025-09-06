@@ -462,190 +462,80 @@ export function useLayerManager() {
 
       // 根据来源类型设置不同的样式
       const getLayerStyle = () => {
-        const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--draw-color').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000')
-        const errorColor = getComputedStyle(document.documentElement).getPropertyValue('--error-color').trim() || '#dc3545'
+        const css = getComputedStyle(document.documentElement)
+        const panelColor = css.getPropertyValue('--panel').trim() || '#ffffff'
+        
+        // 获取统一的红色主题变量
+        const getRedColor = (type: string) => {
+          const colorVar = `--${type}-color`
+          const rgbVar = `--${type}-rgb`
+          const color = css.getPropertyValue(colorVar).trim() || '#dc3545'
+          const rgb = css.getPropertyValue(rgbVar).trim() || '220, 53, 69'
+          return { color, rgb }
+        }
+        
+        // 创建统一的红色样式
+        const createRedStyle = (type: string, width: number = 2) => {
+          const { color, rgb } = getRedColor(type)
+          return new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              color: color,
+              width: width
+            }),
+            fill: new ol.style.Fill({
+              color: `rgba(${rgb}, 0.1)`
+            }),
+            image: new ol.style.Circle({
+              radius: 6,
+              fill: new ol.style.Fill({
+                color: color
+              }),
+              stroke: new ol.style.Stroke({
+                color: panelColor,
+                width: 2
+              })
+            })
+          })
+        }
         
         switch (sourceType) {
           case 'draw':
-            return new ol.style.Style({
-              stroke: new ol.style.Stroke({
-                color: highlightColor,
-                width: 2
-              }),
-              fill: new ol.style.Fill({
-                color: `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--draw-rgb').trim() || '0, 0, 0'}, 0.1)`
-              }),
-              image: new ol.style.Circle({
-                radius: 6,
-                fill: new ol.style.Fill({
-                  color: highlightColor
-                }),
-                stroke: new ol.style.Stroke({
-                  color: getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || '#ffffff',
-                  width: 2
-                })
-              })
-            })
+            return createRedStyle('draw', 2)
           case 'area':
-            return new ol.style.Style({
-              stroke: new ol.style.Stroke({
-                color: highlightColor,
-                width: 2
-              }),
-              fill: new ol.style.Fill({
-                color: `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').trim() || '0, 0, 0'}, 0.1)`
-              }),
-              image: new ol.style.Circle({
-                radius: 6,
-                fill: new ol.style.Fill({
-                  color: highlightColor
-                }),
-                stroke: new ol.style.Stroke({
-                  color: getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || '#ffffff',
-                  width: 2
-                })
-              })
-            })
+            return createRedStyle('analysis', 2)
           case 'query':
-            return new ol.style.Style({
-              stroke: new ol.style.Stroke({
-                color: highlightColor,
-                width: 2
-              }),
-              fill: new ol.style.Fill({
-                color: `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').trim() || '0, 0, 0'}, 0.1)`
-              }),
-              image: new ol.style.Circle({
-                radius: 6,
-                fill: new ol.style.Fill({
-                  color: highlightColor
-                }),
-                stroke: new ol.style.Stroke({
-                  color: getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || '#ffffff',
-                  width: 2
-                })
-              })
-            })
+            return createRedStyle('analysis', 2)
           case 'buffer':
-            return new ol.style.Style({
-              stroke: new ol.style.Stroke({
-                color: '#ff0000',
-                width: 3
-              }),
-              fill: new ol.style.Fill({
-                color: 'rgba(255, 255, 255, 0.0)' // 完全透明，实现空心效果
-              }),
-              image: new ol.style.Circle({
-                radius: 6,
-                fill: new ol.style.Fill({
-                  color: '#ff0000'
-                }),
-                stroke: new ol.style.Stroke({
-                  color: getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || '#ffffff',
-                  width: 2
-                })
-              })
-            })
+            return createRedStyle('analysis', 3)
           case 'upload':
-            return new ol.style.Style({
-              stroke: new ol.style.Stroke({
-                color: errorColor,
-                width: 3
-              }),
-              fill: new ol.style.Fill({
-                color: 'rgba(255, 255, 255, 0.0)'
-              }),
-              image: new ol.style.Circle({
-                radius: 6,
-                fill: new ol.style.Fill({
-                  color: errorColor
-                }),
-                stroke: new ol.style.Stroke({
-                  color: getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || '#ffffff',
-                  width: 2
-                })
-              })
-            })
+            return createRedStyle('upload', 3)
           case 'path':
+            // 路径分析保持绿色以区分
             return new ol.style.Style({
               stroke: new ol.style.Stroke({
-                color: '#ff0000',
+                color: '#00ff00',
                 width: 4
               }),
               fill: new ol.style.Fill({
-                color: 'rgba(255, 0, 0, 0.1)'
+                color: 'rgba(0, 255, 0, 0.1)'
               }),
               image: new ol.style.Circle({
-                radius: 6,
+                radius: 8,
                 fill: new ol.style.Fill({
-                  color: '#ff0000'
+                  color: '#00ff00'
                 }),
                 stroke: new ol.style.Stroke({
-                  color: getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || '#ffffff',
+                  color: panelColor,
                   width: 2
                 })
               })
             })
           case 'intersect':
-            return new ol.style.Style({
-              stroke: new ol.style.Stroke({
-                color: '#00ff00',
-                width: 3
-              }),
-              fill: new ol.style.Fill({
-                color: 'rgba(0, 255, 0, 0.2)'
-              }),
-              image: new ol.style.Circle({
-                radius: 6,
-                fill: new ol.style.Fill({
-                  color: '#00ff00'
-                }),
-                stroke: new ol.style.Stroke({
-                  color: getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || '#ffffff',
-                  width: 2
-                })
-              })
-            })
+            return createRedStyle('analysis', 3)
           case 'erase':
-            return new ol.style.Style({
-              stroke: new ol.style.Stroke({
-                color: '#ff6600',
-                width: 3
-              }),
-              fill: new ol.style.Fill({
-                color: 'rgba(255, 102, 0, 0.2)'
-              }),
-              image: new ol.style.Circle({
-                radius: 6,
-                fill: new ol.style.Fill({
-                  color: '#ff6600'
-                }),
-                stroke: new ol.style.Stroke({
-                  color: getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || '#ffffff',
-                  width: 2
-                })
-              })
-            })
+            return createRedStyle('analysis', 3)
           default:
-            return new ol.style.Style({
-              stroke: new ol.style.Stroke({
-                color: highlightColor,
-                width: 2
-              }),
-              fill: new ol.style.Fill({
-                color: `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').trim() || '0, 0, 0'}, 0.1)`
-              }),
-              image: new ol.style.Circle({
-                radius: 6,
-                fill: new ol.style.Fill({
-                  color: highlightColor
-                }),
-                stroke: new ol.style.Stroke({
-                  color: getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || '#ffffff',
-                  width: 2
-                })
-              })
-            })
+            return createRedStyle('analysis', 2)
         }
       }
 
@@ -712,7 +602,7 @@ export function useLayerManager() {
   }
 
   // 将绘制内容保存为GeoJSON图层（支持多种保存格式）
-  const saveDrawAsLayer = async (): Promise<DrawLayerSaveType | false> => {
+  const saveDrawAsLayer = async (layerName?: string): Promise<DrawLayerSaveType | false> => {
     
     
     const drawSource = getDrawLayerSource()
@@ -786,10 +676,14 @@ export function useLayerManager() {
       } as FeatureCollection<Polygon>
     }
 
+    // 生成默认图层名称
+    const defaultLayerName = generateDefaultDrawLayerName(geometryTypes)
+    const finalLayerName = layerName || defaultLayerName
+
     // 使用通用插槽函数保存绘制要素
     const success = await saveFeaturesAsLayer(
       features, 
-      `绘制图层`, 
+      finalLayerName, 
       'draw'
     )
 
@@ -800,6 +694,32 @@ export function useLayerManager() {
     }
 
     return false
+  }
+
+  // 生成默认绘制图层名称
+  const generateDefaultDrawLayerName = (geometryTypes: Set<string>): string => {
+    const timestamp = new Date().toLocaleString('zh-CN', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).replace(/[\/\s:]/g, '')
+    
+    if (geometryTypes.size === 1) {
+      const type = Array.from(geometryTypes)[0]
+      switch (type) {
+        case 'Point':
+          return `绘制点_${timestamp}`
+        case 'LineString':
+          return `绘制线_${timestamp}`
+        case 'Polygon':
+          return `绘制面_${timestamp}`
+        default:
+          return `绘制图层_${timestamp}`
+      }
+    } else {
+      return `绘制图层_${timestamp}`
+    }
   }
 
   // 处理绘制模式下的清除操作

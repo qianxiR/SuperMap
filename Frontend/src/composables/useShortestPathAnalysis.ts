@@ -2,6 +2,7 @@ import { ref, computed } from 'vue'
 import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useLayerManager } from '@/composables/useLayerManager'
+import { getAPIConfig } from '@/api/config'
 import shortestPath from '@turf/shortest-path'
 import { feature, point, lineString, polygon, featureCollection } from '@turf/turf'
 import { convertFeatureToTurfGeometry, convertFeaturesToTurfGeometries } from '@/utils/geometryConverter'
@@ -498,72 +499,79 @@ export function useShortestPathAnalysis() {
     try {
       removePathLayersOnly()
       
-      // 使用geometryConverter统一转换要素为turf几何对象
-      const startTurfFeature = convertFeatureToTurfGeometry(startPoint.value)
-      const endTurfFeature = convertFeatureToTurfGeometry(endPoint.value)
+      // 提取起点和终点坐标
+      const startGeometry = startPoint.value.getGeometry()
+      const endGeometry = endPoint.value.getGeometry()
+      const startCoords = startGeometry.getCoordinates()
+      const endCoords = endGeometry.getCoordinates()
       
-      if (!startTurfFeature || !endTurfFeature) {
-        throw new Error('分析点转换失败，几何信息无效')
+      // 构建API请求数据
+      const requestData: any = {
+        startPoint: {
+          type: 'Point',
+          coordinates: [startCoords[0], startCoords[1]]
+        },
+        endPoint: {
+          type: 'Point',
+          coordinates: [endCoords[0], endCoords[1]]
+        },
+        analysisOptions: {
+          units: analysisOptions.value.units || 'kilometers',
+          resolution: analysisOptions.value.resolution || 1000
+        },
+        options: {
+          returnGeometry: true,
+          calculateDistance: true,
+          calculateDuration: true,
+          averageSpeed: 50
+        }
       }
       
-      // 从turf几何对象中提取坐标
-      const startCoords = startTurfFeature.geometry.coordinates
-      const endCoords = endTurfFeature.geometry.coordinates
-      
-      const start = [startCoords[0], startCoords[1]]
-      const end = [endCoords[0], endCoords[1]]
-      
-      console.log(`[ShortestPath] 起始点坐标: [${start[0]}, ${start[1]}]`)
-      console.log(`[ShortestPath] 目标点坐标: [${end[0]}, ${end[1]}]`)
-      
-      const options: any = {
-        units: analysisOptions.value.units,
-        resolution: analysisOptions.value.resolution
-      }
-      
+      // 如果有障碍物数据，添加到请求中（使用现有的obstacles数据）
       if (analysisOptions.value.obstacles) {
-        options.obstacles = analysisOptions.value.obstacles
+        requestData.obstacleData = analysisOptions.value.obstacles
+        console.log('[ShortestPath] 发送障碍物数据:', {
+          obstacleCount: analysisOptions.value.obstacles.features?.length || 0
+        })
       }
       
-      // 使用更长的延迟来确保UI不被阻塞
-      const pathResult = await new Promise<any>((resolve, reject) => {
-        setTimeout(() => {
-          try {
-            const result = shortestPath(start, end, options)
-            resolve(result)
-          } catch (error) {
-            reject(error)
-          }
-        }, 10)
+      console.log('[ShortestPath] 发送API请求:', requestData)
+      
+      // 调用后端API
+      const API_BASE_URL = getAPIConfig().baseUrl
+      const response = await fetch(`${API_BASE_URL}/spatial-analysis/shortest-path`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestData)
       })
       
-      // 异步计算距离，避免阻塞UI
-      const distance = await new Promise<number>((resolve) => {
-        setTimeout(() => {
-          const dist = calculatePathDistance(pathResult)
-          resolve(dist)
-        }, 10)
-      })
+      const apiResponse = await response.json()
+      
+      if (!apiResponse.success) {
+        throw new Error(`API请求失败: ${apiResponse.error?.message || '未知错误'}`)
+      }
+      
+      const pathData = apiResponse.data
+      const stats = pathData.statistics
       
       const result: ShortestPathResult = {
-        id: `path_${Date.now()}`,
-        name: '最短路径分析',
-        geometry: pathResult.geometry,
-        distance: distance,
-        duration: Math.round(distance / 1000 * 20),
+        id: pathData.resultId,
+        name: pathData.resultName,
+        geometry: pathData.pathGeometry,
+        distance: stats.distance,
+        duration: stats.duration,
         pathType: '最短路径',
         sourceLayerName: '分析图层',
         createdAt: new Date().toISOString()
       }
       
-      // 异步更新结果和显示，避免阻塞UI
-      await new Promise(resolve => setTimeout(resolve, 10))
       analysisResults.value = [result]
-      
-      await new Promise(resolve => setTimeout(resolve, 10))
       displayAnalysisResults([result])
       
-      analysisStore.setAnalysisStatus(`路径分析完成: 距离 ${result.distance.toFixed(2)}米`)
+      const statusMessage = `最短路径分析完成，距离: ${stats.distance} ${stats.distanceUnit}，预计时间: ${stats.duration} ${stats.durationUnit}`
+      analysisStore.setAnalysisStatus(statusMessage)
       
     } catch (error) {
       analysisStore.setAnalysisStatus(`路径分析失败: ${error instanceof Error ? error.message : '未知错误'}`)

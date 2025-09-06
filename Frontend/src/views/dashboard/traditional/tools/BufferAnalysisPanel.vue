@@ -272,20 +272,65 @@ const exportGeoJSON = async () => {
   }
   
   try {
+    const allFeatures: any[] = []
+    
+    bufferResults.value.forEach(result => {
+      if (result.geometry.type === 'FeatureCollection') {
+        // 如果是FeatureCollection类型，处理所有features
+        const features = result.geometry.features || []
+        console.log(`[Export] FeatureCollection包含 ${features.length} 个要素`)
+        
+        features.forEach((feature: any, index: number) => {
+          allFeatures.push({
+            type: 'Feature',
+            geometry: feature.geometry,
+            properties: {
+              id: `${result.id}_${index}`,
+              name: `${result.name}_${index + 1}`,
+              distance: result.distance,
+              unit: result.unit,
+              sourceLayer: result.sourceLayerName,
+              createdAt: result.createdAt,
+              featureIndex: index
+            }
+          })
+        })
+      } else if (result.geometry.type === 'Feature') {
+        // 如果是Feature类型，直接添加
+        allFeatures.push({
+          type: 'Feature',
+          geometry: result.geometry.geometry,
+          properties: {
+            id: result.id,
+            name: result.name,
+            distance: result.distance,
+            unit: result.unit,
+            sourceLayer: result.sourceLayerName,
+            createdAt: result.createdAt
+          }
+        })
+      } else {
+        // 直接是Geometry类型
+        allFeatures.push({
+          type: 'Feature',
+          geometry: result.geometry,
+          properties: {
+            id: result.id,
+            name: result.name,
+            distance: result.distance,
+            unit: result.unit,
+            sourceLayer: result.sourceLayerName,
+            createdAt: result.createdAt
+          }
+        })
+      }
+    })
+    
+    console.log(`[Export] 总共导出 ${allFeatures.length} 个要素`)
+    
     const geoJSON = {
       type: 'FeatureCollection',
-      features: bufferResults.value.map(result => ({
-        type: 'Feature',
-        geometry: result.geometry,
-        properties: {
-          id: result.id,
-          name: result.name,
-          distance: result.distance,
-          unit: result.unit,
-          sourceLayer: result.sourceLayerName,
-          createdAt: result.createdAt
-        }
-      }))
+      features: allFeatures
     }
     
     const blob = new Blob([JSON.stringify(geoJSON, null, 2)], { type: 'application/json' })
@@ -383,41 +428,71 @@ const saveBufferLayer = async (customLayerName: string) => {
 
   try {
     const name = customLayerName
+    const bufferFeatures: any[] = []
     
-    // 创建Feature对象数组
-    const bufferFeatures = bufferResults.value.map(result => {
-      let geometry
-      
+    bufferResults.value.forEach(result => {
       // 处理不同的GeoJSON格式
       if (result.geometry.type === 'Feature') {
         // 如果是Feature类型，提取geometry部分
-        geometry = new window.ol.format.GeoJSON().readGeometry(result.geometry.geometry)
+        const geometry = new window.ol.format.GeoJSON().readGeometry(result.geometry.geometry)
+        if (geometry) {
+          const feature = new window.ol.Feature({
+            geometry: geometry,
+            properties: {
+              id: result.id,
+              name: result.name,
+              distance: result.distance,
+              unit: result.unit,
+              sourceLayer: result.sourceLayerName,
+              createdAt: result.createdAt
+            }
+          })
+          bufferFeatures.push(feature)
+        }
       } else if (result.geometry.type === 'FeatureCollection') {
-        // 如果是FeatureCollection类型，提取第一个feature的geometry
+        // 如果是FeatureCollection类型，处理所有features
         const features = new window.ol.format.GeoJSON().readFeatures(result.geometry)
-        geometry = features[0]?.getGeometry()
+        console.log(`[Save] FeatureCollection包含 ${features.length} 个要素`)
+        
+        features.forEach((olFeature: any, index: number) => {
+          const geometry = olFeature.getGeometry()
+          if (geometry) {
+            const feature = new window.ol.Feature({
+              geometry: geometry,
+              properties: {
+                id: `${result.id}_${index}`,
+                name: `${result.name}_${index + 1}`,
+                distance: result.distance,
+                unit: result.unit,
+                sourceLayer: result.sourceLayerName,
+                createdAt: result.createdAt,
+                featureIndex: index
+              }
+            })
+            bufferFeatures.push(feature)
+          }
+        })
       } else {
         // 直接是Geometry类型
-        geometry = new window.ol.format.GeoJSON().readGeometry(result.geometry)
-      }
-      
-      if (!geometry) {
-        return null
-      }
-      
-      const feature = new window.ol.Feature({
-        geometry: geometry,
-        properties: {
-          id: result.id,
-          name: result.name,
-          distance: result.distance,
-          unit: result.unit,
-          sourceLayer: result.sourceLayerName,
-          createdAt: result.createdAt
+        const geometry = new window.ol.format.GeoJSON().readGeometry(result.geometry)
+        if (geometry) {
+          const feature = new window.ol.Feature({
+            geometry: geometry,
+            properties: {
+              id: result.id,
+              name: result.name,
+              distance: result.distance,
+              unit: result.unit,
+              sourceLayer: result.sourceLayerName,
+              createdAt: result.createdAt
+            }
+          })
+          bufferFeatures.push(feature)
         }
-      })
-      return feature
-    }).filter(Boolean) // 过滤掉null值
+      }
+    })
+    
+    console.log(`[Save] 总共保存 ${bufferFeatures.length} 个要素`)
     
     // 调用图层管理中的通用保存函数
     const success = await saveFeaturesAsLayer(

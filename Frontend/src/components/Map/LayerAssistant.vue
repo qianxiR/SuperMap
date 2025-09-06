@@ -126,14 +126,26 @@
     @cancel="layerManager.handleConfirmDialogCancel"
     @close="layerManager.handleConfirmDialogClose"
   />
+
+  <!-- 图层名称输入对话框 -->
+  <LayerNameModal
+    :visible="layerNameModalVisible"
+    title="保存绘制图层"
+    placeholder="请输入图层名称"
+    :hint="layerNameHint"
+    :default-name="defaultLayerName"
+    @confirm="handleLayerNameConfirm"
+    @close="handleLayerNameClose"
+  />
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useLayerManager } from '@/composables/useLayerManager'
 import ConfirmDialog from '@/components/UI/ConfirmDialog.vue'
+import LayerNameModal from '@/components/UI/LayerNameModal.vue'
 
 const mapStore = useMapStore()
 const analysisStore = useAnalysisStore()
@@ -145,6 +157,76 @@ const drawSource = ref<any>(null)
 const drawLayer = ref<any>(null)
 const currentDrawType = ref<string | null>('None')
 let themeObserver: MutationObserver | null = null // 主题变化观察器
+
+// 图层名称输入相关状态
+const layerNameModalVisible = ref(false)
+const pendingDrawSave = ref<(() => Promise<void>) | null>(null)
+
+// 生成默认图层名称
+const defaultLayerName = computed(() => {
+  if (!drawSource.value) return ''
+  
+  const features = drawSource.value.getFeatures()
+  if (features.length === 0) return ''
+  
+  const geometryTypes = new Set<string>()
+  features.forEach((feature: any) => {
+    const geometry = feature.getGeometry()
+    if (geometry) {
+      geometryTypes.add(geometry.getType())
+    }
+  })
+  
+  const timestamp = new Date().toLocaleString('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).replace(/[\/\s:]/g, '')
+  
+  if (geometryTypes.size === 1) {
+    const type = Array.from(geometryTypes)[0]
+    switch (type) {
+      case 'Point':
+        return `绘制点_${timestamp}`
+      case 'LineString':
+        return `绘制线_${timestamp}`
+      case 'Polygon':
+        return `绘制面_${timestamp}`
+      default:
+        return `绘制图层_${timestamp}`
+    }
+  } else {
+    return `绘制图层_${timestamp}`
+  }
+})
+
+// 图层名称提示信息
+const layerNameHint = computed(() => {
+  if (!drawSource.value) return '图层名称不能为空'
+  
+  const features = drawSource.value.getFeatures()
+  if (features.length === 0) return '图层名称不能为空'
+  
+  const geometryTypes = new Set<string>()
+  features.forEach((feature: any) => {
+    const geometry = feature.getGeometry()
+    if (geometry) {
+      geometryTypes.add(geometry.getType())
+    }
+  })
+  
+  const typeNames = Array.from(geometryTypes).map(type => {
+    switch (type) {
+      case 'Point': return '点'
+      case 'LineString': return '线'
+      case 'Polygon': return '面'
+      default: return type
+    }
+  }).join('、')
+  
+  return `将保存 ${features.length} 个${typeNames}要素`
+})
 
 const ol = window.ol
 
@@ -453,14 +535,10 @@ const clearDrawFeatures = () => {
       layerManager.showConfirmDialog(
         '保存绘制内容',
         `您已绘制了 ${features.length} 个要素，是否要保存为图层？`,
-        async () => {
-          // 用户确认保存
-          console.log('用户确认保存绘制内容')
-          const success = await layerManager.saveDrawAsLayer()
-          if (success) {
-            console.log('绘制内容保存成功')
-            stopDraw()
-          }
+        () => {
+          // 用户确认保存，显示图层名称输入对话框
+          console.log('用户确认保存绘制内容，显示图层名称输入对话框')
+          layerNameModalVisible.value = true
         },
         () => {
           // 用户取消，直接清除
@@ -477,6 +555,30 @@ const clearDrawFeatures = () => {
   } else {
     stopDraw()
   }
+}
+
+// 处理图层名称确认
+const handleLayerNameConfirm = async (layerName: string) => {
+  console.log('用户输入图层名称:', layerName)
+  layerNameModalVisible.value = false
+  
+  try {
+    const success = await layerManager.saveDrawAsLayer(layerName)
+    if (success) {
+      console.log('绘制内容保存成功，图层名称:', layerName)
+      stopDraw()
+    } else {
+      console.error('绘制内容保存失败')
+    }
+  } catch (error) {
+    console.error('保存绘制内容时发生错误:', error)
+  }
+}
+
+// 处理图层名称输入取消
+const handleLayerNameClose = () => {
+  console.log('用户取消图层名称输入')
+  layerNameModalVisible.value = false
 }
 
 // 清理绘制图层

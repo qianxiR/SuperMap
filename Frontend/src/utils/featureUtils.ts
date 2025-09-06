@@ -3,6 +3,9 @@
  * 保留实际使用的核心功能
  */
 
+import { GeoJSON } from 'ol/format'
+import type { default as OlMap } from 'ol/Map'
+
 /**
  * 获取要素的几何类型
  * @param feature 要素对象
@@ -162,4 +165,205 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
             Math.sin(dLon / 2) * Math.sin(dLon / 2)
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
   return R * c
+}
+
+/**
+ * 从OpenLayers图层提取GeoJSON数据
+ * 
+ * 输入数据格式：
+ * @param layer - OpenLayers图层对象
+ * @param map - OpenLayers地图对象（可选，用于获取投影信息）
+ * @param options - 提取选项
+ * @param options.featureProjection - 要素投影（默认从地图获取或使用EPSG:3857）
+ * @param options.dataProjection - 输出数据投影（默认EPSG:4326）
+ * @param options.enableLogging - 是否启用详细日志（默认true）
+ * 
+ * 数据处理方法：
+ * 1. 验证图层和源数据有效性
+ * 2. 获取图层中的所有要素
+ * 3. 使用OpenLayers GeoJSON格式器转换数据
+ * 4. 验证和解析GeoJSON数据
+ * 5. 进行数据完整性检查
+ * 
+ * 输出数据格式：
+ * GeoJSON FeatureCollection对象或null（如果提取失败）
+ */
+export function extractGeoJSONFromLayer(
+  layer: any, 
+  map?: OlMap, 
+  options: {
+    featureProjection?: string
+    dataProjection?: string
+    enableLogging?: boolean
+  } = {}
+): any {
+  const {
+    featureProjection,
+    dataProjection = 'EPSG:4326',
+    enableLogging = true
+  } = options
+
+  if (!layer || !layer.getSource) {
+    if (enableLogging) {
+      console.error('[GeoJSONExtractor] 无效的图层对象')
+    }
+    return null
+  }
+
+  const source = layer.getSource()
+  if (!source || !source.getFeatures) {
+    if (enableLogging) {
+      console.error('[GeoJSONExtractor] 图层没有有效的源数据')
+    }
+    return null
+  }
+
+  const features = source.getFeatures()
+  if (!features || features.length === 0) {
+    if (enableLogging) {
+      console.error('[GeoJSONExtractor] 图层中没有要素')
+    }
+    return null
+  }
+
+  if (enableLogging) {
+    console.log(`[GeoJSONExtractor] 图层包含 ${features.length} 个要素`)
+  }
+
+  // 确定要素投影
+  const finalFeatureProjection = featureProjection || 
+    map?.getView().getProjection() || 
+    'EPSG:3857'
+
+  // 使用OpenLayers的GeoJSON格式器提取数据
+  const geoJSONFormat = new GeoJSON()
+  const geoJSONData = geoJSONFormat.writeFeatures(features, {
+    featureProjection: finalFeatureProjection,
+    dataProjection: dataProjection
+  })
+
+  try {
+    const parsedData = JSON.parse(geoJSONData)
+    
+    if (enableLogging) {
+      console.log('[GeoJSONExtractor] 成功提取GeoJSON数据:', {
+        type: parsedData.type,
+        featureCount: parsedData.features?.length || 0,
+        projection: {
+          from: finalFeatureProjection,
+          to: dataProjection
+        },
+        features: parsedData.features?.map((f: any, index: number) => ({
+          index: index,
+          id: f.properties?.id || 'unknown',
+          type: f.geometry?.type,
+          coordinates: f.geometry?.coordinates ? 'present' : 'missing',
+          coordinateSample: f.geometry?.coordinates ? 
+            (Array.isArray(f.geometry.coordinates[0]) ? 
+              f.geometry.coordinates[0].slice(0, 2) : 
+              f.geometry.coordinates.slice(0, 2)) : 
+            'no-coords'
+        })) || []
+      })
+      
+      // 验证数据完整性
+      if (parsedData.features && parsedData.features.length > 0) {
+        console.log('[GeoJSONExtractor] 数据完整性检查:')
+        console.log(`  - 总要素数: ${parsedData.features.length}`)
+        console.log(`  - 第一个要素:`, parsedData.features[0])
+        console.log(`  - 最后一个要素:`, parsedData.features[parsedData.features.length - 1])
+        
+        // 检查是否有重复的要素
+        const uniqueIds = new Set(parsedData.features.map((f: any) => f.properties?.id || 'no-id'))
+        console.log(`  - 唯一ID数量: ${uniqueIds.size}`)
+        if (uniqueIds.size !== parsedData.features.length) {
+          console.warn('[GeoJSONExtractor] 警告: 发现重复的要素ID')
+        }
+      }
+    }
+    
+    return parsedData
+  } catch (error) {
+    if (enableLogging) {
+      console.error('[GeoJSONExtractor] 解析GeoJSON数据失败:', error)
+    }
+    return null
+  }
+}
+
+/**
+ * 从OpenLayers要素数组提取GeoJSON数据
+ * 
+ * 输入数据格式：
+ * @param features - OpenLayers要素数组
+ * @param map - OpenLayers地图对象（可选，用于获取投影信息）
+ * @param options - 提取选项
+ * 
+ * 数据处理方法：
+ * 1. 验证要素数组有效性
+ * 2. 使用OpenLayers GeoJSON格式器转换数据
+ * 3. 验证和解析GeoJSON数据
+ * 
+ * 输出数据格式：
+ * GeoJSON FeatureCollection对象或null（如果提取失败）
+ */
+export function extractGeoJSONFromFeatures(
+  features: any[], 
+  map?: OlMap, 
+  options: {
+    featureProjection?: string
+    dataProjection?: string
+    enableLogging?: boolean
+  } = {}
+): any {
+  const {
+    featureProjection,
+    dataProjection = 'EPSG:4326',
+    enableLogging = true
+  } = options
+
+  if (!features || !Array.isArray(features) || features.length === 0) {
+    if (enableLogging) {
+      console.error('[GeoJSONExtractor] 无效的要素数组')
+    }
+    return null
+  }
+
+  if (enableLogging) {
+    console.log(`[GeoJSONExtractor] 处理 ${features.length} 个要素`)
+  }
+
+  // 确定要素投影
+  const finalFeatureProjection = featureProjection || 
+    map?.getView().getProjection() || 
+    'EPSG:3857'
+
+  // 使用OpenLayers的GeoJSON格式器提取数据
+  const geoJSONFormat = new GeoJSON()
+  const geoJSONData = geoJSONFormat.writeFeatures(features, {
+    featureProjection: finalFeatureProjection,
+    dataProjection: dataProjection
+  })
+
+  try {
+    const parsedData = JSON.parse(geoJSONData)
+    
+    if (enableLogging) {
+      console.log('[GeoJSONExtractor] 成功提取要素GeoJSON数据:', {
+        type: parsedData.type,
+        featureCount: parsedData.features?.length || 0,
+        projection: {
+          from: finalFeatureProjection,
+          to: dataProjection
+        }
+      })
+    }
+    
+    return parsedData
+  } catch (error) {
+    if (enableLogging) {
+      console.error('[GeoJSONExtractor] 解析要素GeoJSON数据失败:', error)
+    }
+    return null
+  }
 }
