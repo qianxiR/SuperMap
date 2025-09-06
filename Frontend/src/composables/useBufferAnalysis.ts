@@ -240,15 +240,19 @@ export function useBufferAnalysis() {
       features: bufferFeatures
     })
     
+    // 获取分析专用颜色
+    const rootStyle = getComputedStyle(document.documentElement)
+    const analysisColor = rootStyle.getPropertyValue('--analysis-color')?.trim() || '#0078D4'
+    
     const bufferLayer = new VectorLayer({
       source: bufferSource,
       style: new Style({
         stroke: new Stroke({
-          color: '#ff0000',
+          color: analysisColor,
           width: 3
         }),
         fill: new Fill({
-          color: 'rgba(255, 255, 255, 0.0)'
+          color: analysisColor + '40' // 25% 不透明度
         })
       })
     })
