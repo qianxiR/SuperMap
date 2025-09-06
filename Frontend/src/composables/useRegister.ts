@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
-import { getAPIConfig } from '@/api/config'
+import { getUserServiceConfig } from '@/api/config'
 
 // 接口定义
 interface UserRegisterRequest {
@@ -89,8 +89,8 @@ export function useRegister() {
   // 注册API实现
   const register = async (userData: UserRegisterRequest): Promise<ApiResponse> => {
     try {
-      const baseUrl = `${getAPIConfig().baseUrl}/user`
-      const response = await fetch(`${baseUrl}/register`, {
+      const baseUrl = getUserServiceConfig().baseUrl
+      const response = await fetch(`${baseUrl}/user/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -121,8 +121,8 @@ export function useRegister() {
   // 登录API实现
   const login = async (loginData: UserLoginRequest): Promise<ApiResponse> => {
     try {
-      const baseUrl = `${getAPIConfig().baseUrl}/user`
-      const response = await fetch(`${baseUrl}/login`, {
+      const baseUrl = getUserServiceConfig().baseUrl
+      const response = await fetch(`${baseUrl}/user/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -157,8 +157,8 @@ export function useRegister() {
       }
       
       // 从后端获取完整的用户信息
-      const baseUrl = `${getAPIConfig().baseUrl}/user`
-      const response = await fetch(`${baseUrl}/me`, {
+      const baseUrl = getUserServiceConfig().baseUrl
+      const response = await fetch(`${baseUrl}/user/me`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

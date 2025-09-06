@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { getAPIConfig } from '@/api/config'
+import { getUserServiceConfig } from '@/api/config'
 
 // 接口定义
 interface UserUpdateRequest {
@@ -32,8 +32,8 @@ export function useUserProfile() {
   // 更新用户资料API
   const updateProfile = async (token: string, updateData: UserUpdateRequest): Promise<ApiResponse> => {
     try {
-      const baseUrl = `${getAPIConfig().baseUrl}/user`
-      const response = await fetch(`${baseUrl}/update-profile`, {
+      const baseUrl = getUserServiceConfig().baseUrl
+      const response = await fetch(`${baseUrl}/user/update-profile`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -63,8 +63,8 @@ export function useUserProfile() {
   // 修改密码API
   const changePassword = async (token: string, passwordData: PasswordChangeRequest): Promise<ApiResponse> => {
     try {
-      const baseUrl = `${getAPIConfig().baseUrl}/user`
-      const response = await fetch(`${baseUrl}/change-password`, {
+      const baseUrl = getUserServiceConfig().baseUrl
+      const response = await fetch(`${baseUrl}/user/change-password`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -131,8 +131,8 @@ export function useUserProfile() {
   // 获取当前用户信息API
   const getCurrentUser = async (token: string): Promise<ApiResponse> => {
     try {
-      const baseUrl = `${getAPIConfig().baseUrl}/user`
-      const response = await fetch(`${baseUrl}/me`, {
+      const baseUrl = getUserServiceConfig().baseUrl
+      const response = await fetch(`${baseUrl}/user/me`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

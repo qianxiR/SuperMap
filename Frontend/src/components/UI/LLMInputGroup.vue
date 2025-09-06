@@ -93,6 +93,12 @@ watch(() => props.modelValue, adjustHeight, { immediate: true });
   opacity: 0.7;
 }
 
+.input-element:focus {
+  border-color: var(--accent);
+  background: transparent;
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.1);
+}
+
 .input-element[disabled] {
   opacity: 0.6;
   cursor: not-allowed;

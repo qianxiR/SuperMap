@@ -3,7 +3,7 @@ import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useIntersectionAnalysisStore } from '@/stores/intersectionAnalysisStore'
 import { useLayerManager } from '@/composables/useLayerManager'
-import { getAPIConfig } from '@/api/config'
+import { getAnalysisServiceConfig } from '@/api/config'
 import { extractGeoJSONFromLayer } from '@/utils/featureUtils'
 import { Feature } from 'ol'
 import { Vector as VectorSource } from 'ol/source'
@@ -113,7 +113,7 @@ export function useIntersectionAnalysis() {
       console.log('[Intersection] 发送API请求:', requestData)
 
       // 调用后端API
-      const API_BASE_URL = getAPIConfig().baseUrl
+      const API_BASE_URL = getAnalysisServiceConfig().baseUrl
       const response = await fetch(`${API_BASE_URL}/spatial-analysis/intersection`, {
         method: 'POST',
         headers: {

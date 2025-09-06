@@ -469,8 +469,8 @@ export function useLayerManager() {
         const getRedColor = (type: string) => {
           const colorVar = `--${type}-color`
           const rgbVar = `--${type}-rgb`
-          const color = css.getPropertyValue(colorVar).trim() || '#dc3545'
-          const rgb = css.getPropertyValue(rgbVar).trim() || '220, 53, 69'
+          const color = css.getPropertyValue(colorVar).trim() || '#0078D4'
+          const rgb = css.getPropertyValue(rgbVar).trim() || '0, 120, 212'
           return { color, rgb }
         }
         

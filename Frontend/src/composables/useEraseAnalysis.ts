@@ -3,7 +3,7 @@ import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useEraseAnalysisStore } from '@/stores/eraseAnalysisStore'
 import { useLayerManager } from '@/composables/useLayerManager'
-import { getAPIConfig } from '@/api/config'
+import { getAnalysisServiceConfig } from '@/api/config'
 import { extractGeoJSONFromLayer } from '@/utils/featureUtils'
 import { Feature } from 'ol'
 import { Vector as VectorSource } from 'ol/source'
@@ -104,7 +104,7 @@ export function useEraseAnalysis() {
       console.log('[Erase] 发送API请求:', requestData)
 
       // 调用后端API
-      const API_BASE_URL = getAPIConfig().baseUrl
+      const API_BASE_URL = getAnalysisServiceConfig().baseUrl
       const response = await fetch(`${API_BASE_URL}/spatial-analysis/erase`, {
         method: 'POST',
         headers: {

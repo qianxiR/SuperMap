@@ -485,7 +485,7 @@ curl -X POST "https://your-domain.com/api/v1/spatial-analysis/buffer" \
   },
   "analysisOptions": {
     "units": "kilometers|miles|meters",
-    "resolution": 10000,
+    "resolution": 1000,
     "obstacleLayerId": "string",
     "costField": "string"
   },
@@ -505,7 +505,7 @@ curl -X POST "https://your-domain.com/api/v1/spatial-analysis/buffer" \
 | startPoint | object | 是 | 起点坐标，GeoJSON Point格式 |
 | endPoint | object | 是 | 终点坐标，GeoJSON Point格式 |
 | analysisOptions.units | string | 否 | 距离单位，默认kilometers |
-| analysisOptions.resolution | number | 否 | 网格分辨率(米)，默认10000 |
+| analysisOptions.resolution | number | 否 | 网格分辨率(米)，默认1000 |
 | analysisOptions.obstacleLayerId | string | 否 | 障碍物图层ID |
 | analysisOptions.costField | string | 否 | 成本字段名称 |
 | options.averageSpeed | number | 否 | 平均速度(km/h)，用于计算时间 |
@@ -568,7 +568,7 @@ curl -X POST "https://your-domain.com/api/v1/spatial-analysis/shortest-path" \
     },
     "analysisOptions": {
       "units": "kilometers",
-      "resolution": 10000,
+      "resolution": 1000,
       "obstacleLayerId": "wuhan_water"
     },
     "options": {

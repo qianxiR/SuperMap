@@ -42,12 +42,12 @@
   --scale-color: #0078D4;
   
   /* ===== 绘制颜色 - 浅色模式 ===== */
-  --draw-color: #dc3545;
-  --draw-rgb: 220, 53, 69;
+  --draw-color: #0078D4;
+  --draw-rgb: 0, 120, 212;
   
   /* ===== 分析图层颜色 - 浅色模式 ===== */
-  --analysis-color: #dc3545;
-  --analysis-rgb: 220, 53, 69;
+  --analysis-color: #0078D4;
+  --analysis-rgb: 0, 120, 212;
   
   /* ===== 上传图层颜色 - 浅色模式 ===== */
   --upload-color: #212529;
@@ -137,12 +137,12 @@ html {
   --scale-color: #0078D4;
   
   /* ===== 绘制颜色 - 深色模式 ===== */
-  --draw-color: #dc3545;
-  --draw-rgb: 220, 53, 69;
+  --draw-color: #0078D4;
+  --draw-rgb: 0, 120, 212;
   
   /* ===== 分析图层颜色 - 深色模式 ===== */
-  --analysis-color: #dc3545;
-  --analysis-rgb: 220, 53, 69;
+  --analysis-color: #0078D4;
+  --analysis-rgb: 0, 120, 212;
   
   /* ===== 上传图层颜色 - 深色模式 ===== */
   --upload-color: #ffffff;
@@ -320,9 +320,9 @@ html {
   color: inherit;
 }
 
-/* 确保黑色主题下标题、坐标、比例尺等使用深黑色主题色 */
+/* 确保黑色主题下标题使用蓝色强调色 */
 [data-theme="dark"] .screen-title {
-  color: #ffffff !important;
+  color: var(--accent) !important;
 }
 
 [data-theme="dark"] .coordinate-text,

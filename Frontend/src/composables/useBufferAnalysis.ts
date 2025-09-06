@@ -3,7 +3,7 @@ import { useAnalysisStore } from '@/stores/analysisStore'
 import { useMapStore } from '@/stores/mapStore'
 import { useBufferAnalysisStore } from '@/stores/bufferAnalysisStore'
 import { extractGeoJSONFromLayer } from '@/utils/featureUtils'
-import { getAPIConfig } from '@/api/config'
+import { getAnalysisServiceConfig } from '@/api/config'
 import * as ol from 'ol'
 import { Feature } from 'ol'
 import { Vector as VectorSource } from 'ol/source'
@@ -13,7 +13,7 @@ import GeoJSON from 'ol/format/GeoJSON'
 import type OlFeature from 'ol/Feature'
 
 // API配置
-const API_BASE_URL = getAPIConfig().baseUrl
+const API_BASE_URL = getAnalysisServiceConfig().baseUrl
 
 // 后端API接口类型定义
 interface FeatureGeometry {
@@ -132,6 +132,8 @@ export function useBufferAnalysis() {
 
     bufferAnalysisStore.setIsAnalyzing(true)
 
+    try {
+
     const sourceData = extractGeoJSONFromLayer(target.layer, mapStore.map, {
       enableLogging: false
     })
@@ -147,7 +149,7 @@ export function useBufferAnalysis() {
       }
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/v1/spatial-analysis/buffer`, {
+    const response = await fetch(`${API_BASE_URL}/spatial-analysis/buffer`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -155,11 +157,23 @@ export function useBufferAnalysis() {
       body: JSON.stringify(requestData)
     })
 
+    if (!response.ok) {
+      throw new Error(`API请求失败: ${response.status} ${response.statusText}`)
+    }
+
     const apiResponse = await response.json()
 
+    if (!apiResponse.success) {
+      throw new Error(apiResponse.error?.message || '缓冲区分析失败')
+    }
+
+    if (!apiResponse.data || !apiResponse.data.features) {
+      throw new Error('API响应格式错误：缺少features数据')
+    }
+
     const results: BufferResult[] = apiResponse.data.features.map((feature: any, index: number) => ({
-      id: feature.properties.id || `buffer_${Date.now()}_${index}`,
-      name: feature.properties.name || `缓冲区_${index + 1}`,
+      id: feature.properties?.id || `buffer_${Date.now()}_${index}`,
+      name: feature.properties?.name || `缓冲区_${index + 1}`,
       geometry: feature.geometry,
       distance: radiusMeters,
       unit: 'meters',
@@ -168,12 +182,18 @@ export function useBufferAnalysis() {
     }))
 
     const stats = apiResponse.data.statistics
-    const statusMessage = `缓冲区分析完成，成功处理 ${sourceData.features.length} 个要素，生成 ${stats.outputFeatureCount} 个缓冲区，总面积 ${stats.totalArea.toFixed(2)} 平方米`
+    const statusMessage = `缓冲区分析完成，成功处理 ${sourceData.features.length} 个要素，生成 ${stats?.outputFeatureCount || results.length} 个缓冲区，总面积 ${stats?.totalArea?.toFixed(2) || '未知'} 平方米`
     analysisStore.setAnalysisStatus(statusMessage)
     
     bufferAnalysisStore.setBufferResults(results as any)
     displayBufferResults(results as any)
     bufferAnalysisStore.setIsAnalyzing(false)
+    
+    } catch (error) {
+      console.error('缓冲区分析执行失败:', error)
+      analysisStore.setAnalysisStatus(`缓冲区分析失败: ${error instanceof Error ? error.message : '未知错误'}`)
+      bufferAnalysisStore.setIsAnalyzing(false)
+    }
   }
   
   // 在地图上显示缓冲区结果

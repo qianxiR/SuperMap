@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
-import { getAPIConfig } from '@/api/config'
+import { getUserServiceConfig } from '@/api/config'
 
 // 接口定义
 interface UserLoginRequest {
@@ -41,8 +41,8 @@ export function useLogin() {
   // 登录API实现
   const login = async (loginData: UserLoginRequest): Promise<ApiResponse> => {
     try {
-      const baseUrl = `${getAPIConfig().baseUrl}/user`
-      const response = await fetch(`${baseUrl}/login`, {
+      const baseUrl = getUserServiceConfig().baseUrl
+      const response = await fetch(`${baseUrl}/user/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -73,8 +73,8 @@ export function useLogin() {
   // 获取当前用户信息API
   const getCurrentUser = async (token: string): Promise<ApiResponse> => {
     try {
-      const baseUrl = `${getAPIConfig().baseUrl}/user`
-      const response = await fetch(`${baseUrl}/me`, {
+      const baseUrl = getUserServiceConfig().baseUrl
+      const response = await fetch(`${baseUrl}/user/me`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

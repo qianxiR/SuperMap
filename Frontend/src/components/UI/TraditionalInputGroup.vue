@@ -76,10 +76,9 @@ defineEmits(['update:modelValue', 'enter']);
 }
 
 .traditional-input:focus {
-  border-color: var(--sub);
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 0 0 2px rgba(108, 117, 125, 0.15);
-  transform: translateY(-1px);
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.1);
 }
 
 .traditional-input::placeholder {

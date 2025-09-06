@@ -72,7 +72,7 @@ class Settings(BaseSettings):
     log_level: str = Field(alias="LOG_LEVEL")
     
     class Config:
-        env_file = ".env"
+        env_file = ".env copy"
         case_sensitive = False
 
 

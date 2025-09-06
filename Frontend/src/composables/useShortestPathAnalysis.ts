@@ -2,7 +2,7 @@ import { ref, computed } from 'vue'
 import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useLayerManager } from '@/composables/useLayerManager'
-import { getAPIConfig } from '@/api/config'
+import { getAnalysisServiceConfig } from '@/api/config'
 import shortestPath from '@turf/shortest-path'
 import { feature, point, lineString, polygon, featureCollection } from '@turf/turf'
 import { convertFeatureToTurfGeometry, convertFeaturesToTurfGeometries } from '@/utils/geometryConverter'
@@ -65,7 +65,7 @@ export function useShortestPathAnalysis() {
   const analysisOptions = ref<ShortestPathOptions>({
     obstacles: null,
     units: 'kilometers',
-    resolution: 10000  // 设置网格分辨率为10000米
+    resolution: 1000  // 设置网格分辨率为1000米
   })
   
   // 分析图层引用
@@ -517,7 +517,7 @@ export function useShortestPathAnalysis() {
         },
         analysisOptions: {
           units: analysisOptions.value.units || 'kilometers',
-          resolution: analysisOptions.value.resolution || 10000
+          resolution: analysisOptions.value.resolution || 1000
         },
         options: {
           returnGeometry: true,
@@ -538,7 +538,7 @@ export function useShortestPathAnalysis() {
       console.log('[ShortestPath] 发送API请求:', requestData)
       
       // 调用后端API
-      const API_BASE_URL = getAPIConfig().baseUrl
+      const API_BASE_URL = getAnalysisServiceConfig().baseUrl
       const response = await fetch(`${API_BASE_URL}/spatial-analysis/shortest-path`, {
         method: 'POST',
         headers: {

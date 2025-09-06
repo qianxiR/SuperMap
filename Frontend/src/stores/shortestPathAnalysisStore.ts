@@ -54,7 +54,7 @@ export const useShortestPathAnalysisStore = defineStore('shortestPathAnalysis', 
     endPoint: null,
     analysisOptions: {
       units: 'kilometers',
-      resolution: 10000
+      resolution: 1000
     },
     analysisResults: [],
     currentResult: null,
@@ -135,7 +135,7 @@ export const useShortestPathAnalysisStore = defineStore('shortestPathAnalysis', 
     // 重置为默认设置
     state.analysisOptions = {
       units: 'kilometers',
-      resolution: 10000
+      resolution: 1000
     }
   }
 
