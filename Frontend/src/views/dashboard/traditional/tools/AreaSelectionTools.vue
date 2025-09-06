@@ -131,7 +131,7 @@ const showLayerNameModal = () => {
     return
   }
   
-  defaultLayerName.value = `区域选择_${new Date().toLocaleString()}`
+  defaultLayerName.value = `区域选择`
   showLayerNameModalRef.value = true
 }
 

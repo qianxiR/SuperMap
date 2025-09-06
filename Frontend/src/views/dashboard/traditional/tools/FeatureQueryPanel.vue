@@ -182,7 +182,7 @@ const { saveFeaturesAsLayer } = useLayerManager()
 const generateLayerNameFromQuery = () => {
   const condition = queryConfig.value.condition
   if (!condition || !condition.fieldName || !condition.value) {
-    return `属性查询_${new Date().toLocaleString()}`
+    return `属性查询`
   }
 
   // 获取图层名称

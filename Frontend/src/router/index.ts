@@ -216,13 +216,13 @@ const router = createRouter({
                 requiresAuth: true
               }
             },
-            // 数据上传
+            // 图层上传
             {
               path: 'upload',
               name: 'data-upload',
               component: () => import('@/views/dashboard/traditional/tools/DataUploadPanel.vue'),
               meta: {
-                title: '数据上传',
+                title: '图层上传',
                 tool: 'upload',
                 requiresAuth: true
               }

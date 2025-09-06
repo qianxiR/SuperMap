@@ -6,9 +6,9 @@
     :height="'100%'"
     class="data-upload-panel"
   >
-    <!-- 数据上传说明 -->
+    <!-- 图层上传说明 -->
     <div class="upload-section">
-      <div class="section-title">数据上传</div>
+      <div class="section-title">图层上传</div>
       <div class="upload-description">
         <p>支持上传GeoJSON格式的地理数据文件，系统将自动解析并在地图上显示。</p>
         <div class="supported-formats">
@@ -108,11 +108,23 @@
       </div>
     </div>
 
-    <!-- 数据上传模态窗口 -->
+    <!-- 图层上传模态窗口 -->
     <DataUploadModal 
       :visible="showUploadModal"
+      :externalUploading="isUploading"
       @close="closeUploadModal"
       @upload="handleFileUpload"
+    />
+
+    <!-- 图层名称弹窗 -->
+    <LayerNameModal
+      :visible="showLayerNameModal"
+      :defaultName="defaultLayerName"
+      title="设置图层名称"
+      placeholder="请输入图层名称"
+      hint="为上传的数据设置一个图层名称"
+      @confirm="handleLayerNameConfirm"
+      @close="handleLayerNameClose"
     />
   </PanelWindow>
 </template>
@@ -124,6 +136,7 @@ import { useDataUpload } from '@/composables/useDataUpload'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import DataUploadModal from '@/components/UI/DataUploadModal.vue'
+import LayerNameModal from '@/components/UI/LayerNameModal.vue'
 
 const analysisStore = useAnalysisStore()
 
@@ -132,9 +145,13 @@ const {
   isUploading,
   uploadProgress,
   showUploadModal,
+  showLayerNameModal,
+  defaultLayerName,
   openUploadModal,
   closeUploadModal,
   handleFileUpload,
+  handleLayerNameConfirm,
+  handleLayerNameClose,
   clearAllFiles,
   removeFile,
   previewFile,

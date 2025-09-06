@@ -125,6 +125,7 @@ interface UploadOptions {
 
 interface Props {
   visible: boolean
+  externalUploading?: boolean
 }
 
 interface Emits {
@@ -244,6 +245,13 @@ watch(() => props.visible, (newVisible) => {
   if (!newVisible) {
     selectedFiles.value = []
     isDragOver.value = false
+    isUploading.value = false
+  }
+})
+
+// 监听外部上传状态变化
+watch(() => props.externalUploading, (newUploading) => {
+  if (newUploading === false) {
     isUploading.value = false
   }
 })

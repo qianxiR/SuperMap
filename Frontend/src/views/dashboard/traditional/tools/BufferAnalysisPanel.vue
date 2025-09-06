@@ -314,7 +314,7 @@ const exportGeoJSON = async () => {
 // 生成基于分析参数的图层名称
 const generateLayerNameFromBuffer = () => {
   if (!selectedAnalysisLayerInfo.value) {
-    return `缓冲区分析_${new Date().toLocaleString()}`
+    return `缓冲区分析`
   }
 
   const sourceLayerName = selectedAnalysisLayerInfo.value.name

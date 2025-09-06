@@ -432,7 +432,7 @@ export function useEraseAnalysis() {
 
       if (features.length > 0) {
         // 使用图层管理器的保存功能
-        const layerName = `擦除分析结果_${new Date().toLocaleString()}`
+        const layerName = `擦除分析结果`
         await saveFeaturesAsLayer(features as any[], layerName, 'erase')
         
         console.log(`[Erase] Saved ${features.length} erase results as layer: ${layerName}`)

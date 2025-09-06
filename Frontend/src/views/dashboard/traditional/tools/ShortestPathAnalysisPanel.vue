@@ -302,7 +302,7 @@ const showLayerNameModal = () => {
     return
   }
   
-  defaultLayerName.value = `最短路径分析_${new Date().toLocaleString()}`
+  defaultLayerName.value = `最短路径分析`
   showLayerNameModalRef.value = true
 }
 

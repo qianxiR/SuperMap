@@ -29,6 +29,9 @@ export function useDataUpload() {
   const isUploading = ref<boolean>(false)
   const uploadProgress = ref<number>(0)
   const showUploadModal = ref<boolean>(false)
+  const showLayerNameModal = ref<boolean>(false)
+  const defaultLayerName = ref<string>('')
+  const pendingUploadData = ref<{files: File[], options: UploadOptions} | null>(null)
   
   // 计算属性
   const hasUploadedFiles = computed(() => uploadedFiles.value.length > 0)
@@ -48,6 +51,38 @@ export function useDataUpload() {
   
   // 处理文件上传
   const handleFileUpload = async (files: File[], options: UploadOptions) => {
+    // 生成默认图层名称
+    if (files.length === 1) {
+      defaultLayerName.value = files[0].name.replace(/\.(geojson|json)$/i, '')
+    } else {
+      defaultLayerName.value = `上传图层_${files.length}个文件`
+    }
+    
+    // 保存上传数据，显示图层名称弹窗
+    pendingUploadData.value = { files, options }
+    showLayerNameModal.value = true
+    closeUploadModal()
+  }
+
+  // 处理图层名称确认
+  const handleLayerNameConfirm = async (layerName: string) => {
+    if (!pendingUploadData.value) return
+    
+    showLayerNameModal.value = false
+    const { files, options } = pendingUploadData.value
+    pendingUploadData.value = null
+    
+    await performUpload(files, options, layerName)
+  }
+
+  // 处理图层名称弹窗关闭
+  const handleLayerNameClose = () => {
+    showLayerNameModal.value = false
+    pendingUploadData.value = null
+  }
+
+  // 执行实际的上传操作
+  const performUpload = async (files: File[], options: UploadOptions, layerName: string) => {
     isUploading.value = true
     uploadProgress.value = 0
 
@@ -61,7 +96,9 @@ export function useDataUpload() {
       const projection = mapStore.map.getView().getProjection()
       const features = new ol.format.GeoJSON().readFeatures(geojson, { featureProjection: projection })
 
-      await layerManager.saveFeaturesAsLayer(features, file.name.replace(/\.(geojson|json)$/i, ''), 'upload')
+      // 使用用户指定的图层名称
+      const finalLayerName = files.length === 1 ? layerName : `${layerName}_${file.name.replace(/\.(geojson|json)$/i, '')}`
+      await layerManager.saveFeaturesAsLayer(features, finalLayerName, 'upload')
 
       if (options.zoomToLayer) {
         const extent = ol.extent.createEmpty()
@@ -155,6 +192,8 @@ export function useDataUpload() {
     isUploading,
     uploadProgress,
     showUploadModal,
+    showLayerNameModal,
+    defaultLayerName,
     
     // Computed
     hasUploadedFiles,
@@ -164,6 +203,8 @@ export function useDataUpload() {
     openUploadModal,
     closeUploadModal,
     handleFileUpload,
+    handleLayerNameConfirm,
+    handleLayerNameClose,
     clearAllFiles,
     removeFile,
     previewFile,

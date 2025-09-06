@@ -366,7 +366,7 @@ export function useIntersectionAnalysis() {
 
       if (features.length > 0) {
         // 使用图层管理器的保存功能
-        const layerName = `相交分析结果_${new Date().toLocaleString()}`
+        const layerName = `相交分析结果`
         await saveFeaturesAsLayer(features as any[], layerName, 'intersect')
         
         console.log(`[Intersection] Saved ${features.length} intersection results as layer: ${layerName}`)

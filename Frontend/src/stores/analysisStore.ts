@@ -81,7 +81,7 @@ export const useAnalysisStore = defineStore('analysis', () => {
         // 绘制工具：清理绘制状态
         break
       case 'upload':
-        // 数据上传：清理上传状态和文件列表
+        // 图层上传：清理上传状态和文件列表
         break
       default:
         break

@@ -789,7 +789,7 @@ export function useLayerManager() {
     // 使用通用插槽函数保存绘制要素
     const success = await saveFeaturesAsLayer(
       features, 
-      `绘制图层_${new Date().toLocaleString()}`, 
+      `绘制图层`, 
       'draw'
     )
 

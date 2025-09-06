@@ -180,7 +180,7 @@ const showLayerNameModal = () => {
     return
   }
   
-  defaultLayerName.value = `擦除分析结果_${new Date().toLocaleString()}`
+  defaultLayerName.value = `擦除分析结果`
   showLayerNameModalRef.value = true
 }
 
