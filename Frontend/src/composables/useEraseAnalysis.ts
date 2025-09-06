@@ -8,7 +8,14 @@ import { Vector as VectorSource } from 'ol/source'
 import { Vector as VectorLayer } from 'ol/layer'
 import { Style, Stroke, Fill } from 'ol/style'
 import GeoJSON from 'ol/format/GeoJSON'
-import { difference as turfDifference, union as turfUnion, kinks as turfKinks, polygon as turfPolygon, multiPolygon as turfMultiPolygon, feature as turfFeature } from '@turf/turf'
+import { difference as turfDifference, union as turfUnion, polygon as turfPolygon, multiPolygon as turfMultiPolygon, feature as turfFeature } from '@turf/turf'
+import { convertFeaturesToTurfGeometries } from '@/utils/geometryConverter'
+
+declare global {
+  interface Window {
+    turf: any
+  }
+}
 
 interface EraseResultItem {
   id: string
@@ -18,6 +25,7 @@ interface EraseResultItem {
   sourceEraseLayerName: string
   createdAt: string
 }
+
 
 export function useEraseAnalysis() {
   const mapStore = useMapStore()
@@ -95,9 +103,6 @@ export function useEraseAnalysis() {
     const target = mapStore.vectorLayers.find(l => l.id === tId)
     const erase = mapStore.vectorLayers.find(l => l.id === eId)
 
-    const format = new GeoJSON()
-    const viewProj = mapStore.map?.getView().getProjection().getCode()
-
     const targetFeatures: any[] = params.targetFeatures
     const eraseFeatures: any[] = params.eraseFeatures
     store.setTargetFeaturesCache(targetFeatures)
@@ -106,9 +111,9 @@ export function useEraseAnalysis() {
     store.setIsAnalyzing(true)
     analysisStore.setAnalysisStatus('正在执行擦除分析...')
 
-    const toGj = (f: any) => format.writeFeatureObject(f, { dataProjection: 'EPSG:4326', featureProjection: viewProj }) as any
-    const targetGeoJson = targetFeatures.map(toGj)
-    const eraseGeoJson = eraseFeatures.map(toGj)
+    // 使用直接坐标转换方法替代writeFeatureObject
+    const targetGeoJson = convertFeaturesToTurfGeometries(targetFeatures)
+    const eraseGeoJson = convertFeaturesToTurfGeometries(eraseFeatures)
 
     console.log('[Erase] selected ids:', { targetLayerId: tId, eraseLayerId: eId })
     console.log('[Erase] cache sizes (features from store):', { targetCache: targetFeatures.length, eraseCache: eraseFeatures.length })
@@ -133,22 +138,6 @@ export function useEraseAnalysis() {
     const typeSampleE = eraseGeoJson.slice(0, 5).map((g: any) => getType(g))
     console.log('[Erase] sample types:', { target: typeSampleT, erase: typeSampleE })
 
-    // 几何验证
-    const wrapFeature = (geometry: any) => ({ type: 'Feature', geometry, properties: {} }) as any
-    const invalidTarget = targetGeoJson
-      .filter((g: any) => g && g.geometry)
-      .map((g: any, idx: number) => ({ idx, k: turfKinks(wrapFeature(g.geometry)) }))
-      .filter((r: any) => r.k && r.k.features && r.k.features.length > 0)
-    const invalidErase = eraseGeoJson
-      .filter((g: any) => g && g.geometry)
-      .map((g: any, idx: number) => ({ idx, k: turfKinks(wrapFeature(g.geometry)) }))
-      .filter((r: any) => r.k && r.k.features && r.k.features.length > 0)
-    
-    if (invalidTarget.length > 0 || invalidErase.length > 0) {
-      console.warn('[Erase] kinks detected (self-intersections may affect results):', { invalidTarget, invalidErase })
-      analysisStore.setAnalysisStatus(`检测到异常几何：目标 ${invalidTarget.length} 个，擦除 ${invalidErase.length} 个（已高亮）。继续执行分析...`)
-      displayInvalidGeometries(invalidTarget, invalidErase)
-    }
 
     const totalPairs = targetGeoJson.length * eraseGeoJson.length
     let processedPairs = 0
@@ -216,19 +205,9 @@ export function useEraseAnalysis() {
       }
     }
 
-    // 清理要素数据，确保可以序列化
+    // 清理要素数据，确保可以序列化（turf几何对象已经是可序列化的）
     const cleanGeoJsonData = (features: any[]): any[] => {
-      return features.map(feature => {
-        if (feature && typeof feature === 'object') {
-          // 确保是纯GeoJSON格式，移除任何不可序列化的属性
-          return {
-            type: feature.type || 'Feature',
-            geometry: feature.geometry || feature,
-            properties: feature.properties || {}
-          }
-        }
-        return feature
-      })
+      return features.filter(feature => feature && feature.geometry)
     }
 
     // 启动分页计算
@@ -250,7 +229,9 @@ export function useEraseAnalysis() {
               startTargetIndex: targetStart,
               endTargetIndex: targetEnd,
               startEraseIndex: eraseStart,
-              endEraseIndex: eraseEnd
+              endEraseIndex: eraseEnd,
+              targetLayerName: target?.name || '目标图层',
+              eraseLayerName: erase?.name || '擦除图层'
             }
           })
         }
@@ -372,6 +353,8 @@ export function useEraseAnalysis() {
     const features = items.map(item => {
       if (item.geometry && item.geometry.type && item.geometry.coordinates) {
         const geometry = format.readGeometry(item.geometry)
+        if (!geometry) return null
+        
         return new Feature({
           geometry,
           properties: {
@@ -401,6 +384,7 @@ export function useEraseAnalysis() {
       }
     }
   }
+
 
   const removeEraseLayers = (): void => {
     if (!mapStore.map) return
@@ -449,7 +433,7 @@ export function useEraseAnalysis() {
       if (features.length > 0) {
         // 使用图层管理器的保存功能
         const layerName = `擦除分析结果_${new Date().toLocaleString()}`
-        await saveFeaturesAsLayer(features as any[], layerName, 'intersect')
+        await saveFeaturesAsLayer(features as any[], layerName, 'erase')
         
         console.log(`[Erase] Saved ${features.length} erase results as layer: ${layerName}`)
       }
@@ -458,36 +442,6 @@ export function useEraseAnalysis() {
     }
   }
 
-  const displayInvalidGeometries = (invalidTarget: any[], invalidErase: any[]): void => {
-    if (!mapStore.map) return
-    const format = new GeoJSON()
-    const feats: any[] = [] as any
-    const take = (arr: any[], src: 'target' | 'erase') => {
-      arr.forEach((it: any) => {
-        const gj = it?.k
-        if (!gj || !gj.features) return
-        gj.features.forEach((f: any) => {
-          const g = f?.geometry
-          if (!g) return
-          const olGeom = format.readGeometry(g)
-          const feat = new Feature({ geometry: olGeom, properties: { src } })
-          feats.push(feat)
-        })
-      })
-    }
-    take(invalidTarget, 'target')
-    take(invalidErase, 'erase')
-    if (feats.length === 0) return
-    const src = new VectorSource({ features: feats as any })
-    const root = getComputedStyle(document.documentElement)
-    const color = root.getPropertyValue('--map-highlight-color')?.trim() || '#ff0000'
-    const lyr = new VectorLayer({
-      source: src,
-      style: new Style({ stroke: new Stroke({ color, width: 3, lineDash: [6, 6] }) })
-    })
-    lyr.set('isInvalidGeometryLayer', true)
-    mapStore.map.addLayer(lyr)
-  }
 
   return {
     targetLayerId,

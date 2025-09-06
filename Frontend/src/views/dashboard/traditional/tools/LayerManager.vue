@@ -51,11 +51,11 @@
           </div>
         </div>
 
-        <!-- 绘制图层容器 -->
+        <!-- 分析图层容器 -->
         <div class="layer-container">
           <div class="group-header" @click="toggleGroupCollapse('draw')">
             <div class="group-title">
-              绘制图层
+              分析图层
               <span class="layer-count">({{ getLayerCount('draw') }})</span>
             </div>
           </div>
@@ -241,11 +241,10 @@ const getLayerCount = (source: string): number => {
   return allLayers.value.filter(item => item.source === source).length
 }
 
-// 获取指定来源的图层列表（将已打开/可见图层置顶）
+// 获取指定来源的图层列表
 const getLayersBySource = (source: string): MapLayerItem[] => {
   return allLayers.value
     .filter(item => item.source === source)
-    .sort((a, b) => Number(b.visible) - Number(a.visible))
 }
 
 
@@ -269,20 +268,21 @@ const allLayers = computed(() => {
       const layerName = vl.layer.get('layerName') || vl.name
       const sourceType = vl.layer.get('sourceType') || 'draw'
       const sourceTypeNames: Record<string, string> = {
-        draw: '绘制',
+        draw: '分析',
         area: '区域选择',
         query: '属性查询',
         buffer: '缓冲区分析',
         path: '最短路径',
         upload: '上传',
-        intersect: '相交分析'
+        intersect: '相交分析',
+        erase: '擦除分析'
       }
       item.displayName = `${sourceTypeNames[sourceType] || '本地'}: ${layerName}`
-      item.desc = sourceType === 'buffer' ? '缓冲区分析结果图层' : (sourceType === 'path' ? '最短路径分析结果图层' : (sourceType === 'upload' ? '上传的GeoJSON图层' : (sourceType === 'intersect' ? '相交分析结果图层' : '用户创建的图层')))
+      item.desc = sourceType === 'buffer' ? '缓冲区分析结果图层' : (sourceType === 'path' ? '最短路径分析结果图层' : (sourceType === 'upload' ? '上传的GeoJSON图层' : (sourceType === 'intersect' ? '相交分析结果图层' : (sourceType === 'erase' ? '擦除分析结果图层' : '用户创建的图层'))))
       
       // 根据sourceType确定分组
-      if (sourceType === 'draw' || sourceType === 'buffer' || sourceType === 'path' || sourceType === 'intersect') {
-        item.source = 'draw' // 绘制图层、缓冲区分析图层、相交分析图层都归类到绘制图层组
+      if (sourceType === 'draw' || sourceType === 'buffer' || sourceType === 'path' || sourceType === 'intersect' || sourceType === 'erase') {
+        item.source = 'draw' // 绘制图层、缓冲区分析图层、相交分析图层、擦除分析图层都归类到绘制图层组
       } else if (sourceType === 'area' || sourceType === 'query') {
         item.source = 'query' // 查询图层（区域选择 + 属性查询）
       } else if (sourceType === 'upload') {

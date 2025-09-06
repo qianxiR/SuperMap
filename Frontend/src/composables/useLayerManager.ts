@@ -355,7 +355,7 @@ export function useLayerManager() {
   const saveFeaturesAsLayer = async (
     features: any[], 
     layerName: string, 
-    sourceType: 'draw' | 'area' | 'query' | 'buffer' | 'path' | 'upload' | 'intersect' = 'draw'
+    sourceType: 'draw' | 'area' | 'query' | 'buffer' | 'path' | 'upload' | 'intersect' | 'erase' = 'draw'
   ) => {
     
     
@@ -599,6 +599,26 @@ export function useLayerManager() {
                 radius: 6,
                 fill: new ol.style.Fill({
                   color: '#00ff00'
+                }),
+                stroke: new ol.style.Stroke({
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || '#ffffff',
+                  width: 2
+                })
+              })
+            })
+          case 'erase':
+            return new ol.style.Style({
+              stroke: new ol.style.Stroke({
+                color: '#ff6600',
+                width: 3
+              }),
+              fill: new ol.style.Fill({
+                color: 'rgba(255, 102, 0, 0.2)'
+              }),
+              image: new ol.style.Circle({
+                radius: 6,
+                fill: new ol.style.Fill({
+                  color: '#ff6600'
                 }),
                 stroke: new ol.style.Stroke({
                   color: getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || '#ffffff',

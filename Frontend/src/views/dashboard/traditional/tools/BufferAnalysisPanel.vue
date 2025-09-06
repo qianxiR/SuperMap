@@ -141,17 +141,10 @@
       
       <!-- 结果操作 -->
       <div class="result-actions">
-        <div class="form-item">
-          <label class="form-label">图层名称</label>
-          <TraditionalInputGroup
-            v-model="layerName"
-            placeholder="输入图层名称"
-          />
-        </div>
         <div class="button-group">
           <PrimaryButton 
             text="保存为图层"
-            @click="saveBufferLayer(layerName)"
+            @click="showLayerNameModal"
           />
           <SecondaryButton 
             text="导出 GeoJSON"
@@ -161,6 +154,17 @@
       </div>
     </div>
   </PanelWindow>
+  
+  <!-- 图层名称输入弹窗 -->
+  <LayerNameModal
+    :visible="showLayerNameModalRef"
+    title="保存缓冲区分析结果"
+    placeholder="请输入图层名称"
+    hint="图层名称将用于在图层管理器中识别此缓冲区分析结果"
+    :default-name="defaultLayerName"
+    @confirm="handleLayerNameConfirm"
+    @close="handleLayerNameClose"
+  />
 </template>
 
 <script setup lang="ts">
@@ -176,6 +180,7 @@ import TraditionalInputGroup from '@/components/UI/TraditionalInputGroup.vue'
 import DropdownSelect from '@/components/UI/DropdownSelect.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import TipWindow from '@/components/UI/TipWindow.vue'
+import LayerNameModal from '@/components/UI/LayerNameModal.vue'
 
 const analysisStore = useAnalysisStore()
 const mapStore = useMapStore()
@@ -202,8 +207,9 @@ const {
 // 使用图层管理 hook
 const { saveFeaturesAsLayer } = useLayerManager()
 
-// 图层名称
-const layerName = ref<string>('')
+// 图层名称弹窗状态
+const showLayerNameModalRef = ref<boolean>(false)
+const defaultLayerName = ref<string>('')
 
 // 获取已选择要素信息
 const selectedFeatures = computed(() => areaSelectionStore.selectedFeatures)
@@ -255,7 +261,6 @@ const onDistanceChange = () => {
 // 清除结果
 const clearResults = () => {
   clearState()
-  layerName.value = ''
   analysisStore.setAnalysisStatus('已清除缓冲区分析结果')
 }
 
@@ -347,15 +352,37 @@ const generateLayerNameFromBuffer = () => {
   return `缓冲区_${sourceLayerName}_${distanceText}`
 }
 
+// 显示图层名称输入弹窗
+const showLayerNameModal = () => {
+  if (!bufferResults.value || bufferResults.value.length === 0) {
+    analysisStore.setAnalysisStatus('没有可保存的缓冲区结果')
+    return
+  }
+  
+  defaultLayerName.value = generateLayerNameFromBuffer()
+  showLayerNameModalRef.value = true
+}
+
+// 处理图层名称确认
+const handleLayerNameConfirm = async (layerName: string) => {
+  showLayerNameModalRef.value = false
+  await saveBufferLayer(layerName)
+}
+
+// 处理图层名称弹窗关闭
+const handleLayerNameClose = () => {
+  showLayerNameModalRef.value = false
+}
+
 // 保存缓冲区结果为图层
-const saveBufferLayer = async (customLayerName?: string) => {
+const saveBufferLayer = async (customLayerName: string) => {
   if (!bufferResults.value || bufferResults.value.length === 0) {
     analysisStore.setAnalysisStatus('没有可保存的缓冲区结果')
     return
   }
 
   try {
-    const name = customLayerName || generateLayerNameFromBuffer()
+    const name = customLayerName
     
     // 创建Feature对象数组
     const bufferFeatures = bufferResults.value.map(result => {
@@ -407,9 +434,6 @@ const saveBufferLayer = async (customLayerName?: string) => {
       // 清空缓冲区分析状态（包括结果、当前结果等）
       clearState()
       
-      // 清空图层名称
-      layerName.value = ''
-      
       // 重置分析状态
       analysisStore.setAnalysisStatus(`缓冲区图层 "${name}" 已保存并已提交入库流程，结果已清空`)
     } else {
@@ -426,7 +450,6 @@ const saveBufferLayer = async (customLayerName?: string) => {
 // 清理缓冲区分析状态（工具切换时调用）
 const clearBufferAnalysisState = () => {
   clearState()
-  layerName.value = ''
   
   analysisStore.setAnalysisStatus('缓冲区分析状态已清理')
 }
@@ -444,8 +467,7 @@ onUnmounted(() => {})
 watch([
   selectedAnalysisLayerId,
   () => bufferSettings.value.radius,
-  () => bufferSettings.value.semicircleLineSegment,
-  layerName
+  () => bufferSettings.value.semicircleLineSegment
 ], () => {
   // 持久化已移除：此处仅更新状态提示
 })
@@ -474,24 +496,11 @@ watch(selectedAnalysisLayerId, (newLayerId) => {
 
 
 
-// 监听分析结果变化，只在有结果时保存
+// 监听分析结果变化
 watch(bufferResults, (results) => {
-  if (results && results.length > 0 && !layerName.value) {
-    layerName.value = generateLayerNameFromBuffer()
-  }
-  
-  // 结果变化时手动保存状态（避免频繁保存）
-}, { deep: true })
-
-// 监听已选择要素变化，实时更新图层名称
-watch([selectedFeatures, selectedAnalysisLayerId, () => bufferSettings.value.radius], () => {
-  // 如果有分析结果且图层名称为空，或者用户没有手动修改图层名称，则自动更新
-  if (bufferResults.value && bufferResults.value.length > 0) {
-    const newLayerName = generateLayerNameFromBuffer()
-    // 只有在图层名称为空或者是自动生成的名称时才更新
-    if (!layerName.value || layerName.value.includes('缓冲区_')) {
-      layerName.value = newLayerName
-    }
+  // 结果变化时更新默认图层名称
+  if (results && results.length > 0) {
+    defaultLayerName.value = generateLayerNameFromBuffer()
   }
 }, { deep: true })
 </script>

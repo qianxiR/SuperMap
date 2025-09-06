@@ -54,7 +54,7 @@
         />
         <SecondaryButton 
           text="另存为图层"
-          @click="saveSelectedAsLayer"
+          @click="showLayerNameModal"
           :disabled="selectedFeatures.length === 0"
         />
         <SecondaryButton 
@@ -76,10 +76,21 @@
     </div>
     
   </PanelWindow>
+  
+  <!-- 图层名称输入弹窗 -->
+  <LayerNameModal
+    :visible="showLayerNameModalRef"
+    title="保存区域选择结果"
+    placeholder="请输入图层名称"
+    hint="图层名称将用于在图层管理器中识别此区域选择结果"
+    :default-name="defaultLayerName"
+    @confirm="handleLayerNameConfirm"
+    @close="handleLayerNameClose"
+  />
 </template>
 
 <script setup lang="ts">
-import { watch, computed, onMounted, onUnmounted } from 'vue'
+import { watch, computed, onMounted, onUnmounted, ref } from 'vue'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useMapStore } from '@/stores/mapStore'
 import { useFeatureSelection } from '@/composables/useFeatureSelection'
@@ -88,6 +99,7 @@ import { getFeatureCompleteInfo } from '@/utils/featureUtils'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import TipWindow from '@/components/UI/TipWindow.vue'
+import LayerNameModal from '@/components/UI/LayerNameModal.vue'
 
 const analysisStore = useAnalysisStore()
 const mapStore = useMapStore()
@@ -109,14 +121,38 @@ const {
 // 使用图层管理 hook
 const { saveFeaturesAsLayer } = useLayerManager()
 
+// 图层名称弹窗状态
+const showLayerNameModalRef = ref<boolean>(false)
+const defaultLayerName = ref<string>('')
+
+// 显示图层名称输入弹窗
+const showLayerNameModal = () => {
+  if (selectedFeatures.value.length === 0) {
+    return
+  }
+  
+  defaultLayerName.value = `区域选择_${new Date().toLocaleString()}`
+  showLayerNameModalRef.value = true
+}
+
+// 处理图层名称确认
+const handleLayerNameConfirm = async (layerName: string) => {
+  showLayerNameModalRef.value = false
+  await saveSelectedAsLayer(layerName)
+}
+
+// 处理图层名称弹窗关闭
+const handleLayerNameClose = () => {
+  showLayerNameModalRef.value = false
+}
+
 // 保存选中要素为图层
-const saveSelectedAsLayer = async () => {
+const saveSelectedAsLayer = async (customLayerName: string) => {
   if (selectedFeatures.value.length === 0) {
     return
   }
 
-  const layerName = `区域选择_${new Date().toLocaleString()}`
-  await saveFeaturesAsLayer(selectedFeatures.value, layerName, 'area')
+  await saveFeaturesAsLayer(selectedFeatures.value, customLayerName, 'area')
 }
 
 // 导出区域选择结果为 GeoJSON 文件

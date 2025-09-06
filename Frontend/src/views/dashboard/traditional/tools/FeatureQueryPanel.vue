@@ -116,7 +116,7 @@
         />
         <SecondaryButton 
           text="另存为图层"
-          @click="saveQueryResultsAsLayer"
+          @click="showLayerNameModal"
           :disabled="queryResults.length === 0"
         />
         <SecondaryButton 
@@ -140,6 +140,17 @@
     
     <TipWindow v-if="selectedLayerId" :text="getTipText()" />
   </PanelWindow>
+  
+  <!-- 图层名称输入弹窗 -->
+  <LayerNameModal
+    :visible="showLayerNameModalRef"
+    title="保存属性查询结果"
+    placeholder="请输入图层名称"
+    hint="图层名称将用于在图层管理器中识别此属性查询结果"
+    :default-name="defaultLayerName"
+    @confirm="handleLayerNameConfirm"
+    @close="handleLayerNameClose"
+  />
 </template>
 
 <script setup lang="ts">
@@ -155,6 +166,7 @@ import SecondaryButton from '@/components/UI/SecondaryButton.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import TipWindow from '@/components/UI/TipWindow.vue'
 import QueryConditionRow from '@/components/UI/QueryConditionRow.vue'
+import LayerNameModal from '@/components/UI/LayerNameModal.vue'
 import type { QueryCondition } from '@/types/query'
  
 
@@ -185,14 +197,38 @@ const generateLayerNameFromQuery = () => {
   return sqlLayerName
 }
 
+// 图层名称弹窗状态
+const showLayerNameModalRef = ref<boolean>(false)
+const defaultLayerName = ref<string>('')
+
+// 显示图层名称输入弹窗
+const showLayerNameModal = () => {
+  if (queryResults.value.length === 0) {
+    return
+  }
+  
+  defaultLayerName.value = generateLayerNameFromQuery()
+  showLayerNameModalRef.value = true
+}
+
+// 处理图层名称确认
+const handleLayerNameConfirm = async (layerName: string) => {
+  showLayerNameModalRef.value = false
+  await saveQueryResultsAsLayer(layerName)
+}
+
+// 处理图层名称弹窗关闭
+const handleLayerNameClose = () => {
+  showLayerNameModalRef.value = false
+}
+
 // 保存查询结果为图层
-const saveQueryResultsAsLayer = async () => {
+const saveQueryResultsAsLayer = async (customLayerName: string) => {
   if (queryResults.value.length === 0) {
     return
   }
 
-  const layerName = generateLayerNameFromQuery()
-  await saveFeaturesAsLayer(queryResults.value, layerName, 'query')
+  await saveFeaturesAsLayer(queryResults.value, customLayerName, 'query')
 }
  
 // 导出查询结果为 GeoJSON 文件

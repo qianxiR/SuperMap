@@ -1,7 +1,24 @@
 // 擦除分析Web Worker
 // 用于在后台线程中执行擦除计算，避免阻塞主线程
 
-import { difference as turfDifference, kinks as turfKinks, polygon as turfPolygon, multiPolygon as turfMultiPolygon, feature as turfFeature } from '@turf/turf'
+import { difference as turfDifference, polygon as turfPolygon, multiPolygon as turfMultiPolygon, feature as turfFeature } from '@turf/turf'
+
+// 工具函数：将turf几何对象包装成FeatureCollection格式
+const wrapTurfGeometryAsFeatureCollection = (turfGeometry: any): any => {
+  if (!turfGeometry) return null
+  return { type: 'FeatureCollection', features: [turfGeometry] }
+}
+
+// 工具函数：为turf分析函数准备FeatureCollection格式的输入
+const prepareTurfAnalysisInput = (geometry1: any, geometry2: any): any => {
+  if (!geometry1 || !geometry2) return null
+  
+  // 确保输入的是完整的Feature对象，而不是只有geometry属性
+  const feature1 = geometry1.type === 'Feature' ? geometry1 : turfFeature(geometry1)
+  const feature2 = geometry2.type === 'Feature' ? geometry2 : turfFeature(geometry2)
+  
+  return { type: 'FeatureCollection', features: [feature1, feature2] }
+}
 
 // Worker消息类型定义
 interface WorkerMessage {
@@ -14,6 +31,8 @@ interface WorkerMessage {
     endTargetIndex: number
     startEraseIndex: number
     endEraseIndex: number
+    targetLayerName?: string
+    eraseLayerName?: string
   }
 }
 
@@ -27,28 +46,28 @@ interface WorkerResult {
 }
 
 // 处理单个要素对的擦除计算
-const computeErase = (targetFeature: any, eraseFeature: any, targetIndex: number, eraseIndex: number): any | null => {
+const computeErase = (targetFeature: any, eraseFeature: any, targetIndex: number, eraseIndex: number, targetLayerName: string = '目标图层', eraseLayerName: string = '擦除图层'): any | null => {
   try {
     if (!targetFeature || !eraseFeature) {
       return null
     }
 
-    // 使用Turf.js进行擦除计算
-    // 原始方式：把输入拼接成FeatureCollection格式
-    const difference = turfDifference({ type: 'FeatureCollection', features: [targetFeature, eraseFeature] })
+    // 使用工具函数准备FeatureCollection格式的输入进行擦除计算
+    const featureCollection = prepareTurfAnalysisInput(targetFeature, eraseFeature)
+    if (!featureCollection) {
+      console.warn(`Worker: 无法准备FeatureCollection格式输入 [${targetIndex}, ${eraseIndex}]`)
+      return null
+    }
+    
+    const difference = turfDifference(featureCollection)
     
     if (difference && difference.geometry) {
-      // 检查几何体是否有自相交
-      const kinks = turfKinks(difference)
-      if (kinks.features.length > 0) {
-        console.warn(`Worker: 擦除结果存在自相交，跳过 [${targetIndex}, ${eraseIndex}]`)
-        return null
-      }
-
       return {
         id: `erase_${targetIndex}_${eraseIndex}_${Date.now()}`,
         name: `擦除区域`,
         geometry: difference.geometry,
+        sourceTargetLayerName: targetLayerName,
+        sourceEraseLayerName: eraseLayerName,
         targetIndex,
         eraseIndex,
         createdAt: new Date().toISOString()
@@ -74,7 +93,7 @@ const processBatch = (data: WorkerMessage['data']): WorkerResult => {
     }
   }
 
-  const { batchId, targetFeatures, eraseFeatures, startTargetIndex, endTargetIndex, startEraseIndex, endEraseIndex } = data
+  const { batchId, targetFeatures, eraseFeatures, startTargetIndex, endTargetIndex, startEraseIndex, endEraseIndex, targetLayerName, eraseLayerName } = data
   const results: any[] = []
   let processedPairs = 0
   const totalPairs = (endTargetIndex - startTargetIndex) * (endEraseIndex - startEraseIndex)
@@ -92,7 +111,7 @@ const processBatch = (data: WorkerMessage['data']): WorkerResult => {
         const eraseFeature = eraseFeatures[j]
         if (!eraseFeature) continue
 
-        const result = computeErase(targetFeature, eraseFeature, i, j)
+        const result = computeErase(targetFeature, eraseFeature, i, j, targetLayerName, eraseLayerName)
         if (result) {
           results.push(result)
         }

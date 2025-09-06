@@ -9,6 +9,13 @@ import { Vector as VectorLayer } from 'ol/layer'
 import { Style, Stroke, Fill } from 'ol/style'
 import GeoJSON from 'ol/format/GeoJSON'
 import { intersect as turfIntersect, kinks as turfKinks, polygon as turfPolygon, multiPolygon as turfMultiPolygon, feature as turfFeature } from '@turf/turf'
+import { convertFeaturesToTurfGeometries, prepareTurfAnalysisInput } from '@/utils/geometryConverter'
+
+declare global {
+  interface Window {
+    turf: any
+  }
+}
 
 interface IntersectionResultItem {
   id: string
@@ -18,6 +25,7 @@ interface IntersectionResultItem {
   sourceMaskLayerName: string
   createdAt: string
 }
+
 
 export function useIntersectionAnalysis() {
   const mapStore = useMapStore()
@@ -70,17 +78,11 @@ export function useIntersectionAnalysis() {
 
   // 传统相交分析（保留作为备用）
   const executeIntersectionAnalysis = async (params: { targetLayerId: string; maskLayerId: string; targetFeatures: any[]; maskFeatures: any[]; }): Promise<void> => {
-    const intersectTwo = (a: any, b: any): any => {
-      return (turfIntersect as any)({ type: 'FeatureCollection', features: [a, b] })
-    }
     const tId = params.targetLayerId
     const mId = params.maskLayerId
 
     const target = mapStore.vectorLayers.find(l => l.id === tId)
     const mask = mapStore.vectorLayers.find(l => l.id === mId)
-
-    const format = new GeoJSON()
-    const viewProj = mapStore.map?.getView().getProjection().getCode()
 
     const targetFeatures: any[] = params.targetFeatures
     const maskFeatures: any[] = params.maskFeatures
@@ -90,31 +92,20 @@ export function useIntersectionAnalysis() {
     store.setIsAnalyzing(true)
     analysisStore.setAnalysisStatus('正在执行相交分析...')
 
-    const toGj = (f: any) => format.writeFeatureObject(f, { dataProjection: 'EPSG:4326', featureProjection: viewProj }) as any
-    const targetGeoJson = targetFeatures.map(toGj)
-    const maskGeoJson = maskFeatures.map(toGj)
+    // 使用直接坐标转换方法替代writeFeatureObject
+    const targetGeoJson = convertFeaturesToTurfGeometries(targetFeatures)
+    const maskGeoJson = convertFeaturesToTurfGeometries(maskFeatures)
 
     console.log('[Intersection] selected ids:', { targetLayerId: tId, maskLayerId: mId })
     console.log('[Intersection] cache sizes (features from store):', { targetCache: targetFeatures.length, maskCache: maskFeatures.length })
     console.log('[Intersection] geojson sizes (transformed for intersect):', { target: targetGeoJson.length, mask: maskGeoJson.length })
+    
     if (targetGeoJson.length < 1 || maskGeoJson.length < 1) {
-      const debugT = targetFeatures.slice(0, 1).map((f: any) => ({
-        type: f?.getGeometry?.()?.getType?.(),
-        hasGeom: !!f?.getGeometry?.(),
-        id: f?.getId?.()
-      }))
-      const debugM = maskFeatures.slice(0, 1).map((f: any) => ({
-        type: f?.getGeometry?.()?.getType?.(),
-        hasGeom: !!f?.getGeometry?.(),
-        id: f?.getId?.()
-      }))
-      console.warn('[Intersection] after transformation, one side has 0 geometries. raw feature sample:', { target: debugT, mask: debugM })
+      console.warn('[Intersection] after transformation, one side has 0 geometries')
+      analysisStore.setAnalysisStatus('转换后的几何数据为空，无法执行相交分析')
+      store.setIsAnalyzing(false)
+      return
     }
-    const getType = (g: any) => (g && (g.geometry?.type ?? g.type))
-    const getCoords = (g: any) => (g && (g.geometry?.coordinates ?? g.coordinates))
-    const typeSampleT = targetGeoJson.slice(0, 5).map((g: any) => getType(g))
-    const typeSampleM = maskGeoJson.slice(0, 5).map((g: any) => getType(g))
-    console.log('[Intersection] sample types:', { target: typeSampleT, mask: typeSampleM })
 
     const coordinateShape = (coords: any): number[] => {
       const sizes: number[] = []
@@ -135,58 +126,16 @@ export function useIntersectionAnalysis() {
       }
       return cur
     }
-    const sampleTargetDetails = targetGeoJson.slice(0, 5).map((g: any, idx: number) => ({
-      idx,
-      type: getType(g),
-      coordShape: coordinateShape(getCoords(g)),
-      firstPosition: firstPosition(getCoords(g))
-    }))
-    const sampleMaskDetails = maskGeoJson.slice(0, 5).map((g: any, idx: number) => ({
-      idx,
-      type: getType(g),
-      coordShape: coordinateShape(getCoords(g)),
-      firstPosition: firstPosition(getCoords(g))
-    }))
-    console.log('[Intersection] sample details (first 5)', { target: sampleTargetDetails, mask: sampleMaskDetails })
 
-    const sampleTargetFull = targetGeoJson.slice(0, 5).map((g: any, idx: number) => ({
-      idx,
-      type: getType(g),
-      coordinates: getCoords(g)
-    }))
-    const sampleMaskFull = maskGeoJson.slice(0, 5).map((g: any, idx: number) => ({
-      idx,
-      type: getType(g),
-      coordinates: getCoords(g)
-    }))
-    console.log('[Intersection] sample coordinates (first 5, full)', { target: sampleTargetFull, mask: sampleMaskFull })
-    
-    // 诊断转换前后的几何类型变化
-    const checkGeometryTypes = (features: any[], name: string) => {
-      const beforeTypes = features.slice(0, 3).map((f: any) => f?.getGeometry?.()?.getType?.())
-      const afterTypes = features.slice(0, 3).map((f: any) => {
-        const gj = format.writeFeatureObject(f, { dataProjection: 'EPSG:4326', featureProjection: viewProj })
-        return gj?.geometry?.type
-      })
-      console.log(`[Intersection] ${name} geometry types - before conversion:`, beforeTypes, 'after conversion:', afterTypes)
-    }
-    checkGeometryTypes(targetFeatures, 'target')
-    checkGeometryTypes(maskFeatures, 'mask')
+    console.log('[Intersection] sample geometries (first 5):', { 
+      target: targetGeoJson.slice(0, 5).map((g: any, idx: number) => ({ idx, type: g?.geometry?.type })),
+      mask: maskGeoJson.slice(0, 5).map((g: any, idx: number) => ({ idx, type: g?.geometry?.type }))
+    })
 
-    const wrapFeature = (geometry: any) => ({ type: 'Feature', geometry, properties: {} }) as any
-    const invalidTarget = targetGeoJson
-      .filter((g: any) => g && g.geometry)
-      .map((g: any, idx: number) => ({ idx, k: turfKinks(wrapFeature(g.geometry)) }))
-      .filter((r: any) => r.k && r.k.features && r.k.features.length > 0)
-    const invalidMask = maskGeoJson
-      .filter((g: any) => g && g.geometry)
-      .map((g: any, idx: number) => ({ idx, k: turfKinks(wrapFeature(g.geometry)) }))
-      .filter((r: any) => r.k && r.k.features && r.k.features.length > 0)
-    if (invalidTarget.length > 0 || invalidMask.length > 0) {
-      console.warn('[Intersection] kinks detected (self-intersections may affect results):', { invalidTarget, invalidMask })
-      analysisStore.setAnalysisStatus(`检测到异常几何：目标 ${invalidTarget.length} 个，遮罩 ${invalidMask.length} 个（已高亮）。继续执行分析...`)
-      displayInvalidGeometries(invalidTarget, invalidMask)
-    }
+    // 检查几何有效性（turf几何对象已经是有效的）
+    const validTarget = targetGeoJson.filter((g: any) => g && g.geometry)
+    const validMask = maskGeoJson.filter((g: any) => g && g.geometry)
+    console.log('[Intersection] valid geometries:', { target: validTarget.length, mask: validMask.length })
 
     const out: IntersectionResultItem[] = []
     const totalPairs = targetGeoJson.length * maskGeoJson.length
@@ -209,18 +158,16 @@ export function useIntersectionAnalysis() {
 
             console.log(`[Intersection] Processing pair [${currentI}, ${currentJ}]...`)
 
-            const useOriginalFeature = (g: any) => {
-              return g
-            }
-
             try {
-              const targetFeature = useOriginalFeature(tfGj)
-              const maskFeature = useOriginalFeature(mfGj)
+              const targetFeature = tfGj
+              const maskFeature = mfGj
               
               if (!targetFeature || !maskFeature) {
                 console.log(`[Intersection] Skipping [${currentI}, ${currentJ}] - invalid features`)
               } else {
-                const intersection: any = intersectTwo(targetFeature, maskFeature)
+                // 使用工具函数准备FeatureCollection格式的输入进行相交分析
+                const featureCollection = prepareTurfAnalysisInput(targetFeature, maskFeature)
+                const intersection: any = turfIntersect(featureCollection)
                 
                 if (intersection && intersection.geometry) {
                   const resultItem: IntersectionResultItem = {
@@ -356,7 +303,11 @@ export function useIntersectionAnalysis() {
       } else {
         // 所有要素处理完成，缩放到结果范围
         const extent = source.getExtent()
-        if (extent && !extent.every((coord: number) => coord === Infinity)) {
+        if (extent && 
+            !extent.every((coord: number) => coord === Infinity) &&
+            !extent.every((coord: number) => coord === -Infinity) &&
+            extent[0] !== extent[2] && 
+            extent[1] !== extent[3]) {
           mapStore.map.getView().fit(extent, {
             padding: [50, 50, 50, 50],
             duration: 1000
@@ -470,7 +421,7 @@ export function useIntersectionAnalysis() {
     setTargetLayer,
     setMaskLayer,
     executeIntersectionAnalysis,
-    executeSmartIntersectionAnalysis, // 智能分析方法
+    executeSmartIntersectionAnalysis, // 分析方法
     displayIntersectionResults,
     removeIntersectionLayers,
     clearState,

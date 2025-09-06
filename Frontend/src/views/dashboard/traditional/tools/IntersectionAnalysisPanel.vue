@@ -16,7 +16,7 @@
 
       <div class="analysis-actions">
         <SecondaryButton text="开始执行相交" @click="handleExecute" />
-        <SecondaryButton v-if="results.length > 0" text="保存为图层" @click="handleSaveLayer" />
+        <SecondaryButton v-if="results.length > 0" text="保存为图层" @click="showLayerNameModal" />
         <SecondaryButton v-if="results.length > 0" text="导出为json" @click="handleExportJSON" />
         <SecondaryButton v-if="results.length > 0" text="清除相交结果" @click="handleClear" />
       </div>
@@ -31,7 +31,7 @@
         <div>
           <div style="font-weight: 600; margin-bottom: 4px;">正在执行智能相交分析...</div>
           <div style="font-size: 11px; opacity: 0.8;">
-            正在对目标要素 ({{ targetFeatureCount }} 个) 和计算要素 ({{ maskFeatureCount }} 个) 进行智能分析
+            正在对目标要素 ({{ targetFeatureCount }} 个) 和计算要素 ({{ maskFeatureCount }} 个) 进行分析
             <br> 
           </div>
         </div>
@@ -55,11 +55,22 @@
       </TipWindow>
     </div>
   </PanelWindow>
+  
+  <!-- 图层名称输入弹窗 -->
+  <LayerNameModal
+    :visible="showLayerNameModalRef"
+    title="保存相交分析结果"
+    placeholder="请输入图层名称"
+    hint="图层名称将用于在图层管理器中识别此相交分析结果"
+    :default-name="defaultLayerName"
+    @confirm="handleLayerNameConfirm"
+    @close="handleLayerNameClose"
+  />
 
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useIntersectionAnalysis } from '@/composables/useIntersectionAnalysis'
 import { useLayerManager } from '@/composables/useLayerManager'
 import { useMapStore } from '@/stores/mapStore'
@@ -68,6 +79,7 @@ import DropdownSelect from '@/components/UI/DropdownSelect.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import TipWindow from '@/components/UI/TipWindow.vue'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
+import LayerNameModal from '@/components/UI/LayerNameModal.vue'
 import GeoJSON from 'ol/format/GeoJSON'
 import { Feature } from 'ol'
 
@@ -80,7 +92,7 @@ const {
   maskFeatureCount,
   isAnalyzing,
   executeIntersectionAnalysis,
-  executeSmartIntersectionAnalysis, // 使用智能分析方法
+  executeSmartIntersectionAnalysis, // 使用分析方法
   clearState,
   setTargetLayer,
   setMaskLayer,
@@ -91,6 +103,10 @@ const {
 const mapStore = useMapStore()
 const analysisStore = useAnalysisStore()
 const { saveFeaturesAsLayer } = useLayerManager()
+
+// 图层名称弹窗状态
+const showLayerNameModalRef = ref<boolean>(false)
+const defaultLayerName = ref<string>('')
 
 const layerOptionsWithNone = computed(() => [{ value: '', label: '无', disabled: false }, ...layerOptions.value])
 
@@ -140,7 +156,7 @@ const handleExecute = () => {
     maskFirstType: mGeom?.getType?.()
   })
 
-  // 使用智能分析方法，自动选择传统或分布式计算
+  // 使用分析方法，自动选择传统或分布式计算
   executeSmartIntersectionAnalysis({
     targetLayerId: targetLayerId.value,
     maskLayerId: maskLayerId.value,
@@ -153,7 +169,8 @@ const handleClear = () => {
   clearState()
 }
 
-const handleSaveLayer = async () => {
+// 显示图层名称输入弹窗
+const showLayerNameModal = () => {
   if (results.value.length === 0) {
     window.dispatchEvent(new CustomEvent('showNotification', {
       detail: {
@@ -163,6 +180,26 @@ const handleSaveLayer = async () => {
         duration: 3000
       }
     }))
+    return
+  }
+  
+  defaultLayerName.value = `相交分析结果_${new Date().toLocaleString()}`
+  showLayerNameModalRef.value = true
+}
+
+// 处理图层名称确认
+const handleLayerNameConfirm = async (layerName: string) => {
+  showLayerNameModalRef.value = false
+  await handleSaveLayer(layerName)
+}
+
+// 处理图层名称弹窗关闭
+const handleLayerNameClose = () => {
+  showLayerNameModalRef.value = false
+}
+
+const handleSaveLayer = async (customLayerName: string) => {
+  if (results.value.length === 0) {
     return
   }
   
@@ -189,8 +226,7 @@ const handleSaveLayer = async () => {
     }).filter(Boolean)
 
     if (features.length > 0) {
-      const layerName = `相交分析结果_${new Date().toLocaleString()}`
-      await saveFeaturesAsLayer(features as any[], layerName, 'intersect')
+      await saveFeaturesAsLayer(features as any[], customLayerName, 'intersect')
       
       // 保存成功后清除临时渲染结果
       clearState()
@@ -198,7 +234,7 @@ const handleSaveLayer = async () => {
       window.dispatchEvent(new CustomEvent('showNotification', {
         detail: {
           title: '保存成功',
-          message: `已保存 ${features.length} 个相交结果为图层：${layerName}`,
+          message: `已保存 ${features.length} 个相交结果为图层：${customLayerName}`,
           type: 'success',
           duration: 3000
         }

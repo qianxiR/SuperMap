@@ -9,7 +9,31 @@ import { Vector as VectorLayer } from 'ol/layer'
 import { Style, Stroke, Fill } from 'ol/style'
 import GeoJSON from 'ol/format/GeoJSON'
 import type OlFeature from 'ol/Feature'
-import { buffer as turfBuffer } from '@turf/turf'
+import { buffer as turfBuffer, polygon as turfPolygon, multiPolygon as turfMultiPolygon, feature as turfFeature } from '@turf/turf'
+import { convertFeaturesToTurfGeometries } from '@/utils/geometryConverter'
+
+// 确保几何类型为多边形的工具函数
+const ensurePolygonGeometry = (geometry: any): any => {
+  if (!geometry || !geometry.type) return null
+  
+  switch (geometry.type) {
+    case 'Polygon':
+      return geometry
+    case 'MultiPolygon':
+      return geometry
+    case 'Point':
+      // 点要素的缓冲区应该已经是多边形，如果还是点，说明缓冲区失败
+      console.warn('点要素缓冲区结果仍为点类型，可能缓冲区距离过小')
+      return null
+    case 'LineString':
+      // 线要素的缓冲区应该已经是多边形，如果还是线，说明缓冲区失败
+      console.warn('线要素缓冲区结果仍为线类型，可能缓冲区距离过小')
+      return null
+    default:
+      console.warn(`未知的几何类型: ${geometry.type}`)
+      return null
+  }
+}
 
 // 后端API接口类型定义
 interface FeatureGeometry {
@@ -156,23 +180,32 @@ export function useBufferAnalysis() {
         return
       }
 
-      const format = new GeoJSON()
-      const viewProj = mapStore.map.getView().getProjection().getCode()
+      // 使用geometryConverter统一转换要素为turf几何对象
+      const turfFeatures = convertFeaturesToTurfGeometries(features)
+      
+      console.log(`[Buffer] 转换后的turf要素数量: ${turfFeatures.length}`)
+      
+      if (turfFeatures.length === 0) {
+        analysisStore.setAnalysisStatus('转换后的几何数据为空，无法执行缓冲区分析')
+        bufferAnalysisStore.setIsAnalyzing(false)
+        return
+      }
 
       const results: BufferResult[] = []
+      let polygonCount = 0
+      let multiPolygonCount = 0
 
-      for (let i = 0; i < features.length; i++) {
-        const f = features[i]
-        const geometry = f.getGeometry()
+      for (let i = 0; i < turfFeatures.length; i++) {
+        const turfFeature = turfFeatures[i]
+        const originalFeature = features[i]
         
-        // 检查几何类型是否支持缓冲区分析
-        if (!geometry) {
-          console.warn(`要素 ${i + 1} 没有几何信息，跳过`)
+        if (!turfFeature || !turfFeature.geometry) {
+          console.warn(`要素 ${i + 1} 转换失败，跳过`)
           continue
         }
         
-        const geometryType = geometry.getType()
-        console.log(`处理要素 ${i + 1}，几何类型: ${geometryType}`)
+        const geometryType = turfFeature.geometry.type
+        console.log(`处理要素 ${i + 1}，输入几何类型: ${geometryType}`)
         
         // 检查几何类型是否支持缓冲区分析
         const supportedTypes = ['Point', 'MultiPoint', 'LineString', 'MultiLineString', 'Polygon', 'MultiPolygon']
@@ -182,25 +215,35 @@ export function useBufferAnalysis() {
         }
         
         try {
-          // 转为 GeoJSON（以 WGS84 提供给 Turf）
-          const gjFeature: any = format.writeFeatureObject(f, {
-            dataProjection: 'EPSG:4326',
-            featureProjection: viewProj
-          })
-          
-          console.log(`要素 ${i + 1} 转换为GeoJSON:`, gjFeature)
+          console.log(`要素 ${i + 1} 转换为turf格式:`, turfFeature)
 
           // Turf 缓冲（单位米，步数由圆弧精度决定）
-          const buffered: any = turfBuffer(gjFeature, radiusMeters, { units: 'meters', steps })
+          const buffered: any = turfBuffer(turfFeature, radiusMeters, { units: 'meters', steps })
           if (!buffered || !buffered.geometry) {
             console.warn(`要素 ${i + 1} 缓冲区分析失败，跳过`)
             continue
           }
           
           console.log(`要素 ${i + 1} 缓冲区分析成功:`, buffered)
+          
+          // 确保结果几何类型为多边形
+          const finalGeometry = ensurePolygonGeometry(buffered.geometry)
+          if (!finalGeometry) {
+            console.warn(`要素 ${i + 1} 缓冲区结果不是有效的多边形，跳过`)
+            continue
+          }
+          
+          console.log(`要素 ${i + 1} 生成了${finalGeometry.type}缓冲区`)
+          
+          // 统计多边形类型
+          if (finalGeometry.type === 'Polygon') {
+            polygonCount++
+          } else if (finalGeometry.type === 'MultiPolygon') {
+            multiPolygonCount++
+          }
 
           // 尝试从要素属性中获取名称
-          const properties = f.getProperties?.() || {}
+          const properties = originalFeature.getProperties?.() || {}
           const featureName = properties.name || properties.NAME || properties.Name || 
                              properties.title || properties.TITLE || properties.Title ||
                              properties.label || properties.LABEL || properties.Label
@@ -210,7 +253,7 @@ export function useBufferAnalysis() {
           results.push({
             id: `${Date.now()}_${i}`,
             name: `缓冲_${target?.name || '图层'}_${elementName}`,
-            geometry: buffered.geometry,
+            geometry: finalGeometry, // 使用确保为多边形的几何
             distance: radiusMeters,
             unit: 'meters',
             sourceLayerName: target?.name || '',
@@ -226,7 +269,9 @@ export function useBufferAnalysis() {
       if (!results.length) {
         analysisStore.setAnalysisStatus(`未生成任何缓冲结果，共处理 ${features.length} 个要素`)
       } else {
-        analysisStore.setAnalysisStatus(`缓冲区分析完成，成功处理 ${results.length}/${features.length} 个要素`)
+        const statusMessage = `缓冲区分析完成，成功处理 ${results.length}/${features.length} 个要素，生成 ${polygonCount} 个多边形和 ${multiPolygonCount} 个多多边形`
+        analysisStore.setAnalysisStatus(statusMessage)
+        console.log(`[Buffer] 分析统计: 多边形 ${polygonCount} 个，多多边形 ${multiPolygonCount} 个`)
         bufferAnalysisStore.setBufferResults(results as any)
         displayBufferResults(results as any)
       }
