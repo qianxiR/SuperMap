@@ -193,13 +193,20 @@ export function useMap() {
   }
 
   const updatelayerStyles = async () => {
+    console.log('开始批量更新图层样式')
+    
     // 批量更新矢量图层样式，避免频繁重绘
     const updatePromises: Promise<void>[] = []
+    
+    // 获取当前主题的CSS变量，避免重复获取
+    const css = getComputedStyle(document.documentElement)
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light'
     
     mapStore.vectorlayers.forEach(layerInfo => {
       if (layerInfo.layer) {
         // 更新所有类型的图层，不仅仅是supermap图层
         const updatePromise = new Promise<void>(resolve => {
+          // 使用单次requestAnimationFrame，避免多次调用
           requestAnimationFrame(() => {
             try {
               if (layerInfo.source === 'supermap') {
@@ -230,9 +237,6 @@ export function useMap() {
     if (mapStore.selectlayer) {
       const updateSelectPromise = new Promise<void>(resolve => {
         requestAnimationFrame(() => {
-          const css = getComputedStyle(document.documentElement);
-          const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-          
           const grayFillColor = css.getPropertyValue('--map-select-fill').trim() || (currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(33, 37, 41, 0.15)');
           const highlightColor = css.getPropertyValue('--map-highlight-color').trim() || (currentTheme === 'dark' ? '#ffffff' : '#000000');
           
@@ -307,9 +311,6 @@ export function useMap() {
     if (mapStore.hintersecter) {
       const updateHoverPromise = new Promise<void>(resolve => {
         requestAnimationFrame(() => {
-          const css = getComputedStyle(document.documentElement);
-          const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-          
           const highlightColor = css.getPropertyValue('--map-highlight-color').trim() || (currentTheme === 'dark' ? '#ffffff' : '#000000');
           const hoverFillColor = css.getPropertyValue('--map-hover-fill').trim() || 'rgba(0, 123, 255, 0.3)';
           
@@ -334,15 +335,18 @@ export function useMap() {
     
     // 等待所有样式更新完成
     await Promise.all(updatePromises)
+    console.log('图层样式更新完成')
   }
   const updateBaseMap = async (theme: 'light' | 'dark') => {
     if (mapStore.map && mapStore.baselayer) {
+      console.log(`开始更新底图到${theme}主题`)
+      
       // 优先使用预加载的底图源
       const preloadedSources = mapStore.getPreloadedBaseMapSources()
       let newBaseMapSource: any
       
       if (preloadedSources && preloadedSources[theme]) {
-        // 使用预加载的源
+        // 使用预加载的源，避免重新加载
         newBaseMapSource = preloadedSources[theme]
         console.log(`使用预加载的${theme}主题底图`)
       } else {
@@ -362,52 +366,50 @@ export function useMap() {
         console.log(`动态创建${theme}主题底图`)
       }
       
+      // 直接切换底图源，不使用隐藏/显示机制
       const oldSource = mapStore.baselayer.getSource()
       if (oldSource) {
         oldSource.clear?.()
       }
       
+      // 设置新源
       mapStore.baselayer.setSource(newBaseMapSource)
       mapStore.baselayer.changed()
       
-      // 使用异步渲染替代同步渲染
-      await new Promise(resolve => {
-        requestAnimationFrame(() => {
-          if (mapStore.map) {
-            mapStore.map.updateSize()
-            mapStore.map.render()
-            resolve(void 0)
-          }
-        })
-      })
+      // 强制重绘地图
+      if (mapStore.map) {
+        mapStore.map.updateSize()
+        mapStore.map.render()
+      }
+      
+      console.log(`${theme}主题底图更新完成`)
     }
   }
      const observeThemeChanges = () => {
-     // 防抖函数，避免频繁更新
-     let debounceTimer: number | null = null
-     
-     const debouncedUpdate = async () => {
-       if (debounceTimer) {
-         clearTimeout(debounceTimer)
+     // 使用事件驱动的方式监听主题变化，确保与主题切换同步
+     const handleThemeChange = async (event: Event) => {
+       const customEvent = event as CustomEvent
+       const newTheme = customEvent.detail.theme
+       console.log(`收到主题变化事件: ${newTheme}`)
+       
+       try {
+         // 立即更新底图和矢量图层样式，无需防抖
+         await updateBaseMap(newTheme)
+         await updatelayerStyles()
+         console.log(`地图主题更新完成: ${newTheme}`)
+       } catch (error) {
+         console.error('地图主题更新失败:', error)
        }
-       debounceTimer = window.setTimeout(async () => {
-         try {
-           // 使用优化的主题切换同步机制
-           const { useThemeOptimization } = await import('@/composables/useThemeOptimization')
-           const { syncThemeChange } = useThemeOptimization()
-           await syncThemeChange(async () => {
-             // 更新底图和矢量图层样式
-             await updateBaseMap(themeStore.theme)
-             await updatelayerStyles() // 等待矢量图层样式更新完成
-           })
-         } catch (error) {
-           console.error('地图主题更新失败:', error)
-         }
-         debounceTimer = null
-       }, 100) // 增加防抖延迟到100ms，确保主题切换完成
      }
      
-     const observer = new MutationObserver(debouncedUpdate);
+     // 监听自定义主题变化事件
+     window.addEventListener('themeChanged', handleThemeChange)
+     
+     // 保留原有的MutationObserver作为备用监听
+     const observer = new MutationObserver(async () => {
+       // 只在没有收到themeChanged事件时才执行
+       console.log('MutationObserver检测到主题变化（备用机制）')
+     });
      
      observer.observe(document.documentElement, {
        attributes: true,
@@ -415,14 +417,9 @@ export function useMap() {
        subtree: false
      });
      
-     const stopThemeWatch = watch(() => themeStore.theme, debouncedUpdate);
-     
      return () => {
-       if (debounceTimer) {
-         clearTimeout(debounceTimer)
-       }
+       window.removeEventListener('themeChanged', handleThemeChange)
        try { observer.disconnect(); } catch (_) {}
-       try { stopThemeWatch(); } catch (_) {}
      }
    }
 
@@ -1383,3 +1380,4 @@ export function useMap() {
     unloadLazyLayer
   }
 }
+

@@ -4,57 +4,9 @@ import { useThemeStore } from '@/stores/themeStore'
 export function useThemeOptimization() {
   const themeStore = useThemeStore()
   const isTransitioning = ref(false)
-  const transitionDuration = 150 // 毫秒
+  const transitionDuration = 0 // 毫秒
 
-  // 预渲染主题状态
-  const preRenderThemes = () => {
-    const root = document.documentElement
-    const currentTheme = themeStore.theme
-    
-    // 创建两个隐藏的容器来预渲染两种主题
-    const lightContainer = document.createElement('div')
-    const darkContainer = document.createElement('div')
-    
-    lightContainer.style.cssText = `
-      position: fixed;
-      top: -9999px;
-      left: -9999px;
-      width: 1px;
-      height: 1px;
-      opacity: 0;
-      pointer-events: none;
-      z-index: -1;
-    `
-    
-    darkContainer.style.cssText = `
-      position: fixed;
-      top: -9999px;
-      left: -9999px;
-      width: 1px;
-      height: 1px;
-      opacity: 0;
-      pointer-events: none;
-      z-index: -1;
-    `
-    
-    // 设置预渲染容器的主题
-    lightContainer.setAttribute('data-theme', 'light')
-    darkContainer.setAttribute('data-theme', 'dark')
-    
-    // 克隆当前页面内容到预渲染容器
-    const currentContent = document.body.cloneNode(true) as HTMLElement
-    lightContainer.appendChild(currentContent.cloneNode(true))
-    darkContainer.appendChild(currentContent.cloneNode(true))
-    
-    document.body.appendChild(lightContainer)
-    document.body.appendChild(darkContainer)
-    
-    // 强制浏览器渲染预渲染容器
-    lightContainer.offsetHeight
-    darkContainer.offsetHeight
-    
-    return { lightContainer, darkContainer }
-  }
+  // 直接同步主题切换，不使用预渲染容器
 
   // 优化的主题切换函数
   const optimizedToggleTheme = async () => {
@@ -64,38 +16,33 @@ export function useThemeOptimization() {
     const newTheme = themeStore.theme === 'light' ? 'dark' : 'light'
     
     try {
-      // 1. 预渲染新主题
-      const { lightContainer, darkContainer } = preRenderThemes()
-      
-      // 2. 使用 requestAnimationFrame 确保在下一帧执行
-      await new Promise(resolve => requestAnimationFrame(resolve))
-      
-      // 3. 批量更新所有主题相关的CSS变量
+      // 1. 同步更新：CSS变量 + data-theme + store状态
       const root = document.documentElement
       const newThemeVars = getThemeVariables(newTheme)
       
-      // 使用 CSS 自定义属性批量更新
+      // 批量更新CSS变量
       Object.entries(newThemeVars).forEach(([key, value]) => {
         root.style.setProperty(key, value)
       })
       
-      // 4. 更新 data-theme 属性
+      // 同步更新data-theme属性
       root.setAttribute('data-theme', newTheme)
       
-      // 5. 等待一帧确保DOM更新完成
-      await new Promise(resolve => requestAnimationFrame(resolve))
-      
-      // 6. 更新store状态
+      // 同步更新store状态
       themeStore.setTheme(newTheme)
       
-      // 7. 清理预渲染容器
-      setTimeout(() => {
-        lightContainer.remove()
-        darkContainer.remove()
-        isTransitioning.value = false
-      }, transitionDuration)
+      // 2. 立即触发地图主题更新事件（同步执行）
+      window.dispatchEvent(new CustomEvent('themeChanged', {
+        detail: { theme: newTheme }
+      }))
       
-      // 8. 触发通知
+      // 3. 等待一帧确保所有更新完成
+      await new Promise(resolve => requestAnimationFrame(resolve))
+      
+      // 4. 完成切换
+      isTransitioning.value = false
+      
+      // 5. 触发通知
       window.dispatchEvent(new CustomEvent('showNotification', {
         detail: {
           title: '主题已切换',
@@ -200,3 +147,4 @@ export function useThemeOptimization() {
     syncThemeChange
   }
 }
+

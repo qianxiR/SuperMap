@@ -508,10 +508,9 @@ html {
 
 /* ===== 防闪烁样式 ===== */
 /* 全局防闪烁样式 - 防止主题切换时的颜色闪烁 */
-.no-theme-flicker,
-.no-theme-flicker *,
-.no-theme-flicker *::before,
-.no-theme-flicker *::after {
+*,
+*::before,
+*::after {
   transition: none !important;
   animation: none !important;
 }
@@ -521,7 +520,9 @@ html {
 .layer-item,
 .analysis-section,
 .feature-query-panel,
-.layer-manager-panel {
+.layer-manager-panel,
+.map-container,
+.theme-switch-container {
   transition: none !important;
 }
 
@@ -529,7 +530,9 @@ html {
 .layer-item *,
 .analysis-section *,
 .feature-query-panel *,
-.layer-manager-panel * {
+.layer-manager-panel *,
+.map-container *,
+.theme-switch-container * {
   transition: none !important;
   animation: none !important;
 }
@@ -537,8 +540,11 @@ html {
 /* 确保Openlayers地图在主题切换时不闪烁 */
 .ol-viewport,
 .ol-canvas,
-.ol-control {
+.ol-control,
+.ol-layer,
+.ol-tile {
   transition: none !important;
+  animation: none !important;
 }
 
 /* 修复Openlayers被动事件监听器问题 */
@@ -549,18 +555,43 @@ html {
 /* 按钮和交互元素的防闪烁 */
 button,
 .btn,
-.overview-toggle-btn {
+.overview-toggle-btn,
+.theme-toggle-btn {
   transition: none !important;
+  animation: none !important;
 }
 
 /* 面板和容器的防闪烁 */
 .panel-window,
-.panel-container {
+.panel-container,
+.app-container,
+.main-container {
   transition: none !important;
+  animation: none !important;
 }
 
 .panel-window *,
-.panel-container * {
+.panel-container *,
+.app-container *,
+.main-container * {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* 地图相关元素的防闪烁 */
+.map-viewport,
+.map-canvas,
+.map-controls {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* 主题切换时的特殊处理 */
+[data-theme] {
+  transition: none !important;
+}
+
+[data-theme] * {
   transition: none !important;
   animation: none !important;
 }
