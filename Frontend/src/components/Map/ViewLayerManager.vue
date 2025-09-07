@@ -4,7 +4,6 @@
     <div class="layer-panel" v-show="visible">
       <div class="panel-header">
         <h3 class="panel-title">图层管理</h3>
-        <div class="layer-count">{{ totalLayersCount }} 个图层</div>
       </div>
       
       <div class="layer-list" ref="layerList">
@@ -20,7 +19,6 @@
               </svg>
             </button>
             <span class="group-title">SuperMap 服务图层</span>
-            <span class="group-count">({{ getLayersBySource('supermap').length }})</span>
           </div>
           
           <LayerItem
@@ -46,7 +44,6 @@
               </svg>
             </button>
             <span class="group-title">分析及绘制图层</span>
-            <span class="group-count">({{ getLayersBySource('draw').length }})</span>
           </div>
           
           <LayerItem
@@ -84,7 +81,6 @@
               </svg>
             </button>
             <span class="group-title">查询图层</span>
-            <span class="group-count">({{ getLayersBySource('query').length }})</span>
           </div>
           
           <LayerItem
@@ -122,7 +118,6 @@
               </svg>
             </button>
             <span class="group-title">上传图层</span>
-            <span class="group-count">({{ getLayersBySource('upload').length }})</span>
           </div>
           
           <LayerItem
@@ -223,7 +218,7 @@ const allLayers = computed(() => {
       key: vl.id,
       name: vl.name,
       displayName: vl.name,
-      desc: inferDesc(vl.name, vl.type),
+      desc: '矢量数据',
       visible: vl.layer.getVisible(),
       source: source
     }
@@ -265,21 +260,12 @@ const allLayers = computed(() => {
   return layers
 })
 
-const totalLayersCount = computed(() => allLayers.value.length)
 
 // 获取指定来源的图层列表
 const getLayersBySource = (source: string): LayerItem[] => {
   return allLayers.value.filter(item => item.source === source)
 }
 
-// 推断图层描述
-function inferDesc(name: string, type: string): string {
-  if (type === 'raster') return '栅格数据 (DEM)'
-  if (name.includes('点')) return '点要素'
-  if (name.includes('线')) return '线要素'
-  if (name.includes('面')) return '面要素'
-  return '矢量数据'
-}
 
 // 切换分组展开状态
 const toggleGroup = (groupName: keyof typeof expandedGroups.value) => {
@@ -466,14 +452,6 @@ const emit = defineEmits<{
   animation: none !important;
 }
 
-.group-count {
-  font-size: 11px;
-  color: inherit;
-  font-weight: normal;
-  opacity: 0.8;
-  transition: none !important;
-  animation: none !important;
-}
 
 
 

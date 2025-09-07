@@ -1,51 +1,40 @@
 import type { APIConfig, Wuhanlayer } from '@/types/map'
 
 /**
- * 创建SuperMap API配置 - 定义所有服务器连接地址和图层配置
- * 调用者: mapStore.ts -> createMapConfig() -> createAPIConfig()
- * 作用: 集中管理SuperMap iServer的服务器地址、服务路径和图层定义
+ * SuperMap API 配置管理器
+ * 
+ * 功能：集中管理SuperMap iServer的所有服务配置
+ * 包括：服务器地址、服务路径、图层定义、底图配置等
+ * 
+ * @returns {APIConfig} 完整的API配置对象
  */
 export const createAPIConfig = (): APIConfig => {
-  // ===== 服务器连接配置 =====
-  // 调用者: createAPIConfig()
-  // 服务器地址: 从环境变量获取，默认localhost:8090
-  // 作用: 定义SuperMap iServer的基础服务器地址
+  // ===== 基础服务配置 =====
+  
+  /** SuperMap iServer 服务器基础地址 */
   const baseUrl = import.meta.env.VITE_SUPERMAP_BASE_URL 
   
-  // ===== 地图服务路径配置 =====
-  // 调用者: createAPIConfig()
-  // 服务路径: 从环境变量获取，默认iserver/services/map-guanlifenxipingtai/rest
-  // 作用: 定义地图服务的REST API路径，用于底图和地图服务
+  /** 地图服务REST API路径 - 用于底图和地图服务 */
   const mapService = import.meta.env.VITE_SUPERMAP_MAP_SERVICE 
   
-  // ===== 数据服务路径配置 =====
-  // 调用者: createAPIConfig()
-  // 服务路径: 从环境变量获取，默认iserver/services/data-guanlifenxipingtai/rest/data
-  // 作用: 定义数据服务的REST API路径，用于矢量要素数据获取
+  /** 数据服务REST API路径 - 用于矢量要素数据获取 */
   const dataService = import.meta.env.VITE_SUPERMAP_DATA_SERVICE
   
-  // ===== 工作空间配置 =====
-  // 调用者: createAPIConfig()
-  // 工作空间: 从环境变量获取，默认wuhan
-  // 作用: 定义数据源工作空间名称
+  /** 数据源工作空间名称 */
   const workspace = import.meta.env.VITE_SUPERMAP_WORKSPACE 
   
-  // ===== 地图名称配置 =====
-  // 调用者: createAPIConfig()
-  // 地图名称: 从环境变量获取，默认wuhan_map
-  // 作用: 定义地图服务中的地图名称
+  /** 地图服务中的地图名称 */
   const mapName = import.meta.env.VITE_SUPERMAP_MAP_NAME
   
-  // ===== 地图边界范围配置 =====
-  // 调用者: useMap.ts -> loadVectorlayer() -> 空间过滤
-  // 边界范围: 从环境变量获取
-  // 作用: 定义地图的空间过滤边界，用于限制要素加载范围
+  // ===== 地图显示配置 =====
+  
+  /** 地图边界和显示参数配置 */
   const mapBounds = {
-    // 武汉地区边界范围 [minLon, minLat, maxLon, maxLat]
+    /** 武汉地区边界范围 [minLon, minLat, maxLon, maxLat] */
     extent: import.meta.env.VITE_SUPERMAP_MAP_EXTENT.split(',').map(Number),
-    // 地图中心点 [lon, lat]
+    /** 地图中心点坐标 [lon, lat] */
     center: import.meta.env.VITE_SUPERMAP_MAP_CENTER.split(',').map(Number),
-    // 初始缩放级别
+    /** 初始缩放级别 */
     zoom: Number(import.meta.env.VITE_SUPERMAP_MAP_ZOOM)
   }
   

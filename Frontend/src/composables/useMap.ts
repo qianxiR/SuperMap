@@ -12,7 +12,16 @@ import { createAPIConfig, getCurrentBaseMapUrl } from '@/utils/config'
 
 const ol = window.ol;
 
+/**
+ * 地图管理 Composable
+ * 
+ * 功能：提供地图初始化、图层管理、要素交互、主题切换等核心功能
+ * 包括：SuperMap数据加载、OpenLayers地图渲染、用户交互处理
+ * 
+ * @returns {Object} 地图管理相关的方法和状态
+ */
 export function useMap() {
+  // ===== Store 引用 =====
   let mapStore = useMapStore()
   const selectionStore = useSelectionStore()
   const popupStore = usePopupStore()
@@ -20,16 +29,28 @@ export function useMap() {
   const loadingStore = useLoadingStore()
   const themeStore = useThemeStore()
   const layermanager = uselayermanager()
+  
+  // ===== 响应式状态 =====
   const mapContainer = ref<HTMLElement | null>(null)
   const hoverTimer = ref<number | null>(null)
-  const selectSourceRef = ref<any>(null) // ol.source.Vector
-  const disposers: Array<() => void> = []
-
-  // 前置声明所有函数
+  const selectSourceRef = ref<any>(null) // OpenLayers 选择图层源
+  const disposers: Array<() => void> = [] // 清理函数数组
+  // ===== 样式管理函数 =====
+  
+  /**
+   * 创建本地图层样式
+   * 用于绘制、分析、上传等本地生成的图层
+   * 
+   * @param {string} sourceType - 图层来源类型
+   * @returns {ol.style.Style} OpenLayers 样式对象
+   */
   const createLocalLayerStyle = (sourceType: string): any => {
     const css = getComputedStyle(document.documentElement)
     
-    // 创建红色样式（用于绘制、分析等图层）
+    /**
+     * 创建统一的红色主题样式
+     * 支持主题切换，自动适配浅色/深色模式
+     */
     const createRedStyle = (colorVar: string, strokeWidth: number) => {
       const color = css.getPropertyValue(`--${colorVar}-color`).trim() || 
                    css.getPropertyValue('--accent').trim() || 
@@ -57,19 +78,19 @@ export function useMap() {
       })
     }
     
+    // 根据图层来源类型返回对应样式
     switch (sourceType) {
-      case 'draw':
+      case 'draw':      // 绘制图层
         return createRedStyle('draw', 2)
-      case 'area':
+      case 'area':      // 区域选择图层
         return createRedStyle('analysis', 2)
-      case 'query':
+      case 'query':     // 查询结果图层
         return createRedStyle('analysis', 2)
-      case 'buffer':
+      case 'buffer':    // 缓冲区分析图层
         return createRedStyle('analysis', 3)
-      case 'upload':
+      case 'upload':    // 上传图层
         return createRedStyle('upload', 3)
-      case 'path':
-        // 路径分析使用蓝色
+      case 'path':      // 路径分析图层（使用蓝色主题）
         return new ol.style.Style({
           stroke: new ol.style.Stroke({
             color: '#0078D4',
@@ -89,32 +110,42 @@ export function useMap() {
             })
           })
         })
-      case 'intersect':
+      case 'intersect': // 相交分析图层
         return createRedStyle('analysis', 3)
-      case 'erase':
+      case 'erase':     // 擦除分析图层
         return createRedStyle('analysis', 3)
-      default:
+      default:          // 默认分析图层
         return createRedStyle('analysis', 2)
     }
   }
 
+  /**
+   * 创建SuperMap服务图层样式
+   * 用于从SuperMap服务器加载的矢量图层
+   * 
+   * @param {any} layerConfig - 图层配置对象
+   * @param {string} layerName - 图层名称
+   * @returns {ol.style.Style} OpenLayers 样式对象
+   */
   const createlayerStyle = (layerConfig: any, layerName: string): any => {
-    // 强制重新获取最新的CSS变量值
+    // 获取当前主题的CSS变量值
     const css = getComputedStyle(document.documentElement);
     const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
     
+    // 获取图层特定的样式变量
     const strokeVar = css.getPropertyValue(`--layer-stroke-${layerName}`).trim();
     const fillVar = css.getPropertyValue(`--layer-fill-${layerName}`).trim();
     const accentFallback = css.getPropertyValue('--accent').trim() || (currentTheme === 'dark' ? '#666666' : '#212529');
 
-    // 统一使用CSS变量，如果CSS变量为空则使用主题色作为fallback
+    // 解析样式颜色，优先使用图层特定变量，回退到主题色
     const resolvedStroke = strokeVar || accentFallback;
     const resolvedFill = fillVar || (currentTheme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(33,37,41,0.1)');
     
-    
-    // 根据图层类型和重要性调整样式参数
+    /**
+     * 根据图层类型和重要性获取样式参数
+     * 重要图层（如县级边界、主要交通线）使用更粗的线条和更大的点
+     */
     const getStyleParams = (type: string, layerName: string) => {
-      // 重要图层使用更粗的线条和更大的点
       const isImportant = ['武汉_县级', '公路', '铁路'].includes(layerName);
       
       switch (type) {
@@ -145,6 +176,7 @@ export function useMap() {
     
     const params = getStyleParams(layerConfig.type, layerName);
     
+    // 根据几何类型创建对应的OpenLayers样式
     switch (layerConfig.type) {
       case 'point':
         return new ol.style.Style({
@@ -192,6 +224,10 @@ export function useMap() {
     }
   }
 
+  /**
+   * 批量更新图层样式
+   * 在主题切换时调用，更新所有图层的样式以适配新主题
+   */
   const updatelayerStyles = async () => {
     console.log('开始批量更新图层样式')
     
@@ -588,15 +624,27 @@ export function useMap() {
     
     // 只有非懒加载图层才需要添加到地图和mapStore
     if (!existingLayerInfo) {
+      // ===== 检查是否已经在mapStore中存在 =====
+      const alreadyInStore = mapStore.vectorlayers.find(l => 
+        l.id === layerConfig.name || l.name === layerName
+      )
+      
       map.addLayer(vectorlayer);
-      mapStore.vectorlayers.push({
-        id: layerConfig.name,
-        name: layerName,
-        layer: vectorlayer,
-        visible: resolvedVisible,
-        type: 'vector',
-        source: 'supermap'
-      });
+      
+      // 只有不在Store中的图层才添加
+      if (!alreadyInStore) {
+        mapStore.vectorlayers.push({
+          id: layerConfig.name,
+          name: layerName,
+          layer: vectorlayer,
+          visible: resolvedVisible,
+          type: 'vector',
+          source: 'supermap'
+        });
+        console.log(`图层 ${layerName} 已添加到mapStore`)
+      } else {
+        console.log(`图层 ${layerName} 已存在于mapStore中，跳过添加`)
+      }
     } else {
       // 懒加载图层已存在，只需要设置可见性
       vectorlayer.setVisible(resolvedVisible);
@@ -641,6 +689,17 @@ export function useMap() {
    */
   const createLazyLayerContainer = (map: any, layerConfig: any): void => {
     const layerName = layerConfig.name.split('@')[0] || layerConfig.name
+    
+    // ===== 检查图层是否已存在 =====
+    const existingLayer = mapStore.vectorlayers.find(l => 
+      l.id === layerName || l.name === layerName
+    )
+    
+    if (existingLayer) {
+      console.log(`懒加载图层容器 ${layerName} 已存在，跳过创建`)
+      return
+    }
+    
     const style = createlayerStyle(layerConfig, layerName)
     
     // 创建空的矢量图层容器
@@ -764,8 +823,14 @@ export function useMap() {
     }
   }
 
+  /**
+   * 加载所有矢量图层
+   * 在加载前检查图层是否已存在，避免重复添加
+   */
   const loadVectorlayers = async (map: any): Promise<void> => {
     const apiConfig = createAPIConfig()
+    
+    console.log('开始加载矢量图层，当前已有图层数量:', mapStore.vectorlayers.length)
     
     const loadTasks: Promise<void>[] = []
     for (const layerConfig of apiConfig.wuhanlayers) {
@@ -773,6 +838,16 @@ export function useMap() {
       
       if (layerConfig.type === 'raster') {
         continue;
+      }
+      
+      // ===== 检查图层是否已存在 =====
+      const existingLayer = mapStore.vectorlayers.find(l => 
+        l.id === layerConfig.name || l.name === layerName
+      )
+      
+      if (existingLayer) {
+        console.log(`图层 ${layerName} 已存在，跳过加载`)
+        continue
       }
       
       // 懒加载逻辑：只有非懒加载且可见的图层才立即加载
@@ -787,7 +862,10 @@ export function useMap() {
         createLazyLayerContainer(map, layerConfig)
       }
     }
+    
+    console.log('图层加载任务创建完成，待加载图层数量:', loadTasks.length)
     await Promise.allSettled(loadTasks)
+    console.log('所有图层加载完成，当前图层总数:', mapStore.vectorlayers.length)
   }
 
   const handleFeatureHover = async (hoverSource: any): Promise<void> => {
@@ -1380,4 +1458,5 @@ export function useMap() {
     unloadLazyLayer
   }
 }
+
 

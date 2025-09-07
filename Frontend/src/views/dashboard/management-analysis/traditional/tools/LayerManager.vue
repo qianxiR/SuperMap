@@ -17,7 +17,6 @@
           <div class="group-header" @click="toggleGroupCollapse('supermap')">
             <div class="group-title">
               SuperMap 服务图层
-              <span class="layer-count">({{ getlayerCount('supermap') }})</span>
             </div>
           </div>
           
@@ -43,7 +42,6 @@
           <div class="group-header" @click="toggleGroupCollapse('draw')">
             <div class="group-title">
               分析及绘制图层
-              <span class="layer-count">({{ getlayerCount('draw') }})</span>
             </div>
           </div>
           
@@ -69,7 +67,6 @@
           <div class="group-header" @click="toggleGroupCollapse('query')">
             <div class="group-title">
               查询图层
-              <span class="layer-count">({{ getlayerCount('query') }})</span>
             </div>
           </div>
           
@@ -95,7 +92,6 @@
           <div class="group-header" @click="toggleGroupCollapse('upload')">
             <div class="group-title">
               上传图层
-              <span class="layer-count">({{ getlayerCount('upload') }})</span>
             </div>
           </div>
           
@@ -163,10 +159,6 @@ const toggleGroupCollapse = (source: string) => {
   collapsedGroups.value[source] = !collapsedGroups.value[source]
 }
 
-// 获取指定来源的图层数量
-const getlayerCount = (source: string): number => {
-  return alllayers.value.filter(item => item.source === source).length
-}
 
 // 获取指定来源的图层列表
 const getLayersBySource = (source: string): MaplayerItem[] => {
@@ -185,7 +177,7 @@ const alllayers = computed(() => {
       key: vl.id,
       name: vl.name,
       displayName: vl.name,
-      desc: inferDesc(vl.name, vl.type),
+      desc: '矢量数据',
       visible: vl.layer.getVisible(),
       source: source
     }
@@ -228,13 +220,6 @@ const alllayers = computed(() => {
 })
 
 
-function inferDesc(name: string, type: string): string {
-  if (type === 'raster') return '栅格数据 (DEM)'
-  if (name.includes('点')) return '点要素'
-  if (name.includes('线')) return '线要素'
-  if (name.includes('面')) return '面要素'
-  return '矢量数据'
-}
 
 const handleToggleVisibility = (item: MaplayerItem) => {
   togglelayerVisibility(item.key)
@@ -380,12 +365,6 @@ const handleToggleVisibility = (item: MaplayerItem) => {
 }
 
 
-.layer-count {
-  font-size: 11px;
-  color: inherit;
-  font-weight: normal;
-  opacity: 0.8;
-}
 
 .group-content {
   background: var(--panel);

@@ -289,6 +289,31 @@ const useMapStore = defineStore('map', () => {
     }
   }
 
+  /**
+   * 清理SuperMap服务图层
+   * 在路由切换或页面刷新时调用，避免重复加载
+   */
+  function clearSuperMapLayers() {
+    if (map.value) {
+      // 只清理SuperMap服务图层，保留本地图层
+      vectorlayers.value
+        .filter(item => item.source === 'supermap')
+        .forEach(item => {
+          try { 
+            map.value.removeLayer(item.layer) 
+            console.log(`已从地图中移除SuperMap图层: ${item.name}`)
+          } catch (_) { /* noop */ }
+        })
+    }
+    
+    // 从数组中移除SuperMap图层
+    const beforeCount = vectorlayers.value.length
+    vectorlayers.value = vectorlayers.value.filter(item => item.source !== 'supermap')
+    const afterCount = vectorlayers.value.length
+    
+    console.log(`清理SuperMap图层完成，移除 ${beforeCount - afterCount} 个图层`)
+  }
+
   function reloadConfig() {
     mapConfig.value = createMapConfig()
   }
@@ -640,6 +665,7 @@ const useMapStore = defineStore('map', () => {
     updateCoordinate,
     getSelectedFeatures,
     clearAlllayers,
+    clearSuperMapLayers,
     reloadConfig,
     clearCoordinate,
     // 距离量算方法
