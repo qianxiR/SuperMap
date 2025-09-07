@@ -18,7 +18,7 @@ export const useFeatureQueryStore = defineStore('featureQuery', () => {
   const mapStore = useMapStore()
   const modeStateStore = useModeStateStore()
 
-  const selectedLayerId = ref<string>('')
+  const selectedlayerId = ref<string>('')
   const queryResults = ref<any[]>([])
   const layerFields = ref<FieldInfo[]>([])
   const isQuerying = ref<boolean>(false)
@@ -39,19 +39,19 @@ export const useFeatureQueryStore = defineStore('featureQuery', () => {
     return null
   })
 
-  const getLayerOptions = () => {
-    const visibleLayers = mapStore.vectorLayers.filter(layer => layer.layer && layer.layer.getVisible())
-    return visibleLayers.map(layer => ({ value: layer.id, label: layer.name, disabled: false }))
+  const getlayerOptions = () => {
+    const visiblelayers = mapStore.vectorlayers.filter(layer => layer.layer && layer.layer.getVisible())
+    return visiblelayers.map(layer => ({ value: layer.id, label: layer.name, disabled: false }))
   }
 
-  const getSelectedLayerName = (layerId: string) => {
-    const layer = mapStore.vectorLayers.find(l => l.id === layerId)
+  const getSelectedlayerName = (layerId: string) => {
+    const layer = mapStore.vectorlayers.find(l => l.id === layerId)
     // 改进图层名称获取逻辑，确保返回有效的图层名称
     if (layer && layer.name) {
       return layer.name
     }
     // 如果通过 id 找不到，尝试通过名称查找
-    const layerByName = mapStore.vectorLayers.find(l => l.name === layerId)
+    const layerByName = mapStore.vectorlayers.find(l => l.name === layerId)
     if (layerByName && layerByName.name) {
       return layerByName.name
     }
@@ -59,8 +59,8 @@ export const useFeatureQueryStore = defineStore('featureQuery', () => {
     return '未知图层'
   }
 
-  const getLayerFeatureCount = (layerId: string) => {
-    const layer = mapStore.vectorLayers.find(l => l.id === layerId)
+  const getlayerFeatureCount = (layerId: string) => {
+    const layer = mapStore.vectorlayers.find(l => l.id === layerId)
     if (!layer || !layer.layer) return 0
     try {
       const source = layer.layer.getSource()
@@ -105,9 +105,9 @@ export const useFeatureQueryStore = defineStore('featureQuery', () => {
     return `${fieldType}类型字段`
   }
 
-  const getLayerFields = async (layerId: string) => {
+  const getlayerFields = async (layerId: string) => {
     if (!layerId) { layerFields.value = []; return [] }
-    const layer = mapStore.vectorLayers.find(l => l.id === layerId)
+    const layer = mapStore.vectorlayers.find(l => l.id === layerId)
     if (!layer || !layer.layer) { layerFields.value = []; return [] }
     try {
       const source = layer.layer.getSource()
@@ -199,7 +199,7 @@ export const useFeatureQueryStore = defineStore('featureQuery', () => {
   }
 
   const executeFrontendQuery = async (condition: QueryCondition) => {
-    const layer = mapStore.vectorLayers.find(l => l.id === selectedLayerId.value)
+    const layer = mapStore.vectorlayers.find(l => l.id === selectedlayerId.value)
     if (!layer || !layer.layer) return []
     
     // 直接从图层获取原始要素
@@ -249,8 +249,8 @@ export const useFeatureQueryStore = defineStore('featureQuery', () => {
 
   const highlightFeatureOnMap = (feature: any) => {
     if (!mapStore.map || !feature) return
-    if (mapStore.selectLayer && mapStore.selectLayer.getSource) {
-      const source = mapStore.selectLayer.getSource()
+    if (mapStore.selectlayer && mapStore.selectlayer.getSource) {
+      const source = mapStore.selectlayer.getSource()
       if (source) {
         const exists = source.getFeatures().some((f: any) => {
           const fGeom = f.getGeometry(); const oGeom = feature.getGeometry()
@@ -273,8 +273,8 @@ export const useFeatureQueryStore = defineStore('featureQuery', () => {
   }
 
   const startHighlightAnimation = () => {
-    if (!highlightedFeature.value || !mapStore.selectLayer) return
-    const source = mapStore.selectLayer.getSource()
+    if (!highlightedFeature.value || !mapStore.selectlayer) return
+    const source = mapStore.selectlayer.getSource()
     if (!source) return
     const grayFillColor = getComputedStyle(document.documentElement).getPropertyValue('--map-select-fill').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(33, 37, 41, 0.15)')
     const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--map-highlight-color').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000')
@@ -313,12 +313,12 @@ export const useFeatureQueryStore = defineStore('featureQuery', () => {
         }
       }
     }
-    mapStore.selectLayer.setStyle(createStyle())
-    mapStore.selectLayer.changed()
+    mapStore.selectlayer.setStyle(createStyle())
+    mapStore.selectlayer.changed()
   }
 
   const removeHighlightFeature = () => {
-    if (!mapStore.selectLayer) return
+    if (!mapStore.selectlayer) return
     const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--map-highlight-color').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000')
     const grayFillColor = getComputedStyle(document.documentElement).getPropertyValue('--map-select-fill').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(33, 37, 41, 0.15)')
     const restore = (feature: any) => {
@@ -339,16 +339,16 @@ export const useFeatureQueryStore = defineStore('featureQuery', () => {
           return new styleCtor.Style({ image: new styleCtor.Circle({ radius: 8, stroke: new styleCtor.Stroke({ color: highlightColor, width: 3 }), fill: new styleCtor.Fill({ color: grayFillColor }) }), stroke: new styleCtor.Stroke({ color: highlightColor, width: 3 }), fill: new styleCtor.Fill({ color: grayFillColor }) })
       }
     }
-    mapStore.selectLayer.setStyle(restore)
-    mapStore.selectLayer.changed()
+    mapStore.selectlayer.setStyle(restore)
+    mapStore.selectlayer.changed()
   }
 
   const removeFeaturesByTagOrMatch = (tag: string, candidates: any[] = []) => {
-    if (!mapStore.selectLayer || !mapStore.selectLayer.getSource) return
-    const source = mapStore.selectLayer.getSource()
+    if (!mapStore.selectlayer || !mapStore.selectlayer.getSource) return
+    const source = mapStore.selectlayer.getSource()
     if (!source) return
-    const featuresOnLayer = source.getFeatures?.() || []
-    featuresOnLayer.forEach((f: any) => {
+    const featuresOnlayer = source.getFeatures?.() || []
+    featuresOnlayer.forEach((f: any) => {
       const isTagMatch = f?.get && f.get('sourceTag') === tag
       const isGeomMatch = candidates.some((c: any) => isSameFeature(c, f))
       if (isTagMatch || isGeomMatch) {
@@ -361,7 +361,7 @@ export const useFeatureQueryStore = defineStore('featureQuery', () => {
     if (queryResults.value.length === 0) return
     try {
       removeFeaturesByTagOrMatch('query')
-      const selectSource = mapStore.selectLayer?.getSource()
+      const selectSource = mapStore.selectlayer?.getSource()
       if (selectSource) {
         queryResults.value.forEach((r: any) => {
           try { r.set('sourceTag', 'query') } catch (_) {}
@@ -384,20 +384,20 @@ export const useFeatureQueryStore = defineStore('featureQuery', () => {
     }
   }
 
-  const clearSelectedLayer = (layerId: string) => {
+  const clearSelectedlayer = (layerId: string) => {
     if (!layerId) return
-    const layer = mapStore.vectorLayers.find(l => l.id === layerId)
+    const layer = mapStore.vectorlayers.find(l => l.id === layerId)
     if (!layer || !layer.layer) return
     removeFeaturesByTagOrMatch('query', queryResults.value)
   }
 
-  const invertSelectedLayer = (layerId: string) => {
+  const invertSelectedlayer = (layerId: string) => {
     if (!layerId) return
-    const layer = mapStore.vectorLayers.find(l => l.id === layerId)
+    const layer = mapStore.vectorlayers.find(l => l.id === layerId)
     if (!layer || !layer.layer) return
     const source = layer.layer.getSource(); if (!source) return
     const all = source.getFeatures()
-    const selectSource = mapStore.selectLayer?.getSource(); if (!selectSource) return
+    const selectSource = mapStore.selectlayer?.getSource(); if (!selectSource) return
     // 仅清除查询侧高亮，避免影响区域侧
     removeFeaturesByTagOrMatch('query')
     const currentSelected = queryResults.value
@@ -455,7 +455,7 @@ export const useFeatureQueryStore = defineStore('featureQuery', () => {
 
     try {
       modeStateStore.saveToolState('query', {
-        selectedLayerId: selectedLayerId.value,
+        selectedlayerId: selectedlayerId.value,
         queryConfig: { condition: { ...queryConfig.condition } },
         queryResults: []
       })
@@ -465,7 +465,7 @@ export const useFeatureQueryStore = defineStore('featureQuery', () => {
   }
 
   const executeQuery = async () => {
-    if (!selectedLayerId.value) {
+    if (!selectedlayerId.value) {
       analysisStore.setAnalysisStatus('请选择查询图层')
       return { success: false, data: [], totalCount: 0, queryType: 'frontend' as const, error: '请选择查询图层' }
     }
@@ -473,7 +473,7 @@ export const useFeatureQueryStore = defineStore('featureQuery', () => {
     if (!validateQueryCondition(condition)) {
       return { success: false, data: [], totalCount: 0, queryType: 'frontend' as const, error: '查询条件不完整' }
     }
-    const layer = mapStore.vectorLayers.find(l => l.id === selectedLayerId.value)
+    const layer = mapStore.vectorlayers.find(l => l.id === selectedlayerId.value)
     if (!layer || !layer.layer) {
       analysisStore.setAnalysisStatus('图层不存在或不可用')
       return { success: false, data: [], totalCount: 0, queryType: 'frontend' as const, error: '图层不存在或不可用' }
@@ -497,7 +497,7 @@ export const useFeatureQueryStore = defineStore('featureQuery', () => {
 
   return {
     // state
-    selectedLayerId,
+    selectedlayerId,
     queryResults,
     layerFields,
     queryConfig,
@@ -509,20 +509,20 @@ export const useFeatureQueryStore = defineStore('featureQuery', () => {
     selectedFeature,
 
     // getters/helpers
-    getLayerOptions,
-    getSelectedLayerName,
-    getLayerFeatureCount,
+    getlayerOptions,
+    getSelectedlayerName,
+    getlayerFeatureCount,
 
     // actions
-    getLayerFields,
+    getlayerFields,
     executeQuery,
     highlightQueryResults,
     handleSelectFeature,
     highlightFeatureOnMap,
     triggerMapFeatureHighlight,
     removeHighlightFeature,
-    clearSelectedLayer,
-    invertSelectedLayer,
+    clearSelectedlayer,
+    invertSelectedlayer,
     isSameFeature,
     applyQuerySelection,
     clearQuerySelection

@@ -84,8 +84,8 @@ const isSameFeature = (feature1: any, feature2: any): boolean => {
       }
       
       // 清除地图上对应的点击选择高亮
-      if (mapStore.selectLayer && mapStore.selectLayer.getSource()) {
-        const source = mapStore.selectLayer.getSource()
+      if (mapStore.selectlayer && mapStore.selectlayer.getSource()) {
+        const source = mapStore.selectlayer.getSource()
         const features = source.getFeatures()
         features.forEach((f: any) => {
           if (f?.get && f.get('sourceTag') === 'click' && 
@@ -93,7 +93,7 @@ const isSameFeature = (feature1: any, feature2: any): boolean => {
             source.removeFeature(f)
           }
         })
-        mapStore.selectLayer.changed()
+        mapStore.selectlayer.changed()
       }
     } else if (sourceTag === 'area') {
       // 区域选择的要素：清除区域选择状态
@@ -114,8 +114,8 @@ const isSameFeature = (feature1: any, feature2: any): boolean => {
       }
       
       // 清除地图上对应的区域选择高亮
-      if (mapStore.selectLayer && mapStore.selectLayer.getSource()) {
-        const source = mapStore.selectLayer.getSource()
+      if (mapStore.selectlayer && mapStore.selectlayer.getSource()) {
+        const source = mapStore.selectlayer.getSource()
         const features = source.getFeatures()
         features.forEach((f: any) => {
           if (f?.get && f.get('sourceTag') === 'area' && 
@@ -123,7 +123,7 @@ const isSameFeature = (feature1: any, feature2: any): boolean => {
             source.removeFeature(f)
           }
         })
-        mapStore.selectLayer.changed()
+        mapStore.selectlayer.changed()
       }
     } else if (sourceTag === 'query') {
       // 查询选择的要素：清除查询选择状态
@@ -144,8 +144,8 @@ const isSameFeature = (feature1: any, feature2: any): boolean => {
       }
       
       // 清除地图上对应的查询选择高亮
-      if (mapStore.selectLayer && mapStore.selectLayer.getSource()) {
-        const source = mapStore.selectLayer.getSource()
+      if (mapStore.selectlayer && mapStore.selectlayer.getSource()) {
+        const source = mapStore.selectlayer.getSource()
         const features = source.getFeatures()
         features.forEach((f: any) => {
           if (f?.get && f.get('sourceTag') === 'query' && 
@@ -153,7 +153,7 @@ const isSameFeature = (feature1: any, feature2: any): boolean => {
             source.removeFeature(f)
           }
         })
-        mapStore.selectLayer.changed()
+        mapStore.selectlayer.changed()
       }
     }
   }

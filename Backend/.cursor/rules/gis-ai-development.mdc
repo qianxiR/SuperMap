@@ -33,7 +33,7 @@
 ### 2. 空间分析功能
 - 缓冲区分析 (Buffer Analysis)
 - 最短路径分析 (Shortest Path Analysis)
-- 叠加分析 (Overlay Analysis)
+- 叠加分析 (intersect Analysis)
 - 自定义分析类型
 
 ### 3. SuperMap服务集成

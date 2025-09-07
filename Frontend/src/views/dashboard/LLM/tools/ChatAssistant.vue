@@ -216,7 +216,7 @@ const demoMessage = (): string => {
   ].join('\n');
 }
 
-const maybeAnnounceInitialLayers = () => {
+const maybeAnnounceInitiallayers = () => {
   // 不再依赖地图是否 ready，确保可直接开始对话
   if (!hasAnnounced.value) {
     messages.value.push({
@@ -247,7 +247,7 @@ onMounted(async () => {
   
   // 如果没有恢复的状态，则显示初始消息
   if (messages.value.length === 0) {
-    maybeAnnounceInitialLayers();
+    maybeAnnounceInitiallayers();
   }
   
   await nextTick();
@@ -296,7 +296,7 @@ watch([messages, newMessage], () => {
 
 // 地图就绪与否均可发送消息，保留监听但不做限制
 watch(() => props.mapReady, () => {
-  maybeAnnounceInitialLayers();
+  maybeAnnounceInitiallayers();
 });
 
 watch(messages, async () => {
@@ -379,7 +379,7 @@ const startNewConversation = () => {
   hasAnnounced.value = false;
   
   // 重新显示初始消息
-  maybeAnnounceInitialLayers();
+  maybeAnnounceInitiallayers();
   
   // 清空保存的状态
   modeStateStore.saveLLMState({

@@ -3,9 +3,9 @@ import { useMapStore } from '@/stores/mapStore'
 import { useSelectionStore } from '@/stores/selectionStore'
 import { usePopupStore } from '@/stores/popupStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
-import type { MapLayer, DrawLayerSaveType, Polygon, Feature, FeatureCollection } from '@/types/map';
+import type { Maplayer, DrawlayerSaveType, Polygon, Feature, FeatureCollection } from '@/types/map';
 
-export function useLayerManager() {
+export function uselayermanager() {
   const mapStore = useMapStore()
   const selectionStore = useSelectionStore()
   const popupStore = usePopupStore()
@@ -21,18 +21,18 @@ export function useLayerManager() {
   })
 
   // 清除特定图层的选择高亮
-  const clearLayerSelection = (layerName: string) => {
+  const clearlayerSelection = (layerName: string) => {
     
     
-    if (!mapStore.selectLayer || !mapStore.selectLayer.getSource()) return
+    if (!mapStore.selectlayer || !mapStore.selectlayer.getSource()) return
 
-    const source = mapStore.selectLayer.getSource()
+    const source = mapStore.selectlayer.getSource()
     const features = source.getFeatures()
     
     // 找出属于该图层的选择要素并移除
     const featuresToRemove = features.filter((feature: any) => {
       // 通过几何坐标比较来判断要素是否属于该图层
-      const layerInfo = mapStore.vectorLayers.find(l => l.name === layerName)
+      const layerInfo = mapStore.vectorlayers.find(l => l.name === layerName)
       if (layerInfo && layerInfo.layer) {
         const layerSource = layerInfo.layer.getSource()
         if (layerSource) {
@@ -63,11 +63,11 @@ export function useLayerManager() {
     // 检查弹窗中的要素是否属于被隐藏的图层
     const popupFeature = popupStore.feature
     if (popupFeature) {
-      const popupLayerName = popupFeature.get('layerName') || 
+      const popuplayerName = popupFeature.get('layerName') || 
                             (popupFeature.getProperties ? popupFeature.getProperties().layerName : null) ||
                             (popupFeature.properties ? popupFeature.properties.layerName : null)
       
-      if (popupLayerName === layerName) {
+      if (popuplayerName === layerName) {
         
         popupStore.hidePopup()
       }
@@ -77,12 +77,12 @@ export function useLayerManager() {
     const currentSelectedFeature = selectionStore.currentSelectedFeature
     if (currentSelectedFeature) {
       // 通过几何坐标比较来判断当前选中要素是否属于被隐藏的图层
-      const layerInfo = mapStore.vectorLayers.find(l => l.name === layerName)
+      const layerInfo = mapStore.vectorlayers.find(l => l.name === layerName)
       if (layerInfo && layerInfo.layer) {
         const layerSource = layerInfo.layer.getSource()
         if (layerSource) {
           const layerFeatures = layerSource.getFeatures()
-          const isFromHiddenLayer = layerFeatures.some((lf: any) => {
+          const isFromHiddenlayer = layerFeatures.some((lf: any) => {
             const lfGeom = lf.getGeometry()
             const currentGeom = currentSelectedFeature.getGeometry()
             if (lfGeom && currentGeom) {
@@ -93,7 +93,7 @@ export function useLayerManager() {
             return false
           })
           
-          if (isFromHiddenLayer) {
+          if (isFromHiddenlayer) {
             
             selectionStore.clearSelection()
           }
@@ -103,7 +103,7 @@ export function useLayerManager() {
 
     // 从持久化选择列表中移除相关要素（通过几何坐标比较）
     const updatedFeatures = selectionStore.selectedFeatures.filter((feature: any) => {
-      const layerInfo = mapStore.vectorLayers.find(l => l.name === layerName)
+      const layerInfo = mapStore.vectorlayers.find(l => l.name === layerName)
       if (layerInfo && layerInfo.layer) {
         const layerSource = layerInfo.layer.getSource()
         if (layerSource) {
@@ -130,15 +130,15 @@ export function useLayerManager() {
     }
 
     // 强制刷新选择图层以确保高亮效果立即消失
-    if (mapStore.selectLayer) {
-      mapStore.selectLayer.changed()
+    if (mapStore.selectlayer) {
+      mapStore.selectlayer.changed()
     }
 
     
   }
 
-  const toggleLayerVisibility = async (layerId: string) => {
-    const layerInfo = mapStore.vectorLayers.find(l => l.id === layerId)
+  const togglelayerVisibility = async (layerId: string) => {
+    const layerInfo = mapStore.vectorlayers.find(l => l.id === layerId)
     if (layerInfo && layerInfo.layer) {
       const currentVisibility = layerInfo.layer.getVisible()
       const newVisibility = !currentVisibility
@@ -148,11 +148,11 @@ export function useLayerManager() {
       // 如果图层被隐藏，立即清除该图层的选择高亮和组件状态
       if (!newVisibility) {
         
-        clearLayerSelection(layerInfo.name)
+        clearlayerSelection(layerInfo.name)
         
         // 强制清除所有选择状态，确保完全清除
-        if (mapStore.selectLayer && mapStore.selectLayer.getSource()) {
-          const source = mapStore.selectLayer.getSource()
+        if (mapStore.selectlayer && mapStore.selectlayer.getSource()) {
+          const source = mapStore.selectlayer.getSource()
           const features = source.getFeatures()
           features.forEach((f: any) => {
             if (f?.get && (f.get('sourceTag') === 'click' || f.get('sourceTag') === 'area' || f.get('sourceTag') === 'query')) {
@@ -175,11 +175,11 @@ export function useLayerManager() {
       layerInfo.layer.setVisible(newVisibility)
       
       // 确保响应式更新 - 使用数组索引直接更新
-      const layerIndex = mapStore.vectorLayers.findIndex(l => l.id === layerId)
+      const layerIndex = mapStore.vectorlayers.findIndex(l => l.id === layerId)
       if (layerIndex > -1) {
         // 创建新的对象来触发响应式更新
-        mapStore.vectorLayers[layerIndex] = {
-          ...mapStore.vectorLayers[layerIndex],
+        mapStore.vectorlayers[layerIndex] = {
+          ...mapStore.vectorlayers[layerIndex],
           visible: newVisibility
         }
       }
@@ -189,15 +189,15 @@ export function useLayerManager() {
   }
 
   const removeLayer = (layerId: string) => {
-    const index = mapStore.vectorLayers.findIndex(l => l.id === layerId)
+    const index = mapStore.vectorlayers.findIndex(l => l.id === layerId)
     if (index > -1) {
-      const layerInfo = mapStore.vectorLayers[index]
+      const layerInfo = mapStore.vectorlayers[index]
       if (layerInfo.layer && mapStore.map) {
         // 移除图层前，清除该图层的选择高亮
-        clearLayerSelection(layerInfo.name)
+        clearlayerSelection(layerInfo.name)
         
         mapStore.map.removeLayer(layerInfo.layer)
-        mapStore.vectorLayers.splice(index, 1)
+        mapStore.vectorlayers.splice(index, 1)
         return true
       }
     }
@@ -205,22 +205,22 @@ export function useLayerManager() {
   }
 
   // 保留原有的被禁用的函数，以防其他地方有依赖
-  const acceptDrawLayer = (_layerData: MapLayer): boolean => {
+  const acceptDrawlayer = (_layerData: Maplayer): boolean => {
     
     return false
   }
 
-  const toggleDrawLayerVisibility = (_layerId: string): boolean => {
+  const toggleDrawlayerVisibility = (_layerId: string): boolean => {
     
     return false
   }
 
-  const removeDrawLayer = (_layerId: string): boolean => {
+  const removeDrawlayer = (_layerId: string): boolean => {
     
     return false
   }
 
-  const updateLayerProperties = (_layerId: string, _properties: Partial<MapLayer>): boolean => {
+  const updatelayerProperties = (_layerId: string, _properties: Partial<Maplayer>): boolean => {
     
     return false
   }
@@ -273,7 +273,7 @@ export function useLayerManager() {
   }
 
   // 获取绘制图层的数据源
-  const getDrawLayerSource = () => {
+  const getDrawlayerSource = () => {
     
     
     // 从地图中查找绘制图层
@@ -287,11 +287,11 @@ export function useLayerManager() {
     
     for (let i = 0; i < layers.getLength(); i++) {
       const layer = layers.item(i)
-      const isDrawLayer = layer.get('isDrawLayer')
+      const isDrawlayer = layer.get('isDrawlayer')
       
       
       // 检查是否是绘制图层（通过样式或其他特征识别）
-      if (isDrawLayer) {
+      if (isDrawlayer) {
         const source = layer.getSource()
         
         return source
@@ -352,7 +352,7 @@ export function useLayerManager() {
 
 
   // 通用保存要素为图层的插槽函数
-  const saveFeaturesAsLayer = async (
+  const saveFeaturesAslayer = async (
     features: any[], 
     layerName: string, 
     sourceType: 'draw' | 'area' | 'query' | 'buffer' | 'path' | 'upload' | 'intersect' | 'erase' = 'draw'
@@ -365,9 +365,9 @@ export function useLayerManager() {
     }
 
     try {
-      // 检查OpenLayers是否可用
+      // 检查Openlayers是否可用
       if (!window.ol) {
-        throw new Error('OpenLayers库未加载')
+        throw new Error('Openlayers库未加载')
       }
 
       // 分析要素类型，决定保存格式
@@ -461,7 +461,7 @@ export function useLayerManager() {
       })
 
       // 根据来源类型设置不同的样式
-      const getLayerStyle = () => {
+      const getlayerStyle = () => {
         const css = getComputedStyle(document.documentElement)
         const panelColor = css.getPropertyValue('--panel').trim() || '#ffffff'
         
@@ -539,19 +539,19 @@ export function useLayerManager() {
         }
       }
 
-      const newLayer = new ol.layer.Vector({
+      const newlayer = new ol.layer.Vector({
         source: newSource,
-        style: getLayerStyle()
+        style: getlayerStyle()
       })
 
       // 设置图层标识
-      newLayer.set('isDrawLayer', false)
-      newLayer.set('isSavedDrawLayer', true)
-      newLayer.set('layerName', layerName)
-      newLayer.set('sourceType', sourceType)
+      newlayer.set('isDrawlayer', false)
+      newlayer.set('isSavedDrawlayer', true)
+      newlayer.set('layerName', layerName)
+      newlayer.set('sourceType', sourceType)
 
       // 添加到地图
-      mapStore.map.addLayer(newLayer)
+      mapStore.map.addLayer(newlayer)
 
       // 添加到图层管理列表
       const layerId = `${sourceType}_${Date.now()}`
@@ -559,17 +559,17 @@ export function useLayerManager() {
       const layerInfo = {
         id: layerId,
         name: layerName,
-        layer: newLayer,
+        layer: newlayer,
         visible: true,
         type: 'vector' as const,
         source: 'local' as const
       }
       
       
-      mapStore.vectorLayers.push(layerInfo)
+      mapStore.vectorlayers.push(layerInfo)
       
       // 强制触发响应式更新
-      mapStore.vectorLayers = [...mapStore.vectorLayers]
+      mapStore.vectorlayers = [...mapStore.vectorlayers]
 
       
 
@@ -602,10 +602,10 @@ export function useLayerManager() {
   }
 
   // 将绘制内容保存为GeoJSON图层（支持多种保存格式）
-  const saveDrawAsLayer = async (layerName?: string): Promise<DrawLayerSaveType | false> => {
+  const saveDrawAslayer = async (layerName?: string): Promise<DrawlayerSaveType | false> => {
     
     
-    const drawSource = getDrawLayerSource()
+    const drawSource = getDrawlayerSource()
     if (!drawSource) {
       
       return false
@@ -634,7 +634,7 @@ export function useLayerManager() {
 
     // 根据要素类型决定保存格式
     let saveFormat: 'polygon' | 'featurecollection'
-    let result: DrawLayerSaveType
+    let result: DrawlayerSaveType
 
     if (geometryTypes.size === 1 && geometryTypes.has('Polygon')) {
       // 只有多边形时，保存为多边形
@@ -677,13 +677,13 @@ export function useLayerManager() {
     }
 
     // 生成默认图层名称
-    const defaultLayerName = generateDefaultDrawLayerName(geometryTypes)
-    const finalLayerName = layerName || defaultLayerName
+    const defaultlayerName = generateDefaultDrawlayerName(geometryTypes)
+    const finallayerName = layerName || defaultlayerName
 
     // 使用通用插槽函数保存绘制要素
-    const success = await saveFeaturesAsLayer(
+    const success = await saveFeaturesAslayer(
       features, 
-      finalLayerName, 
+      finallayerName, 
       'draw'
     )
 
@@ -697,7 +697,7 @@ export function useLayerManager() {
   }
 
   // 生成默认绘制图层名称
-  const generateDefaultDrawLayerName = (geometryTypes: Set<string>): string => {
+  const generateDefaultDrawlayerName = (geometryTypes: Set<string>): string => {
     const timestamp = new Date().toLocaleString('zh-CN', {
       month: '2-digit',
       day: '2-digit',
@@ -728,7 +728,7 @@ export function useLayerManager() {
       return
     }
 
-    const drawSource = getDrawLayerSource()
+    const drawSource = getDrawlayerSource()
     if (!drawSource) {
       return
     }
@@ -754,17 +754,17 @@ export function useLayerManager() {
 
   return {
     // 激活新功能
-    toggleLayerVisibility,
+    togglelayerVisibility,
     removeLayer,
-    clearLayerSelection,
+    clearlayerSelection,
 
     // 绘制相关功能
     isDrawingMode,
     handleDrawClear,
-    saveDrawAsLayer,
+    saveDrawAslayer,
 
     // 通用保存功能
-    saveFeaturesAsLayer,
+    saveFeaturesAslayer,
 
     // 确认对话框相关
     showConfirmDialog,
@@ -775,11 +775,11 @@ export function useLayerManager() {
     handleConfirmDialogClose,
 
     // 旧的禁用功能
-    managedDrawLayers: computed(() => []),
-    acceptDrawLayer,
-    toggleDrawLayerVisibility,
-    removeDrawLayer,
-    updateLayerProperties,
+    managedDrawlayers: computed(() => []),
+    acceptDrawlayer,
+    toggleDrawlayerVisibility,
+    removeDrawlayer,
+    updatelayerProperties,
     findFeatureAtCoordinate,
     toggleFeatureVisibility,
     removeFeature,

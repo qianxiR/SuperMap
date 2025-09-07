@@ -1,6 +1,6 @@
 /**
  * 几何转换工具函数
- * 用于在OpenLayers和Turf.js之间进行几何数据转换
+ * 用于在Openlayers和Turf.js之间进行几何数据转换
  */
 
 declare global {
@@ -10,9 +10,9 @@ declare global {
 }
 
 /**
- * 将OpenLayers要素直接转换为turf几何对象
- * 输入数据格式：OpenLayers Feature对象
- * 数据处理方法：直接从OpenLayers几何对象中提取坐标和类型信息，创建对应的turf几何对象
+ * 将Openlayers要素直接转换为turf几何对象
+ * 输入数据格式：Openlayers Feature对象
+ * 数据处理方法：直接从Openlayers几何对象中提取坐标和类型信息，创建对应的turf几何对象
  * 输出数据格式：turf几何对象（Feature类型）
  */
 export const convertFeatureToTurfGeometry = (feature: any): any => {
@@ -48,8 +48,8 @@ export const convertFeatureToTurfGeometry = (feature: any): any => {
 }
 
 /**
- * 将OpenLayers要素数组转换为turf几何对象数组
- * 输入数据格式：OpenLayers Feature数组
+ * 将Openlayers要素数组转换为turf几何对象数组
+ * 输入数据格式：Openlayers Feature数组
  * 数据处理方法：批量转换每个要素为turf几何对象，过滤无效要素
  * 输出数据格式：turf几何对象数组
  */
@@ -58,10 +58,10 @@ export const convertFeaturesToTurfGeometries = (features: any[]): any[] => {
 }
 
 /**
- * 将turf几何对象转换为OpenLayers几何对象
+ * 将turf几何对象转换为Openlayers几何对象
  * 输入数据格式：turf几何对象（包含geometry属性）
- * 数据处理方法：使用OpenLayers的GeoJSON格式器读取几何数据
- * 输出数据格式：OpenLayers几何对象
+ * 数据处理方法：使用Openlayers的GeoJSON格式器读取几何数据
+ * 输出数据格式：Openlayers几何对象
  */
 export const convertTurfGeometryToOlGeometry = (turfGeometry: any): any => {
   if (!turfGeometry || !turfGeometry.geometry) return null
@@ -71,10 +71,10 @@ export const convertTurfGeometryToOlGeometry = (turfGeometry: any): any => {
 }
 
 /**
- * 将turf几何对象转换为OpenLayers要素
+ * 将turf几何对象转换为Openlayers要素
  * 输入数据格式：turf几何对象和属性对象
- * 数据处理方法：先转换为OpenLayers几何对象，再创建Feature
- * 输出数据格式：OpenLayers Feature对象
+ * 数据处理方法：先转换为Openlayers几何对象，再创建Feature
+ * 输出数据格式：Openlayers Feature对象
  */
 export const convertTurfGeometryToOlFeature = (turfGeometry: any, properties: any = {}): any => {
   const geometry = convertTurfGeometryToOlGeometry(turfGeometry)

@@ -230,11 +230,14 @@ const setMode = (modeId: 'traditional' | 'llm') => {
       'bianji': 'area-selection',
       'buffer': 'buffer',
       'distance': 'distance',
+      'intersect': 'intersect',
+      'erase': 'erase',
+      'upload': 'upload'
     }
     const path = toolPathMap[traditionalState.activeTool] || 'layer'
-    router.push(`/dashboard/traditional/${path}`)
+    router.push(`/dashboard/management-analysis/traditional/${path}`)
   } else {
-    router.push('/dashboard/llm')
+    router.push('/dashboard/management-analysis/llm')
   }
 };
 
@@ -245,11 +248,11 @@ onMounted(() => {
   
   // 确保模式状态与当前路由同步
   const currentPath = router.currentRoute.value.path
-  if (currentPath.includes('/dashboard/llm')) {
+  if (currentPath.includes('/dashboard/management-analysis/llm')) {
     if (modeStateStore.currentMode !== 'llm') {
       modeStateStore.switchMode('llm')
     }
-  } else if (currentPath.includes('/dashboard/traditional')) {
+  } else if (currentPath.includes('/dashboard/management-analysis/traditional')) {
     if (modeStateStore.currentMode !== 'traditional') {
       modeStateStore.switchMode('traditional')
     }
@@ -272,11 +275,11 @@ onMounted(() => {
 
 // 监听路由变化，同步模式状态
 watch(() => router.currentRoute.value.path, (newPath: string) => {
-  if (newPath.includes('/dashboard/llm')) {
+  if (newPath.includes('/dashboard/management-analysis/llm')) {
     if (modeStateStore.currentMode !== 'llm') {
       modeStateStore.switchMode('llm')
     }
-  } else if (newPath.includes('/dashboard/traditional')) {
+  } else if (newPath.includes('/dashboard/management-analysis/traditional')) {
     if (modeStateStore.currentMode !== 'traditional') {
       modeStateStore.switchMode('traditional')
     }

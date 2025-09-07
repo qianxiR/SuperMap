@@ -1,5 +1,5 @@
 <template>
-  <div v-if="visible" class="modal-overlay" @click="handleOverlayClick">
+  <div v-if="visible" class="modal-intersect" @click="handleintersectClick">
     <div class="modal-container" @click.stop>
       <div class="modal-header">
         <h3 class="modal-title">{{ title }}</h3>
@@ -94,13 +94,13 @@ const handleClose = () => {
   emit('close')
 }
 
-const handleOverlayClick = () => {
+const handleintersectClick = () => {
   handleClose()
 }
 </script>
 
 <style scoped>
-.modal-overlay {
+.modal-intersect {
   position: fixed;
   top: 0;
   left: 0;

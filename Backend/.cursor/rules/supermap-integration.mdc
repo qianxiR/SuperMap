@@ -507,15 +507,15 @@ class SuperMapSpatialAnalystService:
                 "method": "bufferAnalysis"
             }
     
-    async def overlay_analysis(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+    async def intersect_analysis(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """叠加分析"""
         try:
             # 构建SuperMap请求参数
-            request_params = self._build_overlay_params(parameters)
+            request_params = self._build_intersect_params(parameters)
             
             # 调用SuperMap服务
             response = await self._call_supermap_service(
-                method="overlayAnalysis",
+                method="intersectAnalysis",
                 parameters=request_params
             )
             
@@ -523,7 +523,7 @@ class SuperMapSpatialAnalystService:
                 "success": True,
                 "data": response,
                 "service_type": "spatial_analyst",
-                "method": "overlayAnalysis"
+                "method": "intersectAnalysis"
             }
             
         except Exception as e:
@@ -531,7 +531,7 @@ class SuperMapSpatialAnalystService:
                 "success": False,
                 "error_message": str(e),
                 "service_type": "spatial_analyst",
-                "method": "overlayAnalysis"
+                "method": "intersectAnalysis"
             }
     
     def _build_buffer_params(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -549,7 +549,7 @@ class SuperMapSpatialAnalystService:
             }
         }
     
-    def _build_overlay_params(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+    def _build_intersect_params(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """构建叠加分析参数"""
         return {
             "layer1": parameters.get("layer1"),

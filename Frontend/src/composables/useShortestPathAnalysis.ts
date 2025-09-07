@@ -1,10 +1,9 @@
-import { ref, computed } from 'vue'
+import { ref, computed, toRefs } from 'vue'
 import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
-import { useLayerManager } from '@/composables/useLayerManager'
+import { useShortestPathAnalysisStore } from '@/stores/shortestPathAnalysisStore'
+import { uselayermanager } from '@/composables/uselayermanager'
 import { getAnalysisServiceConfig } from '@/api/config'
-import shortestPath from '@turf/shortest-path'
-import { feature, point, lineString, polygon, featureCollection } from '@turf/turf'
 import { convertFeatureToTurfGeometry, convertFeaturesToTurfGeometries } from '@/utils/geometryConverter'
 
 declare global {
@@ -27,7 +26,7 @@ interface ShortestPathResult {
   distance: number
   duration: number
   pathType: string
-  sourceLayerName: string
+  sourcelayerName: string
   createdAt: string
 }
 
@@ -49,38 +48,42 @@ interface ShortestPathOptions {
 export function useShortestPathAnalysis() {
   const mapStore = useMapStore()
   const analysisStore = useAnalysisStore()
-  const { saveFeaturesAsLayer } = useLayerManager()
+  const shortestPathStore = useShortestPathAnalysisStore()
+  const { saveFeaturesAslayer } = uselayermanager()
   
-  // ===== 核心状态 =====
-  const analysisResults = ref<ShortestPathResult[]>([])
-  const layerName = ref<string>('')
+  // 从 store 获取状态
+  const {
+    state,
+    hasResults,
+    canAnalyze,
+    hasStartPoint,
+    hasEndPoint,
+    currentResult,
+    startPointInfo,
+    endPointInfo,
+    setStartPoint,
+    setEndPoint,
+    updateAnalysisOptions,
+    setAnalysisResults,
+    setIsAnalyzing,
+    setIsSelectingStartPoint,
+    setIsSelectingEndPoint,
+    setLayerName,
+    setAnalysisLayers,
+    clearResults: clearResultsStore,
+    clearPoints,
+    clearAll
+  } = shortestPathStore
   
-  // 地图交互状态
-  const isSelectingStartPoint = ref<boolean>(false)
-  const isSelectingEndPoint = ref<boolean>(false)
-  const startPoint = ref<any>(null)
-  const endPoint = ref<any>(null)
+  // 直接使用 store 的状态，不解构
   
-  // 分析配置选项
-  const analysisOptions = ref<ShortestPathOptions>({
-    obstacles: null,
-    units: 'kilometers',
-    resolution: 1000  // 设置网格分辨率为1000米
-  })
+  // 重新定义计算属性，确保响应式更新
+  const canAnalyzeLocal = computed(() => !!(state.startPoint && state.endPoint))
   
-  // 分析图层引用
-  const analysisLayers = ref({
-    startPointLayer: null as any,
-    endPointLayer: null as any,
-    pathLayer: null as any,
-    obstaclesLayer: null as any
-  })
-  
-  // ===== 计算属性 =====
-  const startPointInfo = computed<PointInfo | null>(() => {
-    if (!startPoint.value) return null
+  const startPointInfoLocal = computed<PointInfo | null>(() => {
+    if (!state.startPoint) return null
     
-    const geometry = startPoint.value.getGeometry()
+    const geometry = state.startPoint.getGeometry()
     const coords = geometry?.getCoordinates()
     
     return {
@@ -90,10 +93,10 @@ export function useShortestPathAnalysis() {
     }
   })
   
-  const endPointInfo = computed<PointInfo | null>(() => {
-    if (!endPoint.value) return null
+  const endPointInfoLocal = computed<PointInfo | null>(() => {
+    if (!state.endPoint) return null
     
-    const geometry = endPoint.value.getGeometry()
+    const geometry = state.endPoint.getGeometry()
     const coords = geometry?.getCoordinates()
     
     return {
@@ -103,15 +106,11 @@ export function useShortestPathAnalysis() {
     }
   })
   
-  const canAnalyze = computed<boolean>(() => {
-    return !!(startPoint.value && endPoint.value)
-  })
-  
   // ===== 图层显示方法 =====
   
   const displayAnalysisResults = (results: ShortestPathResult[]): void => {
     // 只移除之前的路径图层，保留起始点和目标点
-    removePathLayersOnly()
+    removePathlayersOnly()
     
     if (results.length === 0) return
     
@@ -126,7 +125,7 @@ export function useShortestPathAnalysis() {
           distance: result.distance,
           duration: result.duration,
           pathType: result.pathType,
-          sourceLayer: result.sourceLayerName,
+          sourcelayer: result.sourcelayerName,
           createdAt: result.createdAt
         }
       })
@@ -134,23 +133,23 @@ export function useShortestPathAnalysis() {
     })
     
     // 设置分析图层样式
-    const analysisLayer = new window.ol.layer.Vector({
+    const analysislayer = new window.ol.layer.Vector({
       source: new window.ol.source.Vector({ features: analysisFeatures }),
-      style: getAnalysisLayerStyle(),
+      style: getAnalysislayerStyle(),
       zIndex: 999
     })
     
     // 设置图层标识属性
-    analysisLayer.set('isAnalysisLayer', true)
-    analysisLayer.set('id', `path-layer-${Date.now()}`)
-    analysisLayer.set('analysisType', 'path')
-    analysisLayer.set('analysisResults', results)
+    analysislayer.set('isAnalysislayer', true)
+    analysislayer.set('id', `path-layer-${Date.now()}`)
+    analysislayer.set('analysisType', 'path')
+    analysislayer.set('analysisResults', results)
     
-    analysisLayers.value.pathLayer = analysisLayer
-    mapStore.map.addLayer(analysisLayer)
+    setAnalysisLayers({ pathlayer: analysislayer })
+    mapStore.map.addLayer(analysislayer)
     
     // 自动缩放到分析结果范围
-    const extent = analysisLayer.getSource().getExtent()
+    const extent = analysislayer.getSource().getExtent()
     if (extent && extent.every((coord: number) => isFinite(coord))) {
       mapStore.map.getView().fit(extent, {
         padding: [50, 50, 50, 50],
@@ -170,7 +169,7 @@ export function useShortestPathAnalysis() {
   }
 
   // 获取分析图层样式 - 使用主题色
-  const getAnalysisLayerStyle = () => {
+  const getAnalysislayerStyle = () => {
     return new window.ol.style.Style({
       stroke: new window.ol.style.Stroke({
         color: '#0078D4', // 蓝色
@@ -184,14 +183,14 @@ export function useShortestPathAnalysis() {
   
   // ===== 保存为图层方法 =====
   
-  const saveAnalysisLayer = async (customLayerName?: string) => {
-    const name = customLayerName || generateLayerNameFromAnalysis()
+  const saveAnalysislayer = async (customlayerName?: string) => {
+    const name = customlayerName || generatelayerNameFromAnalysis()
     
     // 创建Feature对象数组，包含路径和起始点、目标点
     const allFeatures: any[] = []
     
     // 添加路径要素
-    analysisResults.value.forEach(result => {
+    state.analysisResults.forEach(result => {
       const geometry = new window.ol.format.GeoJSON().readGeometry(result.geometry)
       const feature = new window.ol.Feature({
         geometry: geometry,
@@ -201,7 +200,7 @@ export function useShortestPathAnalysis() {
           distance: result.distance,
           duration: result.duration,
           pathType: result.pathType,
-          sourceLayer: result.sourceLayerName,
+          sourcelayer: result.sourcelayerName,
           createdAt: result.createdAt,
           featureType: 'path' // 标识为路径要素
         }
@@ -210,8 +209,8 @@ export function useShortestPathAnalysis() {
     })
     
     // 添加起始点要素
-    if (startPoint.value) {
-      const startGeometry = startPoint.value.getGeometry()
+    if (state.startPoint) {
+      const startGeometry = state.startPoint.getGeometry()
       if (startGeometry) {
         const startFeature = new window.ol.Feature({
           geometry: startGeometry,
@@ -227,8 +226,8 @@ export function useShortestPathAnalysis() {
     }
     
     // 添加目标点要素
-    if (endPoint.value) {
-      const endGeometry = endPoint.value.getGeometry()
+    if (state.endPoint) {
+      const endGeometry = state.endPoint.getGeometry()
       if (endGeometry) {
         const endFeature = new window.ol.Feature({
           geometry: endGeometry,
@@ -244,27 +243,23 @@ export function useShortestPathAnalysis() {
     }
     
     // 调用通用保存函数
-    const success = await saveFeaturesAsLayer(
+    const success = await saveFeaturesAslayer(
       allFeatures,
       name,
       'path'
     )
     
     if (success) {
-      removeAnalysisLayers()
-      startPoint.value = null
-      endPoint.value = null
-      analysisResults.value = []
-      isSelectingStartPoint.value = false
-      isSelectingEndPoint.value = false
-      layerName.value = name
+      removeAnalysislayers()
+      clearAll()
+      setLayerName(name)
     }
     
     return success
   }
   
   // 生成图层名称
-  const generateLayerNameFromAnalysis = (): string => {
+  const generatelayerNameFromAnalysis = (): string => {
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-')
     return `分析图层_${timestamp}`
   }
@@ -272,21 +267,11 @@ export function useShortestPathAnalysis() {
   // ===== 清空图层方法 =====
   
   const clearResults = () => {
-    removeAnalysisLayers()
-    analysisResults.value = []
-    layerName.value = ''
-    startPoint.value = null
-    endPoint.value = null
-    isSelectingStartPoint.value = false
-    isSelectingEndPoint.value = false
-    analysisOptions.value = {
-      obstacles: null,
-      units: 'kilometers',
-      resolution: 100
-    }
+    removeAnalysislayers()
+    clearAll()
   }
   
-  const removePathLayersOnly = (): void => {
+  const removePathlayersOnly = (): void => {
     if (!mapStore.map) return
     
     const layers = mapStore.map.getLayers().getArray()
@@ -296,32 +281,32 @@ export function useShortestPathAnalysis() {
       }
     })
     
-    analysisLayers.value.pathLayer = null
+    setAnalysisLayers({ pathlayer: null })
   }
   
-  const removeAnalysisLayers = (): void => {
+  const removeAnalysislayers = (): void => {
     if (!mapStore.map) return
     
     // 直接通过图层引用移除图层
-    if (analysisLayers.value.startPointLayer) {
-      mapStore.map.removeLayer(analysisLayers.value.startPointLayer)
-      analysisLayers.value.startPointLayer = null
+    if (state.analysislayers.startPointlayer) {
+      mapStore.map.removeLayer(state.analysislayers.startPointlayer)
+      setAnalysisLayers({ startPointlayer: null })
     }
     
-    if (analysisLayers.value.endPointLayer) {
-      mapStore.map.removeLayer(analysisLayers.value.endPointLayer)
-      analysisLayers.value.endPointLayer = null
+    if (state.analysislayers.endPointlayer) {
+      mapStore.map.removeLayer(state.analysislayers.endPointlayer)
+      setAnalysisLayers({ endPointlayer: null })
     }
     
-    if (analysisLayers.value.pathLayer) {
-      mapStore.map.removeLayer(analysisLayers.value.pathLayer)
-      analysisLayers.value.pathLayer = null
+    if (state.analysislayers.pathlayer) {
+      mapStore.map.removeLayer(state.analysislayers.pathlayer)
+      setAnalysisLayers({ pathlayer: null })
     }
     
     // 额外检查：通过图层属性移除可能遗漏的图层
     const layers = mapStore.map.getLayers().getArray()
     layers.forEach((layer: any) => {
-      if (layer.get && (layer.get('isAnalysisLayer') || layer.get('isStartPointLayer') || layer.get('isEndPointLayer') || layer.get('analysisType') === 'path')) {
+      if (layer.get && (layer.get('isAnalysislayer') || layer.get('isStartPointlayer') || layer.get('isEndPointlayer') || layer.get('analysisType') === 'path')) {
         mapStore.map.removeLayer(layer)
       }
     })
@@ -333,7 +318,7 @@ export function useShortestPathAnalysis() {
     const allFeatures: any[] = []
     
     // 添加路径要素
-    analysisResults.value.forEach(result => {
+    state.analysisResults.forEach(result => {
       allFeatures.push({
         type: 'Feature',
         geometry: result.geometry,
@@ -343,7 +328,7 @@ export function useShortestPathAnalysis() {
           distance: result.distance,
           duration: result.duration,
           pathType: result.pathType,
-          sourceLayer: result.sourceLayerName,
+          sourcelayer: result.sourcelayerName,
           createdAt: result.createdAt,
           featureType: 'path' // 标识为路径要素
         }
@@ -351,8 +336,8 @@ export function useShortestPathAnalysis() {
     })
     
     // 添加起始点要素
-    if (startPoint.value) {
-      const startGeometry = startPoint.value.getGeometry()
+    if (state.startPoint) {
+      const startGeometry = state.startPoint.getGeometry()
       if (startGeometry) {
         allFeatures.push({
           type: 'Feature',
@@ -371,8 +356,8 @@ export function useShortestPathAnalysis() {
     }
     
     // 添加目标点要素
-    if (endPoint.value) {
-      const endGeometry = endPoint.value.getGeometry()
+    if (state.endPoint) {
+      const endGeometry = state.endPoint.getGeometry()
       if (endGeometry) {
         allFeatures.push({
           type: 'Feature',
@@ -435,14 +420,6 @@ export function useShortestPathAnalysis() {
     
     pointFeature.setStyle(pointStyle)
     
-    // 根据类型设置相应的状态和显示
-    if (pointType === 'start') {
-      startPoint.value = pointFeature
-      displayStartPoint(pointFeature)
-    } else {
-      endPoint.value = pointFeature
-      displayEndPoint(pointFeature)
-    }
   }
   
   // 绘制起始点
@@ -453,8 +430,8 @@ export function useShortestPathAnalysis() {
     }
     
     clearMapInteractions()
-    isSelectingStartPoint.value = true
-    isSelectingEndPoint.value = false
+    setIsSelectingStartPoint(true)
+    setIsSelectingEndPoint(false)
     
     const clickListener = (event: any) => {
       const coordinate = event.coordinate
@@ -463,7 +440,7 @@ export function useShortestPathAnalysis() {
       createAndDisplayPoint(coordinate, 'start')
       
       mapStore.map.un('singleclick', clickListener)
-      isSelectingStartPoint.value = false
+      setIsSelectingStartPoint(false)
       
       analysisStore.setAnalysisStatus('起始点已绘制，请绘制目标点')
     }
@@ -480,8 +457,8 @@ export function useShortestPathAnalysis() {
     }
     
     clearMapInteractions()
-    isSelectingEndPoint.value = true
-    isSelectingStartPoint.value = false
+    setIsSelectingEndPoint(true)
+    setIsSelectingStartPoint(false)
     
     const clickListener = (event: any) => {
       const coordinate = event.coordinate
@@ -490,7 +467,7 @@ export function useShortestPathAnalysis() {
       createAndDisplayPoint(coordinate, 'end')
       
       mapStore.map.un('singleclick', clickListener)
-      isSelectingEndPoint.value = false
+      setIsSelectingEndPoint(false)
       
       analysisStore.setAnalysisStatus('目标点已绘制，可以开始最短路径分析')
     }
@@ -502,7 +479,7 @@ export function useShortestPathAnalysis() {
   // ===== 分析执行功能 =====
   
   const executePathAnalysis = async (): Promise<void> => {
-    if (!canAnalyze.value) {
+    if (!canAnalyzeLocal.value) {
       analysisStore.setAnalysisStatus('请先绘制两个分析点')
       return
     }
@@ -510,11 +487,11 @@ export function useShortestPathAnalysis() {
     analysisStore.setAnalysisStatus('正在计算最短路径...')
     
     try {
-      removePathLayersOnly()
+      removePathlayersOnly()
       
       // 提取起点和终点坐标
-      const startGeometry = startPoint.value.getGeometry()
-      const endGeometry = endPoint.value.getGeometry()
+      const startGeometry = state.startPoint.getGeometry()
+      const endGeometry = state.endPoint.getGeometry()
       const startCoords = startGeometry.getCoordinates()
       const endCoords = endGeometry.getCoordinates()
       
@@ -529,8 +506,8 @@ export function useShortestPathAnalysis() {
           coordinates: [endCoords[0], endCoords[1]]
         },
         analysisOptions: {
-          units: analysisOptions.value.units || 'kilometers',
-          resolution: analysisOptions.value.resolution || 1000
+          units: state.analysisOptions.units || 'kilometers',
+          resolution: state.analysisOptions.resolution || 1000
         },
         options: {
           returnGeometry: true,
@@ -541,10 +518,10 @@ export function useShortestPathAnalysis() {
       }
       
       // 如果有障碍物数据，添加到请求中（使用现有的obstacles数据）
-      if (analysisOptions.value.obstacles) {
-        requestData.obstacleData = analysisOptions.value.obstacles
+      if (state.analysisOptions.obstacles) {
+        requestData.obstacleData = state.analysisOptions.obstacles
         console.log('[ShortestPath] 发送障碍物数据:', {
-          obstacleCount: analysisOptions.value.obstacles.features?.length || 0
+          obstacleCount: state.analysisOptions.obstacles.features?.length || 0
         })
       }
       
@@ -576,11 +553,11 @@ export function useShortestPathAnalysis() {
         distance: stats.distance,
         duration: stats.duration,
         pathType: '最短路径',
-        sourceLayerName: '分析图层',
+        sourcelayerName: '分析图层',
         createdAt: new Date().toISOString()
       }
       
-      analysisResults.value = [result]
+      setAnalysisResults([result])
       displayAnalysisResults([result])
       
       const statusMessage = `最短路径分析完成，距离: ${stats.distance} ${stats.distanceUnit}，预计时间: ${stats.duration} ${stats.durationUnit}`
@@ -626,8 +603,8 @@ export function useShortestPathAnalysis() {
   const displayStartPoint = (pointFeature: any): void => {
     if (!mapStore.map) return
     
-    if (analysisLayers.value.startPointLayer) {
-      mapStore.map.removeLayer(analysisLayers.value.startPointLayer)
+    if (state.analysislayers.startPointlayer) {
+      mapStore.map.removeLayer(state.analysislayers.startPointlayer)
     }
     
     const source = new window.ol.source.Vector({
@@ -639,18 +616,18 @@ export function useShortestPathAnalysis() {
       zIndex: 1000
     })
     
-    layer.set('isStartPointLayer', true)
+    layer.set('isStartPointlayer', true)
     layer.set('id', 'start-point-layer')
     
-    analysisLayers.value.startPointLayer = layer
+    setAnalysisLayers({ startPointlayer: layer })
     mapStore.map.addLayer(layer)
   }
   
   const displayEndPoint = (pointFeature: any): void => {
     if (!mapStore.map) return
     
-    if (analysisLayers.value.endPointLayer) {
-      mapStore.map.removeLayer(analysisLayers.value.endPointLayer)
+    if (state.analysislayers.endPointlayer) {
+      mapStore.map.removeLayer(state.analysislayers.endPointlayer)
     }
     
     const source = new window.ol.source.Vector({
@@ -662,18 +639,18 @@ export function useShortestPathAnalysis() {
       zIndex: 1001
     })
     
-    layer.set('isEndPointLayer', true)
+    layer.set('isEndPointlayer', true)
     layer.set('id', 'end-point-layer')
     
-    analysisLayers.value.endPointLayer = layer
+    setAnalysisLayers({ endPointlayer: layer })
     mapStore.map.addLayer(layer)
   }
   
   // ===== 工具方法 =====
   
-  const convertLayerToObstacles = (layerId: string): any => {
+  const convertlayerToObstacles = (layerId: string): any => {
     try {
-      const layerInfo = mapStore.vectorLayers.find(l => l.id === layerId)
+      const layerInfo = mapStore.vectorlayers.find(l => l.id === layerId)
       if (!layerInfo || !layerInfo.layer) {
         return null
       }
@@ -740,47 +717,47 @@ export function useShortestPathAnalysis() {
     }
   }
   
-  const setObstacleLayer = (layerId: string | null): void => {
+  const setObstaclelayer = (layerId: string | null): void => {
     if (layerId) {
-      const obstacles = convertLayerToObstacles(layerId)
-      analysisOptions.value.obstacles = obstacles
+      const obstacles = convertlayerToObstacles(layerId)
+      updateAnalysisOptions({ obstacles })
     } else {
-      analysisOptions.value.obstacles = null
+      updateAnalysisOptions({ obstacles: null })
     }
   }
   
   // 更新分析选项
-  const updateAnalysisOptions = (options: Partial<ShortestPathOptions>): void => {
-    analysisOptions.value = { ...analysisOptions.value, ...options }
+  const updateAnalysisOptionsLocal = (options: Partial<ShortestPathOptions>): void => {
+    updateAnalysisOptions(options)
   }
   
   // 清除地图交互
   const clearMapInteractions = (): void => {
-    isSelectingStartPoint.value = false
-    isSelectingEndPoint.value = false
+    setIsSelectingStartPoint(false)
+    setIsSelectingEndPoint(false)
   }
   
  
   
   return {
-    // 状态
-    analysisResults,
-    layerName,
-    startPointInfo,
-    endPointInfo,
-    canAnalyze,
-    isSelectingStartPoint,
-    isSelectingEndPoint,
-    analysisOptions,
+    // 状态 (从 store 获取)
+    analysisResults: computed(() => state.analysisResults),
+    layerName: computed(() => state.layerName),
+    startPointInfo: startPointInfoLocal,
+    endPointInfo: endPointInfoLocal,
+    canAnalyze: canAnalyzeLocal,
+    isSelectingStartPoint: computed(() => state.isSelectingStartPoint),
+    isSelectingEndPoint: computed(() => state.isSelectingEndPoint),
+    analysisOptions: computed(() => state.analysisOptions),
     
     // 方法
     selectStartPoint,
     selectEndPoint,
     executePathAnalysis,
     clearResults,
-    saveAnalysisLayer,
+    saveAnalysislayer,
     exportGeoJSON,
-    setObstacleLayer,
-    updateAnalysisOptions
+    setObstaclelayer,
+    updateAnalysisOptions: updateAnalysisOptionsLocal
   }
 }

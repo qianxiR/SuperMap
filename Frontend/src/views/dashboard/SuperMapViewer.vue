@@ -2,7 +2,7 @@
   <div class="map-container">
     <div ref="mapContainer" class="map-view"></div>
     <!-- 图层辅助控件（左上角） -->
-    <LayerAssistant />
+    <layerAssistant />
     <!-- 要素弹窗 -->
     <FeaturePopup />
     <!-- 坐标显示（左下角） -->
@@ -25,7 +25,7 @@ import { useMapStore } from '@/stores/mapStore'
 import FeaturePopup from '@/components/Map/FeaturePopup.vue'
 import CoordinateDisplay from '@/components/Map/CoordinateDisplay.vue'
 import ScaleBar from '@/components/Map/ScaleBar.vue'
-import LayerAssistant from '@/components/Map/LayerAssistant.vue'
+import layerAssistant from '@/components/Map/layerAssistant.vue'
 import OverviewMap from '@/components/Map/OverviewMap.vue'
 import DistanceMeasurePanel from '@/components/Map/DistanceMeasurePanel.vue'
 import AreaMeasurePanel from '@/components/Map/AreaMeasurePanel.vue'
@@ -78,7 +78,7 @@ onUnmounted(() => {
   border-radius: 8px;
 }
 
-/* 隐藏默认的 OpenLayers 缩放控件 */
+/* 隐藏默认的 Openlayers 缩放控件 */
 :deep(.custom-zoom-control) {
   display: none !important;
 }

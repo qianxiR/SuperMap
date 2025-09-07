@@ -23,17 +23,17 @@ const themeStore = useThemeStore()
 // 响应式数据
 const overviewMapElement = ref<HTMLElement | null>(null)
 const overviewMap = ref<any>(null)
-const extentLayer = ref<any>(null) // 视口框图层
+const extentlayer = ref<any>(null) // 视口框图层
 let themeObserver: MutationObserver | null = null // 主题变化观察器
 
 // 更新视口框函数
 const updateExtentBox = () => {
-  if (!overviewMap.value || !mapStore.map || !extentLayer.value) return
+  if (!overviewMap.value || !mapStore.map || !extentlayer.value) return
   
   const ol = window.ol
   const mainView = mapStore.map.getView()
   const overviewView = overviewMap.value.getView()
-  const extentSource = extentLayer.value.getSource()
+  const extentSource = extentlayer.value.getSource()
   
   // 清除旧的视口框
   extentSource.clear()
@@ -95,7 +95,7 @@ const initOverviewMap = async () => {
       sourceConfig.tileLoadFunction = undefined
     }
     
-    const overviewLayer = new ol.layer.Tile({
+    const overviewlayer = new ol.layer.Tile({
       source: new ol.source.TileSuperMapRest(sourceConfig),
       visible: true,
       opacity: 0.8 // 降低透明度，让视口框更明显
@@ -120,7 +120,7 @@ const initOverviewMap = async () => {
     // 创建鹰眼
     overviewMap.value = new ol.Map({
       target: overviewMapElement.value,
-      layers: [overviewLayer],
+      layers: [overviewlayer],
       view: overviewView,
       controls: [], // 鹰眼不需要控件
     })
@@ -130,7 +130,7 @@ const initOverviewMap = async () => {
     const extentRgb = getComputedStyle(document.documentElement).getPropertyValue('--overview-extent-rgb').trim() || '0, 0, 0'
     
     // 添加主地图视口框图层到鹰眼
-    extentLayer.value = new ol.layer.Vector({
+    extentlayer.value = new ol.layer.Vector({
       source: new ol.source.Vector(),
       style: new ol.style.Style({
         stroke: new ol.style.Stroke({
@@ -143,7 +143,7 @@ const initOverviewMap = async () => {
         })
       })
     })
-    overviewMap.value.addLayer(extentLayer.value)
+    overviewMap.value.addLayer(extentlayer.value)
     
         // 监听主地图视图变化
     mapStore.map.getView().on('change:center', syncViews)
@@ -156,7 +156,7 @@ const initOverviewMap = async () => {
         const newExtentColor = getComputedStyle(document.documentElement).getPropertyValue('--overview-extent-color').trim() || '#000000'
         const newExtentRgb = getComputedStyle(document.documentElement).getPropertyValue('--overview-extent-rgb').trim() || '0, 0, 0'
         
-        extentLayer.value.setStyle(new ol.style.Style({
+        extentlayer.value.setStyle(new ol.style.Style({
           stroke: new ol.style.Stroke({
             color: newExtentColor,
             width: 3,
@@ -168,7 +168,7 @@ const initOverviewMap = async () => {
         }))
         
         // 强制重绘
-        extentLayer.value.changed()
+        extentlayer.value.changed()
       }
     }
     
@@ -264,7 +264,7 @@ const destroyOverviewMap = () => {
       overviewMap.value = null
       
       // 清理视口框图层
-      extentLayer.value = null
+      extentlayer.value = null
       
       console.log('鹰眼地图实例已销毁')
     } catch (error) {
@@ -307,7 +307,7 @@ watch(() => mapStore.overviewMapVisible, (visible) => {
 })
 
 // 重建鹰眼图层的函数
-const rebuildOverviewLayer = () => {
+const rebuildOverviewlayer = () => {
   if (!overviewMap.value) return
   
   try {
@@ -329,7 +329,7 @@ const rebuildOverviewLayer = () => {
     const newSource = new ol.source.TileSuperMapRest(sourceConfig)
     
     // 创建新图层
-    const newLayer = new ol.layer.Tile({
+    const newlayer = new ol.layer.Tile({
       source: newSource,
       visible: true
     })
@@ -343,7 +343,7 @@ const rebuildOverviewLayer = () => {
     }
     
     // 添加新图层
-    layers.insertAt(0, newLayer)
+    layers.insertAt(0, newlayer)
     
     // 强制刷新地图
     overviewMap.value.updateSize()
@@ -375,7 +375,7 @@ const rebuildOverviewLayer = () => {
 watch(() => themeStore.theme, () => {
   if (overviewMap.value) {
     // 直接重建鹰眼图层，这是最可靠的方式
-    rebuildOverviewLayer()
+    rebuildOverviewlayer()
   }
 }, { immediate: false })
 
@@ -462,7 +462,7 @@ onUnmounted(() => {
   box-shadow: inset 0 0 0 2px var(--accent);
 }
 
-/* OpenLayers 鹰眼样式覆盖 */
+/* Openlayers 鹰眼样式覆盖 */
 .overview-map :deep(.ol-viewport) {
   border-radius: 4px;
 }

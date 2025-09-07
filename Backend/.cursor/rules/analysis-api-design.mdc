@@ -53,7 +53,7 @@
 - **输入**: origin, destination, waypoints, impedance
 - **输出**: 最短路径、行驶导引、统计信息
 
-#### 叠加分析 (Overlay Analysis)
+#### 叠加分析 (intersect Analysis)
 - **接口**: `POST /api/v1/analysis/tasks`
 - **输入**: layer1, layer2, operation_type, tolerance
 - **输出**: 叠加结果几何、属性信息、统计信息

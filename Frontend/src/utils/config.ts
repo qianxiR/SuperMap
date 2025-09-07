@@ -1,4 +1,4 @@
-import type { APIConfig, WuhanLayer } from '@/types/map'
+import type { APIConfig, Wuhanlayer } from '@/types/map'
 
 /**
  * 创建SuperMap API配置 - 定义所有服务器连接地址和图层配置
@@ -37,7 +37,7 @@ export const createAPIConfig = (): APIConfig => {
   const mapName = import.meta.env.VITE_SUPERMAP_MAP_NAME
   
   // ===== 地图边界范围配置 =====
-  // 调用者: useMap.ts -> loadVectorLayer() -> 空间过滤
+  // 调用者: useMap.ts -> loadVectorlayer() -> 空间过滤
   // 边界范围: 从环境变量获取
   // 作用: 定义地图的空间过滤边界，用于限制要素加载范围
   const mapBounds = {
@@ -74,12 +74,12 @@ export const createAPIConfig = (): APIConfig => {
     },
     
     // ===== 矢量图层配置 =====
-    // 调用者: useMap.ts -> loadVectorLayers() -> loadVectorLayer()
+    // 调用者: useMap.ts -> loadVectorlayers() -> loadVectorlayer()
     // 服务器地址: ${baseUrl}/${dataService}/datasources/${workspace}/datasets/{数据集名}
     // 作用: 定义所有矢量图层，包括县级边界、交通、水系、建筑物、基础设施等
-    wuhanLayers: [
+    wuhanlayers: [
       // ===== 市县级行政区图层 =====
-      // 调用者: useMap.ts -> loadVectorLayer()
+      // 调用者: useMap.ts -> loadVectorlayer()
       // 服务器地址: ${baseUrl}/${dataService}/datasources/${workspace}/datasets/wuhan_map_县级
       // 作用: 提供县级行政区边界数据，用于区域划分和空间分析
       { 
@@ -92,7 +92,7 @@ export const createAPIConfig = (): APIConfig => {
       },
     
       // ===== 交通设施图层组 =====
-      // 调用者: useMap.ts -> loadVectorLayer()
+      // 调用者: useMap.ts -> loadVectorlayer()
       // 服务器地址: ${baseUrl}/${dataService}/datasources/${workspace}/datasets/公路
       // 作用: 提供公路网络数据，用于交通分析和路径规划
       { 
@@ -103,7 +103,7 @@ export const createAPIConfig = (): APIConfig => {
         datasetName: '公路',
         dataService: `${mapService}/maps/${mapName}`
       },
-      // 调用者: useMap.ts -> loadVectorLayer()
+      // 调用者: useMap.ts -> loadVectorlayer()
       // 服务器地址: ${baseUrl}/${dataService}/datasources/${workspace}/datasets/铁路
       // 作用: 提供铁路网络数据，用于交通分析和运输规划
       { 
@@ -218,36 +218,36 @@ export const isDevelopment = (): boolean => {
 // 获取按组分类的图层
 export const getLayersByGroup = () => {
   const config = createAPIConfig()
-  const groupedLayers: Record<string, WuhanLayer[]> = {}
+  const groupedlayers: Record<string, Wuhanlayer[]> = {}
   
-  config.wuhanLayers.forEach(layer => {
+  config.wuhanlayers.forEach(layer => {
     const group = layer.group || '其他'
-    if (!groupedLayers[group]) {
-      groupedLayers[group] = []
+    if (!groupedlayers[group]) {
+      groupedlayers[group] = []
     }
-    groupedLayers[group].push(layer)
+    groupedlayers[group].push(layer)
   })
   
-  return groupedLayers
+  return groupedlayers
 }
 
 // 获取指定组的图层
-export const getLayersByGroupName = (groupName: string): WuhanLayer[] => {
+export const getLayersByGroupName = (groupName: string): Wuhanlayer[] => {
   const config = createAPIConfig()
-  return config.wuhanLayers.filter(layer => layer.group === groupName)
+  return config.wuhanlayers.filter(layer => layer.group === groupName)
 }
 
 // 获取所有图层组名称
-export const getLayerGroupNames = (): string[] => {
+export const getlayerGroupNames = (): string[] => {
   const config = createAPIConfig()
-  const groups = new Set(config.wuhanLayers.map(layer => layer.group).filter((group): group is string => Boolean(group)))
+  const groups = new Set(config.wuhanlayers.map(layer => layer.group).filter((group): group is string => Boolean(group)))
   return Array.from(groups)
 }
 
 // 获取指定图层的完整地图服务URL
-export const getLayerMapServiceUrl = (layerName: string): string | null => {
+export const getlayerMapServiceUrl = (layerName: string): string | null => {
   const config = createAPIConfig()
-  const layer = config.wuhanLayers.find(l => l.name === layerName)
+  const layer = config.wuhanlayers.find(l => l.name === layerName)
   
   if (layer && layer.dataService) {
     return `${config.baseUrl}/${layer.dataService}/${layer.name}`
@@ -257,9 +257,9 @@ export const getLayerMapServiceUrl = (layerName: string): string | null => {
 }
 
 // 获取指定图层的完整数据服务URL（包含数据集）
-export const getLayerDatasetUrl = (layerName: string): string | null => {
+export const getlayerDatasetUrl = (layerName: string): string | null => {
   const config = createAPIConfig()
-  const layer = config.wuhanLayers.find(l => l.name === layerName)
+  const layer = config.wuhanlayers.find(l => l.name === layerName)
   
   if (layer && layer.dataService && layer.datasetName) {
     return `${config.baseUrl}/${layer.dataService}/${layer.datasetName}`
@@ -273,7 +273,7 @@ export const getAllMapServiceUrls = (): Record<string, string> => {
   const config = createAPIConfig()
   const urls: Record<string, string> = {}
   
-  config.wuhanLayers.forEach(layer => {
+  config.wuhanlayers.forEach(layer => {
     if (layer.dataService) {
       urls[layer.name] = `${config.baseUrl}/${layer.dataService}/${layer.name}`
     }
@@ -283,10 +283,10 @@ export const getAllMapServiceUrls = (): Record<string, string> => {
 }
 
 // 测试函数：验证图层配置
-export const testLayerConfig = () => {
+export const testlayerConfig = () => {
   const config = createAPIConfig()
   console.log('\n=== 图层列表 ===')
-  config.wuhanLayers.forEach((layer, index) => {
+  config.wuhanlayers.forEach((layer, index) => {
     console.log(`${index + 1}. ${layer.name}`)
     console.log(`   类型: ${layer.type}`)
     console.log(`   组: ${layer.group}`)

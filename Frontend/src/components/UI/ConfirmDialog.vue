@@ -1,6 +1,6 @@
 <template>
   <!-- 确认对话框 -->
-  <div v-if="visible" class="confirm-dialog-overlay" @click="handleOverlayClick">
+  <div v-if="visible" class="confirm-dialog-intersect" @click="handleintersectClick">
     <div class="confirm-dialog" @click.stop>
       <div class="dialog-header">
         <h3 class="dialog-title">{{ title }}</h3>
@@ -63,7 +63,7 @@ const handleCancel = () => {
   emit('cancel')
 }
 
-const handleOverlayClick = () => {
+const handleintersectClick = () => {
   emit('close')
 }
 
@@ -76,7 +76,7 @@ watch(() => props.visible, (newVisible) => {
 </script>
 
 <style scoped>
-.confirm-dialog-overlay {
+.confirm-dialog-intersect {
   position: fixed;
   top: 0;
   left: 0;

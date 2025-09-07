@@ -1,5 +1,5 @@
 <template>
-  <div v-if="visible" class="modal-overlay" @click="handleOverlayClick">
+  <div v-if="visible" class="modal-intersect" @click="handleintersectClick">
     <div class="modal-content" @click.stop>
       <div class="modal-header">
         <h3 class="modal-title">上传GeoJSON数据</h3>
@@ -87,7 +87,7 @@
             <label class="option-label">
               <input 
                 type="checkbox" 
-                v-model="options.zoomToLayer"
+                v-model="options.zoomTolayer"
                 class="option-checkbox"
               />
               <span class="option-text">自动缩放到图层</span>
@@ -120,7 +120,7 @@ import SecondaryButton from './SecondaryButton.vue'
 interface UploadOptions {
   autoAddToMap: boolean
   generateStyle: boolean
-  zoomToLayer: boolean
+  zoomTolayer: boolean
 }
 
 interface Props {
@@ -144,11 +144,11 @@ const isUploading = ref(false)
 const options = reactive<UploadOptions>({
   autoAddToMap: true,
   generateStyle: true,
-  zoomToLayer: true
+  zoomTolayer: true
 })
 
 // 处理遮罩层点击
-const handleOverlayClick = () => {
+const handleintersectClick = () => {
   if (!isUploading.value) {
     closeModal()
   }
@@ -258,7 +258,7 @@ watch(() => props.externalUploading, (newUploading) => {
 </script>
 
 <style scoped>
-.modal-overlay {
+.modal-intersect {
   position: fixed;
   top: 0;
   left: 0;

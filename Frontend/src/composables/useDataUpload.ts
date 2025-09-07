@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { useAnalysisStore } from '@/stores/analysisStore'
-import { useLayerManager } from '@/composables/useLayerManager'
+import { uselayermanager } from '@/composables/uselayermanager'
 import { useMapStore } from '@/stores/mapStore'
 
 interface UploadedFile {
@@ -16,12 +16,12 @@ interface UploadedFile {
 interface UploadOptions {
   autoAddToMap: boolean
   generateStyle: boolean
-  zoomToLayer: boolean
+  zoomTolayer: boolean
 }
 
 export function useDataUpload() {
   const analysisStore = useAnalysisStore()
-  const layerManager = useLayerManager()
+  const layermanager = uselayermanager()
   const mapStore = useMapStore()
   
   // 状态管理
@@ -29,8 +29,8 @@ export function useDataUpload() {
   const isUploading = ref<boolean>(false)
   const uploadProgress = ref<number>(0)
   const showUploadModal = ref<boolean>(false)
-  const showLayerNameModal = ref<boolean>(false)
-  const defaultLayerName = ref<string>('')
+  const showlayerNameModal = ref<boolean>(false)
+  const defaultlayerName = ref<string>('')
   const pendingUploadData = ref<{files: File[], options: UploadOptions} | null>(null)
   
   // 计算属性
@@ -53,22 +53,22 @@ export function useDataUpload() {
   const handleFileUpload = async (files: File[], options: UploadOptions) => {
     // 生成默认图层名称
     if (files.length === 1) {
-      defaultLayerName.value = files[0].name.replace(/\.(geojson|json)$/i, '')
+      defaultlayerName.value = files[0].name.replace(/\.(geojson|json)$/i, '')
     } else {
-      defaultLayerName.value = `上传图层_${files.length}个文件`
+      defaultlayerName.value = `上传图层_${files.length}个文件`
     }
     
     // 保存上传数据，显示图层名称弹窗
     pendingUploadData.value = { files, options }
-    showLayerNameModal.value = true
+    showlayerNameModal.value = true
     closeUploadModal()
   }
 
   // 处理图层名称确认
-  const handleLayerNameConfirm = async (layerName: string) => {
+  const handlelayerNameConfirm = async (layerName: string) => {
     if (!pendingUploadData.value) return
     
-    showLayerNameModal.value = false
+    showlayerNameModal.value = false
     const { files, options } = pendingUploadData.value
     pendingUploadData.value = null
     
@@ -76,8 +76,8 @@ export function useDataUpload() {
   }
 
   // 处理图层名称弹窗关闭
-  const handleLayerNameClose = () => {
-    showLayerNameModal.value = false
+  const handlelayerNameClose = () => {
+    showlayerNameModal.value = false
     pendingUploadData.value = null
   }
 
@@ -97,10 +97,10 @@ export function useDataUpload() {
       const features = new ol.format.GeoJSON().readFeatures(geojson, { featureProjection: projection })
 
       // 使用用户指定的图层名称
-      const finalLayerName = files.length === 1 ? layerName : `${layerName}_${file.name.replace(/\.(geojson|json)$/i, '')}`
-      await layerManager.saveFeaturesAsLayer(features, finalLayerName, 'upload')
+      const finallayerName = files.length === 1 ? layerName : `${layerName}_${file.name.replace(/\.(geojson|json)$/i, '')}`
+      await layermanager.saveFeaturesAslayer(features, finallayerName, 'upload')
 
-      if (options.zoomToLayer) {
+      if (options.zoomTolayer) {
         const extent = ol.extent.createEmpty()
         for (const f of features) {
           ol.extent.extend(extent, f.getGeometry().getExtent())
@@ -144,7 +144,7 @@ export function useDataUpload() {
     const ol = (window as any).ol
     const projection = mapStore.map.getView().getProjection()
     const features = new ol.format.GeoJSON().readFeatures(file.data, { featureProjection: projection })
-    layerManager.saveFeaturesAsLayer(features, file.name.replace(/\.(geojson|json)$/i, ''), 'upload')
+    layermanager.saveFeaturesAslayer(features, file.name.replace(/\.(geojson|json)$/i, ''), 'upload')
     const extent = ol.extent.createEmpty()
     for (const f of features) {
       ol.extent.extend(extent, f.getGeometry().getExtent())
@@ -174,15 +174,15 @@ export function useDataUpload() {
   }
   
   // 创建地图图层
-  const createMapLayer = (geojsonData: any, layerName: string) => {
+  const createMaplayer = (geojsonData: any, layerName: string) => {
     const ol = (window as any).ol
     const projection = mapStore.map.getView().getProjection()
     const features = new ol.format.GeoJSON().readFeatures(geojsonData, { featureProjection: projection })
-    layerManager.saveFeaturesAsLayer(features, layerName, 'upload')
+    layermanager.saveFeaturesAslayer(features, layerName, 'upload')
   }
   
   // 生成图层样式
-  const generateLayerStyle = (_geometryType: string) => {
+  const generatelayerStyle = (_geometryType: string) => {
     return null
   }
   
@@ -192,8 +192,8 @@ export function useDataUpload() {
     isUploading,
     uploadProgress,
     showUploadModal,
-    showLayerNameModal,
-    defaultLayerName,
+    showlayerNameModal,
+    defaultlayerName,
     
     // Computed
     hasUploadedFiles,
@@ -203,8 +203,8 @@ export function useDataUpload() {
     openUploadModal,
     closeUploadModal,
     handleFileUpload,
-    handleLayerNameConfirm,
-    handleLayerNameClose,
+    handlelayerNameConfirm,
+    handlelayerNameClose,
     clearAllFiles,
     removeFile,
     previewFile,
@@ -213,7 +213,7 @@ export function useDataUpload() {
     // Utilities
     validateGeoJSONFile,
     parseGeoJSONFile,
-    createMapLayer,
-    generateLayerStyle
+    createMaplayer,
+    generatelayerStyle
   }
 }

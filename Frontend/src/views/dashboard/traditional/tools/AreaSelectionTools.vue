@@ -50,11 +50,11 @@
       <div class="button-column">
         <SecondaryButton 
           text="反选当前要素"
-          @click="invertSelectedLayer"
+          @click="invertSelectedlayer"
         />
         <SecondaryButton 
           text="另存为图层"
-          @click="showLayerNameModal"
+          @click="showlayerNameModal"
           :disabled="selectedFeatures.length === 0"
         />
         <SecondaryButton 
@@ -78,14 +78,14 @@
   </PanelWindow>
   
   <!-- 图层名称输入弹窗 -->
-  <LayerNameModal
-    :visible="showLayerNameModalRef"
+  <layerNameModal
+    :visible="showlayerNameModalRef"
     title="保存区域选择结果"
     placeholder="请输入图层名称"
     hint="图层名称将用于在图层管理器中识别此区域选择结果"
-    :default-name="defaultLayerName"
-    @confirm="handleLayerNameConfirm"
-    @close="handleLayerNameClose"
+    :default-name="defaultlayerName"
+    @confirm="handlelayerNameConfirm"
+    @close="handlelayerNameClose"
   />
 </template>
 
@@ -94,12 +94,12 @@ import { watch, computed, onMounted, onUnmounted, ref } from 'vue'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useMapStore } from '@/stores/mapStore'
 import { useFeatureSelection } from '@/composables/useFeatureSelection'
-import { useLayerManager } from '@/composables/useLayerManager'
+import { uselayermanager } from '@/composables/uselayermanager'
 import { getFeatureCompleteInfo } from '@/utils/featureUtils'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import TipWindow from '@/components/UI/TipWindow.vue'
-import LayerNameModal from '@/components/UI/LayerNameModal.vue'
+import layerNameModal from '@/components/UI/layerNameModal.vue'
 
 const analysisStore = useAnalysisStore()
 const mapStore = useMapStore()
@@ -109,7 +109,7 @@ const {
   selectedFeatures,
   selectedFeatureIndex,
   clearSelection,
-  invertSelectedLayer,
+  invertSelectedlayer,
   handleSelectFeature,
   setupSelectionInteractions,
   clearSelectionInteractions,
@@ -119,40 +119,40 @@ const {
 } = useFeatureSelection()
 
 // 使用图层管理 hook
-const { saveFeaturesAsLayer } = useLayerManager()
+const { saveFeaturesAslayer } = uselayermanager()
 
 // 图层名称弹窗状态
-const showLayerNameModalRef = ref<boolean>(false)
-const defaultLayerName = ref<string>('')
+const showlayerNameModalRef = ref<boolean>(false)
+const defaultlayerName = ref<string>('')
 
 // 显示图层名称输入弹窗
-const showLayerNameModal = () => {
+const showlayerNameModal = () => {
   if (selectedFeatures.value.length === 0) {
     return
   }
   
-  defaultLayerName.value = `区域选择`
-  showLayerNameModalRef.value = true
+  defaultlayerName.value = `区域选择`
+  showlayerNameModalRef.value = true
 }
 
 // 处理图层名称确认
-const handleLayerNameConfirm = async (layerName: string) => {
-  showLayerNameModalRef.value = false
-  await saveSelectedAsLayer(layerName)
+const handlelayerNameConfirm = async (layerName: string) => {
+  showlayerNameModalRef.value = false
+  await saveSelectedAslayer(layerName)
 }
 
 // 处理图层名称弹窗关闭
-const handleLayerNameClose = () => {
-  showLayerNameModalRef.value = false
+const handlelayerNameClose = () => {
+  showlayerNameModalRef.value = false
 }
 
 // 保存选中要素为图层
-const saveSelectedAsLayer = async (customLayerName: string) => {
+const saveSelectedAslayer = async (customlayerName: string) => {
   if (selectedFeatures.value.length === 0) {
     return
   }
 
-  await saveFeaturesAsLayer(selectedFeatures.value, customLayerName, 'area')
+  await saveFeaturesAslayer(selectedFeatures.value, customlayerName, 'area')
 }
 
 // 导出区域选择结果为 GeoJSON 文件

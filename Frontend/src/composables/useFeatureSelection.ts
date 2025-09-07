@@ -137,7 +137,7 @@ export function useFeatureSelection() {
     // 使用 setTimeout 让UI有机会更新
     await new Promise(resolve => setTimeout(resolve, 10))
 
-    mapStore.vectorLayers.forEach(layerInfo => {
+    mapStore.vectorlayers.forEach(layerInfo => {
       if (layerInfo.visible && layerInfo.layer) {
         const source = layerInfo.layer.getSource()
         if (source && source.forEachFeatureInExtent) {
@@ -172,9 +172,9 @@ export function useFeatureSelection() {
 
   // 异步高亮显示多个要素
   const highlightFeaturesAsync = async (features: any[]) => {
-    if (!mapStore.map || !mapStore.selectLayer || features.length === 0) return
+    if (!mapStore.map || !mapStore.selectlayer || features.length === 0) return
 
-    const source = mapStore.selectLayer.getSource()
+    const source = mapStore.selectlayer.getSource()
     if (!source) return
 
     const batchSize = 100
@@ -214,8 +214,8 @@ export function useFeatureSelection() {
     if (!mapStore.map || !feature) return
 
     // 确保选择图层中包含当前要素
-    if (mapStore.selectLayer && mapStore.selectLayer.getSource) {
-      const source = mapStore.selectLayer.getSource()
+    if (mapStore.selectlayer && mapStore.selectlayer.getSource) {
+      const source = mapStore.selectlayer.getSource()
       if (source) {
         // 检查要素是否已经在高亮图层中，如果不在则添加
         const features = source.getFeatures()
@@ -253,9 +253,9 @@ export function useFeatureSelection() {
 
   // 开始常亮效果
   const startHighlightAnimation = () => {
-    if (!highlightedFeature.value || !mapStore.selectLayer) return
+    if (!highlightedFeature.value || !mapStore.selectlayer) return
 
-    const source = mapStore.selectLayer.getSource()
+    const source = mapStore.selectlayer.getSource()
     if (!source) return
 
     // 创建常亮样式
@@ -361,13 +361,13 @@ export function useFeatureSelection() {
     }
 
     // 设置常亮样式
-    mapStore.selectLayer.setStyle(createFlashingStyle())
-    mapStore.selectLayer.changed()
+    mapStore.selectlayer.setStyle(createFlashingStyle())
+    mapStore.selectlayer.changed()
   }
 
   // 移除常亮要素
   const removeHighlightFeature = () => {
-    if (!mapStore.selectLayer) return
+    if (!mapStore.selectlayer) return
 
     // 恢复原始样式
     const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--map-highlight-color').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000')
@@ -421,8 +421,8 @@ export function useFeatureSelection() {
       }
     }
 
-    mapStore.selectLayer.setStyle(restoreOriginalStyle)
-    mapStore.selectLayer.changed()
+    mapStore.selectlayer.setStyle(restoreOriginalStyle)
+    mapStore.selectlayer.changed()
   }
 
   // 检查两个要素是否相同
@@ -454,8 +454,8 @@ export function useFeatureSelection() {
 
   // 清除地图上的区域选择高亮
   const clearMapSelection = () => {
-    if (mapStore.selectLayer && mapStore.selectLayer.getSource) {
-      const source = mapStore.selectLayer.getSource()
+    if (mapStore.selectlayer && mapStore.selectlayer.getSource) {
+      const source = mapStore.selectlayer.getSource()
       if (source) {
         const feats = source.getFeatures?.() || []
         feats.forEach((f: any) => {
@@ -468,7 +468,7 @@ export function useFeatureSelection() {
   }
 
   // 反选：基于当前已选要素所在图层进行反选
-  const invertSelectedLayer = () => {
+  const invertSelectedlayer = () => {
     // 推断目标图层：通过几何坐标匹配找到要素所属的图层
     const first = selectedFeatures.value[0]
     if (!first) {
@@ -478,7 +478,7 @@ export function useFeatureSelection() {
 
     // 通过几何坐标匹配找到要素所属的图层
     let layerInfo = null
-    for (const layer of mapStore.vectorLayers) {
+    for (const layer of mapStore.vectorlayers) {
       if (layer.visible && layer.layer) {
         const source = layer.layer.getSource()
         if (source) {
@@ -507,7 +507,7 @@ export function useFeatureSelection() {
     }
 
     const source = layerInfo.layer.getSource?.()
-    const selectSource = mapStore.selectLayer?.getSource?.()
+    const selectSource = mapStore.selectlayer?.getSource?.()
     if (!source || !selectSource) {
       analysisStore.setAnalysisStatus('数据源不可用')
       return
@@ -559,15 +559,15 @@ export function useFeatureSelection() {
     clearSelectionInteractions()
     
     // 清除地图上的区域高亮
-    if (mapStore.selectLayer && mapStore.selectLayer.getSource()) {
-      const source = mapStore.selectLayer.getSource()
+    if (mapStore.selectlayer && mapStore.selectlayer.getSource()) {
+      const source = mapStore.selectlayer.getSource()
       const features = source.getFeatures()
       features.forEach((f: any) => {
         if (f?.get && f.get('sourceTag') === 'area') {
           source.removeFeature(f)
         }
       })
-      mapStore.selectLayer.changed()
+      mapStore.selectlayer.changed()
     }
     
     // 清除区域选择存储状态
@@ -601,7 +601,7 @@ export function useFeatureSelection() {
     clearSelectionInteractions,
     handleSelectFeature,
     clearSelection,
-    invertSelectedLayer,
+    invertSelectedlayer,
     triggerMapFeatureHighlight,
     removeHighlightFeature,
     initializeHighlightFeatures,

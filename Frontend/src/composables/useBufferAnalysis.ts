@@ -2,12 +2,12 @@ import { ref, computed } from 'vue'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useMapStore } from '@/stores/mapStore'
 import { useBufferAnalysisStore } from '@/stores/bufferAnalysisStore'
-import { extractGeoJSONFromLayer } from '@/utils/featureUtils'
+import { extractGeoJSONFromlayer } from '@/utils/featureUtils'
 import { getAnalysisServiceConfig } from '@/api/config'
 import * as ol from 'ol'
 import { Feature } from 'ol'
 import { Vector as VectorSource } from 'ol/source'
-import { Vector as VectorLayer } from 'ol/layer'
+import { Vector as Vectorlayer } from 'ol/layer'
 import { Style, Stroke, Fill } from 'ol/style'
 import GeoJSON from 'ol/format/GeoJSON'
 import type OlFeature from 'ol/Feature'
@@ -34,7 +34,7 @@ interface BufferResult {
   geometry: any
   distance: number
   unit: string
-  sourceLayerName: string
+  sourcelayerName: string
   createdAt: string
 }
 
@@ -50,7 +50,7 @@ export function useBufferAnalysis() {
   const bufferAnalysisStore = useBufferAnalysisStore()
   
   // 从store获取状态
-  const selectedAnalysisLayerId = computed(() => bufferAnalysisStore.state.selectedAnalysisLayerId)
+  const selectedAnalysislayerId = computed(() => bufferAnalysisStore.state.selectedAnalysislayerId)
   const bufferSettings = computed(() => bufferAnalysisStore.state.bufferSettings)
   const bufferResults = computed(() => bufferAnalysisStore.state.bufferResults)
   const currentResult = computed(() => bufferAnalysisStore.state.currentResult)
@@ -60,14 +60,14 @@ export function useBufferAnalysis() {
   // 清理状态（工具切换时调用）
   const clearState = () => {
     bufferAnalysisStore.clearResults()
-    removeBufferLayers()
+    removeBufferlayers()
   }
   
   // 选中图层信息
-  const selectedAnalysisLayerInfo = computed(() => {
-    if (!selectedAnalysisLayerId.value) return null
+  const selectedAnalysislayerInfo = computed(() => {
+    if (!selectedAnalysislayerId.value) return null
     
-    const layer = mapStore.vectorLayers.find(l => l.id === selectedAnalysisLayerId.value)
+    const layer = mapStore.vectorlayers.find(l => l.id === selectedAnalysislayerId.value)
     if (!layer) return null
     
     return {
@@ -81,12 +81,12 @@ export function useBufferAnalysis() {
   
   // 图层选项（只显示矢量图层）
   const layerOptions = computed(() => {
-    const vectorLayers = mapStore.vectorLayers.filter(layer => 
+    const vectorlayers = mapStore.vectorlayers.filter(layer => 
       layer.layer && 
       layer.layer.getVisible() && 
       layer.type === 'vector'
     )
-    return vectorLayers.map(layer => {
+    return vectorlayers.map(layer => {
       const features = layer.layer.getSource()?.getFeatures() || []
       const featureCount = features.length
       
@@ -110,10 +110,10 @@ export function useBufferAnalysis() {
   })
   
   // 设置选中的分析图层
-  const setSelectedAnalysisLayer = (layerId: string): void => {
-    bufferAnalysisStore.setSelectedAnalysisLayer(layerId)
+  const setSelectedAnalysislayer = (layerId: string): void => {
+    bufferAnalysisStore.setSelectedAnalysislayer(layerId)
     if (layerId) {
-      const layer = mapStore.vectorLayers.find(l => l.id === layerId)
+      const layer = mapStore.vectorlayers.find(l => l.id === layerId)
       if (layer) {
               analysisStore.setAnalysisStatus(`已选择分析图层: ${layer.name}`)
       }
@@ -122,11 +122,11 @@ export function useBufferAnalysis() {
     }
   }
 
-  // 从OpenLayers图层中提取GeoJSON数据
+  // 从Openlayers图层中提取GeoJSON数据
   
   const executeBufferAnalysis = async (): Promise<void> => {
-    const layerId = selectedAnalysisLayerId.value
-    const target = mapStore.vectorLayers.find(l => l.id === layerId)!
+    const layerId = selectedAnalysislayerId.value
+    const target = mapStore.vectorlayers.find(l => l.id === layerId)!
     const radiusMeters = Number(bufferSettings.value.radius)
     const steps = Number(bufferSettings.value.semicircleLineSegment)
 
@@ -134,7 +134,7 @@ export function useBufferAnalysis() {
 
     try {
 
-    const sourceData = extractGeoJSONFromLayer(target.layer, mapStore.map, {
+    const sourceData = extractGeoJSONFromlayer(target.layer, mapStore.map, {
       enableLogging: false
     })
 
@@ -145,7 +145,7 @@ export function useBufferAnalysis() {
         semicircleLineSegment: steps
       },
       options: {
-        resultLayerName: `缓冲区分析结果_${target.name}`
+        resultlayerName: `缓冲区分析结果_${target.name}`
       }
     }
 
@@ -177,7 +177,7 @@ export function useBufferAnalysis() {
       geometry: feature.geometry,
       distance: radiusMeters,
       unit: 'meters',
-      sourceLayerName: target.name,
+      sourcelayerName: target.name,
       createdAt: new Date().toISOString()
     }))
 
@@ -198,7 +198,7 @@ export function useBufferAnalysis() {
   
   // 在地图上显示缓冲区结果
   const displayBufferResults = (results: BufferResult[]): void => {
-    removeBufferLayers()
+    removeBufferlayers()
     
     const bufferFeatures: any[] = []
     
@@ -213,7 +213,7 @@ export function useBufferAnalysis() {
               name: `${result.name}_${index + 1}`,
               distance: result.distance,
               unit: result.unit,
-              sourceLayer: result.sourceLayerName,
+              sourcelayer: result.sourcelayerName,
               createdAt: result.createdAt
             }
           })
@@ -228,7 +228,7 @@ export function useBufferAnalysis() {
             name: result.name,
             distance: result.distance,
             unit: result.unit,
-            sourceLayer: result.sourceLayerName,
+            sourcelayer: result.sourcelayerName,
             createdAt: result.createdAt
           }
         })
@@ -244,7 +244,7 @@ export function useBufferAnalysis() {
     const rootStyle = getComputedStyle(document.documentElement)
     const analysisColor = rootStyle.getPropertyValue('--analysis-color')?.trim() || '#0078D4'
     
-    const bufferLayer = new VectorLayer({
+    const bufferlayer = new Vectorlayer({
       source: bufferSource,
       style: new Style({
         stroke: new Stroke({
@@ -257,10 +257,10 @@ export function useBufferAnalysis() {
       })
     })
     
-    bufferLayer.set('isBufferLayer', true)
-    bufferLayer.set('bufferResults', results)
+    bufferlayer.set('isBufferlayer', true)
+    bufferlayer.set('bufferResults', results)
     
-    mapStore.map.addLayer(bufferLayer)
+    mapStore.map.addLayer(bufferlayer)
     
     // 缩放到缓冲区范围
     const extent = bufferSource.getExtent()
@@ -273,12 +273,12 @@ export function useBufferAnalysis() {
   }
   
   // 移除缓冲区图层
-  const removeBufferLayers = (): void => {
+  const removeBufferlayers = (): void => {
     if (!mapStore.map) return
     
     const layers = mapStore.map.getLayers().getArray()
     layers.forEach((layer: any) => {
-      if (layer.get('isBufferLayer')) {
+      if (layer.get('isBufferlayer')) {
         mapStore.map.removeLayer(layer)
       }
     })
@@ -287,7 +287,7 @@ export function useBufferAnalysis() {
   // 清除所有选择状态（仅清除结果，不清除保存的状态）
   const clearAllSelections = (): void => {
     // 只清除图层显示，保留状态数据
-    removeBufferLayers()
+    removeBufferlayers()
     analysisStore.setAnalysisStatus('已清除缓冲区图层显示')
   }
   
@@ -308,8 +308,8 @@ export function useBufferAnalysis() {
 
   return {
     // 分析参数
-    selectedAnalysisLayerId,
-    selectedAnalysisLayerInfo,
+    selectedAnalysislayerId,
+    selectedAnalysislayerInfo,
     layerOptions,
     
     // 参数设置
@@ -322,13 +322,13 @@ export function useBufferAnalysis() {
     taskId,
     
     // 方法
-    setSelectedAnalysisLayer,
+    setSelectedAnalysislayer,
     executeBufferAnalysis,
     executeBufferAnalysisAndSave,
     saveBufferAnalysisToDatabase,
     clearAllSelections,
     updateBufferSettings,
-    removeBufferLayers,
+    removeBufferlayers,
     displayBufferResults,
     
     // 状态管理

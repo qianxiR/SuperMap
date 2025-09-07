@@ -13,7 +13,7 @@
         <div class="button-row">
           <PrimaryButton text="缓冲区分析" :active="isBufferOpen" @click="toggleBuffer" />
           <PrimaryButton text="最短路径分析" :active="isDistanceOpen" @click="toggleDistance" />
-          <PrimaryButton text="相交分析" :active="isOverlayOpen" @click="toggleOverlay" />
+          <PrimaryButton text="相交分析" :active="isIntersectOpen" @click="toggleIntersect" />
           <PrimaryButton text="擦除分析" :active="isEraseOpen" @click="toggleErase" />
         </div>
       </div>
@@ -26,7 +26,7 @@
               <AreaSelectionTools v-if="analysisStore.toolPanel.activeTool === 'area-selection'" />
 <ShortestPathAnalysisPanel v-if="analysisStore.toolPanel.activeTool === 'distance'" />
       <BufferAnalysisPanel v-if="analysisStore.toolPanel.activeTool === 'buffer'" />
-      <IntersectionAnalysisPanel v-if="analysisStore.toolPanel.activeTool === 'overlay'" />
+      <IntersectionAnalysisPanel v-if="analysisStore.toolPanel.activeTool === 'intersect'" />
       <EraseAnalysisPanel v-if="analysisStore.toolPanel.activeTool === 'erase'" />
       <DataUploadPanel v-if="analysisStore.toolPanel.activeTool === 'upload'" />
       
@@ -73,29 +73,69 @@ const toolConfigs = {
   'area-selection': { id: 'area-selection', title: '按区域选择要素', path: 'area-selection' },
   buffer: { id: 'buffer', title: '缓冲区分析', path: 'buffer' },
   distance: { id: 'distance', title: '最短路径分析', path: 'distance' },
-  overlay: { id: 'overlay', title: '相交分析', path: 'overlay' },
+  intersect: { id: 'intersect', title: '相交分析', path: 'intersect' },
   erase: { id: 'erase', title: '擦除分析', path: 'erase' },
 } as const
 
 // 判断是否为路由模式
 const isRouteMode = computed(() => {
-  return route.path.includes('/traditional/') && route.path !== '/dashboard/traditional'
+  return route.path.includes('/traditional/') && route.path !== '/dashboard/management-analysis/traditional'
 })
 
-// 状态检查变量
-const isBufferOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'buffer')
-const isLayerOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'layer')
-const isAreaSelection = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'area-selection')
-const isDistanceOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'distance')
-const isUploadOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'upload')
-const isQueryOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'attribute-selection')
-const isOverlayOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'overlay')
-const isEraseOpen = computed(() => analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'erase')
+// 状态检查变量 - 修复：当在路由模式下，按钮状态应该基于当前路由路径判断
+const isBufferOpen = computed(() => {
+  if (isRouteMode.value) {
+    return route.path.includes('/traditional/buffer')
+  }
+  return analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'buffer'
+})
+const isLayerOpen = computed(() => {
+  if (isRouteMode.value) {
+    return route.path.includes('/traditional/layer')
+  }
+  return analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'layer'
+})
+const isAreaSelection = computed(() => {
+  if (isRouteMode.value) {
+    return route.path.includes('/traditional/area-selection')
+  }
+  return analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'area-selection'
+})
+const isDistanceOpen = computed(() => {
+  if (isRouteMode.value) {
+    return route.path.includes('/traditional/distance')
+  }
+  return analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'distance'
+})
+const isUploadOpen = computed(() => {
+  if (isRouteMode.value) {
+    return route.path.includes('/traditional/upload')
+  }
+  return analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'upload'
+})
+const isQueryOpen = computed(() => {
+  if (isRouteMode.value) {
+    return route.path.includes('/traditional/attribute-selection')
+  }
+  return analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'attribute-selection'
+})
+const isIntersectOpen = computed(() => {
+  if (isRouteMode.value) {
+    return route.path.includes('/traditional/intersect')
+  }
+  return analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'intersect'
+})
+const isEraseOpen = computed(() => {
+  if (isRouteMode.value) {
+    return route.path.includes('/traditional/erase')
+  }
+  return analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'erase'
+})
 
 // 路由导航函数
 const navigateToTool = (toolKey: keyof typeof toolConfigs) => {
   const config = toolConfigs[toolKey]
-  const targetPath = `/dashboard/traditional/${config.path}`
+  const targetPath = `/dashboard/management-analysis/traditional/${config.path}`
   
   // 路由跳转
   router.push(targetPath)
@@ -112,7 +152,7 @@ const toggleTool = (toolKey: keyof typeof toolConfigs) => {
   if (isCurrentlyActive) {
     // 如果当前激活，关闭工具
     analysisStore.closeTool()
-    router.push('/dashboard/traditional')
+    router.push('/dashboard/management-analysis/traditional')
   } else {
     // 否则导航到对应工具，使用 switchTool 确保状态清理
     const prevTool = analysisStore.toolPanel.activeTool
@@ -128,7 +168,7 @@ const toggleLayerManager = () => toggleTool('layer')
 const toggleDistance = () => toggleTool('distance')
 const toggleUpload = () => toggleTool('upload')
 const toggleQuery = () => toggleTool('attribute-selection')
-const toggleOverlay = () => toggleTool('overlay')
+const toggleIntersect = () => toggleTool('intersect')
 const toggleErase = () => toggleTool('erase')
 
 // 监听路由变化，同步到状态管理
@@ -141,8 +181,8 @@ watch(() => route.path, (newPath) => {
     if (toolKey) {
       const config = toolConfigs[toolKey]
       const prevTool = analysisStore.toolPanel.activeTool
-      // 使用 switchTool 确保状态清理
-      analysisStore.switchTool(config.id as any, prevTool)
+      // 使用 openTool 确保面板可见状态正确设置
+      analysisStore.openTool(config.id, config.title)
       
       // 同步到模式状态管理
       modeStateStore.saveTraditionalState({
@@ -157,7 +197,7 @@ watch(() => analysisStore.toolPanel.activeTool, (newTool, oldTool) => {
   if (newTool && !isRouteMode.value) {
     const toolKey = Object.entries(toolConfigs).find(([, config]) => config.id === newTool)?.[0] as keyof typeof toolConfigs
     if (toolKey) {
-      router.push(`/dashboard/traditional/${toolConfigs[toolKey].path}`)
+      router.push(`/dashboard/management-analysis/traditional/${toolConfigs[toolKey].path}`)
       
       // 同步到模式状态管理
       modeStateStore.saveTraditionalState({
@@ -174,7 +214,7 @@ onMounted(() => {
   
   // 延迟执行，确保组件已完全渲染
   setTimeout(() => {
-    if (!analysisStore.toolPanel.visible && route.path === '/dashboard/traditional') {
+    if (!analysisStore.toolPanel.visible && route.path === '/dashboard/management-analysis/traditional') {
       // 从状态管理中获取上次激活的工具
       const traditionalState = modeStateStore.getTraditionalState()
       const activeTool = traditionalState.activeTool || 'layer'
@@ -185,7 +225,7 @@ onMounted(() => {
         'buffer': '缓冲区分析',
         'distance': '最短路径分析',
         'upload': '数据上传',
-        'overlay': '相交分析',
+        'intersect': '相交分析',
         'erase': '擦除分析'
       }
       analysisStore.openTool(activeTool as any, toolTitleMap[activeTool] || '图层管理')

@@ -11,26 +11,26 @@
       <div class="section-title">选择分析图层</div>
       <div class="layer-selector">
         <DropdownSelect 
-          :model-value="selectedAnalysisLayerId"
+          :model-value="selectedAnalysislayerId"
           :options="layerOptionsWithNone"
           placeholder="请选择分析图层"
-          @update:model-value="onLayerSelectionChange"
+          @update:model-value="onlayerSelectionChange"
         />
       </div>
       
       <!-- 显示选中图层信息 -->
-      <div v-if="selectedAnalysisLayerInfo" class="layer-info">
+      <div v-if="selectedAnalysislayerInfo" class="layer-info">
         <div class="info-item">
           <span class="info-label">图层名称:</span>
-          <span class="info-value">{{ selectedAnalysisLayerInfo?.name }}</span>
+          <span class="info-value">{{ selectedAnalysislayerInfo?.name }}</span>
         </div>
         <div class="info-item">
           <span class="info-label">图层类型:</span>
-          <span class="info-value">{{ selectedAnalysisLayerInfo?.type }}</span>
+          <span class="info-value">{{ selectedAnalysislayerInfo?.type }}</span>
         </div>
         <div class="info-item">
           <span class="info-label">要素数量:</span>
-          <span class="info-value">{{ selectedAnalysisLayerInfo?.featureCount }} 个</span>
+          <span class="info-value">{{ selectedAnalysislayerInfo?.featureCount }} 个</span>
         </div>
       </div>
       
@@ -94,7 +94,7 @@
         <PrimaryButton 
           text="执行缓冲区分析"
           :loading="isAnalyzing"
-          :disabled="!selectedAnalysisLayerId"
+          :disabled="!selectedAnalysislayerId"
           @click="executeBufferAnalysis"
         />
         <SecondaryButton 
@@ -115,7 +115,7 @@
         <div>
           <div style="font-weight: 600; margin-bottom: 4px;">正在执行缓冲区分析...</div>
           <div style="font-size: 11px; opacity: 0.8;">
-            正在对图层 "{{ selectedAnalysisLayerInfo?.name }}" 进行缓冲区分析，请稍候
+            正在对图层 "{{ selectedAnalysislayerInfo?.name }}" 进行缓冲区分析，请稍候
           </div>
         </div>
       </TipWindow>
@@ -144,7 +144,7 @@
         <div class="button-group">
           <PrimaryButton 
             text="保存为图层"
-            @click="showLayerNameModal"
+            @click="showlayerNameModal"
           />
           <SecondaryButton 
             text="导出 GeoJSON"
@@ -156,14 +156,14 @@
   </PanelWindow>
   
   <!-- 图层名称输入弹窗 -->
-  <LayerNameModal
-    :visible="showLayerNameModalRef"
+  <layerNameModal
+    :visible="showlayerNameModalRef"
     title="保存缓冲区分析结果"
     placeholder="请输入图层名称"
     hint="图层名称将用于在图层管理器中识别此缓冲区分析结果"
-    :default-name="defaultLayerName"
-    @confirm="handleLayerNameConfirm"
-    @close="handleLayerNameClose"
+    :default-name="defaultlayerName"
+    @confirm="handlelayerNameConfirm"
+    @close="handlelayerNameClose"
   />
 </template>
 
@@ -172,7 +172,7 @@ import { watch, computed, ref, onMounted, onUnmounted } from 'vue'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useMapStore } from '@/stores/mapStore'
 import { useBufferAnalysis } from '@/composables/useBufferAnalysis'
-import { useLayerManager } from '@/composables/useLayerManager'
+import { uselayermanager } from '@/composables/uselayermanager'
 import { useAreaSelectionStore } from '@/stores/areaSelectionStore'
 import PrimaryButton from '@/components/UI/PrimaryButton.vue'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
@@ -180,36 +180,36 @@ import TraditionalInputGroup from '@/components/UI/TraditionalInputGroup.vue'
 import DropdownSelect from '@/components/UI/DropdownSelect.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import TipWindow from '@/components/UI/TipWindow.vue'
-import LayerNameModal from '@/components/UI/LayerNameModal.vue'
+import layerNameModal from '@/components/UI/layerNameModal.vue'
 
 const analysisStore = useAnalysisStore()
 const mapStore = useMapStore()
 const areaSelectionStore = useAreaSelectionStore()
 
 const {
-  selectedAnalysisLayerId,
-  selectedAnalysisLayerInfo,
+  selectedAnalysislayerId,
+  selectedAnalysislayerInfo,
   layerOptions,
   bufferSettings,
   bufferResults,
   currentResult,
   isAnalyzing,
-  setSelectedAnalysisLayer,
+  setSelectedAnalysislayer,
   updateBufferSettings,
   clearAllSelections,
   executeBufferAnalysis,
-  removeBufferLayers,
+  removeBufferlayers,
   displayBufferResults,
   clearState,
   
 } = useBufferAnalysis()
 
 // 使用图层管理 hook
-const { saveFeaturesAsLayer } = useLayerManager()
+const { saveFeaturesAslayer } = uselayermanager()
 
 // 图层名称弹窗状态
-const showLayerNameModalRef = ref<boolean>(false)
-const defaultLayerName = ref<string>('')
+const showlayerNameModalRef = ref<boolean>(false)
+const defaultlayerName = ref<string>('')
 
 // 获取已选择要素信息
 const selectedFeatures = computed(() => areaSelectionStore.selectedFeatures)
@@ -241,9 +241,9 @@ const layerOptionsWithNone = computed(() => {
 })
 
 // 图层选择变化处理
-const onLayerSelectionChange = (layerId: string) => {
+const onlayerSelectionChange = (layerId: string) => {
   if (layerId) {
-    setSelectedAnalysisLayer(layerId)
+    setSelectedAnalysislayer(layerId)
   }
 }
 
@@ -289,7 +289,7 @@ const exportGeoJSON = async () => {
               name: `${result.name}_${index + 1}`,
               distance: result.distance,
               unit: result.unit,
-              sourceLayer: result.sourceLayerName,
+              sourcelayer: result.sourcelayerName,
               createdAt: result.createdAt,
               featureIndex: index
             }
@@ -305,7 +305,7 @@ const exportGeoJSON = async () => {
             name: result.name,
             distance: result.distance,
             unit: result.unit,
-            sourceLayer: result.sourceLayerName,
+            sourcelayer: result.sourcelayerName,
             createdAt: result.createdAt
           }
         })
@@ -319,7 +319,7 @@ const exportGeoJSON = async () => {
             name: result.name,
             distance: result.distance,
             unit: result.unit,
-            sourceLayer: result.sourceLayerName,
+            sourcelayer: result.sourcelayerName,
             createdAt: result.createdAt
           }
         })
@@ -357,12 +357,12 @@ const exportGeoJSON = async () => {
 }
 
 // 生成基于分析参数的图层名称
-const generateLayerNameFromBuffer = () => {
-  if (!selectedAnalysisLayerInfo.value) {
+const generatelayerNameFromBuffer = () => {
+  if (!selectedAnalysislayerInfo.value) {
     return `缓冲区分析`
   }
 
-  const sourceLayerName = selectedAnalysisLayerInfo.value.name
+  const sourcelayerName = selectedAnalysislayerInfo.value.name
   const distanceText = `${bufferSettings.value.radius}米`
   
   // 如果有已选择的要素，尝试从要素中获取更详细的名称信息
@@ -387,47 +387,47 @@ const generateLayerNameFromBuffer = () => {
     // 如果要素数量较少，在名称中包含具体要素信息
     if (selectedFeatures.value.length <= 5) {
       const featureNamesStr = featureNames.join('_')
-      return `缓冲区_${sourceLayerName}_${featureNamesStr}_${distanceText}`
+      return `缓冲区_${sourcelayerName}_${featureNamesStr}_${distanceText}`
     } else {
       // 如果要素数量较多，只显示数量和主要信息
-      return `缓冲区_${sourceLayerName}_${selectedFeatures.value.length}个要素_${distanceText}`
+      return `缓冲区_${sourcelayerName}_${selectedFeatures.value.length}个要素_${distanceText}`
     }
   }
   
-  return `缓冲区_${sourceLayerName}_${distanceText}`
+  return `缓冲区_${sourcelayerName}_${distanceText}`
 }
 
 // 显示图层名称输入弹窗
-const showLayerNameModal = () => {
+const showlayerNameModal = () => {
   if (!bufferResults.value || bufferResults.value.length === 0) {
     analysisStore.setAnalysisStatus('没有可保存的缓冲区结果')
     return
   }
   
-  defaultLayerName.value = generateLayerNameFromBuffer()
-  showLayerNameModalRef.value = true
+  defaultlayerName.value = generatelayerNameFromBuffer()
+  showlayerNameModalRef.value = true
 }
 
 // 处理图层名称确认
-const handleLayerNameConfirm = async (layerName: string) => {
-  showLayerNameModalRef.value = false
-  await saveBufferLayer(layerName)
+const handlelayerNameConfirm = async (layerName: string) => {
+  showlayerNameModalRef.value = false
+  await saveBufferlayer(layerName)
 }
 
 // 处理图层名称弹窗关闭
-const handleLayerNameClose = () => {
-  showLayerNameModalRef.value = false
+const handlelayerNameClose = () => {
+  showlayerNameModalRef.value = false
 }
 
 // 保存缓冲区结果为图层
-const saveBufferLayer = async (customLayerName: string) => {
+const saveBufferlayer = async (customlayerName: string) => {
   if (!bufferResults.value || bufferResults.value.length === 0) {
     analysisStore.setAnalysisStatus('没有可保存的缓冲区结果')
     return
   }
 
   try {
-    const name = customLayerName
+    const name = customlayerName
     const bufferFeatures: any[] = []
     
     bufferResults.value.forEach(result => {
@@ -443,7 +443,7 @@ const saveBufferLayer = async (customLayerName: string) => {
               name: result.name,
               distance: result.distance,
               unit: result.unit,
-              sourceLayer: result.sourceLayerName,
+              sourcelayer: result.sourcelayerName,
               createdAt: result.createdAt
             }
           })
@@ -464,7 +464,7 @@ const saveBufferLayer = async (customLayerName: string) => {
                 name: `${result.name}_${index + 1}`,
                 distance: result.distance,
                 unit: result.unit,
-                sourceLayer: result.sourceLayerName,
+                sourcelayer: result.sourcelayerName,
                 createdAt: result.createdAt,
                 featureIndex: index
               }
@@ -483,7 +483,7 @@ const saveBufferLayer = async (customLayerName: string) => {
               name: result.name,
               distance: result.distance,
               unit: result.unit,
-              sourceLayer: result.sourceLayerName,
+              sourcelayer: result.sourcelayerName,
               createdAt: result.createdAt
             }
           })
@@ -495,7 +495,7 @@ const saveBufferLayer = async (customLayerName: string) => {
     console.log(`[Save] 总共保存 ${bufferFeatures.length} 个要素`)
     
     // 调用图层管理中的通用保存函数
-    const success = await saveFeaturesAsLayer(
+    const success = await saveFeaturesAslayer(
       bufferFeatures,
       name,
       'buffer' // 作为缓冲区图层保存，使用红色样式
@@ -504,7 +504,7 @@ const saveBufferLayer = async (customLayerName: string) => {
     // 保存成功后自动清空所有缓冲区分析结果
     if (success) {
       // 移除地图上的临时缓冲区图层
-      removeBufferLayers()
+      removeBufferlayers()
       
       // 清空缓冲区分析状态（包括结果、当前结果等）
       clearState()
@@ -540,7 +540,7 @@ onUnmounted(() => {})
 
 // 监听状态变化，自动保存（防抖）
 watch([
-  selectedAnalysisLayerId,
+  selectedAnalysislayerId,
   () => bufferSettings.value.radius,
   () => bufferSettings.value.semicircleLineSegment
 ], () => {
@@ -563,9 +563,9 @@ watch(() => analysisStore.toolPanel?.activeTool, (tool, prevTool) => {
 }, { immediate: true })
 
 // 监听图层选择变化
-watch(selectedAnalysisLayerId, (newLayerId) => {
-  if (newLayerId) {
-    setSelectedAnalysisLayer(newLayerId)
+watch(selectedAnalysislayerId, (newlayerId) => {
+  if (newlayerId) {
+    setSelectedAnalysislayer(newlayerId)
   }
 })
 
@@ -575,7 +575,7 @@ watch(selectedAnalysisLayerId, (newLayerId) => {
 watch(bufferResults, (results) => {
   // 结果变化时更新默认图层名称
   if (results && results.length > 0) {
-    defaultLayerName.value = generateLayerNameFromBuffer()
+    defaultlayerName.value = generatelayerNameFromBuffer()
   }
 }, { deep: true })
 </script>

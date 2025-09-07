@@ -176,7 +176,7 @@ const toggleRecord = (recordId: string) => {
     }
   }))
 
-  router.push('/dashboard/llm')
+  router.push('/dashboard/management-analysis/llm')
 }
 
 const deleteRecord = (recordId: string) => {
@@ -246,7 +246,7 @@ const formatDate = (timestamp: string) => {
 }
 
 const goBack = () => {
-  router.push('/dashboard/llm')
+  router.push('/dashboard/management-analysis/llm')
 }
 
 

@@ -117,25 +117,25 @@
   
   <!-- 确认对话框 -->
   <ConfirmDialog
-    :visible="layerManager.confirmDialogVisible.value"
-    :title="layerManager.confirmDialogConfig.value.title"
-    :message="layerManager.confirmDialogConfig.value.message"
+    :visible="layermanager.confirmDialogVisible.value"
+    :title="layermanager.confirmDialogConfig.value.title"
+    :message="layermanager.confirmDialogConfig.value.message"
     confirm-text="保存为图层"
     cancel-text="直接清除"
-    @confirm="layerManager.handleConfirmDialogConfirm"
-    @cancel="layerManager.handleConfirmDialogCancel"
-    @close="layerManager.handleConfirmDialogClose"
+    @confirm="layermanager.handleConfirmDialogConfirm"
+    @cancel="layermanager.handleConfirmDialogCancel"
+    @close="layermanager.handleConfirmDialogClose"
   />
 
   <!-- 图层名称输入对话框 -->
-  <LayerNameModal
+  <layerNameModal
     :visible="layerNameModalVisible"
     title="保存绘制图层"
     placeholder="请输入图层名称"
     :hint="layerNameHint"
-    :default-name="defaultLayerName"
-    @confirm="handleLayerNameConfirm"
-    @close="handleLayerNameClose"
+    :default-name="defaultlayerName"
+    @confirm="handlelayerNameConfirm"
+    @close="handlelayerNameClose"
   />
 </template>
 
@@ -143,18 +143,18 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
-import { useLayerManager } from '@/composables/useLayerManager'
+import { uselayermanager } from '@/composables/uselayermanager'
 import ConfirmDialog from '@/components/UI/ConfirmDialog.vue'
-import LayerNameModal from '@/components/UI/LayerNameModal.vue'
+import layerNameModal from '@/components/UI/layerNameModal.vue'
 
 const mapStore = useMapStore()
 const analysisStore = useAnalysisStore()
-const layerManager = useLayerManager()
+const layermanager = uselayermanager()
 
 // 绘制相关状态
 const draw = ref<any>(null)
 const drawSource = ref<any>(null)
-const drawLayer = ref<any>(null)
+const drawlayer = ref<any>(null)
 const currentDrawType = ref<string | null>('None')
 let themeObserver: MutationObserver | null = null // 主题变化观察器
 
@@ -163,7 +163,7 @@ const layerNameModalVisible = ref(false)
 const pendingDrawSave = ref<(() => Promise<void>) | null>(null)
 
 // 生成默认图层名称
-const defaultLayerName = computed(() => {
+const defaultlayerName = computed(() => {
   if (!drawSource.value) return ''
   
   const features = drawSource.value.getFeatures()
@@ -291,8 +291,8 @@ const toggleAreaMeasure = () => {
 }
 
 // 更新绘制图层样式的函数
-const updateDrawLayerStyle = () => {
-  if (!drawLayer.value) return
+const updateDrawlayerStyle = () => {
+  if (!drawlayer.value) return
   
   try {
     const ol = window.ol
@@ -327,10 +327,10 @@ const updateDrawLayerStyle = () => {
     })
     
     // 设置新样式
-    drawLayer.value.setStyle(newStyle)
+    drawlayer.value.setStyle(newStyle)
     
     // 强制重绘
-    drawLayer.value.changed()
+    drawlayer.value.changed()
     
     console.log('绘制图层样式更新完成')
   } catch (error) {
@@ -341,7 +341,7 @@ const updateDrawLayerStyle = () => {
 // 监听主题变化的函数
 const handleThemeChange = () => {
   console.log('检测到主题变化，更新绘制图层样式')
-  updateDrawLayerStyle()
+  updateDrawlayerStyle()
 }
 
 // 初始化主题变化监听
@@ -369,18 +369,18 @@ const cleanupThemeObserver = () => {
 }
 
 // 初始化绘制图层
-const initDrawLayer = () => {
+const initDrawlayer = () => {
   console.log('开始初始化绘制图层...')
   console.log('地图实例:', mapStore.map)
   
   if (!mapStore.map) {
     console.warn('地图实例未准备好，延迟重试...')
-    setTimeout(initDrawLayer, 1000)
+    setTimeout(initDrawlayer, 1000)
     return
   }
   
   if (!window.ol) {
-    console.error('OpenLayers库未加载')
+    console.error('Openlayers库未加载')
     return
   }
   
@@ -396,7 +396,7 @@ const initDrawLayer = () => {
     console.log('初始化绘制图层，颜色:', drawColor, 'RGB:', drawRgb)
     
     // 创建绘制图层
-    drawLayer.value = new ol.layer.Vector({
+    drawlayer.value = new ol.layer.Vector({
       source: drawSource.value,
       style: new ol.style.Style({
         stroke: new ol.style.Stroke({
@@ -422,11 +422,11 @@ const initDrawLayer = () => {
     })
     
     // 设置绘制图层标识
-    drawLayer.value.set('isDrawLayer', true)
-    console.log('绘制图层创建成功:', drawLayer.value)
+    drawlayer.value.set('isDrawlayer', true)
+    console.log('绘制图层创建成功:', drawlayer.value)
     
     // 添加到地图
-    mapStore.map.addLayer(drawLayer.value)
+    mapStore.map.addLayer(drawlayer.value)
     console.log('绘制图层已添加到地图')
     
     // 初始化主题变化监听
@@ -456,7 +456,7 @@ const startDraw = (type: 'Point' | 'LineString' | 'Polygon') => {
   
   if (!drawSource.value) {
     console.error('绘制数据源未初始化，重新初始化...')
-    initDrawLayer()
+    initDrawlayer()
     setTimeout(() => startDraw(type), 100)
     return
   }
@@ -532,7 +532,7 @@ const clearDrawFeatures = () => {
     // 检查是否有绘制内容
     if (features.length > 0) {
       // 显示确认对话框询问是否保存
-      layerManager.showConfirmDialog(
+      layermanager.showConfirmDialog(
         '保存绘制内容',
         `您已绘制了 ${features.length} 个要素，是否要保存为图层？`,
         () => {
@@ -558,12 +558,12 @@ const clearDrawFeatures = () => {
 }
 
 // 处理图层名称确认
-const handleLayerNameConfirm = async (layerName: string) => {
+const handlelayerNameConfirm = async (layerName: string) => {
   console.log('用户输入图层名称:', layerName)
   layerNameModalVisible.value = false
   
   try {
-    const success = await layerManager.saveDrawAsLayer(layerName)
+    const success = await layermanager.saveDrawAslayer(layerName)
     if (success) {
       console.log('绘制内容保存成功，图层名称:', layerName)
       stopDraw()
@@ -576,13 +576,13 @@ const handleLayerNameConfirm = async (layerName: string) => {
 }
 
 // 处理图层名称输入取消
-const handleLayerNameClose = () => {
+const handlelayerNameClose = () => {
   console.log('用户取消图层名称输入')
   layerNameModalVisible.value = false
 }
 
 // 清理绘制图层
-const cleanupDrawLayer = () => {
+const cleanupDrawlayer = () => {
   console.log('清理绘制图层...')
   
   // 清理主题变化监听
@@ -592,10 +592,10 @@ const cleanupDrawLayer = () => {
   clearDrawInteraction()
   
   // 清除绘制图层
-  if (drawLayer.value && mapStore.map) {
+  if (drawlayer.value && mapStore.map) {
     try {
-      mapStore.map.removeLayer(drawLayer.value)
-      drawLayer.value = null
+      mapStore.map.removeLayer(drawlayer.value)
+      drawlayer.value = null
       console.log('绘制图层已移除')
     } catch (error) {
       console.error('移除绘制图层失败:', error)
@@ -621,20 +621,20 @@ const cleanupDrawLayer = () => {
 
 // 组件挂载时初始化
 onMounted(() => {
-  console.log('LayerAssistant组件已挂载')
+  console.log('layerAssistant组件已挂载')
   
   // 延迟初始化，确保地图已准备好
   setTimeout(() => {
     if (mapStore.isMapReady) {
-      initDrawLayer()
+      initDrawlayer()
     }
   }, 1000)
 })
 
 // 组件卸载时清理
 onUnmounted(() => {
-  console.log('LayerAssistant组件即将卸载')
-  cleanupDrawLayer()
+  console.log('layerAssistant组件即将卸载')
+  cleanupDrawlayer()
 })
 </script>
 

@@ -1,5 +1,5 @@
 <template>
-  <div v-if="visible" class="modal-overlay" @click="handleOverlayClick">
+  <div v-if="visible" class="modal-intersect" @click="handleintersectClick">
     <div class="modal-content" @click.stop>
       <div class="modal-header">
         <h3>{{ title }}</h3>
@@ -231,7 +231,7 @@ const handleClose = () => {
 }
 
 // 处理遮罩层点击
-const handleOverlayClick = () => {
+const handleintersectClick = () => {
   handleClose()
 }
 
@@ -253,7 +253,7 @@ const handleSave = () => {
 </script>
 
 <style scoped>
-.modal-overlay {
+.modal-intersect {
   position: fixed;
   top: 0;
   left: 0;

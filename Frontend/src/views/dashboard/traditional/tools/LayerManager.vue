@@ -17,7 +17,7 @@
           <div class="group-header" @click="toggleGroupCollapse('supermap')">
             <div class="group-title">
               SuperMap 服务图层
-              <span class="layer-count">({{ getLayerCount('supermap') }})</span>
+              <span class="layer-count">({{ getlayerCount('supermap') }})</span>
             </div>
           </div>
           
@@ -28,8 +28,8 @@
                 v-for="item in getLayersBySource('supermap')" 
                 :key="item.key"
                 class="layer-item"
-                :class="{ 'active': selectedLayerKey === item.key }"
-                @click="selectLayer(item.key)"
+                :class="{ 'active': selectedlayerKey === item.key }"
+                @click="selectlayer(item.key)"
               >
                 <div class="layer-info">
                   <div class="layer-name">{{ item.displayName }}</div>
@@ -42,7 +42,7 @@
                   />
                   <SecondaryButton
                     text="移除"
-                    :variant="selectedLayerKey === item.key ? 'secondary' : 'danger'"
+                    :variant="selectedlayerKey === item.key ? 'secondary' : 'danger'"
                     @click.stop="handleRemove(item)"
                   />
                 </div>
@@ -56,7 +56,7 @@
           <div class="group-header" @click="toggleGroupCollapse('draw')">
             <div class="group-title">
               分析图层
-              <span class="layer-count">({{ getLayerCount('draw') }})</span>
+              <span class="layer-count">({{ getlayerCount('draw') }})</span>
             </div>
           </div>
           
@@ -67,8 +67,8 @@
                 v-for="item in getLayersBySource('draw')" 
                 :key="item.key"
                 class="layer-item"
-                :class="{ 'active': selectedLayerKey === item.key }"
-                @click="selectLayer(item.key)"
+                :class="{ 'active': selectedlayerKey === item.key }"
+                @click="selectlayer(item.key)"
               >
                 <div class="layer-info">
                   <div class="layer-name">{{ item.displayName }}</div>
@@ -81,7 +81,7 @@
                   />
                   <SecondaryButton
                     text="移除"
-                    :variant="selectedLayerKey === item.key ? 'secondary' : 'danger'"
+                    :variant="selectedlayerKey === item.key ? 'secondary' : 'danger'"
                     @click.stop="handleRemove(item)"
                   />
                 </div>
@@ -95,7 +95,7 @@
           <div class="group-header" @click="toggleGroupCollapse('query')">
             <div class="group-title">
               查询图层
-              <span class="layer-count">({{ getLayerCount('query') }})</span>
+              <span class="layer-count">({{ getlayerCount('query') }})</span>
             </div>
           </div>
           
@@ -106,8 +106,8 @@
                 v-for="item in getLayersBySource('query')" 
                 :key="item.key"
                 class="layer-item"
-                :class="{ 'active': selectedLayerKey === item.key }"
-                @click="selectLayer(item.key)"
+                :class="{ 'active': selectedlayerKey === item.key }"
+                @click="selectlayer(item.key)"
               >
                 <div class="layer-info">
                   <div class="layer-name">{{ item.displayName }}</div>
@@ -120,7 +120,7 @@
                   />
                   <SecondaryButton
                     text="移除"
-                    :variant="selectedLayerKey === item.key ? 'secondary' : 'danger'"
+                    :variant="selectedlayerKey === item.key ? 'secondary' : 'danger'"
                     @click.stop="handleRemove(item)"
                   />
                 </div>
@@ -134,7 +134,7 @@
           <div class="group-header" @click="toggleGroupCollapse('upload')">
             <div class="group-title">
               上传图层
-              <span class="layer-count">({{ getLayerCount('upload') }})</span>
+              <span class="layer-count">({{ getlayerCount('upload') }})</span>
             </div>
           </div>
           
@@ -145,8 +145,8 @@
                 v-for="item in getLayersBySource('upload')" 
                 :key="item.key"
                 class="layer-item"
-                :class="{ 'active': selectedLayerKey === item.key }"
-                @click="selectLayer(item.key)"
+                :class="{ 'active': selectedlayerKey === item.key }"
+                @click="selectlayer(item.key)"
               >
                 <div class="layer-info">
                   <div class="layer-name">{{ item.displayName }}</div>
@@ -159,7 +159,7 @@
                   />
                   <SecondaryButton
                     text="移除"
-                    :variant="selectedLayerKey === item.key ? 'secondary' : 'danger'"
+                    :variant="selectedlayerKey === item.key ? 'secondary' : 'danger'"
                     @click.stop="handleRemove(item)"
                   />
                 </div>
@@ -189,11 +189,11 @@ import { computed, ref } from 'vue'
 import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
-import { useLayerManager } from '@/composables/useLayerManager'
+import { uselayermanager } from '@/composables/uselayermanager'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import ConfirmDialog from '@/components/UI/ConfirmDialog.vue'
 
-interface MapLayerItem {
+interface MaplayerItem {
   key: string;
   name: string;
   displayName: string;
@@ -204,7 +204,7 @@ interface MapLayerItem {
 
 const mapStore = useMapStore()
 const analysisStore = useAnalysisStore()
-const { toggleLayerVisibility, removeLayer } = useLayerManager()
+const { togglelayerVisibility, removeLayer } = uselayermanager()
 
 // 确认对话框状态
 const confirmDialogVisible = ref(false)
@@ -215,11 +215,11 @@ const confirmDialogConfig = ref({
 })
 
 // 选中图层状态
-const selectedLayerKey = ref<string>('')
+const selectedlayerKey = ref<string>('')
 
 // 选择图层
-const selectLayer = (layerKey: string) => {
-  selectedLayerKey.value = layerKey
+const selectlayer = (layerKey: string) => {
+  selectedlayerKey.value = layerKey
 }
 
 // 折叠状态管理
@@ -237,24 +237,24 @@ const toggleGroupCollapse = (source: string) => {
 }
 
 // 获取指定来源的图层数量
-const getLayerCount = (source: string): number => {
-  return allLayers.value.filter(item => item.source === source).length
+const getlayerCount = (source: string): number => {
+  return alllayers.value.filter(item => item.source === source).length
 }
 
 // 获取指定来源的图层列表
-const getLayersBySource = (source: string): MapLayerItem[] => {
-  return allLayers.value
+const getLayersBySource = (source: string): MaplayerItem[] => {
+  return alllayers.value
     .filter(item => item.source === source)
 }
 
 
 // 所有图层的扁平化列表
-const allLayers = computed(() => {
-  const layers: MapLayerItem[] = []
+const alllayers = computed(() => {
+  const layers: MaplayerItem[] = []
   
-  mapStore.vectorLayers.forEach(vl => {
+  mapStore.vectorlayers.forEach(vl => {
     const source = vl.source || 'external'
-    const item: MapLayerItem = {
+    const item: MaplayerItem = {
       key: vl.id,
       name: vl.name,
       displayName: vl.name,
@@ -312,11 +312,11 @@ function inferDesc(name: string, type: string): string {
   return '矢量数据'
 }
 
-const handleToggleVisibility = (item: MapLayerItem) => {
-  toggleLayerVisibility(item.key)
+const handleToggleVisibility = (item: MaplayerItem) => {
+  togglelayerVisibility(item.key)
 }
 
-const handleRemove = (item: MapLayerItem) => {
+const handleRemove = (item: MaplayerItem) => {
   confirmDialogConfig.value = {
     title: '移除图层',
     message: `确定要移除图层"${item.name}"吗？此操作不可撤销。`,

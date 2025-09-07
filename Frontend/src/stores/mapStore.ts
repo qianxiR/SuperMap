@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { MapConfig, Coordinate, MapLayer, VectorLayerConfig } from '@/types/map'
+import type { MapConfig, Coordinate, Maplayer, VectorlayerConfig } from '@/types/map'
 import { createAPIConfig, getFullUrl } from '@/utils/config'
 import { useAnalysisStore } from '@/stores/analysisStore'
 
@@ -10,12 +10,12 @@ const useMapStore = defineStore('map', () => {
   const isMapReady = ref<boolean>(false)
   
   // 图层管理
-  const baseLayer = ref<any>(null) // ol.layer.Tile
-  const hoverLayer = ref<any>(null) // ol.layer.Vector
-  const selectLayer = ref<any>(null) // ol.layer.Vector
-  const vectorLayers = ref<MapLayer[]>([])
+  const baselayer = ref<any>(null) // ol.layer.Tile
+  const hintersecter = ref<any>(null) // ol.layer.Vector
+  const selectlayer = ref<any>(null) // ol.layer.Vector
+  const vectorlayers = ref<Maplayer[]>([])
 
-  const customLayers = ref<MapLayer[]>([])
+  const customlayers = ref<Maplayer[]>([])
   
   // 鼠标坐标
   const currentCoordinate = ref<Coordinate>({ lon: null, lat: null })
@@ -23,13 +23,13 @@ const useMapStore = defineStore('map', () => {
   // 距离量算相关状态
   const distanceMeasureMode = ref<boolean>(false)
   const distanceMeasureResult = ref<{ distance: number; unit: string } | null>(null)
-  const measureLayer = ref<any>(null) // 量算图层
+  const measurelayer = ref<any>(null) // 量算图层
   const measureInteraction = ref<any>(null) // 量算交互
   
   // 面积量算相关状态
   const areaMeasureMode = ref<boolean>(false)
   const areaMeasureResult = ref<{ area: number; unit: string } | null>(null)
-  const areaMeasureLayer = ref<any>(null) // 面积量算图层
+  const areaMeasurelayer = ref<any>(null) // 面积量算图层
   const areaMeasureInteraction = ref<any>(null) // 面积量算交互
   
   // 鹰眼相关状态
@@ -39,8 +39,8 @@ const useMapStore = defineStore('map', () => {
   let themeObserver: MutationObserver | null = null // 主题变化观察器
 
   // 更新测量图层样式的函数
-  const updateMeasureLayerStyle = () => {
-    if (!measureLayer.value && !areaMeasureLayer.value) return
+  const updateMeasurelayerStyle = () => {
+    if (!measurelayer.value && !areaMeasurelayer.value) return
     
     try {
       const ol = window.ol
@@ -65,15 +65,15 @@ const useMapStore = defineStore('map', () => {
       })
       
       // 更新距离测量图层样式
-      if (measureLayer.value) {
-        measureLayer.value.setStyle(newStyle)
-        measureLayer.value.changed()
+      if (measurelayer.value) {
+        measurelayer.value.setStyle(newStyle)
+        measurelayer.value.changed()
       }
       
       // 更新面积测量图层样式
-      if (areaMeasureLayer.value) {
-        areaMeasureLayer.value.setStyle(newStyle)
-        areaMeasureLayer.value.changed()
+      if (areaMeasurelayer.value) {
+        areaMeasurelayer.value.setStyle(newStyle)
+        areaMeasurelayer.value.changed()
       }
       
       console.log('测量图层样式更新完成')
@@ -85,7 +85,7 @@ const useMapStore = defineStore('map', () => {
   // 监听主题变化的函数
   const handleThemeChange = () => {
     console.log('检测到主题变化，更新测量图层样式')
-    updateMeasureLayerStyle()
+    updateMeasurelayerStyle()
   }
 
   // 初始化主题变化监听
@@ -121,9 +121,9 @@ const useMapStore = defineStore('map', () => {
   })
 
   const hasMapDiff = computed(() => {
-    const hasCustomLayers = customLayers.value.length > 0
-    const hasSelections = selectLayer.value && selectLayer.value.getSource() && selectLayer.value.getSource().getFeatures().length > 0
-    return hasCustomLayers || !!hasSelections
+    const hasCustomlayers = customlayers.value.length > 0
+    const hasSelections = selectlayer.value && selectlayer.value.getSource() && selectlayer.value.getSource().getFeatures().length > 0
+    return hasCustomlayers || !!hasSelections
   })
   
 
@@ -143,7 +143,7 @@ const useMapStore = defineStore('map', () => {
     // ===== 创建矢量图层样式配置 =====
     // 调用者: createMapConfig()
     // 作用: 为每个矢量图层创建对应的样式配置，支持主题切换
-    const vectorLayerConfigs: VectorLayerConfig[] = apiConfig.wuhanLayers
+    const vectorlayerConfigs: VectorlayerConfig[] = apiConfig.wuhanlayers
       .filter(layer => layer.type !== 'raster') // 过滤掉栅格图层
       .map(layer => {
         const baseStyle = {
@@ -217,13 +217,13 @@ const useMapStore = defineStore('map', () => {
       baseUrl: getFullUrl('map'),
       
       // ===== 数据服务URL配置 =====
-      // 调用者: useMap.ts -> loadVectorLayer() -> featureService
+      // 调用者: useMap.ts -> loadVectorlayer() -> featureService
       // 服务器地址: ${baseUrl}/${dataService} (数据服务)
       // 作用: 提供矢量要素数据的访问地址
       dataUrl: getFullUrl('data'),
       
       datasetName: apiConfig.datasetName,
-      vectorLayers: vectorLayerConfigs,
+      vectorlayers: vectorlayerConfigs,
       
       // ===== 地图显示配置 =====
       // 作用: 定义地图的初始显示参数，从配置中读取避免硬编码
@@ -242,10 +242,10 @@ const useMapStore = defineStore('map', () => {
     isMapReady.value = true
   }
   
-  function setLayers(layers: { base: any, hover: any, select: any }) {
-    baseLayer.value = layers.base
-    hoverLayer.value = layers.hover
-    selectLayer.value = layers.select
+  function setlayers(layers: { base: any, hover: any, select: any }) {
+    baselayer.value = layers.base
+    hintersecter.value = layers.hover
+    selectlayer.value = layers.select
   }
   
   function updateCoordinate(coordinate: number[]) {
@@ -260,26 +260,26 @@ const useMapStore = defineStore('map', () => {
   }
   
   function getSelectedFeatures(): any[] { // ol.Feature[]
-    if (selectLayer.value && selectLayer.value.getSource) {
-      const source = selectLayer.value.getSource()
+    if (selectlayer.value && selectlayer.value.getSource) {
+      const source = selectlayer.value.getSource()
       return source ? source.getFeatures() : []
     }
     return []
   }
 
-  function clearAllLayers() {
+  function clearAlllayers() {
     if (map.value) {
-      customLayers.value.forEach(item => {
+      customlayers.value.forEach(item => {
         try { map.value.removeLayer(item.layer) } catch (_) { /* noop */ }
       })
-      vectorLayers.value.forEach(item => {
+      vectorlayers.value.forEach(item => {
         try { map.value.removeLayer(item.layer) } catch (_) { /* noop */ }
       })
     }
-    customLayers.value = []
-    vectorLayers.value = []
-    if (selectLayer.value && selectLayer.value.getSource()) {
-      selectLayer.value.getSource().clear()
+    customlayers.value = []
+    vectorlayers.value = []
+    if (selectlayer.value && selectlayer.value.getSource()) {
+      selectlayer.value.getSource().clear()
     }
   }
 
@@ -314,7 +314,7 @@ const useMapStore = defineStore('map', () => {
     
     // 创建量算图层
     const measureSource = new ol.source.Vector({ wrapX: false })
-    measureLayer.value = new ol.layer.Vector({
+    measurelayer.value = new ol.layer.Vector({
       source: measureSource,
       style: new ol.style.Style({
         stroke: new ol.style.Stroke({
@@ -330,10 +330,10 @@ const useMapStore = defineStore('map', () => {
     })
     
     // 设置测量图层标识，防止被保存为要素
-    measureLayer.value.set('isMeasureLayer', true)
-    measureLayer.value.set('measureType', 'distance')
+    measurelayer.value.set('isMeasurelayer', true)
+    measurelayer.value.set('measureType', 'distance')
     
-    map.value.addLayer(measureLayer.value)
+    map.value.addLayer(measurelayer.value)
     
     // 创建独立的量算交互 - 不依赖绘制工具
     measureInteraction.value = new ol.interaction.Draw({
@@ -354,13 +354,7 @@ const useMapStore = defineStore('map', () => {
       // 设置测量要素标识，防止被保存为永久要素
       feature.set('isMeasureFeature', true)
       feature.set('measureType', 'distance')
-      
-      // 打印几何信息
-      console.log('=== 距离量测API调用信息 ===')
-      console.log('绘制要素:', feature)
-      console.log('几何对象:', geometry)
-      console.log('几何类型:', geometry.getType())
-      console.log('几何坐标:', geometry.getCoordinates())
+    
       
       // 尝试使用SuperMap MeasureService进行距离量算
       try {
@@ -412,9 +406,9 @@ const useMapStore = defineStore('map', () => {
       measureInteraction.value = null
     }
     
-    if (measureLayer.value && map.value) {
-      map.value.removeLayer(measureLayer.value)
-      measureLayer.value = null
+    if (measurelayer.value && map.value) {
+      map.value.removeLayer(measurelayer.value)
+      measurelayer.value = null
     }
     
     // 清理主题变化监听
@@ -429,8 +423,8 @@ const useMapStore = defineStore('map', () => {
   }
   
   function clearDistanceMeasure() {
-    if (measureLayer.value && measureLayer.value.getSource()) {
-      measureLayer.value.getSource().clear()
+    if (measurelayer.value && measurelayer.value.getSource()) {
+      measurelayer.value.getSource().clear()
     }
     distanceMeasureResult.value = null
   }
@@ -462,7 +456,7 @@ const useMapStore = defineStore('map', () => {
      
      // 创建量算图层
      const measureSource = new ol.source.Vector({ wrapX: false })
-     areaMeasureLayer.value = new ol.layer.Vector({
+     areaMeasurelayer.value = new ol.layer.Vector({
        source: measureSource,
        style: new ol.style.Style({
          stroke: new ol.style.Stroke({
@@ -478,10 +472,10 @@ const useMapStore = defineStore('map', () => {
      })
      
      // 设置面积测量图层标识，防止被保存为要素
-     areaMeasureLayer.value.set('isMeasureLayer', true)
-     areaMeasureLayer.value.set('measureType', 'area')
+     areaMeasurelayer.value.set('isMeasurelayer', true)
+     areaMeasurelayer.value.set('measureType', 'area')
      
-    map.value.addLayer(areaMeasureLayer.value)
+    map.value.addLayer(areaMeasurelayer.value)
     
     // 创建独立的面积量算交互 - 不依赖绘制工具
     areaMeasureInteraction.value = new ol.interaction.Draw({
@@ -548,9 +542,9 @@ const useMapStore = defineStore('map', () => {
       areaMeasureInteraction.value = null
     }
     
-    if (areaMeasureLayer.value && map.value) {
-      map.value.removeLayer(areaMeasureLayer.value)
-      areaMeasureLayer.value = null
+    if (areaMeasurelayer.value && map.value) {
+      map.value.removeLayer(areaMeasurelayer.value)
+      areaMeasurelayer.value = null
     }
     
     // 清理主题变化监听
@@ -565,15 +559,15 @@ const useMapStore = defineStore('map', () => {
   }
   
      function clearAreaMeasure() {
-     if (areaMeasureLayer.value && areaMeasureLayer.value.getSource()) {
-       areaMeasureLayer.value.getSource().clear()
+     if (areaMeasurelayer.value && areaMeasurelayer.value.getSource()) {
+       areaMeasurelayer.value.getSource().clear()
      }
      areaMeasureResult.value = null
    }
    
    // 更新面积量测图层样式（用于主题切换）
    function updateAreaMeasureStyle() {
-     if (areaMeasureLayer.value) {
+     if (areaMeasurelayer.value) {
        const ol = window.ol
        const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--measure-line-color').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000')
        const measureRgb = getComputedStyle(document.documentElement).getPropertyValue('--measure-line-rgb').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '255, 255, 255' : '0, 0, 0')
@@ -588,7 +582,7 @@ const useMapStore = defineStore('map', () => {
          })
        })
        
-       areaMeasureLayer.value.setStyle(newStyle)
+       areaMeasurelayer.value.setStyle(newStyle)
      }
    }
   
@@ -605,32 +599,32 @@ const useMapStore = defineStore('map', () => {
   return {
     map,
     isMapReady,
-    baseLayer,
-    hoverLayer,
-    selectLayer,
-    vectorLayers,
+    baselayer,
+    hintersecter,
+    selectlayer,
+    vectorlayers,
     currentCoordinate,
-    customLayers,
+    customlayers,
     mapConfig,
     formattedCoordinate,
     hasMapDiff,
     // 距离量算相关
     distanceMeasureMode,
     distanceMeasureResult,
-    measureLayer,
+    measurelayer,
     measureInteraction,
     // 面积量算相关
     areaMeasureMode,
     areaMeasureResult,
-    areaMeasureLayer,
+    areaMeasurelayer,
     areaMeasureInteraction,
     // 鹰眼相关
     overviewMapVisible,
     setMap,
-    setLayers,
+    setlayers,
     updateCoordinate,
     getSelectedFeatures,
-    clearAllLayers,
+    clearAlllayers,
     reloadConfig,
     clearCoordinate,
     // 距离量算方法

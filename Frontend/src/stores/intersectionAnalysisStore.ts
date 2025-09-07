@@ -5,14 +5,14 @@ interface IntersectionResultItem {
   id: string
   name: string
   geometry: any
-  sourceTargetLayerName: string
-  sourceMaskLayerName: string
+  sourceTargetlayerName: string
+  sourceMasklayerName: string
   createdAt: string
 }
 
 interface IntersectionAnalysisState {
-  targetLayerId: string
-  maskLayerId: string
+  targetlayerId: string
+  masklayerId: string
   results: IntersectionResultItem[]
   currentResult: IntersectionResultItem | null
   isAnalyzing: boolean
@@ -22,8 +22,8 @@ interface IntersectionAnalysisState {
 
 export const useIntersectionAnalysisStore = defineStore('intersectionAnalysis', () => {
   const state = reactive<IntersectionAnalysisState>({
-    targetLayerId: '',
-    maskLayerId: '',
+    targetlayerId: '',
+    masklayerId: '',
     results: [],
     currentResult: null,
     isAnalyzing: false,
@@ -33,12 +33,12 @@ export const useIntersectionAnalysisStore = defineStore('intersectionAnalysis', 
 
   const hasResults = computed(() => state.results.length > 0)
 
-  const setTargetLayerId = (layerId: string) => {
-    state.targetLayerId = layerId
+  const setTargetlayerId = (layerId: string) => {
+    state.targetlayerId = layerId
   }
 
-  const setMaskLayerId = (layerId: string) => {
-    state.maskLayerId = layerId
+  const setMasklayerId = (layerId: string) => {
+    state.masklayerId = layerId
   }
 
   const setTargetFeaturesCache = (features: any[]) => {
@@ -68,8 +68,8 @@ export const useIntersectionAnalysisStore = defineStore('intersectionAnalysis', 
   }
 
   const clearAll = () => {
-    state.targetLayerId = ''
-    state.maskLayerId = ''
+    state.targetlayerId = ''
+    state.masklayerId = ''
     state.results = []
     state.currentResult = null
     state.isAnalyzing = false
@@ -80,8 +80,8 @@ export const useIntersectionAnalysisStore = defineStore('intersectionAnalysis', 
   return {
     state,
     hasResults,
-    setTargetLayerId,
-    setMaskLayerId,
+    setTargetlayerId,
+    setMasklayerId,
     setTargetFeaturesCache,
     setMaskFeaturesCache,
     setResults,

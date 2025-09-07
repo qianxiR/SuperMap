@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-type ToolId = 'draw' | 'buffer' | 'distance' | 'layer' | 'area-selection' | 'llm' | 'attribute-selection' | 'upload' | 'overlay' | 'erase' | '';
+type ToolId = 'draw' | 'buffer' | 'distance' | 'layer' | 'area-selection' | 'llm' | 'attribute-selection' | 'upload' | 'intersect' | 'erase' | '';
 
 export const useAnalysisStore = defineStore('analysis', () => {
   // 分析状态
@@ -56,7 +56,7 @@ export const useAnalysisStore = defineStore('analysis', () => {
       case 'layer':
         // 图层管理：清理图层选择状态
         break
-      case 'overlay':
+      case 'intersect':
         // 相交分析：清理分析结果和地图显示
         break
       case 'erase':

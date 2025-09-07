@@ -5,7 +5,7 @@ import { usePopupStore } from '@/stores/popupStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useLoadingStore } from '@/stores/loadingStore'
 import { useThemeStore } from '@/stores/themeStore'
-import { useLayerManager } from '@/composables/useLayerManager'
+import { uselayermanager } from '@/composables/uselayermanager'
 import { superMapClient } from '@/api/supermap'
 import { handleError, notificationManager } from '@/utils/notification'
 import { createAPIConfig, getCurrentBaseMapUrl } from '@/utils/config'
@@ -19,14 +19,14 @@ export function useMap() {
   const analysisStore = useAnalysisStore()
   const loadingStore = useLoadingStore()
   const themeStore = useThemeStore()
-  const layerManager = useLayerManager()
+  const layermanager = uselayermanager()
   const mapContainer = ref<HTMLElement | null>(null)
   const hoverTimer = ref<number | null>(null)
   const selectSourceRef = ref<any>(null) // ol.source.Vector
   const disposers: Array<() => void> = []
 
   // 前置声明所有函数
-  const createLayerStyle = (layerConfig: any, layerName: string): any => {
+  const createlayerStyle = (layerConfig: any, layerName: string): any => {
     const css = getComputedStyle(document.documentElement);
     const strokeVar = css.getPropertyValue(`--layer-stroke-${layerName}`).trim();
     const fillVar = css.getPropertyValue(`--layer-fill-${layerName}`).trim();
@@ -116,19 +116,19 @@ export function useMap() {
     }
   }
 
-  const updateLayerStyles = () => {
-    mapStore.vectorLayers.forEach(layerInfo => {
+  const updatelayerStyles = () => {
+    mapStore.vectorlayers.forEach(layerInfo => {
       if (layerInfo.layer && layerInfo.source === 'supermap') {
-        const layerConfig = createAPIConfig().wuhanLayers.find(config => config.name === layerInfo.id);
+        const layerConfig = createAPIConfig().wuhanlayers.find(config => config.name === layerInfo.id);
         if (layerConfig) {
           // 包括县级图层，进行主题切换时的样式更新
-          const newStyle = createLayerStyle(layerConfig, layerInfo.name);
+          const newStyle = createlayerStyle(layerConfig, layerInfo.name);
           layerInfo.layer.setStyle(newStyle);
         }
       }
     });
     
-    if (mapStore.selectLayer) {
+    if (mapStore.selectlayer) {
       const grayFillColor = getComputedStyle(document.documentElement).getPropertyValue('--map-select-fill').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(33, 37, 41, 0.15)');
       const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--map-highlight-color').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000');
       
@@ -190,10 +190,10 @@ export function useMap() {
         }
       };
       
-      mapStore.selectLayer.setStyle(newSelectStyle);
+      mapStore.selectlayer.setStyle(newSelectStyle);
     }
     
-    if (mapStore.hoverLayer) {
+    if (mapStore.hintersecter) {
       const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--map-highlight-color').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000');
       const hoverFillColor = getComputedStyle(document.documentElement).getPropertyValue('--map-hover-fill').trim() || 'rgba(0, 123, 255, 0.3)';
       
@@ -207,11 +207,11 @@ export function useMap() {
         fill: new ol.style.Fill({color: hoverFillColor})
       });
       
-      mapStore.hoverLayer.setStyle(newHoverStyle);
+      mapStore.hintersecter.setStyle(newHoverStyle);
     }
   }
   const updateBaseMap = (theme: 'light' | 'dark') => {
-    if (mapStore.map && mapStore.baseLayer) {
+    if (mapStore.map && mapStore.baselayer) {
       const currentBaseMapUrl = getCurrentBaseMapUrl(theme)
       
       const sourceConfig: any = {
@@ -226,13 +226,13 @@ export function useMap() {
       
       const newBaseMapSource = new ol.source.TileSuperMapRest(sourceConfig)
       
-      const oldSource = mapStore.baseLayer.getSource()
+      const oldSource = mapStore.baselayer.getSource()
       if (oldSource) {
         oldSource.clear?.()
       }
       
-      mapStore.baseLayer.setSource(newBaseMapSource)
-      mapStore.baseLayer.changed()
+      mapStore.baselayer.setSource(newBaseMapSource)
+      mapStore.baselayer.changed()
       mapStore.map.renderSync()
       
       if (mapStore.map) {
@@ -247,7 +247,7 @@ export function useMap() {
   }
      const observeThemeChanges = () => {
      const observer = new MutationObserver(() => {
-       updateLayerStyles();
+       updatelayerStyles();
        updateBaseMap(themeStore.theme);
        // 更新面积量测样式
        mapStore.updateAreaMeasureStyle();
@@ -260,7 +260,7 @@ export function useMap() {
      });
      
      const stopThemeWatch = watch(() => themeStore.theme, () => {
-       updateLayerStyles();
+       updatelayerStyles();
        updateBaseMap(themeStore.theme);
        // 更新面积量测样式
        mapStore.updateAreaMeasureStyle();
@@ -274,10 +274,10 @@ export function useMap() {
 
   /**
    * 加载矢量图层 - 连接SuperMap iServer数据服务获取地理要素数据
-   * 调用者: useMap() -> loadVectorLayers() -> loadVectorLayer()
+   * 调用者: useMap() -> loadVectorlayers() -> loadVectorlayer()
    * 作用: 从SuperMap服务器加载指定图层的矢量要素数据并渲染到地图上
    */
-  const loadVectorLayer = async (map: any, layerConfig: any, visibleOverride?: boolean): Promise<void> => {
+  const loadVectorlayer = async (map: any, layerConfig: any, visibleOverride?: boolean): Promise<void> => {
     // 改进图层名称解析逻辑
     let layerName = layerConfig.name
     if (layerConfig.name.includes('@')) {
@@ -287,9 +287,9 @@ export function useMap() {
         layerName = parts[0] // 取第一部分作为图层名称
       }
     } 
-    const style = createLayerStyle(layerConfig, layerName);
+    const style = createlayerStyle(layerConfig, layerName);
     
-    // 创建OpenLayers矢量图层容器，图层创建和渲染：
+    // 创建Openlayers矢量图层容器，图层创建和渲染：
     // 1. 创建图层容器
     // 2. 创建图层源
     // 3. 创建图层样式
@@ -297,13 +297,13 @@ export function useMap() {
     // 5. 添加图层到地图
     // 6. 渲染图层
     // 7. 更新图层样式
-    const vectorLayer = new ol.layer.Vector({
+    const vectorlayer = new ol.layer.Vector({
       source: new ol.source.Vector({}),
       style: style
     });
     
     // ===== 连接SuperMap iServer数据服务 =====
-    // 调用者: loadVectorLayer()
+    // 调用者: loadVectorlayer()
     // 服务器地址: mapStore.mapConfig.dataUrl (来自 src/utils/config.ts 配置)
     // 作用: 创建SuperMap要素服务客户端，用于获取矢量数据
     const featureService = new ol.supermap.FeatureService(mapStore.mapConfig.dataUrl);
@@ -315,7 +315,7 @@ export function useMap() {
     const datasetNames = [`${datasource}:${dataset}`];
 
     // ===== 第一次服务器调用：获取图层元数据信息 =====
-    // 调用者: loadVectorLayer()
+    // 调用者: loadVectorlayer()
     // 服务器地址: ${mapStore.mapConfig.dataUrl}/datasources/${datasource}/datasets/${dataset}/features.json
     // 作用: 获取图层的要素总数、起始索引等元数据信息，用于分页加载
     const metaUrlBounds = `${mapStore.mapConfig.dataUrl}/datasources/${datasource}/datasets/${dataset}/features.json`;
@@ -326,7 +326,7 @@ export function useMap() {
     const computedToIndexBounds: number = startIndexDefaultBounds + featureCountBounds - 1;
 
     // ===== 从配置中获取地图边界范围 =====
-    // 调用者: loadVectorLayer()
+    // 调用者: loadVectorlayer()
     // 配置来源: createAPIConfig().mapBounds.extent
     // 作用: 使用配置的地图边界范围进行空间过滤，避免硬编码
     const apiConfig = createAPIConfig()
@@ -346,7 +346,7 @@ export function useMap() {
     let totalFeatureCount = 0;
 
     // ===== 第四次服务器调用：获取第一页要素数据（优化后的参数） =====
-    // 调用者: loadVectorLayer() -> featureService.getFeaturesByBounds()
+    // 调用者: loadVectorlayer() -> featureService.getFeaturesByBounds()
     // 服务器地址: mapStore.mapConfig.dataUrl (通过SuperMap FeatureService)
     // 作用: 获取指定边界范围内的第一页矢量要素数据，使用优化的参数配置
     const getFeaturesByBoundsParams = new ol.supermap.GetFeaturesByBoundsParameters({
@@ -360,17 +360,17 @@ export function useMap() {
     });
 
     // ===== 第五次服务器调用：执行第一页要素数据获取 =====
-    // 调用者: loadVectorLayer() -> featureService.getFeaturesByBounds()
+    // 调用者: loadVectorlayer() -> featureService.getFeaturesByBounds()
     // 服务器地址: mapStore.mapConfig.dataUrl (通过SuperMap FeatureService)
-    // 作用: 实际执行第一页要素数据的获取，并将GeoJSON格式的要素数据转换为OpenLayers要素对象
+    // 作用: 实际执行第一页要素数据的获取，并将GeoJSON格式的要素数据转换为Openlayers要素对象
     featureService.getFeaturesByBounds(getFeaturesByBoundsParams, (serviceResult: any) => {
       if (serviceResult.result && serviceResult.result.features) {
         const features = (new ol.format.GeoJSON()).readFeatures(serviceResult.result.features);
-        vectorLayer.getSource().addFeatures(features);
-        //serviceResult.result.features就是目前从服务器中获取到的要素数据，features是GeoJSON格式的要素数据，features是OpenLayers要素对象
+        vectorlayer.getSource().addFeatures(features);
+        //serviceResult.result.features就是目前从服务器中获取到的要素数据，features是GeoJSON格式的要素数据，features是Openlayers要素对象
 
         // ===== 第六次及后续服务器调用：分页加载剩余要素数据（优化后的参数） =====
-        // 调用者: loadVectorLayer() -> addPage() -> featureService.getFeaturesByBounds()
+        // 调用者: loadVectorlayer() -> addPage() -> featureService.getFeaturesByBounds()
         // 服务器地址: mapStore.mapConfig.dataUrl (通过SuperMap FeatureService)
         // 作用: 如果要素总数超过10000个，则分页加载剩余的要素数据，每页最多10000个要素
         const addPage = (from: number, to: number): Promise<void> => new Promise(resolve => {
@@ -386,14 +386,14 @@ export function useMap() {
           featureService.getFeaturesByBounds(pageParams, (res: any) => {
             if (res.result && res.result.features) {
               const feats = (new ol.format.GeoJSON()).readFeatures(res.result.features);
-              vectorLayer.getSource().addFeatures(feats);
+              vectorlayer.getSource().addFeatures(feats);
             }
             resolve();
           });
         });
 
         // ===== 异步分页加载循环 =====
-        // 调用者: loadVectorLayer() -> setTimeout() -> addPage()
+        // 调用者: loadVectorlayer() -> setTimeout() -> addPage()
         // 作用: 延迟100ms后开始分页加载剩余要素，避免阻塞主线程
         setTimeout(() => {
           (async () => {
@@ -409,7 +409,7 @@ export function useMap() {
         }, 100);
         
         // ===== 加载完成通知（使用自定义API获取的统计信息） =====
-        // 调用者: loadVectorLayer()
+        // 调用者: loadVectorlayer()
         // 作用: 显示图层加载完成的统计信息，包括要素数量、数据来源和服务器地址
         notificationManager.info(
           `图层 ${layerName} 加载完成`,
@@ -419,33 +419,33 @@ export function useMap() {
     });
     
     const resolvedVisible = typeof visibleOverride === 'boolean' ? visibleOverride : !!layerConfig.visible
-    vectorLayer.setVisible(resolvedVisible);
-    const zIndex = layerName === '武汉_县级' ? 0 : 10 + mapStore.vectorLayers.length;
-    vectorLayer.setZIndex(zIndex);
+    vectorlayer.setVisible(resolvedVisible);
+    const zIndex = layerName === '武汉_县级' ? 0 : 10 + mapStore.vectorlayers.length;
+    vectorlayer.setZIndex(zIndex);
     
-    map.addLayer(vectorLayer);
-    mapStore.vectorLayers.push({
+    map.addLayer(vectorlayer);
+    mapStore.vectorlayers.push({
       id: layerConfig.name,
       name: layerName,
-      layer: vectorLayer,
+      layer: vectorlayer,
       visible: resolvedVisible,
       type: 'vector',
       source: 'supermap'
     });
   }
 
-  const loadVectorLayers = async (map: any): Promise<void> => {
+  const loadVectorlayers = async (map: any): Promise<void> => {
     const apiConfig = createAPIConfig()
     
     const loadTasks: Promise<void>[] = []
-    for (const layerConfig of apiConfig.wuhanLayers) {
+    for (const layerConfig of apiConfig.wuhanlayers) {
       const layerName = layerConfig.name.split('@')[0] || layerConfig.name
       loadingStore.updateLoading('map-init', `正在加载图层: ${layerName}`)
       if (layerConfig.type === 'raster') {
         continue;
       }
       const isDefaultVisible = layerName === '武汉_县级' || layerName === '水系面'
-      loadTasks.push(loadVectorLayer(map, layerConfig, isDefaultVisible))
+      loadTasks.push(loadVectorlayer(map, layerConfig, isDefaultVisible))
     }
     await Promise.allSettled(loadTasks)
   }
@@ -490,8 +490,8 @@ export function useMap() {
     const feature = map.forEachFeatureAtPixel(
       evt.pixel,
       (f: any, l: any) => {
-        const isInteractiveLayer = l && l !== mapStore.baseLayer && l !== mapStore.hoverLayer && l !== mapStore.selectLayer;
-        if (isInteractiveLayer && l.getVisible()) {
+        const isInteractivelayer = l && l !== mapStore.baselayer && l !== mapStore.hintersecter && l !== mapStore.selectlayer;
+        if (isInteractivelayer && l.getVisible()) {
           return f;
         }
         return undefined;
@@ -546,7 +546,7 @@ export function useMap() {
 
         
         // 清除之前的点击选择
-        const source = mapStore.selectLayer?.getSource()
+        const source = mapStore.selectlayer?.getSource()
         if (source) {
           const features = source.getFeatures()
           features.forEach((f: any) => {
@@ -567,8 +567,8 @@ export function useMap() {
         // 添加到选择状态（直接使用原始要素）
         selectionStore.addSelectedFeature(feature);
         
-        if (mapStore.selectLayer) {
-          mapStore.selectLayer.changed();
+        if (mapStore.selectlayer) {
+          mapStore.selectlayer.changed();
         }
 
         // 直接从GeoJSON properties中获取数据
@@ -637,7 +637,7 @@ export function useMap() {
     try {
       const allFeatures: any[] = [];
       
-      for (const layerInfo of mapStore.vectorLayers) {
+      for (const layerInfo of mapStore.vectorlayers) {
         if (layerInfo.layer && layerInfo.layer.getVisible()) {
           const source = layerInfo.layer.getSource();
           if (source) {
@@ -664,7 +664,7 @@ export function useMap() {
       
       if (allFeatures.length > 0) {
         const layerNameToZ: Record<string, number> = {};
-        mapStore.vectorLayers.forEach(vl => {
+        mapStore.vectorlayers.forEach(vl => {
           if (vl.layer && typeof vl.layer.getZIndex === 'function') {
             layerNameToZ[vl.name] = vl.layer.getZIndex() ?? 0;
           }
@@ -681,11 +681,11 @@ export function useMap() {
         allFeatures.forEach((feature, index) => {
           content += `<div class="feature-item">`;
           // 改进图层名称显示逻辑
-          const displayLayerName = feature.layerName || '未知图层'
+          const displaylayerName = feature.layerName || '未知图层'
           
           // 添加调试信息
           
-          content += `<div class="feature-header">要素 ${index + 1} (${displayLayerName})</div>`;
+          content += `<div class="feature-header">要素 ${index + 1} (${displaylayerName})</div>`;
           
           content += `<div class="field-row"><span class="field-label">要素ID:</span><span class="field-value">${feature.id || '无'}</span></div>`;
           content += `<div class="field-row"><span class="field-label">几何类型:</span><span class="field-value">${feature.geometry?.type || '未知'}</span></div>`;
@@ -822,22 +822,22 @@ export function useMap() {
         sourceConfig.tileLoadFunction = undefined
       }
       
-      const baseMapLayer = new ol.layer.Tile({
+      const baseMaplayer = new ol.layer.Tile({
         source: new ol.source.TileSuperMapRest(sourceConfig),
         visible: true,
         zIndex: -1000
       })
       
-      map.addLayer(baseMapLayer)
+      map.addLayer(baseMaplayer)
       
       setTimeout(() => {
         map.updateSize()
-        baseMapLayer.changed()
+        baseMaplayer.changed()
       }, 100)
       
       loadingStore.updateLoading('map-init', '正在加载图层...')
       
-      await loadVectorLayers(map)
+      await loadVectorlayers(map)
       
       const hoverSource = new ol.source.Vector()
       
@@ -856,12 +856,12 @@ export function useMap() {
         });
       };
       
-      const hoverLayer = new ol.layer.Vector({
+      const hintersecter = new ol.layer.Vector({
         source: hoverSource,
         style: createHoverStyle(),
         zIndex: 999
       })
-      map.addLayer(hoverLayer)
+      map.addLayer(hintersecter)
         
       const selectSource = new ol.source.Vector()
       
@@ -928,19 +928,19 @@ export function useMap() {
         };
       };
       
-      const selectLayer = new ol.layer.Vector({
+      const selectlayer = new ol.layer.Vector({
         source: selectSource,
         style: createSelectStyle(),
         zIndex: 1000
       })
-      map.addLayer(selectLayer)
+      map.addLayer(selectlayer)
       selectSourceRef.value = selectSource
         
       mapStore.setMap(map)
-      mapStore.setLayers({
-        base: baseMapLayer,
-        hover: hoverLayer,
-        select: selectLayer
+      mapStore.setlayers({
+        base: baseMaplayer,
+        hover: hintersecter,
+        select: selectlayer
       })
         
       const disposeEvents = setupMapEvents(map, hoverSource, selectSource)
@@ -952,10 +952,10 @@ export function useMap() {
         map.updateSize()
       }, 100)
 
-      const handleDrawLayerCompleted = (event: Event) => {
-        layerManager.acceptDrawLayer((event as CustomEvent).detail)
+      const handleDrawlayerCompleted = (event: Event) => {
+        layermanager.acceptDrawlayer((event as CustomEvent).detail)
       }
-      window.addEventListener('drawLayerCompleted', handleDrawLayerCompleted)
+      window.addEventListener('drawlayerCompleted', handleDrawlayerCompleted)
       
       loadingStore.stopLoading('map-init')
       notificationManager.success('地图初始化成功', '地图已准备就绪')
@@ -994,14 +994,14 @@ export function useMap() {
   });
 
   let drawCompleteHandler: ((e: Event) => void) | null = null
-  let removeLayerHandler: ((e: Event) => void) | null = null
+  let removelayerHandler: ((e: Event) => void) | null = null
 
   onMounted(() => {
     drawCompleteHandler = (e: Event) => {
-      layerManager.acceptDrawLayer((e as CustomEvent).detail)
+      layermanager.acceptDrawlayer((e as CustomEvent).detail)
     }
     
-    removeLayerHandler = (e: Event) => {
+    removelayerHandler = (e: Event) => {
       const { layer } = (e as CustomEvent).detail
       if (layer && mapStore.map) {
         try {
@@ -1012,16 +1012,16 @@ export function useMap() {
       }
     }
     
-    window.addEventListener('drawLayerCompleted', drawCompleteHandler)
-    window.addEventListener('removeLayerRequested', removeLayerHandler)
+    window.addEventListener('drawlayerCompleted', drawCompleteHandler)
+    window.addEventListener('removelayerRequested', removelayerHandler)
   })
 
   onUnmounted(() => {
     if (drawCompleteHandler) {
-      window.removeEventListener('drawLayerCompleted', drawCompleteHandler)
+      window.removeEventListener('drawlayerCompleted', drawCompleteHandler)
     }
-    if (removeLayerHandler) {
-      window.removeEventListener('removeLayerRequested', removeLayerHandler)
+    if (removelayerHandler) {
+      window.removeEventListener('removelayerRequested', removelayerHandler)
     }
   })
   
@@ -1029,8 +1029,8 @@ export function useMap() {
     mapContainer,
     initMap,
     cleanup,
-    updateLayerStyles,
-    createLayerStyle,
+    updatelayerStyles,
+    createlayerStyle,
     queryFeaturesAtPoint
   }
 }

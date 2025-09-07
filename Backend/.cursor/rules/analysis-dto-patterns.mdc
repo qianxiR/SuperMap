@@ -191,9 +191,9 @@ class ShortestPathParameters(BaseModel):
     optimization: str = Field(default="shortest", description="优化目标")
 ```
 
-### OverlayAnalysisParameters
+### intersectAnalysisParameters
 ```python
-class OverlayAnalysisParameters(BaseModel):
+class intersectAnalysisParameters(BaseModel):
     """叠加分析参数"""
     layer1: str = Field(..., description="第一个图层ID")
     layer2: str = Field(..., description="第二个图层ID")
@@ -251,7 +251,7 @@ class AnalysisType(str, Enum):
     CUSTOM = "custom"
     BUFFER = "buffer"
     SHORTEST_PATH = "shortest_path"
-    OVERLAY = "overlay"
+    intersect = "intersect"
 
 class AnalysisStatus(str, Enum):
     PENDING = "pending"
@@ -260,7 +260,7 @@ class AnalysisStatus(str, Enum):
     FAILED = "failed"
     CANCELLED = "cancelled"
 
-class OverlayOperationType(str, Enum):
+class intersectOperationType(str, Enum):
     INTERSECTION = "intersection"
     UNION = "union"
     DIFFERENCE = "difference"
@@ -294,7 +294,7 @@ task_data = AnalysisTaskCreateDTO(
 task_data = AnalysisTaskCreateDTO(
     name="叠加分析任务",
     description="计算两个图层的交集",
-    analysis_type="overlay",
+    analysis_type="intersect",
     parameters={
         "layer1": "layer_001",
         "layer2": "layer_002",

@@ -1,4 +1,4 @@
-export interface WuhanLayer {
+export interface Wuhanlayer {
   name: string
   type: 'point' | 'line' | 'polygon' | 'raster'
   visible: boolean
@@ -17,7 +17,7 @@ export interface APIConfig {
   mapService: string
   dataService: string
   datasetName: string
-  wuhanLayers: WuhanLayer[]
+  wuhanlayers: Wuhanlayer[]
   baseMaps: BaseMapConfig // 新增底图配置
   fallbackBaseMaps: BaseMapConfig // 备用底图配置
   timeout: number
@@ -34,14 +34,14 @@ export interface MapConfig {
   baseUrl: string;
   dataUrl: string;
   datasetName: string;
-  vectorLayers: VectorLayerConfig[];
+  vectorlayers: VectorlayerConfig[];
   center: [number, number];
   zoom: number;
   projection: string;
   extent: [number, number, number, number];
 }
 
-export interface VectorLayerConfig {
+export interface VectorlayerConfig {
   name: string
   style?: {
     stroke?: { width: number; color?: string }
@@ -54,7 +54,7 @@ export interface Coordinate {
   lat: number | null;
 }
 
-export interface MapLayer {
+export interface Maplayer {
   id: string;
   name: string;
   layer: any; // ol.layer.Base
@@ -98,4 +98,4 @@ export interface FeatureCollection<G = any> {
 }
 
 // 绘制图层保存类型
-export type DrawLayerSaveType = Polygon | FeatureCollection<Polygon>
+export type DrawlayerSaveType = Polygon | FeatureCollection<Polygon>

@@ -2,12 +2,12 @@ import { computed } from 'vue'
 import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useEraseAnalysisStore } from '@/stores/eraseAnalysisStore'
-import { useLayerManager } from '@/composables/useLayerManager'
+import { uselayermanager } from '@/composables/uselayermanager'
 import { getAnalysisServiceConfig } from '@/api/config'
-import { extractGeoJSONFromLayer } from '@/utils/featureUtils'
+import { extractGeoJSONFromlayer } from '@/utils/featureUtils'
 import { Feature } from 'ol'
 import { Vector as VectorSource } from 'ol/source'
-import { Vector as VectorLayer } from 'ol/layer'
+import { Vector as Vectorlayer } from 'ol/layer'
 import { Style, Stroke, Fill } from 'ol/style'
 import GeoJSON from 'ol/format/GeoJSON'
 
@@ -15,8 +15,8 @@ interface EraseResultItem {
   id: string
   name: string
   geometry: any
-  sourceTargetLayerName: string
-  sourceEraseLayerName: string
+  sourceTargetlayerName: string
+  sourceEraselayerName: string
   createdAt: string
 }
 
@@ -24,10 +24,10 @@ export function useEraseAnalysis() {
   const mapStore = useMapStore()
   const analysisStore = useAnalysisStore()
   const store = useEraseAnalysisStore()
-  const { saveFeaturesAsLayer } = useLayerManager()
+  const { saveFeaturesAslayer } = uselayermanager()
 
-  const targetLayerId = computed(() => store.state.targetLayerId)
-  const eraseLayerId = computed(() => store.state.eraseLayerId)
+  const targetlayerId = computed(() => store.state.targetlayerId)
+  const eraselayerId = computed(() => store.state.eraselayerId)
   const results = computed(() => store.state.results)
   const currentResult = computed(() => store.state.currentResult)
   const isAnalyzing = computed(() => store.state.isAnalyzing)
@@ -37,31 +37,31 @@ export function useEraseAnalysis() {
   const eraseFeaturesCache = computed(() => store.state.eraseFeaturesCache)
 
   const layerOptions = computed(() => {
-    const vectorLayers = mapStore.vectorLayers.filter(l => l.layer && l.layer.getVisible() && l.type === 'vector')
-    return vectorLayers.map(l => ({ value: l.id, label: `${l.name} (${l.layer.getSource()?.getFeatures().length || 0}个要素)`, disabled: false }))
+    const vectorlayers = mapStore.vectorlayers.filter(l => l.layer && l.layer.getVisible() && l.type === 'vector')
+    return vectorlayers.map(l => ({ value: l.id, label: `${l.name} (${l.layer.getSource()?.getFeatures().length || 0}个要素)`, disabled: false }))
   })
 
-  const setTargetLayer = (layerId: string): void => {
-    store.setTargetLayerId(layerId)
-    const layer = mapStore.vectorLayers.find(l => l.id === layerId)
+  const setTargetlayer = (layerId: string): void => {
+    store.setTargetlayerId(layerId)
+    const layer = mapStore.vectorlayers.find(l => l.id === layerId)
     const features = layer?.layer?.getSource?.().getFeatures?.() || []
     store.setTargetFeaturesCache(features)
   }
 
-  const setEraseLayer = (layerId: string): void => {
-    store.setEraseLayerId(layerId)
-    const layer = mapStore.vectorLayers.find(l => l.id === layerId)
+  const setEraselayer = (layerId: string): void => {
+    store.setEraselayerId(layerId)
+    const layer = mapStore.vectorlayers.find(l => l.id === layerId)
     const features = layer?.layer?.getSource?.().getFeatures?.() || []
     store.setEraseFeaturesCache(features)
   }
 
   // 擦除分析（调用后端API）
-  const executeEraseAnalysis = async (params: { targetLayerId: string; eraseLayerId: string; targetFeatures: any[]; eraseFeatures: any[]; }): Promise<void> => {
-    const tId = params.targetLayerId
-    const eId = params.eraseLayerId
+  const executeEraseAnalysis = async (params: { targetlayerId: string; eraselayerId: string; targetFeatures: any[]; eraseFeatures: any[]; }): Promise<void> => {
+    const tId = params.targetlayerId
+    const eId = params.eraselayerId
 
-    const target = mapStore.vectorLayers.find(l => l.id === tId)
-    const erase = mapStore.vectorLayers.find(l => l.id === eId)
+    const target = mapStore.vectorlayers.find(l => l.id === tId)
+    const erase = mapStore.vectorlayers.find(l => l.id === eId)
 
     const targetFeatures: any[] = params.targetFeatures
     const eraseFeatures: any[] = params.eraseFeatures
@@ -73,10 +73,10 @@ export function useEraseAnalysis() {
 
     try {
       // 提取目标图层和擦除图层的GeoJSON数据
-      const targetData = extractGeoJSONFromLayer(target!.layer, mapStore.map, {
+      const targetData = extractGeoJSONFromlayer(target!.layer, mapStore.map, {
         enableLogging: true
       })
-      const eraseData = extractGeoJSONFromLayer(erase!.layer, mapStore.map, {
+      const eraseData = extractGeoJSONFromlayer(erase!.layer, mapStore.map, {
         enableLogging: true
       })
 
@@ -95,7 +95,7 @@ export function useEraseAnalysis() {
           returnGeometry: true
         },
         options: {
-          resultLayerName: '擦除分析结果',
+          resultlayerName: '擦除分析结果',
           enableStatistics: true,
           coordinateSystem: 'EPSG:4326'
         }
@@ -129,7 +129,7 @@ export function useEraseAnalysis() {
 
       // 更新状态和显示结果
       store.setResults(results)
-      displayEraseResults(results)
+      displayeraseResults(results)
       analysisStore.setAnalysisStatus(`擦除分析完成：共生成 ${results.length} 个结果，已渲染到地图。`)
 
     } catch (error: any) {
@@ -218,10 +218,10 @@ export function useEraseAnalysis() {
     }
   }
 
-  const displayEraseResults = (items: EraseResultItem[]): void => {
+  const displayeraseResults = (items: EraseResultItem[]): void => {
     if (!mapStore.map) return
 
-    removeEraseLayers()
+    removeEraselayers()
 
     // 创建空的矢量图层容器
     const source = new VectorSource({})
@@ -232,14 +232,14 @@ export function useEraseAnalysis() {
     // 使用蓝色，70%透明度
     const fillVar = fillColor + '4D'
 
-    const layer = new VectorLayer({
+    const layer = new Vectorlayer({
       source,
       style: new Style({
         stroke: new Stroke({ color: strokeColor, width: 2 }),
         fill: new Fill({ color: fillVar })
       })
     })
-    layer.set('isEraseLayer', true)
+    layer.set('isEraselayer', true)
     layer.set('eraseResults', items)
     mapStore.map.addLayer(layer)
 
@@ -265,8 +265,8 @@ export function useEraseAnalysis() {
           properties: { 
             id: item.id, 
             name: item.name, 
-            sourceTarget: item.sourceTargetLayerName, 
-            sourceErase: item.sourceEraseLayerName, 
+            sourceTarget: item.sourceTargetlayerName, 
+            sourceErase: item.sourceEraselayerName, 
             createdAt: item.createdAt 
           } 
         })
@@ -323,14 +323,14 @@ export function useEraseAnalysis() {
     }
   }
 
-  const removeEraseLayers = (): void => {
+  const removeEraselayers = (): void => {
     if (!mapStore.map) return
     const layers = mapStore.map.getLayers().getArray()
     layers.forEach((l: any) => {
-      if (l.get('isEraseLayer')) {
+      if (l.get('isEraselayer')) {
         mapStore.map.removeLayer(l)
       }
-      if (l.get('isInvalidGeometryLayer')) {
+      if (l.get('isInvalidGeometrylayer')) {
         mapStore.map.removeLayer(l)
       }
     })
@@ -338,15 +338,15 @@ export function useEraseAnalysis() {
 
   const clearState = (): void => {
     store.clearResults()
-    removeEraseLayers()
+    removeEraselayers()
   }
 
   // 将擦除结果保存为图层管理中的绘制图层
-  const saveEraseResultsAsLayer = async (items: EraseResultItem[]): Promise<void> => {
+  const saveEraseResultsAslayer = async (items: EraseResultItem[]): Promise<void> => {
     if (!mapStore.map || items.length === 0) return
 
     try {
-      // 将擦除结果转换为 OpenLayers Feature
+      // 将擦除结果转换为 Openlayers Feature
       const features = items.map(item => {
         const format = new GeoJSON()
         if (item.geometry && item.geometry.type && item.geometry.coordinates) {
@@ -356,8 +356,8 @@ export function useEraseAnalysis() {
             properties: { 
               id: item.id, 
               name: item.name, 
-              sourceTarget: item.sourceTargetLayerName, 
-              sourceErase: item.sourceEraseLayerName, 
+              sourceTarget: item.sourceTargetlayerName, 
+              sourceErase: item.sourceEraselayerName, 
               createdAt: item.createdAt,
               analysisType: 'erase'
             } 
@@ -370,7 +370,7 @@ export function useEraseAnalysis() {
       if (features.length > 0) {
         // 使用图层管理器的保存功能
         const layerName = `擦除分析结果`
-        await saveFeaturesAsLayer(features as any[], layerName, 'erase')
+        await saveFeaturesAslayer(features as any[], layerName, 'erase')
         
         console.log(`[Erase] Saved ${features.length} erase results as layer: ${layerName}`)
       }
@@ -380,8 +380,8 @@ export function useEraseAnalysis() {
   }
 
   return {
-    targetLayerId,
-    eraseLayerId,
+    targetlayerId,
+    eraselayerId,
     layerOptions,
     results,
     currentResult,
@@ -390,12 +390,12 @@ export function useEraseAnalysis() {
     eraseFeatureCount,
     targetFeaturesCache,
     eraseFeaturesCache,
-    setTargetLayer,
-    setEraseLayer,
+    setTargetlayer,
+    setEraselayer,
     executeEraseAnalysis,
-    displayEraseResults,
-    removeEraseLayers,
+    displayeraseResults,
+    removeEraselayers,
     clearState,
-    saveEraseResultsAsLayer
+    saveEraseResultsAslayer
   }
 }

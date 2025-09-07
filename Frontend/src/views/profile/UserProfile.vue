@@ -1,6 +1,6 @@
 <template>
   <teleport to="body">
-  <div class="page-modal-overlay" @click="closeModal">
+  <div class="page-modal-intersect" @click="closeModal">
     <div class="page-modal-content" @click.stop>
       <div class="page-modal-header">
         <h2>个人中心</h2>
@@ -127,7 +127,7 @@
     </div>
 
     <!-- 修改密码弹窗 -->
-    <div v-if="showChangePassword" class="modal-overlay" @click="showChangePassword = false">
+    <div v-if="showChangePassword" class="modal-intersect" @click="showChangePassword = false">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
           <h3>修改密码</h3>
@@ -424,7 +424,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.page-modal-overlay {
+.page-modal-intersect {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.08);
@@ -664,7 +664,7 @@ onMounted(async () => {
 
 
 /* 模态框样式 */
-.modal-overlay {
+.modal-intersect {
   position: fixed;
   top: 0;
   left: 0;

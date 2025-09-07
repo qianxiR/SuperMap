@@ -168,11 +168,11 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 }
 
 /**
- * 从OpenLayers图层提取GeoJSON数据
+ * 从Openlayers图层提取GeoJSON数据
  * 
  * 输入数据格式：
- * @param layer - OpenLayers图层对象
- * @param map - OpenLayers地图对象（可选，用于获取投影信息）
+ * @param layer - Openlayers图层对象
+ * @param map - Openlayers地图对象（可选，用于获取投影信息）
  * @param options - 提取选项
  * @param options.featureProjection - 要素投影（默认从地图获取或使用EPSG:3857）
  * @param options.dataProjection - 输出数据投影（默认EPSG:4326）
@@ -181,14 +181,14 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
  * 数据处理方法：
  * 1. 验证图层和源数据有效性
  * 2. 获取图层中的所有要素
- * 3. 使用OpenLayers GeoJSON格式器转换数据
+ * 3. 使用Openlayers GeoJSON格式器转换数据
  * 4. 验证和解析GeoJSON数据
  * 5. 进行数据完整性检查
  * 
  * 输出数据格式：
  * GeoJSON FeatureCollection对象或null（如果提取失败）
  */
-export function extractGeoJSONFromLayer(
+export function extractGeoJSONFromlayer(
   layer: any, 
   map?: OlMap, 
   options: {
@@ -235,7 +235,7 @@ export function extractGeoJSONFromLayer(
     map?.getView().getProjection() || 
     'EPSG:3857'
 
-  // 使用OpenLayers的GeoJSON格式器提取数据
+  // 使用Openlayers的GeoJSON格式器提取数据
   const geoJSONFormat = new GeoJSON()
   const geoJSONData = geoJSONFormat.writeFeatures(features, {
     featureProjection: finalFeatureProjection,
@@ -292,16 +292,16 @@ export function extractGeoJSONFromLayer(
 }
 
 /**
- * 从OpenLayers要素数组提取GeoJSON数据
+ * 从Openlayers要素数组提取GeoJSON数据
  * 
  * 输入数据格式：
- * @param features - OpenLayers要素数组
- * @param map - OpenLayers地图对象（可选，用于获取投影信息）
+ * @param features - Openlayers要素数组
+ * @param map - Openlayers地图对象（可选，用于获取投影信息）
  * @param options - 提取选项
  * 
  * 数据处理方法：
  * 1. 验证要素数组有效性
- * 2. 使用OpenLayers GeoJSON格式器转换数据
+ * 2. 使用Openlayers GeoJSON格式器转换数据
  * 3. 验证和解析GeoJSON数据
  * 
  * 输出数据格式：
@@ -338,7 +338,7 @@ export function extractGeoJSONFromFeatures(
     map?.getView().getProjection() || 
     'EPSG:3857'
 
-  // 使用OpenLayers的GeoJSON格式器提取数据
+  // 使用Openlayers的GeoJSON格式器提取数据
   const geoJSONFormat = new GeoJSON()
   const geoJSONData = geoJSONFormat.writeFeatures(features, {
     featureProjection: finalFeatureProjection,

@@ -5,14 +5,14 @@ interface EraseResultItem {
   id: string
   name: string
   geometry: any
-  sourceTargetLayerName: string
-  sourceEraseLayerName: string
+  sourceTargetlayerName: string
+  sourceEraselayerName: string
   createdAt: string
 }
 
 interface EraseAnalysisState {
-  targetLayerId: string
-  eraseLayerId: string
+  targetlayerId: string
+  eraselayerId: string
   results: EraseResultItem[]
   currentResult: EraseResultItem | null
   isAnalyzing: boolean
@@ -22,8 +22,8 @@ interface EraseAnalysisState {
 
 export const useEraseAnalysisStore = defineStore('eraseAnalysis', () => {
   const state = reactive<EraseAnalysisState>({
-    targetLayerId: '',
-    eraseLayerId: '',
+    targetlayerId: '',
+    eraselayerId: '',
     results: [],
     currentResult: null,
     isAnalyzing: false,
@@ -33,12 +33,12 @@ export const useEraseAnalysisStore = defineStore('eraseAnalysis', () => {
 
   const hasResults = computed(() => state.results.length > 0)
 
-  const setTargetLayerId = (layerId: string) => {
-    state.targetLayerId = layerId
+  const setTargetlayerId = (layerId: string) => {
+    state.targetlayerId = layerId
   }
 
-  const setEraseLayerId = (layerId: string) => {
-    state.eraseLayerId = layerId
+  const setEraselayerId = (layerId: string) => {
+    state.eraselayerId = layerId
   }
 
   const setTargetFeaturesCache = (features: any[]) => {
@@ -68,8 +68,8 @@ export const useEraseAnalysisStore = defineStore('eraseAnalysis', () => {
   }
 
   const clearAll = () => {
-    state.targetLayerId = ''
-    state.eraseLayerId = ''
+    state.targetlayerId = ''
+    state.eraselayerId = ''
     state.results = []
     state.currentResult = null
     state.isAnalyzing = false
@@ -80,8 +80,8 @@ export const useEraseAnalysisStore = defineStore('eraseAnalysis', () => {
   return {
     state,
     hasResults,
-    setTargetLayerId,
-    setEraseLayerId,
+    setTargetlayerId,
+    setEraselayerId,
     setTargetFeaturesCache,
     setEraseFeaturesCache,
     setResults,

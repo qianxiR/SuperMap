@@ -8,7 +8,7 @@ interface BufferResult {
   geometry: any
   distance: number
   unit: string
-  sourceLayerName: string
+  sourcelayerName: string
   createdAt: string
 }
 
@@ -20,7 +20,7 @@ interface BufferSettings {
 
 // 缓冲区分析状态接口
 interface BufferAnalysisState {
-  selectedAnalysisLayerId: string
+  selectedAnalysislayerId: string
   bufferSettings: BufferSettings
   bufferResults: BufferResult[]
   currentResult: BufferResult | null
@@ -32,7 +32,7 @@ interface BufferAnalysisState {
 export const useBufferAnalysisStore = defineStore('bufferAnalysis', () => {
   // 状态定义
   const state = reactive<BufferAnalysisState>({
-    selectedAnalysisLayerId: '',
+    selectedAnalysislayerId: '',
     bufferSettings: {
       radius: 100,
       semicircleLineSegment: 10
@@ -46,11 +46,11 @@ export const useBufferAnalysisStore = defineStore('bufferAnalysis', () => {
 
   // 计算属性
   const hasResults = computed(() => state.bufferResults.length > 0)
-  const hasSelectedLayer = computed(() => !!state.selectedAnalysisLayerId)
+  const hasSelectedlayer = computed(() => !!state.selectedAnalysislayerId)
 
   // Actions
-  const setSelectedAnalysisLayer = (layerId: string) => {
-    state.selectedAnalysisLayerId = layerId
+  const setSelectedAnalysislayer = (layerId: string) => {
+    state.selectedAnalysislayerId = layerId
   }
 
   const updateBufferSettings = (settings: Partial<BufferSettings>) => {
@@ -70,7 +70,7 @@ export const useBufferAnalysisStore = defineStore('bufferAnalysis', () => {
     state.isAnalyzing = analyzing
   }
 
-  const setLayerName = (name: string) => {
+  const setlayerName = (name: string) => {
     state.layerName = name
   }
 
@@ -84,7 +84,7 @@ export const useBufferAnalysisStore = defineStore('bufferAnalysis', () => {
   }
 
   const clearAll = () => {
-    state.selectedAnalysisLayerId = ''
+    state.selectedAnalysislayerId = ''
     state.bufferResults = []
     state.currentResult = null
     state.isAnalyzing = false
@@ -102,15 +102,15 @@ export const useBufferAnalysisStore = defineStore('bufferAnalysis', () => {
     
     // Computed
     hasResults,
-    hasSelectedLayer,
+    hasSelectedlayer,
     
     // Actions
-    setSelectedAnalysisLayer,
+    setSelectedAnalysislayer,
     updateBufferSettings,
     setBufferResults,
     setCurrentResult,
     setIsAnalyzing,
-    setLayerName,
+    setlayerName,
     setTaskId,
     clearResults,
     clearAll

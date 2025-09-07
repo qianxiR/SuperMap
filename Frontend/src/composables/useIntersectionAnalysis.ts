@@ -2,12 +2,12 @@ import { computed } from 'vue'
 import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useIntersectionAnalysisStore } from '@/stores/intersectionAnalysisStore'
-import { useLayerManager } from '@/composables/useLayerManager'
+import { uselayermanager } from '@/composables/uselayermanager'
 import { getAnalysisServiceConfig } from '@/api/config'
-import { extractGeoJSONFromLayer } from '@/utils/featureUtils'
+import { extractGeoJSONFromlayer } from '@/utils/featureUtils'
 import { Feature } from 'ol'
 import { Vector as VectorSource } from 'ol/source'
-import { Vector as VectorLayer } from 'ol/layer'
+import { Vector as Vectorlayer } from 'ol/layer'
 import { Style, Stroke, Fill } from 'ol/style'
 import GeoJSON from 'ol/format/GeoJSON'
 
@@ -21,8 +21,8 @@ interface IntersectionResultItem {
   id: string
   name: string
   geometry: any
-  sourceTargetLayerName: string
-  sourceMaskLayerName: string
+  sourceTargetlayerName: string
+  sourceMasklayerName: string
   createdAt: string
 }
 
@@ -31,10 +31,10 @@ export function useIntersectionAnalysis() {
   const mapStore = useMapStore()
   const analysisStore = useAnalysisStore()
   const store = useIntersectionAnalysisStore()
-  const { saveFeaturesAsLayer } = useLayerManager()
+  const { saveFeaturesAslayer } = uselayermanager()
 
-  const targetLayerId = computed(() => store.state.targetLayerId)
-  const maskLayerId = computed(() => store.state.maskLayerId)
+  const targetlayerId = computed(() => store.state.targetlayerId)
+  const masklayerId = computed(() => store.state.masklayerId)
   const results = computed(() => store.state.results)
   const currentResult = computed(() => store.state.currentResult)
   const isAnalyzing = computed(() => store.state.isAnalyzing)
@@ -44,20 +44,20 @@ export function useIntersectionAnalysis() {
   const maskFeaturesCache = computed(() => store.state.maskFeaturesCache)
 
   const layerOptions = computed(() => {
-    const vectorLayers = mapStore.vectorLayers.filter(l => l.layer && l.layer.getVisible() && l.type === 'vector')
-    return vectorLayers.map(l => ({ value: l.id, label: `${l.name} (${l.layer.getSource()?.getFeatures().length || 0}个要素)`, disabled: false }))
+    const vectorlayers = mapStore.vectorlayers.filter(l => l.layer && l.layer.getVisible() && l.type === 'vector')
+    return vectorlayers.map(l => ({ value: l.id, label: `${l.name} (${l.layer.getSource()?.getFeatures().length || 0}个要素)`, disabled: false }))
   })
 
-  const setTargetLayer = (layerId: string): void => {
-    store.setTargetLayerId(layerId)
-    const layer = mapStore.vectorLayers.find(l => l.id === layerId)
+  const setTargetlayer = (layerId: string): void => {
+    store.setTargetlayerId(layerId)
+    const layer = mapStore.vectorlayers.find(l => l.id === layerId)
     const features = layer?.layer?.getSource?.().getFeatures?.() || []
     store.setTargetFeaturesCache(features)
   }
 
-  const setMaskLayer = (layerId: string): void => {
-    store.setMaskLayerId(layerId)
-    const layer = mapStore.vectorLayers.find(l => l.id === layerId)
+  const setMasklayer = (layerId: string): void => {
+    store.setMasklayerId(layerId)
+    const layer = mapStore.vectorlayers.find(l => l.id === layerId)
     const features = layer?.layer?.getSource?.().getFeatures?.() || []
     store.setMaskFeaturesCache(features)
   }
@@ -65,12 +65,12 @@ export function useIntersectionAnalysis() {
 
 
   // 相交分析（调用后端API）
-  const executeIntersectionAnalysis = async (params: { targetLayerId: string; maskLayerId: string; targetFeatures: any[]; maskFeatures: any[]; }): Promise<void> => {
-    const tId = params.targetLayerId
-    const mId = params.maskLayerId
+  const executeIntersectionAnalysis = async (params: { targetlayerId: string; masklayerId: string; targetFeatures: any[]; maskFeatures: any[]; }): Promise<void> => {
+    const tId = params.targetlayerId
+    const mId = params.masklayerId
 
-    const target = mapStore.vectorLayers.find(l => l.id === tId)
-    const mask = mapStore.vectorLayers.find(l => l.id === mId)
+    const target = mapStore.vectorlayers.find(l => l.id === tId)
+    const mask = mapStore.vectorlayers.find(l => l.id === mId)
 
     const targetFeatures: any[] = params.targetFeatures
     const maskFeatures: any[] = params.maskFeatures
@@ -82,10 +82,10 @@ export function useIntersectionAnalysis() {
 
     try {
       // 提取目标图层和遮罩图层的GeoJSON数据
-      const targetData = extractGeoJSONFromLayer(target!.layer, mapStore.map, {
+      const targetData = extractGeoJSONFromlayer(target!.layer, mapStore.map, {
         enableLogging: true
       })
-      const maskData = extractGeoJSONFromLayer(mask!.layer, mapStore.map, {
+      const maskData = extractGeoJSONFromlayer(mask!.layer, mapStore.map, {
         enableLogging: true
       })
 
@@ -104,7 +104,7 @@ export function useIntersectionAnalysis() {
           returnGeometry: true
         },
         options: {
-          resultLayerName: '相交分析结果',
+          resultlayerName: '相交分析结果',
           enableStatistics: true,
           coordinateSystem: 'EPSG:4326'
         }
@@ -230,7 +230,7 @@ export function useIntersectionAnalysis() {
   const displayIntersectionResults = (items: IntersectionResultItem[]): void => {
     if (!mapStore.map) return
 
-    removeIntersectionLayers()
+    removeIntersectionlayers()
 
     // 创建空的矢量图层容器
     const source = new VectorSource({})
@@ -240,14 +240,14 @@ export function useIntersectionAnalysis() {
     const fillColor = rootStyle.getPropertyValue('--analysis-color')?.trim() || '#0078D4'
     const fillVar = fillColor + '4D' // 蓝色，70%透明度
 
-    const layer = new VectorLayer({
+    const layer = new Vectorlayer({
       source,
       style: new Style({
         stroke: new Stroke({ color: strokeColor, width: 2 }),
         fill: new Fill({ color: fillVar })
       })
     })
-    layer.set('isIntersectionLayer', true)
+    layer.set('isIntersectionlayer', true)
     layer.set('intersectionResults', items)
     mapStore.map.addLayer(layer)
 
@@ -273,8 +273,8 @@ export function useIntersectionAnalysis() {
           properties: { 
             id: item.id, 
             name: item.name, 
-            sourceTarget: item.sourceTargetLayerName, 
-            sourceMask: item.sourceMaskLayerName, 
+            sourceTarget: item.sourceTargetlayerName, 
+            sourceMask: item.sourceMasklayerName, 
             createdAt: item.createdAt 
           } 
         })
@@ -331,14 +331,14 @@ export function useIntersectionAnalysis() {
     }
   }
 
-  const removeIntersectionLayers = (): void => {
+  const removeIntersectionlayers = (): void => {
     if (!mapStore.map) return
     const layers = mapStore.map.getLayers().getArray()
     layers.forEach((l: any) => {
-      if (l.get('isIntersectionLayer')) {
+      if (l.get('isIntersectionlayer')) {
         mapStore.map.removeLayer(l)
       }
-      if (l.get('isInvalidGeometryLayer')) {
+      if (l.get('isInvalidGeometrylayer')) {
         mapStore.map.removeLayer(l)
       }
     })
@@ -346,15 +346,15 @@ export function useIntersectionAnalysis() {
 
   const clearState = (): void => {
     store.clearResults()
-    removeIntersectionLayers()
+    removeIntersectionlayers()
   }
 
   // 将相交结果保存为图层管理中的绘制图层
-  const saveIntersectionResultsAsLayer = async (items: IntersectionResultItem[]): Promise<void> => {
+  const saveIntersectionResultsAslayer = async (items: IntersectionResultItem[]): Promise<void> => {
     if (!mapStore.map || items.length === 0) return
 
     try {
-      // 将相交结果转换为 OpenLayers Feature
+      // 将相交结果转换为 Openlayers Feature
       const features = items.map(item => {
         const format = new GeoJSON()
         if (item.geometry && item.geometry.type && item.geometry.coordinates) {
@@ -364,8 +364,8 @@ export function useIntersectionAnalysis() {
             properties: { 
               id: item.id, 
               name: item.name, 
-              sourceTarget: item.sourceTargetLayerName, 
-              sourceMask: item.sourceMaskLayerName, 
+              sourceTarget: item.sourceTargetlayerName, 
+              sourceMask: item.sourceMasklayerName, 
               createdAt: item.createdAt,
               analysisType: 'intersection'
             } 
@@ -378,7 +378,7 @@ export function useIntersectionAnalysis() {
       if (features.length > 0) {
         // 使用图层管理器的保存功能
         const layerName = `相交分析结果`
-        await saveFeaturesAsLayer(features as any[], layerName, 'intersect')
+        await saveFeaturesAslayer(features as any[], layerName, 'intersect')
         
         console.log(`[Intersection] Saved ${features.length} intersection results as layer: ${layerName}`)
       }
@@ -410,17 +410,17 @@ export function useIntersectionAnalysis() {
     const src = new VectorSource({ features: feats as any })
     const root = getComputedStyle(document.documentElement)
     const color = root.getPropertyValue('--map-highlight-color')?.trim() || '#ff0000'
-    const lyr = new VectorLayer({
+    const lyr = new Vectorlayer({
       source: src,
       style: new Style({ stroke: new Stroke({ color, width: 3, lineDash: [6, 6] }) })
     })
-    lyr.set('isInvalidGeometryLayer', true)
+    lyr.set('isInvalidGeometrylayer', true)
     mapStore.map.addLayer(lyr)
   }
 
   return {
-    targetLayerId,
-    maskLayerId,
+    targetlayerId,
+    masklayerId,
     layerOptions,
     results,
     currentResult,
@@ -429,13 +429,13 @@ export function useIntersectionAnalysis() {
     maskFeatureCount,
     targetFeaturesCache,
     maskFeaturesCache,
-    setTargetLayer,
-    setMaskLayer,
+    setTargetlayer,
+    setMasklayer,
     executeIntersectionAnalysis,
     displayIntersectionResults,
-    removeIntersectionLayers,
+    removeIntersectionlayers,
     clearState,
-    saveIntersectionResultsAsLayer
+    saveIntersectionResultsAslayer
   }
 }
 

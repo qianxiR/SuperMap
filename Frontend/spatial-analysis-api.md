@@ -19,7 +19,7 @@
 #### 1. 输入数据转换流程
 
 ```typescript
-// 1. 从OpenLayers要素获取数据
+// 1. 从Openlayers要素获取数据
 const features = layer.getSource().getFeatures()
 
 // 2. 转换为Turf格式
@@ -67,30 +67,30 @@ const featureCollection = prepareTurfAnalysisInput(feature1, feature2)
 #### 4. 各分析函数的数据处理方式
 
 **缓冲区分析**：
-- 输入：OpenLayers要素数组
+- 输入：Openlayers要素数组
 - 预处理：`convertFeaturesToTurfGeometries(features)` - 转换为Turf格式
 - 处理：`turfBuffer(turfFeature, radius, options)` - 对每个要素创建缓冲区
 - 后处理：`ensurePolygonGeometry()` - 确保结果为多边形类型
 - 输出：缓冲区多边形要素数组
 
 **相交分析**：
-- 输入：两个OpenLayers要素数组（目标图层和遮罩图层）
+- 输入：两个Openlayers要素数组（目标图层和遮罩图层）
 - 预处理：`convertFeaturesToTurfGeometries()` - 转换为Turf格式
 - 处理：`prepareTurfAnalysisInput(feature1, feature2)` → `turfIntersect(featureCollection)`
 - 后处理：异步批量处理，避免阻塞UI
 - 输出：相交区域要素数组
 
 **擦除分析**：
-- 输入：两个OpenLayers要素数组（目标图层和擦除图层）
+- 输入：两个Openlayers要素数组（目标图层和擦除图层）
 - 预处理：`convertFeaturesToTurfGeometries()` - 转换为Turf格式
 - 处理：Web Worker + `prepareTurfAnalysisInput()` → `turfDifference(featureCollection)`
 - 后处理：在后台线程执行，避免阻塞主线程
 - 输出：差集要素数组
 
 **最短路径分析**：
-- 输入：OpenLayers点要素（起点和终点）
+- 输入：Openlayers点要素（起点和终点）
 - 预处理：`convertFeatureToTurfGeometry(startPoint/endPoint)` - 转换为Turf格式
-- 障碍物处理：`convertLayerToObstacles(layerId)` - 将图层转换为障碍物FeatureCollection
+- 障碍物处理：`convertlayerToObstacles(layerId)` - 将图层转换为障碍物FeatureCollection
 - 处理：`shortestPath(startCoords, endCoords, options)` - 计算最短路径
 - 后处理：`calculatePathDistance()` - 计算路径距离
 - 输出：路径线要素
@@ -99,7 +99,7 @@ const featureCollection = prepareTurfAnalysisInput(feature1, feature2)
 
 **缓冲区分析预处理**：
 ```typescript
-// 1. 获取OpenLayers要素
+// 1. 获取Openlayers要素
 const features = layer.getSource().getFeatures()
 
 // 2. 转换为Turf格式
@@ -127,8 +127,8 @@ const startCoords = startTurfFeature.geometry.coordinates
 const endCoords = endTurfFeature.geometry.coordinates
 
 // 3. 处理障碍物（如果存在）
-if (obstacleLayerId) {
-  const obstacles = convertLayerToObstacles(obstacleLayerId)
+if (obstaclelayerId) {
+  const obstacles = convertlayerToObstacles(obstaclelayerId)
   // 将点、线要素转换为小缓冲区作为障碍物
   const polygonFeatures = obstacles.features.map(feature => {
     if (feature.geometry.type === 'Point') {
@@ -146,8 +146,8 @@ const pathResult = shortestPath(startCoords, endCoords, options)
 **相交分析预处理**：
 ```typescript
 // 1. 获取两个图层的要素
-const targetFeatures = targetLayer.getSource().getFeatures()
-const maskFeatures = maskLayer.getSource().getFeatures()
+const targetFeatures = targetlayer.getSource().getFeatures()
+const maskFeatures = masklayer.getSource().getFeatures()
 
 // 2. 转换为Turf格式
 const targetGeoJson = convertFeaturesToTurfGeometries(targetFeatures)
@@ -182,8 +182,8 @@ const processIntersectionAsync = async (): Promise<void> => {
               id: `intersection_${currentI}_${currentJ}_${Date.now()}`,
               name: `相交区域 ${results.length + 1}`,
               geometry: intersection.geometry,
-              sourceTargetLayerName: targetLayerName,
-              sourceMaskLayerName: maskLayerName,
+              sourceTargetlayerName: targetlayerName,
+              sourceMasklayerName: masklayerName,
               createdAt: new Date().toISOString()
             })
           }
@@ -217,8 +217,8 @@ const processIntersectionAsync = async (): Promise<void> => {
 **擦除分析预处理**：
 ```typescript
 // 1. 获取两个图层的要素
-const targetFeatures = targetLayer.getSource().getFeatures()
-const eraseFeatures = eraseLayer.getSource().getFeatures()
+const targetFeatures = targetlayer.getSource().getFeatures()
+const eraseFeatures = eraselayer.getSource().getFeatures()
 
 // 2. 转换为Turf格式
 const targetGeoJson = convertFeaturesToTurfGeometries(targetFeatures)
@@ -241,8 +241,8 @@ worker.onmessage = (event) => {
         id: result.id,
         name: result.name,
         geometry: result.geometry,
-        sourceTargetLayerName: targetLayerName,
-        sourceEraseLayerName: eraseLayerName,
+        sourceTargetlayerName: targetlayerName,
+        sourceEraselayerName: eraselayerName,
         createdAt: result.createdAt
       }))
       allResults.push(...convertedResults)
@@ -261,8 +261,8 @@ worker.postMessage({
   data: {
     targetFeatures: cleanGeoJsonData(targetGeoJson),
     eraseFeatures: cleanGeoJsonData(eraseGeoJson),
-    targetLayerName: targetLayerName,
-    eraseLayerName: eraseLayerName
+    targetlayerName: targetlayerName,
+    eraselayerName: eraselayerName
   }
 })
 
@@ -278,8 +278,8 @@ const computeErase = (targetFeature: any, eraseFeature: any): any | null => {
         id: `erase_${Date.now()}`,
         name: `擦除区域`,
         geometry: difference.geometry,
-        sourceTargetLayerName: targetLayerName,
-        sourceEraseLayerName: eraseLayerName,
+        sourceTargetlayerName: targetlayerName,
+        sourceEraselayerName: eraselayerName,
         createdAt: new Date().toISOString()
       }
     }
@@ -355,7 +355,7 @@ const ensurePolygonGeometry = (geometry: any): any => {
 - **功能**: 对指定要素创建缓冲区
 - **描述**: 为点、线、面要素创建指定距离的缓冲区
 - **内部实现**: 使用Turf.js的buffer函数，输入数据经过以下预处理：
-  1. 从OpenLayers要素转换为Turf格式
+  1. 从Openlayers要素转换为Turf格式
   2. 验证几何类型支持性
   3. 对每个要素执行缓冲区计算
   4. 确保结果为多边形类型
@@ -363,7 +363,7 @@ const ensurePolygonGeometry = (geometry: any): any => {
 
 ```json
 {
-  "sourceLayerId": "string",
+  "sourcelayerId": "string",
   "bufferSettings": {
     "radius": 1000,
     "unit": "meters|kilometers|feet|miles",
@@ -379,7 +379,7 @@ const ensurePolygonGeometry = (geometry: any): any => {
   "options": {
     "returnGeometry": true,
     "returnProperties": true,
-    "resultLayerName": "缓冲区分析结果"
+    "resultlayerName": "缓冲区分析结果"
   }
 }
 ```
@@ -388,14 +388,14 @@ const ensurePolygonGeometry = (geometry: any): any => {
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| sourceLayerId | string | 是 | 源图层标识符 |
+| sourcelayerId | string | 是 | 源图层标识符 |
 | bufferSettings.radius | number | 是 | 缓冲距离 |
 | bufferSettings.unit | string | 是 | 距离单位：meters、kilometers、feet、miles |
 | bufferSettings.semicircleLineSegment | number | 否 | 圆弧精度，默认8 |
 | bufferSettings.unionResults | boolean | 否 | 是否合并结果，默认true |
 | featureFilter.featureIds | array | 否 | 指定要素ID列表 |
 | featureFilter.spatialFilter | object | 否 | 空间过滤条件 |
-| options.resultLayerName | string | 否 | 结果图层名称 |
+| options.resultlayerName | string | 否 | 结果图层名称 |
 
 ### 响应数据
 
@@ -405,7 +405,7 @@ const ensurePolygonGeometry = (geometry: any): any => {
   "data": {
     "resultId": "buffer_result_20240101_001",
     "resultName": "缓冲区分析结果",
-    "sourceLayerName": "武汉市学校",
+    "sourcelayerName": "武汉市学校",
     "bufferSettings": {
       "radius": 1000,
       "unit": "meters",
@@ -446,7 +446,7 @@ curl -X POST "https://your-domain.com/api/v1/spatial-analysis/buffer" \
   -H "Authorization: Bearer your-token" \
   -H "Content-Type: application/json" \
   -d '{
-    "sourceLayerId": "wuhan_schools",
+    "sourcelayerId": "wuhan_schools",
     "bufferSettings": {
       "radius": 500,
       "unit": "meters",
@@ -454,7 +454,7 @@ curl -X POST "https://your-domain.com/api/v1/spatial-analysis/buffer" \
       "unionResults": true
     },
     "options": {
-      "resultLayerName": "学校500米缓冲区"
+      "resultlayerName": "学校500米缓冲区"
     }
   }'
 ```
@@ -486,7 +486,7 @@ curl -X POST "https://your-domain.com/api/v1/spatial-analysis/buffer" \
   "analysisOptions": {
     "units": "kilometers|miles|meters",
     "resolution": 1000,
-    "obstacleLayerId": "string",
+    "obstaclelayerId": "string",
     "costField": "string"
   },
   "options": {
@@ -506,7 +506,7 @@ curl -X POST "https://your-domain.com/api/v1/spatial-analysis/buffer" \
 | endPoint | object | 是 | 终点坐标，GeoJSON Point格式 |
 | analysisOptions.units | string | 否 | 距离单位，默认kilometers |
 | analysisOptions.resolution | number | 否 | 网格分辨率(米)，默认1000 |
-| analysisOptions.obstacleLayerId | string | 否 | 障碍物图层ID |
+| analysisOptions.obstaclelayerId | string | 否 | 障碍物图层ID |
 | analysisOptions.costField | string | 否 | 成本字段名称 |
 | options.averageSpeed | number | 否 | 平均速度(km/h)，用于计算时间 |
 
@@ -569,7 +569,7 @@ curl -X POST "https://your-domain.com/api/v1/spatial-analysis/shortest-path" \
     "analysisOptions": {
       "units": "kilometers",
       "resolution": 1000,
-      "obstacleLayerId": "wuhan_water"
+      "obstaclelayerId": "wuhan_water"
     },
     "options": {
       "calculateDistance": true,
@@ -595,8 +595,8 @@ curl -X POST "https://your-domain.com/api/v1/spatial-analysis/shortest-path" \
 
 ```json
 {
-  "targetLayerId": "string",
-  "maskLayerId": "string",
+  "targetlayerId": "string",
+  "masklayerId": "string",
   "analysisOptions": {
     "unionResults": true,
     "preserveAttributes": true,
@@ -609,7 +609,7 @@ curl -X POST "https://your-domain.com/api/v1/spatial-analysis/shortest-path" \
   "options": {
     "returnGeometry": true,
     "returnProperties": true,
-    "resultLayerName": "相交分析结果"
+    "resultlayerName": "相交分析结果"
   }
 }
 ```
@@ -618,8 +618,8 @@ curl -X POST "https://your-domain.com/api/v1/spatial-analysis/shortest-path" \
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| targetLayerId | string | 是 | 目标图层标识符 |
-| maskLayerId | string | 是 | 遮罩图层标识符 |
+| targetlayerId | string | 是 | 目标图层标识符 |
+| masklayerId | string | 是 | 遮罩图层标识符 |
 | analysisOptions.unionResults | boolean | 否 | 是否合并结果，默认true |
 | analysisOptions.preserveAttributes | boolean | 否 | 是否保留属性，默认true |
 | analysisOptions.attributeMergeStrategy | string | 否 | 属性合并策略：target(目标)、mask(遮罩)、both(两者) |
@@ -634,9 +634,9 @@ curl -X POST "https://your-domain.com/api/v1/spatial-analysis/shortest-path" \
   "data": {
     "resultId": "intersection_result_20240101_001",
     "resultName": "相交分析结果",
-    "sourceLayers": {
-      "targetLayer": "武汉市行政区",
-      "maskLayer": "武汉市水域"
+    "sourcelayers": {
+      "targetlayer": "武汉市行政区",
+      "masklayer": "武汉市水域"
     },
     "statistics": {
       "targetFeatureCount": 10,
@@ -681,15 +681,15 @@ curl -X POST "https://your-domain.com/api/v1/spatial-analysis/intersection" \
   -H "Authorization: Bearer your-token" \
   -H "Content-Type: application/json" \
   -d '{
-    "targetLayerId": "wuhan_districts",
-    "maskLayerId": "wuhan_water",
+    "targetlayerId": "wuhan_districts",
+    "masklayerId": "wuhan_water",
     "analysisOptions": {
       "unionResults": true,
       "preserveAttributes": true,
       "attributeMergeStrategy": "both"
     },
     "options": {
-      "resultLayerName": "行政区与水域相交"
+      "resultlayerName": "行政区与水域相交"
     }
   }'
 ```
@@ -710,8 +710,8 @@ curl -X POST "https://your-domain.com/api/v1/spatial-analysis/intersection" \
 
 ```json
 {
-  "targetLayerId": "string",
-  "eraseLayerId": "string",
+  "targetlayerId": "string",
+  "eraselayerId": "string",
   "analysisOptions": {
     "unionTargetFeatures": true,
     "unionEraseFeatures": true,
@@ -724,7 +724,7 @@ curl -X POST "https://your-domain.com/api/v1/spatial-analysis/intersection" \
   "options": {
     "returnGeometry": true,
     "returnProperties": true,
-    "resultLayerName": "擦除分析结果"
+    "resultlayerName": "擦除分析结果"
   }
 }
 ```
@@ -733,8 +733,8 @@ curl -X POST "https://your-domain.com/api/v1/spatial-analysis/intersection" \
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| targetLayerId | string | 是 | 目标图层标识符 |
-| eraseLayerId | string | 是 | 擦除图层标识符 |
+| targetlayerId | string | 是 | 目标图层标识符 |
+| eraselayerId | string | 是 | 擦除图层标识符 |
 | analysisOptions.unionTargetFeatures | boolean | 否 | 是否合并目标要素，默认true |
 | analysisOptions.unionEraseFeatures | boolean | 否 | 是否合并擦除要素，默认true |
 | analysisOptions.preserveAttributes | boolean | 否 | 是否保留属性，默认true |
@@ -749,9 +749,9 @@ curl -X POST "https://your-domain.com/api/v1/spatial-analysis/intersection" \
   "data": {
     "resultId": "erase_result_20240101_001",
     "resultName": "擦除分析结果",
-    "sourceLayers": {
-      "targetLayer": "武汉市行政区",
-      "eraseLayer": "武汉市水域"
+    "sourcelayers": {
+      "targetlayer": "武汉市行政区",
+      "eraselayer": "武汉市水域"
     },
     "statistics": {
       "targetFeatureCount": 10,
@@ -792,15 +792,15 @@ curl -X POST "https://your-domain.com/api/v1/spatial-analysis/erase" \
   -H "Authorization: Bearer your-token" \
   -H "Content-Type: application/json" \
   -d '{
-    "targetLayerId": "wuhan_districts",
-    "eraseLayerId": "wuhan_water",
+    "targetlayerId": "wuhan_districts",
+    "eraselayerId": "wuhan_water",
     "analysisOptions": {
       "unionTargetFeatures": true,
       "unionEraseFeatures": true,
       "preserveAttributes": true
     },
     "options": {
-      "resultLayerName": "行政区擦除水域"
+      "resultlayerName": "行政区擦除水域"
     }
   }'
 ```
@@ -812,27 +812,27 @@ curl -X POST "https://your-domain.com/api/v1/spatial-analysis/erase" \
 API文档更新总结
 1. 四个分析功能的预处理流程说明
 缓冲区分析：
-输入：OpenLayers要素数组
+输入：Openlayers要素数组
 预处理：convertFeaturesToTurfGeometries(features) - 转换为Turf格式
 处理：turfBuffer(turfFeature, radius, options) - 对每个要素创建缓冲区
 后处理：ensurePolygonGeometry() - 确保结果为多边形类型
 输出：缓冲区多边形要素数组
 相交分析：
-输入：两个OpenLayers要素数组（目标图层和遮罩图层）
+输入：两个Openlayers要素数组（目标图层和遮罩图层）
 预处理：convertFeaturesToTurfGeometries() - 转换为Turf格式
 处理：prepareTurfAnalysisInput(feature1, feature2) → turfIntersect(featureCollection)
 后处理：异步批量处理，避免阻塞UI
 输出：相交区域要素数组
 擦除分析：
-输入：两个OpenLayers要素数组（目标图层和擦除图层）
+输入：两个Openlayers要素数组（目标图层和擦除图层）
 预处理：convertFeaturesToTurfGeometries() - 转换为Turf格式
 处理：Web Worker + prepareTurfAnalysisInput() → turfDifference(featureCollection)
 后处理：在后台线程执行，避免阻塞主线程
 输出：差集要素数组
 最短路径分析：
-输入：OpenLayers点要素（起点和终点）
+输入：Openlayers点要素（起点和终点）
 预处理：convertFeatureToTurfGeometry(startPoint/endPoint) - 转换为Turf格式
-障碍物处理：convertLayerToObstacles(layerId) - 将图层转换为障碍物FeatureCollection
+障碍物处理：convertlayerToObstacles(layerId) - 将图层转换为障碍物FeatureCollection
 处理：shortestPath(startCoords, endCoords, options) - 计算最短路径
 后处理：calculatePathDistance() - 计算路径距离
 输出：路径线要素
@@ -843,7 +843,7 @@ API文档更新总结
 | 错误代码 | HTTP状态码 | 说明 |
 |----------|------------|------|
 | INVALID_PARAMETER | 400 | 参数验证失败 |
-| LAYER_NOT_FOUND | 404 | 图层不存在 |
+| layer_NOT_FOUND | 404 | 图层不存在 |
 | INVALID_GEOMETRY | 400 | 几何数据无效 |
 | ANALYSIS_FAILED | 500 | 分析计算失败 |
 | QUOTA_EXCEEDED | 429 | 请求配额超限 |

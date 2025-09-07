@@ -21,7 +21,7 @@ interface TraditionalState {
   activeTool: string
   toolStates: {
     [toolId: string]: {
-      selectedLayerId?: string
+      selectedlayerId?: string
       queryKeyword?: string
       queryResults?: any[]
       bufferDistance?: number

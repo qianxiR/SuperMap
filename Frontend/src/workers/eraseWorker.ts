@@ -26,8 +26,8 @@ interface WorkerMessage {
   data?: {
     targetFeatures: any[]
     eraseFeatures: any[]
-    targetLayerName?: string
-    eraseLayerName?: string
+    targetlayerName?: string
+    eraselayerName?: string
   }
 }
 
@@ -38,7 +38,7 @@ interface WorkerResult {
 }
 
 // 处理单个要素对的擦除计算
-const computeErase = (targetFeature: any, eraseFeature: any, targetIndex: number, eraseIndex: number, targetLayerName: string = '目标图层', eraseLayerName: string = '擦除图层'): any | null => {
+const computeErase = (targetFeature: any, eraseFeature: any, targetIndex: number, eraseIndex: number, targetlayerName: string = '目标图层', eraselayerName: string = '擦除图层'): any | null => {
   try {
     if (!targetFeature || !eraseFeature) {
       return null
@@ -58,8 +58,8 @@ const computeErase = (targetFeature: any, eraseFeature: any, targetIndex: number
         id: `erase_${targetIndex}_${eraseIndex}_${Date.now()}`,
         name: `擦除区域`,
         geometry: difference.geometry,
-        sourceTargetLayerName: targetLayerName,
-        sourceEraseLayerName: eraseLayerName,
+        sourceTargetlayerName: targetlayerName,
+        sourceEraselayerName: eraselayerName,
         targetIndex,
         eraseIndex,
         createdAt: new Date().toISOString()
@@ -82,7 +82,7 @@ const processAll = (data: WorkerMessage['data']): WorkerResult => {
     }
   }
 
-  const { targetFeatures, eraseFeatures, targetLayerName, eraseLayerName } = data
+  const { targetFeatures, eraseFeatures, targetlayerName, eraselayerName } = data
   const results: any[] = []
 
   console.log(`Worker: 开始处理擦除分析，目标要素: ${targetFeatures.length} 个，擦除要素: ${eraseFeatures.length} 个`)
@@ -98,7 +98,7 @@ const processAll = (data: WorkerMessage['data']): WorkerResult => {
         const eraseFeature = eraseFeatures[j]
         if (!eraseFeature) continue
 
-        const result = computeErase(targetFeature, eraseFeature, i, j, targetLayerName, eraseLayerName)
+        const result = computeErase(targetFeature, eraseFeature, i, j, targetlayerName, eraselayerName)
         if (result) {
           results.push(result)
         }

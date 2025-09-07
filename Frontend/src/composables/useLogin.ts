@@ -229,7 +229,7 @@ export function useLogin() {
         }, 100)
         
         // 跳转到LLM模式
-        router.push('/dashboard/llm')
+        router.push('/dashboard/management-analysis/llm')
         return true
       } else {
         // 处理登录失败 - 显示后端返回的具体错误信息

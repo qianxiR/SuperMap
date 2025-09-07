@@ -19,7 +19,7 @@ const useSelectionStore = defineStore('selection', () => {
   const highlightedFeature = ref<any>(null)
 
   // 按属性查询的持久化状态
-  const querySelectedLayerId = ref<string>('')
+  const querySelectedlayerId = ref<string>('')
   const queryConfig = ref<QueryConfig>({
     condition: {
       fieldName: '',
@@ -68,15 +68,15 @@ const useSelectionStore = defineStore('selection', () => {
   // 清除点击选择：只清除sourceTag为'click'的要素
   function clearSelection() {
     // 清除地图上的点击选择高亮
-    if (mapStore.selectLayer && mapStore.selectLayer.getSource()) {
-      const source = mapStore.selectLayer.getSource()
+    if (mapStore.selectlayer && mapStore.selectlayer.getSource()) {
+      const source = mapStore.selectlayer.getSource()
       const features = source.getFeatures()
       features.forEach((f: any) => {
         if (f?.get && f.get('sourceTag') === 'click') {
           source.removeFeature(f)
         }
       })
-      mapStore.selectLayer.changed()
+      mapStore.selectlayer.changed()
     }
     
     // 只清除点击选择的本地状态，不影响其他选择
@@ -117,15 +117,15 @@ const useSelectionStore = defineStore('selection', () => {
 
   // 清除地图上的点击选择高亮
   function clearClickSelection() {
-    if (mapStore.selectLayer && mapStore.selectLayer.getSource()) {
-      const source = mapStore.selectLayer.getSource()
+    if (mapStore.selectlayer && mapStore.selectlayer.getSource()) {
+      const source = mapStore.selectlayer.getSource()
       const features = source.getFeatures()
       features.forEach((f: any) => {
         if (f?.get && f.get('sourceTag') === 'click') {
           source.removeFeature(f)
         }
       })
-      mapStore.selectLayer.changed()
+      mapStore.selectlayer.changed()
     }
   }
   
@@ -145,8 +145,8 @@ const useSelectionStore = defineStore('selection', () => {
   }
 
   // 按属性查询：设置/获取图层与条件
-  function setQuerySelectedLayerId(layerId: string) {
-    querySelectedLayerId.value = layerId
+  function setQuerySelectedlayerId(layerId: string) {
+    querySelectedlayerId.value = layerId
   }
 
   function setQueryConfig(config: QueryConfig) {
@@ -159,7 +159,7 @@ const useSelectionStore = defineStore('selection', () => {
     selectedFeatures,
     selectedFeatureIndex,
     highlightedFeature,
-    querySelectedLayerId,
+    querySelectedlayerId,
     queryConfig,
     
     // 计算属性
@@ -175,7 +175,7 @@ const useSelectionStore = defineStore('selection', () => {
     clearSelection,
     removeSelectedFeature,
     updateSelectedFeature,
-    setQuerySelectedLayerId,
+    setQuerySelectedlayerId,
     setQueryConfig,
     clearClickSelection
   }

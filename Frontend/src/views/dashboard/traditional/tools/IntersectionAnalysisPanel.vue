@@ -1,10 +1,10 @@
 <template>
   <PanelWindow 
-    :visible="analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'overlay'"
+    :visible="analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'intersect'"
     :embed="true"
     :width="'100%'"
     :height="'100%'"
-    class="overlay-analysis-panel"
+    class="intersect-analysis-panel"
     title="相交分析"
   >
     <div class="analysis-section">
@@ -16,7 +16,7 @@
 
       <div class="analysis-actions">
         <SecondaryButton text="开始执行相交" @click="handleExecute" />
-        <SecondaryButton v-if="results.length > 0" text="保存为图层" @click="showLayerNameModal" />
+        <SecondaryButton v-if="results.length > 0" text="保存为图层" @click="showlayerNameModal" />
         <SecondaryButton v-if="results.length > 0" text="导出为json" @click="handleExportJSON" />
         <SecondaryButton v-if="results.length > 0" text="清除相交结果" @click="handleClear" />
       </div>
@@ -57,14 +57,14 @@
   </PanelWindow>
   
   <!-- 图层名称输入弹窗 -->
-  <LayerNameModal
-    :visible="showLayerNameModalRef"
+  <layerNameModal
+    :visible="showlayerNameModalRef"
     title="保存相交分析结果"
     placeholder="请输入图层名称"
     hint="图层名称将用于在图层管理器中识别此相交分析结果"
-    :default-name="defaultLayerName"
-    @confirm="handleLayerNameConfirm"
-    @close="handleLayerNameClose"
+    :default-name="defaultlayerName"
+    @confirm="handlelayerNameConfirm"
+    @close="handlelayerNameClose"
   />
 
 </template>
@@ -72,20 +72,20 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useIntersectionAnalysis } from '@/composables/useIntersectionAnalysis'
-import { useLayerManager } from '@/composables/useLayerManager'
+import { uselayermanager } from '@/composables/uselayermanager'
 import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import DropdownSelect from '@/components/UI/DropdownSelect.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import TipWindow from '@/components/UI/TipWindow.vue'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
-import LayerNameModal from '@/components/UI/LayerNameModal.vue'
+import layerNameModal from '@/components/UI/layerNameModal.vue'
 import GeoJSON from 'ol/format/GeoJSON'
 import { Feature } from 'ol'
 
 const {
-  targetLayerId,
-  maskLayerId,
+  targetlayerId,
+  masklayerId,
   layerOptions,
   results,
   targetFeatureCount,
@@ -93,24 +93,24 @@ const {
   isAnalyzing,
   executeIntersectionAnalysis,
   clearState,
-  setTargetLayer,
-  setMaskLayer,
+  setTargetlayer,
+  setMasklayer,
   targetFeaturesCache,
   maskFeaturesCache
 } = useIntersectionAnalysis()
 
 const mapStore = useMapStore()
 const analysisStore = useAnalysisStore()
-const { saveFeaturesAsLayer } = useLayerManager()
+const { saveFeaturesAslayer } = uselayermanager()
 
 // 图层名称弹窗状态
-const showLayerNameModalRef = ref<boolean>(false)
-const defaultLayerName = ref<string>('')
+const showlayerNameModalRef = ref<boolean>(false)
+const defaultlayerName = ref<string>('')
 
 const layerOptionsWithNone = computed(() => [{ value: '', label: '无', disabled: false }, ...layerOptions.value])
 
-const selectedTargetId = computed({ get: () => targetLayerId.value, set: (v: string) => setTargetLayer(v) })
-const selectedMaskId = computed({ get: () => maskLayerId.value, set: (v: string) => setMaskLayer(v) })
+const selectedTargetId = computed({ get: () => targetlayerId.value, set: (v: string) => setTargetlayer(v) })
+const selectedMaskId = computed({ get: () => masklayerId.value, set: (v: string) => setMasklayer(v) })
 
 const handleExecute = () => {
   const tCount = targetFeaturesCache.value?.length || 0
@@ -147,8 +147,8 @@ const handleExecute = () => {
   const tGeom = (tFirst as any)?.getGeometry?.()?.clone?.()
   const mGeom = (mFirst as any)?.getGeometry?.()?.clone?.()
   console.log('[Panel] execute clicked. source selection:', {
-    targetLayerId: targetLayerId.value,
-    maskLayerId: maskLayerId.value,
+    targetlayerId: targetlayerId.value,
+    masklayerId: masklayerId.value,
     targetCount: tCount,
     maskCount: mCount,
     targetFirstType: tGeom?.getType?.(),
@@ -157,8 +157,8 @@ const handleExecute = () => {
 
   // 执行相交分析
   executeIntersectionAnalysis({
-    targetLayerId: targetLayerId.value,
-    maskLayerId: maskLayerId.value,
+    targetlayerId: targetlayerId.value,
+    masklayerId: masklayerId.value,
     targetFeatures: targetFeaturesCache.value,
     maskFeatures: maskFeaturesCache.value
   })
@@ -169,7 +169,7 @@ const handleClear = () => {
 }
 
 // 显示图层名称输入弹窗
-const showLayerNameModal = () => {
+const showlayerNameModal = () => {
   if (results.value.length === 0) {
     window.dispatchEvent(new CustomEvent('showNotification', {
       detail: {
@@ -182,28 +182,28 @@ const showLayerNameModal = () => {
     return
   }
   
-  defaultLayerName.value = `相交分析结果`
-  showLayerNameModalRef.value = true
+  defaultlayerName.value = `相交分析结果`
+  showlayerNameModalRef.value = true
 }
 
 // 处理图层名称确认
-const handleLayerNameConfirm = async (layerName: string) => {
-  showLayerNameModalRef.value = false
-  await handleSaveLayer(layerName)
+const handlelayerNameConfirm = async (layerName: string) => {
+  showlayerNameModalRef.value = false
+  await handleSavelayer(layerName)
 }
 
 // 处理图层名称弹窗关闭
-const handleLayerNameClose = () => {
-  showLayerNameModalRef.value = false
+const handlelayerNameClose = () => {
+  showlayerNameModalRef.value = false
 }
 
-const handleSaveLayer = async (customLayerName: string) => {
+const handleSavelayer = async (customlayerName: string) => {
   if (results.value.length === 0) {
     return
   }
   
   try {
-    // 将相交结果转换为 OpenLayers Feature
+    // 将相交结果转换为 Openlayers Feature
     const format = new GeoJSON()
     const features = results.value.map((item: any) => {
       if (item.geometry && item.geometry.type && item.geometry.coordinates) {
@@ -213,8 +213,8 @@ const handleSaveLayer = async (customLayerName: string) => {
           properties: { 
             id: item.id, 
             name: item.name, 
-            sourceTarget: item.sourceTargetLayerName, 
-            sourceMask: item.sourceMaskLayerName, 
+            sourceTarget: item.sourceTargetlayerName, 
+            sourceMask: item.sourceMasklayerName, 
             createdAt: item.createdAt,
             analysisType: 'intersection'
           } 
@@ -225,7 +225,7 @@ const handleSaveLayer = async (customLayerName: string) => {
     }).filter(Boolean)
 
     if (features.length > 0) {
-      await saveFeaturesAsLayer(features as any[], customLayerName, 'intersect')
+      await saveFeaturesAslayer(features as any[], customlayerName, 'intersect')
       
       // 保存成功后清除临时渲染结果
       clearState()
@@ -233,7 +233,7 @@ const handleSaveLayer = async (customLayerName: string) => {
       window.dispatchEvent(new CustomEvent('showNotification', {
         detail: {
           title: '保存成功',
-          message: `已保存 ${features.length} 个相交结果为图层：${customLayerName}`,
+          message: `已保存 ${features.length} 个相交结果为图层：${customlayerName}`,
           type: 'success',
           duration: 3000
         }

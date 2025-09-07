@@ -1,6 +1,6 @@
 <template>
   <teleport to="body">
-  <div class="page-modal-overlay" @click="closeModal">
+  <div class="page-modal-intersect" @click="closeModal">
     <div class="page-modal-content" @click.stop>
       <div class="page-modal-header">
         <h2>Agent管理</h2>
@@ -726,7 +726,7 @@ const deleteAgent = (id: number) => {
 </script>
 
 <style scoped>
-.page-modal-overlay {
+.page-modal-intersect {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.08);

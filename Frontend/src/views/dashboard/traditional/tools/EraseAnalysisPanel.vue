@@ -16,7 +16,7 @@
 
       <div class="analysis-actions">
         <SecondaryButton text="开始执行擦除" @click="handleExecute" />
-        <SecondaryButton v-if="results.length > 0" text="保存为图层" @click="showLayerNameModal" />
+        <SecondaryButton v-if="results.length > 0" text="保存为图层" @click="showlayerNameModal" />
         <SecondaryButton v-if="results.length > 0" text="导出为json" @click="handleExportJSON" />
         <SecondaryButton v-if="results.length > 0" text="清除擦除结果" @click="handleClear" />
       </div>
@@ -56,34 +56,34 @@
   </PanelWindow>
   
   <!-- 图层名称输入弹窗 -->
-  <LayerNameModal
-    :visible="showLayerNameModalRef"
+  <layerNameModal
+    :visible="showlayerNameModalRef"
     title="保存擦除分析结果"
     placeholder="请输入图层名称"
     hint="图层名称将用于在图层管理器中识别此擦除分析结果"
-    :default-name="defaultLayerName"
-    @confirm="handleLayerNameConfirm"
-    @close="handleLayerNameClose"
+    :default-name="defaultlayerName"
+    @confirm="handlelayerNameConfirm"
+    @close="handlelayerNameClose"
   />
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useEraseAnalysis } from '@/composables/useEraseAnalysis'
-import { useLayerManager } from '@/composables/useLayerManager'
+import { uselayermanager } from '@/composables/uselayermanager'
 import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import DropdownSelect from '@/components/UI/DropdownSelect.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import TipWindow from '@/components/UI/TipWindow.vue'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
-import LayerNameModal from '@/components/UI/LayerNameModal.vue'
+import layerNameModal from '@/components/UI/layerNameModal.vue'
 import GeoJSON from 'ol/format/GeoJSON'
 import { Feature } from 'ol'
 
 const {
-  targetLayerId,
-  eraseLayerId,
+  targetlayerId,
+  eraselayerId,
   layerOptions,
   results,
   targetFeatureCount,
@@ -91,24 +91,24 @@ const {
   isAnalyzing,
   executeEraseAnalysis,
   clearState,
-  setTargetLayer,
-  setEraseLayer,
+  setTargetlayer,
+  setEraselayer,
   targetFeaturesCache,
   eraseFeaturesCache
 } = useEraseAnalysis()
 
 const mapStore = useMapStore()
 const analysisStore = useAnalysisStore()
-const { saveFeaturesAsLayer } = useLayerManager()
+const { saveFeaturesAslayer } = uselayermanager()
 
 // 图层名称弹窗状态
-const showLayerNameModalRef = ref<boolean>(false)
-const defaultLayerName = ref<string>('')
+const showlayerNameModalRef = ref<boolean>(false)
+const defaultlayerName = ref<string>('')
 
 const layerOptionsWithNone = computed(() => [{ value: '', label: '无', disabled: false }, ...layerOptions.value])
 
-const selectedTargetId = computed({ get: () => targetLayerId.value, set: (v: string) => setTargetLayer(v) })
-const selectedEraseId = computed({ get: () => eraseLayerId.value, set: (v: string) => setEraseLayer(v) })
+const selectedTargetId = computed({ get: () => targetlayerId.value, set: (v: string) => setTargetlayer(v) })
+const selectedEraseId = computed({ get: () => eraselayerId.value, set: (v: string) => setEraselayer(v) })
 
 const handleExecute = () => {
   const tCount = targetFeaturesCache.value?.length || 0
@@ -145,8 +145,8 @@ const handleExecute = () => {
   const tGeom = (tFirst as any)?.getGeometry?.()?.clone?.()
   const eGeom = (eFirst as any)?.getGeometry?.()?.clone?.()
   console.log('[Panel] execute clicked. source selection:', {
-    targetLayerId: targetLayerId.value,
-    eraseLayerId: eraseLayerId.value,
+    targetlayerId: targetlayerId.value,
+    eraselayerId: eraselayerId.value,
     targetCount: tCount,
     eraseCount: eCount,
     targetFirstType: tGeom?.getType?.(),
@@ -154,8 +154,8 @@ const handleExecute = () => {
   })
 
   executeEraseAnalysis({
-    targetLayerId: targetLayerId.value,
-    eraseLayerId: eraseLayerId.value,
+    targetlayerId: targetlayerId.value,
+    eraselayerId: eraselayerId.value,
     targetFeatures: targetFeaturesCache.value,
     eraseFeatures: eraseFeaturesCache.value
   })
@@ -166,7 +166,7 @@ const handleClear = () => {
 }
 
 // 显示图层名称输入弹窗
-const showLayerNameModal = () => {
+const showlayerNameModal = () => {
   if (results.value.length === 0) {
     window.dispatchEvent(new CustomEvent('showNotification', {
       detail: {
@@ -179,28 +179,28 @@ const showLayerNameModal = () => {
     return
   }
   
-  defaultLayerName.value = `擦除分析结果`
-  showLayerNameModalRef.value = true
+  defaultlayerName.value = `擦除分析结果`
+  showlayerNameModalRef.value = true
 }
 
 // 处理图层名称确认
-const handleLayerNameConfirm = async (layerName: string) => {
-  showLayerNameModalRef.value = false
-  await handleSaveLayer(layerName)
+const handlelayerNameConfirm = async (layerName: string) => {
+  showlayerNameModalRef.value = false
+  await handleSavelayer(layerName)
 }
 
 // 处理图层名称弹窗关闭
-const handleLayerNameClose = () => {
-  showLayerNameModalRef.value = false
+const handlelayerNameClose = () => {
+  showlayerNameModalRef.value = false
 }
 
-const handleSaveLayer = async (customLayerName: string) => {
+const handleSavelayer = async (customlayerName: string) => {
   if (results.value.length === 0) {
     return
   }
   
   try {
-    // 将擦除结果转换为 OpenLayers Feature
+    // 将擦除结果转换为 Openlayers Feature
     const format = new GeoJSON()
     const features = results.value.map((item: any) => {
       if (item.geometry && item.geometry.type && item.geometry.coordinates) {
@@ -210,8 +210,8 @@ const handleSaveLayer = async (customLayerName: string) => {
           properties: { 
             id: item.id, 
             name: item.name, 
-            sourceTarget: item.sourceTargetLayerName, 
-            sourceErase: item.sourceEraseLayerName, 
+            sourceTarget: item.sourceTargetlayerName, 
+            sourceErase: item.sourceEraselayerName, 
             createdAt: item.createdAt,
             analysisType: 'erase'
           } 
@@ -222,7 +222,7 @@ const handleSaveLayer = async (customLayerName: string) => {
     }).filter(Boolean)
 
     if (features.length > 0) {
-      await saveFeaturesAsLayer(features as any[], customLayerName, 'erase')
+      await saveFeaturesAslayer(features as any[], customlayerName, 'erase')
       
       // 保存成功后清除临时渲染结果
       clearState()
@@ -230,7 +230,7 @@ const handleSaveLayer = async (customLayerName: string) => {
       window.dispatchEvent(new CustomEvent('showNotification', {
         detail: {
           title: '保存成功',
-          message: `已保存 ${features.length} 个擦除结果为图层：${customLayerName}`,
+          message: `已保存 ${features.length} 个擦除结果为图层：${customlayerName}`,
           type: 'success',
           duration: 3000
         }

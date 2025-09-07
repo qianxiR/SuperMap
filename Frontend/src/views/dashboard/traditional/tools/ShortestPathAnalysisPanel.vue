@@ -15,6 +15,7 @@
             text="选择起始点"
             @click="selectStartPoint"
             :active="isSelectingStartPoint"
+            :disabled="isAnalyzing"
           />
           
           <!-- 显示起始点信息 -->
@@ -35,6 +36,7 @@
             text="选择目标点"
             @click="selectEndPoint"
             :active="isSelectingEndPoint ?? undefined"
+            :disabled="isAnalyzing"
           />
           
           <!-- 显示目标点信息 -->
@@ -60,12 +62,13 @@
       <div class="form-item">
         <label class="form-label">障碍物图层（可选）</label>
         <DropdownSelect
-          :options="obstacleLayerOptions"
-          v-model="selectedObstacleLayer"
+          :options="obstaclelayerOptions"
+          v-model="selectedObstaclelayer"
           placeholder="选择障碍物图层"
+          :disabled="isAnalyzing"
         />
-        <div v-if="selectedObstacleLayer" class="obstacle-info">
-          <span class="info-text">已选择障碍物图层: {{ getObstacleLayerName() }}</span>
+        <div v-if="selectedObstaclelayer" class="obstacle-info">
+          <span class="info-text">已选择障碍物图层: {{ getObstaclelayerName() }}</span>
         </div>
       </div>
       
@@ -77,6 +80,7 @@
             <DropdownSelect
               :options="unitOptions"
               v-model="analysisOptions.units"
+              :disabled="isAnalyzing"
             />
           </div>
           
@@ -103,7 +107,7 @@
         <SecondaryButton 
           v-if="currentResult"
           text="保存为图层"
-          @click="showLayerNameModal"
+          @click="showlayerNameModal"
           style="margin-top: 8px;"
         />
 
@@ -135,14 +139,14 @@
   </PanelWindow>
   
   <!-- 图层名称输入弹窗 -->
-  <LayerNameModal
-    :visible="showLayerNameModalRef"
+  <layerNameModal
+    :visible="showlayerNameModalRef"
     title="保存最短路径分析结果"
     placeholder="请输入图层名称"
     hint="图层名称将用于在图层管理器中识别此最短路径分析结果"
-    :default-name="defaultLayerName"
-    @confirm="handleLayerNameConfirm"
-    @close="handleLayerNameClose"
+    :default-name="defaultlayerName"
+    @confirm="handlelayerNameConfirm"
+    @close="handlelayerNameClose"
   />
 </template>
 
@@ -153,7 +157,7 @@ import { useMapStore } from '@/stores/mapStore'
 import { useShortestPathAnalysis } from '@/composables/useShortestPathAnalysis'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
 import DropdownSelect from '@/components/UI/DropdownSelect.vue'
-import LayerNameModal from '@/components/UI/LayerNameModal.vue'
+import layerNameModal from '@/components/UI/layerNameModal.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 
 const analysisStore = useAnalysisStore()
@@ -171,15 +175,15 @@ const {
   selectEndPoint,
   clearResults,
   executePathAnalysis,
-  saveAnalysisLayer,
+  saveAnalysislayer,
   exportGeoJSON,
-  setObstacleLayer,
+  setObstaclelayer,
   updateAnalysisOptions
 } = useShortestPathAnalysis()
 
 // 图层名称弹窗状态
-const showLayerNameModalRef = ref<boolean>(false)
-const defaultLayerName = ref<string>('')
+const showlayerNameModalRef = ref<boolean>(false)
+const defaultlayerName = ref<string>('')
 
 // 计算属性
 const hasResults = computed(() => analysisResults.value.length > 0)
@@ -189,17 +193,17 @@ const currentResult = computed(() => analysisResults.value[0] || null)
 const isAnalyzing = ref(false)
 
 // 障碍物图层选项（参考缓冲区分析的方法）
-const obstacleLayerOptions = computed(() => {
+const obstaclelayerOptions = computed(() => {
   const options = [{ value: '', label: '无障碍物' }]
   
   // 获取可见的矢量图层
-  const vectorLayers = mapStore.vectorLayers.filter(layer => 
+  const vectorlayers = mapStore.vectorlayers.filter(layer => 
     layer.layer && 
     layer.layer.getVisible() && 
     layer.type === 'vector'
   )
   
-  vectorLayers.forEach(layer => {
+  vectorlayers.forEach(layer => {
     const features = layer.layer.getSource()?.getFeatures() || []
     const featureCount = features.length
     
@@ -224,7 +228,7 @@ const obstacleLayerOptions = computed(() => {
 })
 
 // 选中的障碍物图层
-const selectedObstacleLayer = ref<string>('')
+const selectedObstaclelayer = ref<string>('')
 
 // 距离单位选项
 const unitOptions = [
@@ -235,24 +239,24 @@ const unitOptions = [
 ]
 
 // 监听障碍物图层选择变化
-watch(selectedObstacleLayer, (newLayerId) => {
+watch(selectedObstaclelayer, (newlayerId) => {
   console.log('=== 障碍物图层选择变化 ===')
-  console.log('新的layerId:', newLayerId)
-  console.log('当前可用图层数量:', mapStore.vectorLayers.length)
-  console.log('可用图层列表:', mapStore.vectorLayers.map(l => ({ id: l.id, name: l.name, type: l.type })))
+  console.log('新的layerId:', newlayerId)
+  console.log('当前可用图层数量:', mapStore.vectorlayers.length)
+  console.log('可用图层列表:', mapStore.vectorlayers.map(l => ({ id: l.id, name: l.name, type: l.type })))
   
-  if (newLayerId === '') {
+  if (newlayerId === '') {
     console.log('清除障碍物图层')
-    setObstacleLayer(null)
+    setObstaclelayer(null)
   } else {
-    console.log('设置障碍物图层:', newLayerId)
-    setObstacleLayer(newLayerId)
+    console.log('设置障碍物图层:', newlayerId)
+    setObstaclelayer(newlayerId)
   }
 })
 
-const getObstacleLayerName = () => {
-  if (!selectedObstacleLayer.value) return ''
-  const layer = mapStore.vectorLayers.find(l => l.id === selectedObstacleLayer.value)
+const getObstaclelayerName = () => {
+  if (!selectedObstaclelayer.value) return ''
+  const layer = mapStore.vectorlayers.find(l => l.id === selectedObstaclelayer.value)
   return layer ? layer.name : '未知图层'
 }
 
@@ -296,30 +300,30 @@ watch(() => analysisStore.toolPanel.visible.valueOf?.() ?? analysisStore.toolPan
 })
 
 // 显示图层名称输入弹窗
-const showLayerNameModal = () => {
+const showlayerNameModal = () => {
   if (!currentResult.value) {
     analysisStore.setAnalysisStatus('没有可保存的路径分析结果')
     return
   }
   
-  defaultLayerName.value = `最短路径分析`
-  showLayerNameModalRef.value = true
+  defaultlayerName.value = `最短路径分析`
+  showlayerNameModalRef.value = true
 }
 
 // 处理图层名称确认
-const handleLayerNameConfirm = async (layerName: string) => {
-  showLayerNameModalRef.value = false
-  await handleSaveLayer(layerName)
+const handlelayerNameConfirm = async (layerName: string) => {
+  showlayerNameModalRef.value = false
+  await handleSavelayer(layerName)
 }
 
 // 处理图层名称弹窗关闭
-const handleLayerNameClose = () => {
-  showLayerNameModalRef.value = false
+const handlelayerNameClose = () => {
+  showlayerNameModalRef.value = false
 }
 
 // 保存为图层
-const handleSaveLayer = async (customLayerName?: string) => {
-  const success = await saveAnalysisLayer(customLayerName)
+const handleSavelayer = async (customlayerName?: string) => {
+  const success = await saveAnalysislayer(customlayerName)
   if (success) {
     analysisStore.setAnalysisStatus('图层保存成功')
   } else {

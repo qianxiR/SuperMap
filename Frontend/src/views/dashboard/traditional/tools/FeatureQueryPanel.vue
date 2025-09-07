@@ -11,7 +11,7 @@
     <div class="analysis-section">
       <div class="section-title">选择查询数据源</div>
       <DropdownSelect 
-        v-model="selectedLayerId"
+        v-model="selectedlayerId"
         :options="layerOptions"
         placeholder="无"
       />
@@ -116,7 +116,7 @@
         />
         <SecondaryButton 
           text="另存为图层"
-          @click="showLayerNameModal"
+          @click="showlayerNameModal"
           :disabled="queryResults.length === 0"
         />
         <SecondaryButton 
@@ -126,7 +126,7 @@
         />
         <SecondaryButton 
           text="反选当前要素"
-          @click="invertSelectedLayer"
+          @click="invertSelectedlayer"
           :disabled="isQuerying"
         />
         <SecondaryButton 
@@ -138,18 +138,18 @@
       </div>
     </div>
     
-    <TipWindow v-if="selectedLayerId" :text="getTipText()" />
+    <TipWindow v-if="selectedlayerId" :text="getTipText()" />
   </PanelWindow>
   
   <!-- 图层名称输入弹窗 -->
-  <LayerNameModal
-    :visible="showLayerNameModalRef"
+  <layerNameModal
+    :visible="showlayerNameModalRef"
     title="保存属性查询结果"
     placeholder="请输入图层名称"
     hint="图层名称将用于在图层管理器中识别此属性查询结果"
-    :default-name="defaultLayerName"
-    @confirm="handleLayerNameConfirm"
-    @close="handleLayerNameClose"
+    :default-name="defaultlayerName"
+    @confirm="handlelayerNameConfirm"
+    @close="handlelayerNameClose"
   />
 </template>
 
@@ -159,14 +159,14 @@ import { useAnalysisStore } from '@/stores/analysisStore'
 import { useFeatureQueryStore } from '@/stores/featureQueryStore'
 import { useMapStore } from '@/stores/mapStore'
 import { useModeStateStore } from '@/stores/modeStateStore'
-import { useLayerManager } from '@/composables/useLayerManager'
+import { uselayermanager } from '@/composables/uselayermanager'
 import { getFeatureCompleteInfo, getFeatureGeometryDescription } from '@/utils/featureUtils'
 import DropdownSelect from '@/components/UI/DropdownSelect.vue'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import TipWindow from '@/components/UI/TipWindow.vue'
 import QueryConditionRow from '@/components/UI/QueryConditionRow.vue'
-import LayerNameModal from '@/components/UI/LayerNameModal.vue'
+import layerNameModal from '@/components/UI/layerNameModal.vue'
 import type { QueryCondition } from '@/types/query'
  
 
@@ -176,59 +176,59 @@ const featureQuery = useFeatureQueryStore()
 const modeStateStore = useModeStateStore()
 
 // 使用图层管理 hook
-const { saveFeaturesAsLayer } = useLayerManager()
+const { saveFeaturesAslayer } = uselayermanager()
 
 // 生成基于SQL语句的图层名称
-const generateLayerNameFromQuery = () => {
+const generatelayerNameFromQuery = () => {
   const condition = queryConfig.value.condition
   if (!condition || !condition.fieldName || !condition.value) {
     return `属性查询`
   }
 
   // 获取图层名称
-  const layerName = getSelectedLayerName()
+  const layerName = getSelectedlayerName()
   
   // 获取操作符标签
   const operatorLabel = getOperatorLabel(condition.operator)
   
   // 拼接图层名称：图层名称 字段 条件 值
-  const sqlLayerName = `${layerName} ${condition.fieldName} ${operatorLabel} ${condition.value}`
+  const sqllayerName = `${layerName} ${condition.fieldName} ${operatorLabel} ${condition.value}`
   
-  return sqlLayerName
+  return sqllayerName
 }
 
 // 图层名称弹窗状态
-const showLayerNameModalRef = ref<boolean>(false)
-const defaultLayerName = ref<string>('')
+const showlayerNameModalRef = ref<boolean>(false)
+const defaultlayerName = ref<string>('')
 
 // 显示图层名称输入弹窗
-const showLayerNameModal = () => {
+const showlayerNameModal = () => {
   if (queryResults.value.length === 0) {
     return
   }
   
-  defaultLayerName.value = generateLayerNameFromQuery()
-  showLayerNameModalRef.value = true
+  defaultlayerName.value = generatelayerNameFromQuery()
+  showlayerNameModalRef.value = true
 }
 
 // 处理图层名称确认
-const handleLayerNameConfirm = async (layerName: string) => {
-  showLayerNameModalRef.value = false
-  await saveQueryResultsAsLayer(layerName)
+const handlelayerNameConfirm = async (layerName: string) => {
+  showlayerNameModalRef.value = false
+  await saveQueryResultsAslayer(layerName)
 }
 
 // 处理图层名称弹窗关闭
-const handleLayerNameClose = () => {
-  showLayerNameModalRef.value = false
+const handlelayerNameClose = () => {
+  showlayerNameModalRef.value = false
 }
 
 // 保存查询结果为图层
-const saveQueryResultsAsLayer = async (customLayerName: string) => {
+const saveQueryResultsAslayer = async (customlayerName: string) => {
   if (queryResults.value.length === 0) {
     return
   }
 
-  await saveFeaturesAsLayer(queryResults.value, customLayerName, 'query')
+  await saveFeaturesAslayer(queryResults.value, customlayerName, 'query')
 }
  
 // 导出查询结果为 GeoJSON 文件
@@ -260,9 +260,9 @@ const exportQueryResultsAsGeoJSON = () => {
  
 
 // 状态管理
-const selectedLayerId = computed({
-  get: () => featureQuery.selectedLayerId,
-  set: (value) => featureQuery.selectedLayerId = value
+const selectedlayerId = computed({
+  get: () => featureQuery.selectedlayerId,
+  set: (value) => featureQuery.selectedlayerId = value
 })
 
 const queryResults = computed(() => featureQuery.queryResults)
@@ -288,7 +288,7 @@ const toolId = 'query'
 // 保存工具状态
 const saveToolState = () => {
   const stateToSave = {
-    selectedLayerId: selectedLayerId.value,
+    selectedlayerId: selectedlayerId.value,
     queryConfig: queryConfig.value,
     queryResults: queryResults.value
   }
@@ -312,8 +312,8 @@ const restoreToolState = () => {
   const state = modeStateStore.getToolState(toolId)
   console.log('恢复查询工具状态:', state)
   
-  if (state.selectedLayerId) {
-    selectedLayerId.value = state.selectedLayerId
+  if (state.selectedlayerId) {
+    selectedlayerId.value = state.selectedlayerId
   }
   if (state.queryConfig) {
     // 恢复查询配置
@@ -328,9 +328,9 @@ const restoreToolState = () => {
   }
   
   // 如果有选中的图层，确保字段结构也被恢复
-  if (state.selectedLayerId) {
+  if (state.selectedlayerId) {
     setTimeout(async () => {
-      await featureQuery.getLayerFields(state.selectedLayerId)
+      await featureQuery.getlayerFields(state.selectedlayerId)
     }, 50)
   }
 }
@@ -352,7 +352,7 @@ onUnmounted(() => {
 
 // 监听状态变化，自动保存（防抖，并缩小监听范围）
 watch([
-  selectedLayerId,
+  selectedlayerId,
   () => queryConfig.value.condition,
   () => queryResults.value.length
 ], () => {
@@ -377,11 +377,11 @@ watch(() => analysisStore.toolPanel.activeTool, (newTool, oldTool) => {
 })
 
 // 监听图层选择变化，自动获取字段结构
-watch(selectedLayerId, async (newLayerId, oldLayerId) => {
-  console.log('图层选择变化:', newLayerId, '从:', oldLayerId)
+watch(selectedlayerId, async (newlayerId, oldlayerId) => {
+  console.log('图层选择变化:', newlayerId, '从:', oldlayerId)
   
   // 只有在真正切换图层时才清空查询结果
-  if (newLayerId && newLayerId !== oldLayerId) {
+  if (newlayerId && newlayerId !== oldlayerId) {
     // 清空查询结果
     featureQuery.queryResults = []
     
@@ -389,12 +389,12 @@ watch(selectedLayerId, async (newLayerId, oldLayerId) => {
     Object.assign(featureQuery.queryConfig.condition, createDefaultCondition())
     
     // 获取新图层的字段结构
-    await featureQuery.getLayerFields(newLayerId)
-    analysisStore.setAnalysisStatus(`已选择图层: ${getSelectedLayerName()}`)
-  } else if (newLayerId && newLayerId === oldLayerId) {
+    await featureQuery.getlayerFields(newlayerId)
+    analysisStore.setAnalysisStatus(`已选择图层: ${getSelectedlayerName()}`)
+  } else if (newlayerId && newlayerId === oldlayerId) {
     // 如果是恢复状态时的相同图层，只获取字段结构
-    await featureQuery.getLayerFields(newLayerId)
-  } else if (!newLayerId) {
+    await featureQuery.getlayerFields(newlayerId)
+  } else if (!newlayerId) {
     // 选择“无”时清空字段与结果
     featureQuery.queryResults = []
     featureQuery.layerFields = []
@@ -404,20 +404,20 @@ watch(selectedLayerId, async (newLayerId, oldLayerId) => {
 })
 
 // 图层选项（首项为“无”）
-const layerOptions = computed(() => [{ value: '', label: '无', disabled: false }, ...featureQuery.getLayerOptions()])
+const layerOptions = computed(() => [{ value: '', label: '无', disabled: false }, ...featureQuery.getlayerOptions()])
 
 // 获取选中图层名称
-const getSelectedLayerName = () => {
-  return featureQuery.getSelectedLayerName(selectedLayerId.value)
+const getSelectedlayerName = () => {
+  return featureQuery.getSelectedlayerName(selectedlayerId.value)
 }
 
 // 获取TipWindow显示文本
 const getTipText = () => {
-  const layerName = getSelectedLayerName()
+  const layerName = getSelectedlayerName()
   const condition = queryConfig.value.condition
   
   // 获取图层要素数量
-  const featureCount = featureQuery.getLayerFeatureCount(selectedLayerId.value)
+  const featureCount = featureQuery.getlayerFeatureCount(selectedlayerId.value)
   
   let tipText = `已选择图层: ${layerName}`
   
@@ -496,7 +496,7 @@ const updateCondition = (condition: QueryCondition) => {
 
 // 执行查询
 const executeQuery = async () => {
-  if (!selectedLayerId.value) {
+  if (!selectedlayerId.value) {
     analysisStore.setAnalysisStatus('请选择查询图层')
     return
   }
@@ -551,15 +551,15 @@ const getFeatureGeometryInfo = (feature: any): string => {
 // 几何计算函数已移除
 
 // 反选当前已选中的要素
-const invertSelectedLayer = () => {
-  if (!selectedLayerId.value) {
+const invertSelectedlayer = () => {
+  if (!selectedlayerId.value) {
     analysisStore.setAnalysisStatus('请先选择要操作的数据')
     return
   }
   
   try {
-    featureQuery.invertSelectedLayer(selectedLayerId.value)
-    analysisStore.setAnalysisStatus(`已反选图层 "${getSelectedLayerName()}"，更新查询结果列表`)
+    featureQuery.invertSelectedlayer(selectedlayerId.value)
+    analysisStore.setAnalysisStatus(`已反选图层 "${getSelectedlayerName()}"，更新查询结果列表`)
   } catch (error) {
     console.error('反选要素时出错:', error)
     analysisStore.setAnalysisStatus('反选要素时出错，请重试')

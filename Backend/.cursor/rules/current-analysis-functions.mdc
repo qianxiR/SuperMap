@@ -5,7 +5,7 @@
 基于对实际代码的分析，当前系统实现了以下核心分析功能：
 - 缓冲区分析 (Buffer Analysis)
 - 最短路径分析 (Shortest Path Analysis)  
-- 叠加分析 (Overlay Analysis)
+- 叠加分析 (intersect Analysis)
 
 ## 1. 缓冲区分析 (Buffer Analysis)
 
@@ -101,11 +101,11 @@ const result = {
 }
 ```
 
-## 3. 叠加分析 (Overlay Analysis)
+## 3. 叠加分析 (intersect Analysis)
 
 ### 前端实现
-- **Composable**: `useOverlayAnalysis.ts`
-- **Panel**: `OverlayAnalysisPanel.vue`
+- **Composable**: `useintersectAnalysis.ts`
+- **Panel**: `intersectAnalysisPanel.vue`
 - **功能**: 空间叠加分析，交集、并集、差集运算
 - **参数**: 输入图层、叠加类型、容差设置
 
@@ -141,13 +141,13 @@ return {
 
 ### 后端API
 - **接口**: `POST /api/v1/analysis/tasks`
-- **分析类型**: `"overlay"`
+- **分析类型**: `"intersect"`
 - **参数结构**:
 ```json
 {
   "name": "叠加分析任务",
   "description": "计算两个图层的交集",
-  "analysis_type": "overlay",
+  "analysis_type": "intersect",
   "parameters": {
     "layer1": "layer_001",
     "layer2": "layer_002",
@@ -237,12 +237,12 @@ class SuperMapNetworkAnalystService:
 ### 空间分析服务
 ```python
 class SuperMapSpatialAnalystService:
-    async def overlay_analysis(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+    async def intersect_analysis(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """叠加分析"""
         try:
-            request_params = self._build_overlay_params(parameters)
+            request_params = self._build_intersect_params(parameters)
             response = await self._call_supermap_service(
-                method="overlayAnalysis",
+                method="intersectAnalysis",
                 parameters=request_params
             )
             
@@ -250,14 +250,14 @@ class SuperMapSpatialAnalystService:
                 "success": True,
                 "data": response,
                 "service_type": "spatial_analyst",
-                "method": "overlayAnalysis"
+                "method": "intersectAnalysis"
             }
         except Exception as e:
             return {
                 "success": False,
                 "error_message": str(e),
                 "service_type": "spatial_analyst",
-                "method": "overlayAnalysis"
+                "method": "intersectAnalysis"
             }
 ```
 
@@ -269,14 +269,14 @@ class SuperMapSpatialAnalystService:
 <div class="button-row">
   <PrimaryButton text="缓冲区分析" :active="isBufferOpen" @click="toggleBuffer" />
   <PrimaryButton text="最短路径分析" :active="isDistanceOpen" @click="toggleDistance" />
-  <PrimaryButton text="叠加分析" :active="isOverlayOpen" @click="toggleOverlay" />
+  <PrimaryButton text="叠加分析" :active="isintersectOpen" @click="toggleintersect" />
 </div>
 ```
 
 ### 分析面板组件
 - `BufferAnalysisPanel.vue` - 缓冲区分析面板
 - `DistanceAnalysisPanel.vue` - 距离/路径分析面板
-- `OverlayAnalysisPanel.vue` - 叠加分析面板
+- `intersectAnalysisPanel.vue` - 叠加分析面板
 
 ## 7. 开发检查清单
 
