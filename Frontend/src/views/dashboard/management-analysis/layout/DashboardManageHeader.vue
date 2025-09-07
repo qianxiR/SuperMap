@@ -1,7 +1,13 @@
 <template>
   <div class="screen-header">
     <div class="header-left">
-      <img src="/628416edb5b7a1b2136a93f41b6e312b.png" alt="Logo" class="header-logo" />
+      <img 
+        src="/628416edb5b7a1b2136a93f41b6e312b.png" 
+        alt="Logo" 
+        class="header-logo" 
+        @click="goToView"
+        title="切换到视图页面"
+      />
       <div class="screen-title">基于LLM-Agent的智能交互式地理空间智能决策分析系统</div>
     </div>
     
@@ -178,6 +184,10 @@ const goToProfile = () => {
   globalModal.open('profile')
 }
 
+const goToView = () => {
+  router.push('/dashboard/view')
+}
+
 const goToAIManagement = () => {
   showUserMenu.value = false
   globalModal.open('agent')
@@ -261,13 +271,13 @@ onMounted(() => {
   // 预加载传统模式相关组件与重型依赖，降低首次切换延迟
   setTimeout(() => {
     void Promise.all([
-      import('@/views/dashboard/traditional/TraditionalMode.vue'),
-      import('@/views/dashboard/traditional/tools/LayerManager.vue'),
-      import('@/views/dashboard/traditional/tools/FeatureQueryPanel.vue'),
-              import('@/views/dashboard/traditional/tools/AreaSelectionTools.vue'),
-      import('@/views/dashboard/traditional/tools/BufferAnalysisPanel.vue'),
-      import('@/views/dashboard/traditional/tools/ShortestPathAnalysisPanel.vue'),
-      import('@/views/dashboard/traditional/tools/DataUploadPanel.vue'),
+      import('@/views/dashboard/management-analysis/traditional/TraditionalMode.vue'),
+      import('@/views/dashboard/management-analysis/traditional/tools/LayerManager.vue'),
+      import('@/views/dashboard/management-analysis/traditional/tools/FeatureQueryPanel.vue'),
+      import('@/views/dashboard/management-analysis/traditional/tools/AreaSelectionTools.vue'),
+      import('@/views/dashboard/management-analysis/traditional/tools/BufferAnalysisPanel.vue'),
+      import('@/views/dashboard/management-analysis/traditional/tools/ShortestPathAnalysisPanel.vue'),
+      import('@/views/dashboard/management-analysis/traditional/tools/DataUploadPanel.vue'),
       import('ol')
     ]).catch(() => {})
   }, 0)
@@ -327,6 +337,15 @@ watch(() => router.currentRoute.value.path, (newPath: string) => {
   width: auto;
   object-fit: contain;
   flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  padding: 2px;
+}
+
+.header-logo:hover {
+  transform: scale(1.05);
+  background: var(--surface-hover);
 }
 
 

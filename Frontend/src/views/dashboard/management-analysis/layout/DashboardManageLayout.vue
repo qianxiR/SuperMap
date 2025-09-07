@@ -24,13 +24,13 @@
 </template>
 
 <script setup lang="ts">
-import DashboardHeader from './DashboardHeader.vue'
-import SuperMapViewer from '@/views/dashboard/SuperMapViewer.vue'
-import RightPanel from '@/views/dashboard/RightPanel.vue'
+import DashboardHeader from './DashboardManageHeader.vue'
+import SuperMapViewer from '@/views/dashboard/management-analysis/SuperMapViewer.vue'
+import RightPanel from '@/views/dashboard/management-analysis/RightPanel.vue'
 import { Splitpanes, Pane } from 'splitpanes'
 import 'splitpanes/dist/splitpanes.css'
-import UserProfile from '@/views/profile/UserProfile.vue'
-import AIManagement from '@/views/management/AIManagement.vue'
+import UserProfile from '@/views/dashboard/management-analysis/profile/UserProfile.vue'
+import AIManagement from '@/views/dashboard/management-analysis/management/AIManagement.vue'
 import { useGlobalModalStore } from '@/stores/modalStore'
 
 const globalModal = useGlobalModalStore()

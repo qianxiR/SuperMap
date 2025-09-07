@@ -139,52 +139,86 @@ export function uselayermanager() {
 
   const togglelayerVisibility = async (layerId: string) => {
     const layerInfo = mapStore.vectorlayers.find(l => l.id === layerId)
-    if (layerInfo && layerInfo.layer) {
-      const currentVisibility = layerInfo.layer.getVisible()
-      const newVisibility = !currentVisibility
-      
-      
-      
-      // 如果图层被隐藏，立即清除该图层的选择高亮和组件状态
-      if (!newVisibility) {
+    if (!layerInfo) {
+      console.warn(`图层不存在: ${layerId}`)
+      return
+    }
+    
+    const currentVisibility = layerInfo.layer.getVisible()
+    const newVisibility = !currentVisibility
+    
+    // 动态导入useMap以获取相关函数
+    const { useMap } = await import('@/composables/useMap')
+    const { loadLazyLayer, unloadLazyLayer } = useMap()
+    
+    if (newVisibility) {
+      // 显示图层逻辑
+      if (layerInfo.isLazyLoaded && !layerInfo.isLoaded) {
+        // 懒加载图层且未加载数据，需要先加载数据
+        console.log(`开始懒加载图层: ${layerInfo.name}`)
         
-        clearlayerSelection(layerInfo.name)
-        
-        // 强制清除所有选择状态，确保完全清除
-        if (mapStore.selectlayer && mapStore.selectlayer.getSource()) {
-          const source = mapStore.selectlayer.getSource()
-          const features = source.getFeatures()
-          features.forEach((f: any) => {
-            if (f?.get && (f.get('sourceTag') === 'click' || f.get('sourceTag') === 'area' || f.get('sourceTag') === 'query')) {
-              source.removeFeature(f)
-            }
-          })
+        const loadSuccess = await loadLazyLayer(layerInfo.name)
+        if (!loadSuccess) {
+          console.error(`懒加载图层失败: ${layerInfo.name}`)
+          return
         }
-        selectionStore.clearSelection()
         
-        // 总是清除弹窗状态，确保状态同步
-        popupStore.hidePopup()
-        
-        // 清除查询结果（如果当前在查询工具中）
-        const { useFeatureQueryStore } = await import('@/stores/featureQueryStore')
-        const featureQuery = useFeatureQueryStore()
-        featureQuery.clearQuerySelection()
+        console.log(`懒加载图层成功: ${layerInfo.name}`)
+      } else {
+        // 非懒加载图层或已加载的懒加载图层，直接显示
+        layerInfo.layer.setVisible(true)
       }
+    } else {
+      // 隐藏图层逻辑
+      console.log(`隐藏图层: ${layerInfo.name}`)
       
-      // 设置图层可见性
-      layerInfo.layer.setVisible(newVisibility)
+      // 清除该图层的选择高亮和组件状态
+      clearlayerSelection(layerInfo.name)
       
-      // 确保响应式更新 - 使用数组索引直接更新
-      const layerIndex = mapStore.vectorlayers.findIndex(l => l.id === layerId)
-      if (layerIndex > -1) {
-        // 创建新的对象来触发响应式更新
-        mapStore.vectorlayers[layerIndex] = {
-          ...mapStore.vectorlayers[layerIndex],
-          visible: newVisibility
+      // 强制清除所有选择状态，确保完全清除
+      if (mapStore.selectlayer && mapStore.selectlayer.getSource()) {
+        const source = mapStore.selectlayer.getSource()
+        const features = source.getFeatures()
+        features.forEach((f: any) => {
+          if (f?.get && (f.get('sourceTag') === 'click' || f.get('sourceTag') === 'area' || f.get('sourceTag') === 'query')) {
+            source.removeFeature(f)
+          }
+        })
+      }
+      selectionStore.clearSelection()
+      
+      // 总是清除弹窗状态，确保状态同步
+      popupStore.hidePopup()
+      
+      // 清除查询结果（如果当前在查询工具中）
+      const { useFeatureQueryStore } = await import('@/stores/featureQueryStore')
+      const featureQuery = useFeatureQueryStore()
+      featureQuery.clearQuerySelection()
+      
+      if (layerInfo.isLazyLoaded && layerInfo.isLoaded) {
+        // 懒加载图层且已加载数据，需要完全卸载数据
+        console.log(`卸载懒加载图层数据: ${layerInfo.name}`)
+        
+        const unloadSuccess = await unloadLazyLayer(layerInfo.name)
+        if (!unloadSuccess) {
+          console.error(`卸载懒加载图层失败: ${layerInfo.name}`)
+        } else {
+          console.log(`懒加载图层数据卸载成功: ${layerInfo.name}`)
         }
+      } else {
+        // 非懒加载图层，只设置可见性
+        layerInfo.layer.setVisible(false)
       }
-      
-      
+    }
+    
+    // 确保响应式更新 - 使用数组索引直接更新
+    const layerIndex = mapStore.vectorlayers.findIndex(l => l.id === layerId)
+    if (layerIndex > -1) {
+      // 创建新的对象来触发响应式更新
+      mapStore.vectorlayers[layerIndex] = {
+        ...mapStore.vectorlayers[layerIndex],
+        visible: newVisibility
+      }
     }
   }
 

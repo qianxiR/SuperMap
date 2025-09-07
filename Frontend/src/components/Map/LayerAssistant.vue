@@ -145,7 +145,7 @@ import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { uselayermanager } from '@/composables/uselayermanager'
 import ConfirmDialog from '@/components/UI/ConfirmDialog.vue'
-import layerNameModal from '@/components/UI/layerNameModal.vue'
+import layerNameModal from '@/components/UI/LayerNameModal.vue'
 
 const mapStore = useMapStore()
 const analysisStore = useAnalysisStore()
@@ -338,35 +338,8 @@ const updateDrawlayerStyle = () => {
   }
 }
 
-// 监听主题变化的函数
-const handleThemeChange = () => {
-  console.log('检测到主题变化，更新绘制图层样式')
-  updateDrawlayerStyle()
-}
-
-// 初始化主题变化监听
-const initThemeObserver = () => {
-  if (themeObserver) {
-    themeObserver.disconnect()
-  }
-  
-  themeObserver = new MutationObserver(handleThemeChange)
-  themeObserver.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ['data-theme']
-  })
-  
-  console.log('主题变化监听器已初始化')
-}
-
-// 清理主题变化监听
-const cleanupThemeObserver = () => {
-  if (themeObserver) {
-    themeObserver.disconnect()
-    themeObserver = null
-    console.log('主题变化监听器已清理')
-  }
-}
+// 移除主题变化监听，由useMap统一管理
+// 避免多个组件重复监听主题变化导致性能问题
 
 // 初始化绘制图层
 const initDrawlayer = () => {
@@ -428,9 +401,6 @@ const initDrawlayer = () => {
     // 添加到地图
     mapStore.map.addLayer(drawlayer.value)
     console.log('绘制图层已添加到地图')
-    
-    // 初始化主题变化监听
-    initThemeObserver()
     
   } catch (error) {
     console.error('初始化绘制图层失败:', error)
@@ -585,9 +555,6 @@ const handlelayerNameClose = () => {
 const cleanupDrawlayer = () => {
   console.log('清理绘制图层...')
   
-  // 清理主题变化监听
-  cleanupThemeObserver()
-  
   // 清除绘制交互
   clearDrawInteraction()
   
@@ -623,12 +590,8 @@ const cleanupDrawlayer = () => {
 onMounted(() => {
   console.log('layerAssistant组件已挂载')
   
-  // 延迟初始化，确保地图已准备好
-  setTimeout(() => {
-    if (mapStore.isMapReady) {
-      initDrawlayer()
-    }
-  }, 1000)
+  // 直接初始化，不等待地图准备
+  initDrawlayer()
 })
 
 // 组件卸载时清理

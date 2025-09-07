@@ -1,12 +1,11 @@
 <template>
   <div class="management-analysis">
-    <router-view />
+    <DashboardManageLayout />
   </div>
 </template>
 
 <script setup lang="ts">
-// 管理分析模块容器组件
-// 作为LLM模式和传统模式的父级容器
+import DashboardManageLayout from '@/views/dashboard/management-analysis/layout/DashboardManageLayout.vue'
 </script>
 
 <style scoped>

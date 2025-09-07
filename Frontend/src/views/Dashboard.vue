@@ -2,13 +2,13 @@
   <div class="dashboard">
     <!-- 主要内容区域 -->
     <main class="dashboard-main">
-      <DashboardLayout />
+      <router-view />
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import DashboardLayout from '@/components/Layout/DashboardLayout.vue'
+// Dashboard作为容器，通过router-view渲染子路由组件
 </script>
 
 <style scoped>

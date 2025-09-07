@@ -2,8 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Login from '@/views/auth/Login.vue'
 import Register from '@/views/auth/Register.vue'
 import Dashboard from '@/views/Dashboard.vue'
-import UserProfile from '@/views/profile/UserProfile.vue'
-import AIManagement from '@/views/management/AIManagement.vue'
+import UserProfile from '@/views/dashboard/management-analysis/profile/UserProfile.vue'
+import AIManagement from '@/views/dashboard/management-analysis/management/AIManagement.vue'
 
 /**
  * Vue Router 配置
@@ -12,10 +12,10 @@ import AIManagement from '@/views/management/AIManagement.vue'
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    // 根路径重定向到管理分析
+    // 根路径重定向到仪表板（会自动重定向到视图页面）
     {
       path: '/',
-      redirect: '/dashboard/management-analysis/llm'
+      redirect: '/dashboard'
     },
     // 登录页面 - 不需要认证
     {
@@ -67,17 +67,33 @@ const router = createRouter({
         title: '地图系统'
       },
       children: [
-        // 默认子路由 - 重定向到管理分析
+        // 默认子路由 - 重定向到地图视图
         {
           path: '',
           name: 'dashboard-default',
-          redirect: '/dashboard/management-analysis/llm'
+          redirect: '/dashboard/view/home'
+        },
+        // 视图首页（带地图功能）
+        {
+          path: 'view/home',
+          name: 'view-home',
+          component: () => import('@/views/dashboard/ViewPage/ViewHome.vue'),
+          meta: { 
+            requiresAuth: true,
+            title: '地图视图'
+          }
+        },
+        // 视图页面重定向
+        {
+          path: 'view',
+          name: 'view-page',
+          redirect: '/dashboard/view/home'
         },
         // 管理分析模块
         {
           path: 'management-analysis',
           name: 'management-analysis',
-          component: () => import('@/views/dashboard/ManagementAnalysis.vue'),
+          component: () => import('@/views/dashboard/management-analysis/ManagementAnalysis.vue'),
           meta: {
             title: '管理分析',
             requiresAuth: true
@@ -93,7 +109,7 @@ const router = createRouter({
             {
               path: 'llm',
               name: 'llm-mode',
-              component: () => import('@/views/dashboard/LLM/LLMMode.vue'),
+              component: () => import('@/views/dashboard/management-analysis/LLM/LLMMode.vue'),
               meta: {
                 title: 'AI助手',
                 mode: 'llm',
@@ -104,7 +120,7 @@ const router = createRouter({
             {
               path: 'chat-history',
               name: 'chat-history',
-              component: () => import('@/views/dashboard/LLM/ChatHistory.vue'),
+              component: () => import('@/views/dashboard/management-analysis/LLM/ChatHistory.vue'),
               meta: {
                 title: '历史聊天记录',
                 mode: 'llm',
@@ -115,7 +131,7 @@ const router = createRouter({
             {
               path: 'traditional',
               name: 'traditional-mode',
-              component: () => import('@/views/dashboard/traditional/TraditionalMode.vue'),
+              component: () => import('@/views/dashboard/management-analysis/traditional/TraditionalMode.vue'),
               meta: {
                 title: '传统模式',
                 mode: 'traditional',
@@ -159,7 +175,7 @@ const router = createRouter({
                 {
                   path: 'layer',
                   name: 'layer-management',
-                  component: () => import('@/views/dashboard/traditional/tools/LayerManager.vue'),
+                  component: () => import('@/views/dashboard/management-analysis/traditional/tools/LayerManager.vue'),
                   meta: {
                     title: '图层管理',
                     tool: 'layer',
@@ -170,7 +186,7 @@ const router = createRouter({
                 {
                   path: 'attribute-selection',
                   name: 'attribute-selection',
-                  component: () => import('@/views/dashboard/traditional/tools/FeatureQueryPanel.vue'),
+                  component: () => import('@/views/dashboard/management-analysis/traditional/tools/FeatureQueryPanel.vue'),
                   meta: {
                     title: '按属性选择要素',
                     tool: 'query',
@@ -181,7 +197,7 @@ const router = createRouter({
                 {
                   path: 'area-selection',
                   name: 'area-selection',
-                  component: () => import('@/views/dashboard/traditional/tools/AreaSelectionTools.vue'),
+                  component: () => import('@/views/dashboard/management-analysis/traditional/tools/AreaSelectionTools.vue'),
                   meta: {
                     title: '按区域选择要素',
                     tool: 'bianji',
@@ -192,7 +208,7 @@ const router = createRouter({
                 {
                   path: 'buffer',
                   name: 'buffer-analysis',
-                  component: () => import('@/views/dashboard/traditional/tools/BufferAnalysisPanel.vue'),
+                  component: () => import('@/views/dashboard/management-analysis/traditional/tools/BufferAnalysisPanel.vue'),
                   meta: {
                     title: '缓冲区分析',
                     tool: 'buffer',
@@ -203,7 +219,7 @@ const router = createRouter({
                 {
                   path: 'distance',
                   name: 'shortest-path-analysis',
-                  component: () => import('@/views/dashboard/traditional/tools/ShortestPathAnalysisPanel.vue'),
+                  component: () => import('@/views/dashboard/management-analysis/traditional/tools/ShortestPathAnalysisPanel.vue'),
                   meta: {
                     title: '最短路径分析',
                     tool: 'distance',
@@ -214,7 +230,7 @@ const router = createRouter({
                 {
                   path: 'intersect',
                   name: 'intersection-analysis',
-                  component: () => import('@/views/dashboard/traditional/tools/IntersectionAnalysisPanel.vue'),
+                  component: () => import('@/views/dashboard/management-analysis/traditional/tools/IntersectionAnalysisPanel.vue'),
                   meta: {
                     title: '相交分析',
                     tool: 'intersect',
@@ -225,7 +241,7 @@ const router = createRouter({
                 {
                   path: 'erase',
                   name: 'erase-analysis',
-                  component: () => import('@/views/dashboard/traditional/tools/EraseAnalysisPanel.vue'),
+                  component: () => import('@/views/dashboard/management-analysis/traditional/tools/EraseAnalysisPanel.vue'),
                   meta: {
                     title: '擦除分析',
                     tool: 'erase',
@@ -236,7 +252,7 @@ const router = createRouter({
                 {
                   path: 'upload',
                   name: 'data-upload',
-                  component: () => import('@/views/dashboard/traditional/tools/DataUploadPanel.vue'),
+                  component: () => import('@/views/dashboard/management-analysis/traditional/tools/DataUploadPanel.vue'),
                   meta: {
                     title: '数据上传',
                     tool: 'upload',
@@ -265,7 +281,7 @@ router.beforeEach((to, _from, next) => {
   } 
   // 如果已登录用户访问登录页或注册页，重定向到仪表板
   else if ((to.path === '/login' || to.path === '/register') && isLoggedIn) {
-    next('/dashboard/management-analysis/llm')
+    next('/dashboard')
   } 
   // 其他情况正常跳转
   else {

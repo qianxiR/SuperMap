@@ -116,115 +116,152 @@ export function useMap() {
     }
   }
 
-  const updatelayerStyles = () => {
+  const updatelayerStyles = async () => {
+    // 批量更新矢量图层样式，避免频繁重绘
+    const updatePromises: Promise<void>[] = []
+    
     mapStore.vectorlayers.forEach(layerInfo => {
       if (layerInfo.layer && layerInfo.source === 'supermap') {
         const layerConfig = createAPIConfig().wuhanlayers.find(config => config.name === layerInfo.id);
         if (layerConfig) {
-          // 包括县级图层，进行主题切换时的样式更新
-          const newStyle = createlayerStyle(layerConfig, layerInfo.name);
-          layerInfo.layer.setStyle(newStyle);
+          // 使用异步更新避免阻塞主线程
+          const updatePromise = new Promise<void>(resolve => {
+            requestAnimationFrame(() => {
+              const newStyle = createlayerStyle(layerConfig, layerInfo.name);
+              layerInfo.layer.setStyle(newStyle);
+              resolve()
+            })
+          })
+          updatePromises.push(updatePromise)
         }
       }
     });
     
+    // 更新选择图层样式
     if (mapStore.selectlayer) {
-      const grayFillColor = getComputedStyle(document.documentElement).getPropertyValue('--map-select-fill').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(33, 37, 41, 0.15)');
-      const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--map-highlight-color').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000');
-      
-      const newSelectStyle = (feature: any) => {
-        const geometry = feature.getGeometry();
-        if (!geometry) {
-          return new ol.style.Style({
-            image: new ol.style.Circle({ 
-              radius: 8, 
-              stroke: new ol.style.Stroke({color: highlightColor, width: 3}), 
-              fill: new ol.style.Fill({color: grayFillColor})
-            }),
-            stroke: new ol.style.Stroke({color: highlightColor, width: 3}),
-            fill: new ol.style.Fill({color: grayFillColor})
-          });
-        }
-        
-        const geometryType = geometry.getType();
-        
-        switch (geometryType) {
-          case 'Point':
-          case 'MultiPoint':
-            return new ol.style.Style({
-              image: new ol.style.Circle({ 
-                radius: 8, 
-                stroke: new ol.style.Stroke({color: highlightColor, width: 3}), 
+      const updateSelectPromise = new Promise<void>(resolve => {
+        requestAnimationFrame(() => {
+          const grayFillColor = getComputedStyle(document.documentElement).getPropertyValue('--map-select-fill').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(33, 37, 41, 0.15)');
+          const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--map-highlight-color').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000');
+          
+          const newSelectStyle = (feature: any) => {
+            const geometry = feature.getGeometry();
+            if (!geometry) {
+              return new ol.style.Style({
+                image: new ol.style.Circle({ 
+                  radius: 8, 
+                  stroke: new ol.style.Stroke({color: highlightColor, width: 3}), 
+                  fill: new ol.style.Fill({color: grayFillColor})
+                }),
+                stroke: new ol.style.Stroke({color: highlightColor, width: 3}),
                 fill: new ol.style.Fill({color: grayFillColor})
-              })
-            });
+              });
+            }
             
-          case 'LineString':
-          case 'MultiLineString':
-            return new ol.style.Style({
-              stroke: new ol.style.Stroke({
-                color: highlightColor, 
-                width: 5,
-                lineCap: 'round',
-                lineJoin: 'round'
-              })
-            });
+            const geometryType = geometry.getType();
             
-          case 'Polygon':
-          case 'MultiPolygon':
-            return new ol.style.Style({
-              stroke: new ol.style.Stroke({color: highlightColor, width: 3}),
-              fill: new ol.style.Fill({color: grayFillColor})
-            });
-            
-          default:
-            return new ol.style.Style({
-              image: new ol.style.Circle({ 
-                radius: 8, 
-                stroke: new ol.style.Stroke({color: highlightColor, width: 3}), 
-                fill: new ol.style.Fill({color: grayFillColor})
-              }),
-              stroke: new ol.style.Stroke({color: highlightColor, width: 3}),
-              fill: new ol.style.Fill({color: grayFillColor})
-            });
-        }
-      };
-      
-      mapStore.selectlayer.setStyle(newSelectStyle);
+            switch (geometryType) {
+              case 'Point':
+              case 'MultiPoint':
+                return new ol.style.Style({
+                  image: new ol.style.Circle({ 
+                    radius: 8, 
+                    stroke: new ol.style.Stroke({color: highlightColor, width: 3}), 
+                    fill: new ol.style.Fill({color: grayFillColor})
+                  })
+                });
+                
+              case 'LineString':
+              case 'MultiLineString':
+                return new ol.style.Style({
+                  stroke: new ol.style.Stroke({
+                    color: highlightColor, 
+                    width: 5,
+                    lineCap: 'round',
+                    lineJoin: 'round'
+                  })
+                });
+                
+              case 'Polygon':
+              case 'MultiPolygon':
+                return new ol.style.Style({
+                  stroke: new ol.style.Stroke({color: highlightColor, width: 3}),
+                  fill: new ol.style.Fill({color: grayFillColor})
+                });
+                
+              default:
+                return new ol.style.Style({
+                  image: new ol.style.Circle({ 
+                    radius: 8, 
+                    stroke: new ol.style.Stroke({color: highlightColor, width: 3}), 
+                    fill: new ol.style.Fill({color: grayFillColor})
+                  }),
+                  stroke: new ol.style.Stroke({color: highlightColor, width: 3}),
+                  fill: new ol.style.Fill({color: grayFillColor})
+                });
+            }
+          };
+          
+          mapStore.selectlayer.setStyle(newSelectStyle);
+          resolve()
+        })
+      })
+      updatePromises.push(updateSelectPromise)
     }
     
+    // 更新悬停图层样式
     if (mapStore.hintersecter) {
-      const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--map-highlight-color').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000');
-      const hoverFillColor = getComputedStyle(document.documentElement).getPropertyValue('--map-hover-fill').trim() || 'rgba(0, 123, 255, 0.3)';
-      
-      const newHoverStyle = new ol.style.Style({
-        image: new ol.style.Circle({ 
-          radius: 6, 
-          stroke: new ol.style.Stroke({color: highlightColor, width: 2}), 
-          fill: new ol.style.Fill({color: hoverFillColor}) 
-        }),
-        stroke: new ol.style.Stroke({color: highlightColor, width: 2}),
-        fill: new ol.style.Fill({color: hoverFillColor})
-      });
-      
-      mapStore.hintersecter.setStyle(newHoverStyle);
+      const updateHoverPromise = new Promise<void>(resolve => {
+        requestAnimationFrame(() => {
+          const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--map-highlight-color').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000');
+          const hoverFillColor = getComputedStyle(document.documentElement).getPropertyValue('--map-hover-fill').trim() || 'rgba(0, 123, 255, 0.3)';
+          
+          const newHoverStyle = new ol.style.Style({
+            image: new ol.style.Circle({ 
+              radius: 6, 
+              stroke: new ol.style.Stroke({color: highlightColor, width: 2}), 
+              fill: new ol.style.Fill({color: hoverFillColor}) 
+            }),
+            stroke: new ol.style.Stroke({color: highlightColor, width: 2}),
+            fill: new ol.style.Fill({color: hoverFillColor})
+          });
+          
+          mapStore.hintersecter.setStyle(newHoverStyle);
+          resolve()
+        })
+      })
+      updatePromises.push(updateHoverPromise)
     }
+    
+    // 等待所有样式更新完成
+    await Promise.all(updatePromises)
   }
-  const updateBaseMap = (theme: 'light' | 'dark') => {
+  const updateBaseMap = async (theme: 'light' | 'dark') => {
     if (mapStore.map && mapStore.baselayer) {
-      const currentBaseMapUrl = getCurrentBaseMapUrl(theme)
+      // 优先使用预加载的底图源
+      const preloadedSources = mapStore.getPreloadedBaseMapSources()
+      let newBaseMapSource: any
       
-      const sourceConfig: any = {
-        url: currentBaseMapUrl,
-        serverType: 'iserver'
+      if (preloadedSources && preloadedSources[theme]) {
+        // 使用预加载的源
+        newBaseMapSource = preloadedSources[theme]
+        console.log(`使用预加载的${theme}主题底图`)
+      } else {
+        // 回退到动态创建
+        const currentBaseMapUrl = getCurrentBaseMapUrl(theme)
+        const sourceConfig: any = {
+          url: currentBaseMapUrl,
+          serverType: 'iserver'
+        }
+        
+        if (theme === 'light') {
+          sourceConfig.crossOrigin = 'anonymous'
+          sourceConfig.tileLoadFunction = undefined
+        }
+        
+        newBaseMapSource = new ol.source.TileSuperMapRest(sourceConfig)
+        console.log(`动态创建${theme}主题底图`)
       }
-      
-      if (theme === 'light') {
-        sourceConfig.crossOrigin = 'anonymous'
-        sourceConfig.tileLoadFunction = undefined
-      }
-      
-      const newBaseMapSource = new ol.source.TileSuperMapRest(sourceConfig)
       
       const oldSource = mapStore.baselayer.getSource()
       if (oldSource) {
@@ -233,25 +270,36 @@ export function useMap() {
       
       mapStore.baselayer.setSource(newBaseMapSource)
       mapStore.baselayer.changed()
-      mapStore.map.renderSync()
       
-      if (mapStore.map) {
-        setTimeout(() => {
+      // 使用异步渲染替代同步渲染
+      await new Promise(resolve => {
+        requestAnimationFrame(() => {
           if (mapStore.map) {
             mapStore.map.updateSize()
-            mapStore.map.renderSync()
+            mapStore.map.render()
+            resolve(void 0)
           }
-        }, 100)
-      }
+        })
+      })
     }
   }
      const observeThemeChanges = () => {
-     const observer = new MutationObserver(() => {
-       updatelayerStyles();
-       updateBaseMap(themeStore.theme);
-       // 更新面积量测样式
-       mapStore.updateAreaMeasureStyle();
-     });
+     // 防抖函数，避免频繁更新
+     let debounceTimer: number | null = null
+     
+     const debouncedUpdate = () => {
+       if (debounceTimer) {
+         clearTimeout(debounceTimer)
+       }
+       debounceTimer = window.setTimeout(async () => {
+         // 更新底图和矢量图层样式
+         await updateBaseMap(themeStore.theme)
+         await updatelayerStyles() // 等待矢量图层样式更新完成
+         debounceTimer = null
+       }, 50) // 50ms 防抖延迟
+     }
+     
+     const observer = new MutationObserver(debouncedUpdate);
      
      observer.observe(document.documentElement, {
        attributes: true,
@@ -259,14 +307,12 @@ export function useMap() {
        subtree: false
      });
      
-     const stopThemeWatch = watch(() => themeStore.theme, () => {
-       updatelayerStyles();
-       updateBaseMap(themeStore.theme);
-       // 更新面积量测样式
-       mapStore.updateAreaMeasureStyle();
-     });
+     const stopThemeWatch = watch(() => themeStore.theme, debouncedUpdate);
      
      return () => {
+       if (debounceTimer) {
+         clearTimeout(debounceTimer)
+       }
        try { observer.disconnect(); } catch (_) {}
        try { stopThemeWatch(); } catch (_) {}
      }
@@ -287,20 +333,32 @@ export function useMap() {
         layerName = parts[0] // 取第一部分作为图层名称
       }
     } 
-    const style = createlayerStyle(layerConfig, layerName);
     
-    // 创建Openlayers矢量图层容器，图层创建和渲染：
-    // 1. 创建图层容器
-    // 2. 创建图层源
-    // 3. 创建图层样式
-    // 4. 创建图层
-    // 5. 添加图层到地图
-    // 6. 渲染图层
-    // 7. 更新图层样式
-    const vectorlayer = new ol.layer.Vector({
-      source: new ol.source.Vector({}),
-      style: style
-    });
+    // 检查是否已存在懒加载图层容器
+    const existingLayerInfo = mapStore.vectorlayers.find(l => l.name === layerName && l.isLazyLoaded)
+    let vectorlayer: any
+    
+    if (existingLayerInfo && existingLayerInfo.layer) {
+      // 使用已存在的懒加载图层容器
+      vectorlayer = existingLayerInfo.layer
+      console.log(`使用已存在的懒加载图层容器: ${layerName}`)
+    } else {
+      // 创建新的图层容器
+      const style = createlayerStyle(layerConfig, layerName);
+      
+      // 创建Openlayers矢量图层容器，图层创建和渲染：
+      // 1. 创建图层容器
+      // 2. 创建图层源
+      // 3. 创建图层样式
+      // 4. 创建图层
+      // 5. 添加图层到地图
+      // 6. 渲染图层
+      // 7. 更新图层样式
+      vectorlayer = new ol.layer.Vector({
+        source: new ol.source.Vector({}),
+        style: style
+      });
+    }
     
     // ===== 连接SuperMap iServer数据服务 =====
     // 调用者: loadVectorlayer()
@@ -423,15 +481,182 @@ export function useMap() {
     const zIndex = layerName === '武汉_县级' ? 0 : 10 + mapStore.vectorlayers.length;
     vectorlayer.setZIndex(zIndex);
     
-    map.addLayer(vectorlayer);
+    // 只有非懒加载图层才需要添加到地图和mapStore
+    if (!existingLayerInfo) {
+      map.addLayer(vectorlayer);
+      mapStore.vectorlayers.push({
+        id: layerConfig.name,
+        name: layerName,
+        layer: vectorlayer,
+        visible: resolvedVisible,
+        type: 'vector',
+        source: 'supermap'
+      });
+    } else {
+      // 懒加载图层已存在，只需要设置可见性
+      vectorlayer.setVisible(resolvedVisible);
+    }
+  }
+
+  // 预加载两套主题的底图数据
+  const preloadBaseMapData = async (): Promise<void> => {
+    try {
+      const lightBaseMapUrl = getCurrentBaseMapUrl('light')
+      const darkBaseMapUrl = getCurrentBaseMapUrl('dark')
+      
+      // 预加载浅色主题底图
+      const lightSource = new ol.source.TileSuperMapRest({
+        url: lightBaseMapUrl,
+        serverType: 'iserver',
+        crossOrigin: 'anonymous'
+      })
+      
+      // 预加载深色主题底图
+      const darkSource = new ol.source.TileSuperMapRest({
+        url: darkBaseMapUrl,
+        serverType: 'iserver'
+      })
+      
+      // 将预加载的源存储到mapStore中，供主题切换时使用
+      mapStore.setPreloadedBaseMapSources({
+        light: lightSource,
+        dark: darkSource
+      })
+      
+      console.log('底图数据预加载完成')
+    } catch (error) {
+      console.warn('底图数据预加载失败:', error)
+    }
+  }
+
+  /**
+   * 创建懒加载图层容器 - 创建空的图层容器，等待用户点击显示时再加载数据
+   * 调用者: loadVectorlayers() -> createLazyLayerContainer()
+   * 作用: 为懒加载图层创建空的OpenLayers图层容器，设置初始样式但不加载数据
+   */
+  const createLazyLayerContainer = (map: any, layerConfig: any): void => {
+    const layerName = layerConfig.name.split('@')[0] || layerConfig.name
+    const style = createlayerStyle(layerConfig, layerName)
+    
+    // 创建空的矢量图层容器
+    const vectorlayer = new ol.layer.Vector({
+      source: new ol.source.Vector({}),
+      style: style,
+      visible: layerConfig.visible // 设置初始可见性
+    })
+    
+    // 设置图层标识
+    vectorlayer.set('layerName', layerName)
+    vectorlayer.set('layerConfig', layerConfig)
+    vectorlayer.set('isLazyLoaded', true) // 标记为懒加载图层
+    vectorlayer.set('isLoaded', false) // 标记为未加载数据
+    
+    // 添加到地图
+    map.addLayer(vectorlayer)
+    
+    // 存储到mapStore中
     mapStore.vectorlayers.push({
-      id: layerConfig.name,
+      id: layerName,
       name: layerName,
       layer: vectorlayer,
-      visible: resolvedVisible,
+      visible: layerConfig.visible,
       type: 'vector',
-      source: 'supermap'
-    });
+      source: 'supermap',
+      isLazyLoaded: true,
+      isLoaded: false
+    })
+    
+    console.log(`懒加载图层容器创建完成: ${layerName}`)
+  }
+
+  /**
+   * 加载懒加载图层数据 - 当用户点击显示懒加载图层时调用
+   * 调用者: useLayerManager.ts -> togglelayerVisibility() -> loadLazyLayer()
+   * 作用: 为已创建的懒加载图层容器加载实际的矢量数据
+   */
+  const loadLazyLayer = async (layerName: string): Promise<boolean> => {
+    const layerInfo = mapStore.vectorlayers.find(l => l.name === layerName && l.isLazyLoaded)
+    
+    if (!layerInfo || !layerInfo.layer) {
+      console.warn(`懒加载图层不存在: ${layerName}`)
+      return false
+    }
+    
+    if (layerInfo.isLoaded) {
+      console.log(`图层 ${layerName} 已经加载过数据`)
+      return true
+    }
+    
+    try {
+      const layerConfig = layerInfo.layer.get('layerConfig')
+      if (!layerConfig) {
+        console.error(`图层配置不存在: ${layerName}`)
+        return false
+      }
+      
+      console.log(`开始加载懒加载图层数据: ${layerName}`)
+      
+      // 调用原有的loadVectorlayer函数加载数据
+      await loadVectorlayer(mapStore.map, layerConfig, true)
+      
+      // 更新图层状态
+      layerInfo.isLoaded = true
+      layerInfo.layer.set('isLoaded', true)
+      
+      console.log(`懒加载图层数据加载完成: ${layerName}`)
+      return true
+      
+    } catch (error) {
+      console.error(`加载懒加载图层失败: ${layerName}`, error)
+      return false
+    }
+  }
+
+  /**
+   * 卸载懒加载图层数据 - 当用户点击隐藏懒加载图层时调用
+   * 调用者: useLayerManager.ts -> togglelayerVisibility() -> unloadLazyLayer()
+   * 作用: 完全移除懒加载图层的数据，释放内存，但保留图层容器
+   */
+  const unloadLazyLayer = async (layerName: string): Promise<boolean> => {
+    const layerInfo = mapStore.vectorlayers.find(l => l.name === layerName && l.isLazyLoaded)
+    
+    if (!layerInfo || !layerInfo.layer) {
+      console.warn(`懒加载图层不存在: ${layerName}`)
+      return false
+    }
+    
+    if (!layerInfo.isLoaded) {
+      console.log(`图层 ${layerName} 数据未加载，无需卸载`)
+      return true
+    }
+    
+    try {
+      console.log(`开始卸载懒加载图层数据: ${layerName}`)
+      
+      // 清除图层源中的所有要素数据
+      const source = layerInfo.layer.getSource()
+      if (source) {
+        source.clear()
+        console.log(`图层 ${layerName} 数据源已清空`)
+      }
+      
+      // 设置图层不可见
+      layerInfo.layer.setVisible(false)
+      
+      // 更新图层状态
+      layerInfo.isLoaded = false
+      layerInfo.layer.set('isLoaded', false)
+      
+      // 强制触发图层重绘
+      layerInfo.layer.changed()
+      
+      console.log(`懒加载图层数据卸载完成: ${layerName}`)
+      return true
+      
+    } catch (error) {
+      console.error(`卸载懒加载图层失败: ${layerName}`, error)
+      return false
+    }
   }
 
   const loadVectorlayers = async (map: any): Promise<void> => {
@@ -440,12 +665,22 @@ export function useMap() {
     const loadTasks: Promise<void>[] = []
     for (const layerConfig of apiConfig.wuhanlayers) {
       const layerName = layerConfig.name.split('@')[0] || layerConfig.name
-      loadingStore.updateLoading('map-init', `正在加载图层: ${layerName}`)
+      
       if (layerConfig.type === 'raster') {
         continue;
       }
-      const isDefaultVisible = layerName === '武汉_县级' || layerName === '水系面'
-      loadTasks.push(loadVectorlayer(map, layerConfig, isDefaultVisible))
+      
+      // 懒加载逻辑：只有非懒加载且可见的图层才立即加载
+      const shouldLoadImmediately = !layerConfig.lazyLoad && layerConfig.visible
+      
+      if (shouldLoadImmediately) {
+        loadingStore.updateLoading('map-init', `正在加载图层: ${layerName}`)
+        loadTasks.push(loadVectorlayer(map, layerConfig, true))
+      } else {
+        // 懒加载图层：创建空的图层容器，等待用户点击显示时再加载数据
+        console.log(`图层 ${layerName} 设置为懒加载模式`)
+        createLazyLayerContainer(map, layerConfig)
+      }
     }
     await Promise.allSettled(loadTasks)
   }
@@ -782,6 +1017,10 @@ export function useMap() {
         throw new Error(`SuperMap服务不可用: ${healthCheck.error}`)
       }
       
+      // 预加载两套主题的底图数据
+      loadingStore.updateLoading('map-init', '正在预加载底图数据...')
+      await preloadBaseMapData()
+      
       const resolutions: number[] = [];
       for (let i = 0; i < 19; i++) {
           resolutions[i] = 180 / 256 / Math.pow(2, i);
@@ -1031,6 +1270,8 @@ export function useMap() {
     cleanup,
     updatelayerStyles,
     createlayerStyle,
-    queryFeaturesAtPoint
+    queryFeaturesAtPoint,
+    loadLazyLayer,
+    unloadLazyLayer
   }
 }

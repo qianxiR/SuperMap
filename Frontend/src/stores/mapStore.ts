@@ -33,7 +33,10 @@ const useMapStore = defineStore('map', () => {
   const areaMeasureInteraction = ref<any>(null) // 面积量算交互
   
   // 鹰眼相关状态
-  const overviewMapVisible = ref<boolean>(false)
+  const overviewMapVisible = ref<boolean>(true)
+  
+  // 预加载的底图源
+  const preloadedBaseMapSources = ref<{ light?: any; dark?: any } | null>(null)
   
   // 主题变化监听
   let themeObserver: MutationObserver | null = null // 主题变化观察器
@@ -595,6 +598,15 @@ const useMapStore = defineStore('map', () => {
     overviewMapVisible.value = visible
   }
   
+  // 预加载底图源管理方法
+  function setPreloadedBaseMapSources(sources: { light?: any; dark?: any }) {
+    preloadedBaseMapSources.value = sources
+  }
+  
+  function getPreloadedBaseMapSources() {
+    return preloadedBaseMapSources.value
+  }
+  
 
   return {
     map,
@@ -638,7 +650,10 @@ const useMapStore = defineStore('map', () => {
      updateAreaMeasureStyle,
     // 鹰眼控制方法
     toggleOverviewMap,
-    setOverviewMapVisible
+    setOverviewMapVisible,
+    // 预加载底图源管理方法
+    setPreloadedBaseMapSources,
+    getPreloadedBaseMapSources
   }
 })
 

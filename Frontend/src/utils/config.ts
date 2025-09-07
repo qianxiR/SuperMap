@@ -88,7 +88,8 @@ export const createAPIConfig = (): APIConfig => {
         visible: true, 
         group: '县级行政区',
         datasetName: 'wuhan_map_县级',
-        dataService: `${mapService}/maps/${mapName}`
+        dataService: `${mapService}/maps/${mapName}`,
+        lazyLoad: false // 默认显示，不懒加载
       },
     
       // ===== 交通设施图层组 =====
@@ -98,10 +99,11 @@ export const createAPIConfig = (): APIConfig => {
       { 
         name: `公路@${workspace}@@武汉`, 
         type: 'line', 
-        visible: true, 
+        visible: false, 
         group: '城市基本信息',
         datasetName: '公路',
-        dataService: `${mapService}/maps/${mapName}`
+        dataService: `${mapService}/maps/${mapName}`,
+        lazyLoad: true // 懒加载，点击显示时才加载
       },
       // 调用者: useMap.ts -> loadVectorlayer()
       // 服务器地址: ${baseUrl}/${dataService}/datasources/${workspace}/datasets/铁路
@@ -109,66 +111,73 @@ export const createAPIConfig = (): APIConfig => {
       { 
         name: `铁路@${workspace}@@武汉`, 
         type: 'line', 
-        visible: true, 
+        visible: false, 
         group: '城市基本信息',
         datasetName: '铁路',
-        dataService: `${mapService}/maps/${mapName}`
+        dataService: `${mapService}/maps/${mapName}`,
+        lazyLoad: true // 懒加载，点击显示时才加载
       },
     
       // 城市基本信息图层组 - 水系信息
       { 
         name: `水系线@${workspace}@@武汉`, 
         type: 'line', 
-        visible: true, 
+        visible: false, 
         group: '城市基本信息',
         datasetName: '水系线',
-        dataService: `${mapService}/maps/${mapName}`
+        dataService: `${mapService}/maps/${mapName}`,
+        lazyLoad: true // 懒加载，点击显示时才加载
       },
       { 
         name: `水系面@${workspace}@@${mapName}`, 
         type: 'polygon', 
-        visible: true, 
+        visible: false, 
         group: '城市基本信息',
         datasetName: '水系面',
-        dataService: `${mapService}/maps/${mapName}`
+        dataService: `${mapService}/maps/${mapName}`,
+        lazyLoad: true // 懒加载，点击显示时才加载
       },
       
       // 城市基本信息图层组 - 建筑信息
       { 
         name: `建筑物面@${workspace}@@${mapName}`, 
         type: 'polygon', 
-        visible: true, 
+        visible: false, 
         group: '城市基本信息',
         datasetName: '建筑物面',
-        dataService: `${mapService}/maps/${mapName}`
+        dataService: `${mapService}/maps/${mapName}`,
+        lazyLoad: true // 懒加载，点击显示时才加载
       },
       
       // 基础设施图层组 - 居民地信息
       { 
         name: `居民地地名点@${workspace}@@${mapName}`, 
         type: 'point', 
-        visible: true, 
+        visible: false, 
         group: '基础设施',
         datasetName: '居民地地名点',
-        dataService: `${mapService}/maps/${mapName}`
+        dataService: `${mapService}/maps/${mapName}`,
+        lazyLoad: true // 懒加载，点击显示时才加载
       },
       
       // 基础设施图层组 - 公共服务设施
       { 
         name: `学校@${workspace}@@${mapName}`, 
         type: 'point', 
-        visible: true, 
+        visible: false, 
         group: '基础设施',
         datasetName: '学校',
-        dataService: `${mapService}/maps/${mapName}`
+        dataService: `${mapService}/maps/${mapName}`,
+        lazyLoad: true // 懒加载，点击显示时才加载
       },
       { 
         name: `医院@${workspace}@@${mapName}`, 
         type: 'point', 
-        visible: true, 
+        visible: false, 
         group: '基础设施',
         datasetName: '医院',
-        dataService: `${mapService}/maps/${mapName}`
+        dataService: `${mapService}/maps/${mapName}`,
+        lazyLoad: true // 懒加载，点击显示时才加载
       },
       
       // DEM图层 - 已禁用加载，避免使用瓦片服务

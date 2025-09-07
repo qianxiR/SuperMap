@@ -5,6 +5,7 @@ export interface Wuhanlayer {
   group?: string
   datasetName?: string
   dataService?: string
+  lazyLoad?: boolean // 是否懒加载，默认false
 }
 
 export interface BaseMapConfig {
@@ -62,6 +63,8 @@ export interface Maplayer {
   type: 'vector' | 'raster' | 'tile';
   source?: 'supermap' | 'local' | 'external';
   error?: string;
+  isLazyLoaded?: boolean; // 是否为懒加载图层
+  isLoaded?: boolean; // 是否已加载数据
 }
 
 export interface FeatureInfo {
