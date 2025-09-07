@@ -6,14 +6,14 @@
     :height="'100%'"
     class="buffer-analysis-panel"
   >
-    <!-- 选择分析图层 -->
+    <!-- 选择分析及绘制图层 -->
     <div class="analysis-section">
-      <div class="section-title">选择分析图层</div>
+      <div class="section-title">选择分析及绘制图层</div>
       <div class="layer-selector">
         <DropdownSelect 
           :model-value="selectedAnalysislayerId"
           :options="layerOptionsWithNone"
-          placeholder="请选择分析图层"
+          placeholder="请选择分析及绘制图层"
           @update:model-value="onlayerSelectionChange"
         />
       </div>
@@ -533,7 +533,7 @@ const clearBufferAnalysisState = () => {
 
 // 组件生命周期管理
 onMounted(() => {
-  analysisStore.setAnalysisStatus('请选择分析图层')
+  analysisStore.setAnalysisStatus('请选择分析及绘制图层')
 })
 
 onUnmounted(() => {})
@@ -554,7 +554,7 @@ watch(() => analysisStore.toolPanel?.activeTool, (tool, prevTool) => {
     if (bufferResults.value && bufferResults.value.length > 0) {
       analysisStore.setAnalysisStatus(`缓冲区分析结果已加载（${bufferResults.value.length}个结果），点击"执行分析"重新显示`)
     } else {
-      analysisStore.setAnalysisStatus('请选择分析图层')
+      analysisStore.setAnalysisStatus('请选择分析及绘制图层')
     }
   } else if (prevTool === 'buffer' && tool !== 'buffer') {
     // 当从缓冲区分析切换到其他工具时，清理分析结果和地图显示

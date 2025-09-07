@@ -234,6 +234,29 @@ const maybeAnnounceInitiallayers = () => {
   }
 }
 
+// 恢复历史对话的方法
+const restoreHistoryMessages = (historyMessages: any[]) => {
+  if (historyMessages && historyMessages.length > 0) {
+    messages.value = [...historyMessages]
+    hasAnnounced.value = true
+    
+    // 清空输入框
+    newMessage.value = ''
+    
+    // 滚动到底部
+    nextTick(() => {
+      smoothScrollToBottom()
+      checkScrollPosition()
+    })
+  }
+}
+
+// 监听历史记录恢复事件
+const handleChatHistoryRestored = (event: CustomEvent) => {
+  const { messages: historyMessages } = event.detail
+  restoreHistoryMessages(historyMessages)
+}
+
 onMounted(async () => {
   // 恢复LLM模式状态
   const llmState = modeStateStore.getLLMState()
@@ -268,6 +291,9 @@ onMounted(async () => {
     // 如果没有保存的滚动位置，滚动到底部
     smoothScrollToBottom();
   }
+  
+  // 监听历史记录恢复事件
+  window.addEventListener('chatHistoryRestored', handleChatHistoryRestored as EventListener)
 });
 
 // 保存LLM模式状态
@@ -287,6 +313,8 @@ onUnmounted(() => {
   if (scrollTimeout.value) {
     clearTimeout(scrollTimeout.value);
   }
+  // 清理事件监听器
+  window.removeEventListener('chatHistoryRestored', handleChatHistoryRestored as EventListener)
 });
 
 // 监听状态变化，自动保存
@@ -344,7 +372,7 @@ const sendMessage = () => {
 
 // 跳转到历史聊天记录页面
 const showChatHistory = () => {
-  router.push('/dashboard/chat-history');
+  router.push('/dashboard/management-analysis/llm/chat-history');
 };
 
 // 新增：开启新对话功能
@@ -509,7 +537,7 @@ const startNewConversation = () => {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  padding: 8px;
+  padding: 6px 8px;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -706,7 +734,7 @@ const startNewConversation = () => {
   cursor: pointer;
   flex-shrink: 0;
   position: absolute;
-  bottom: 8px;
+  bottom: 12px;
   right: 8px;
   z-index: 10;
   transition: all 0.2s ease;

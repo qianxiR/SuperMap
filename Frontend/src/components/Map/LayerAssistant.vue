@@ -1,5 +1,6 @@
 <template>
   <div class="layer-assistant">
+    <!-- 图层组 -->
     <button 
       class="assistant-btn zoom-in" 
       @click="zoomIn"
@@ -27,6 +28,50 @@
     >
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+      </svg>
+    </button>
+
+    <!-- 图层管理按钮 - 仅在view页面显示 -->
+    <button 
+      v-if="!isManagementPage"
+      @click="toggleLayerManager" 
+      :class="['assistant-btn layer-manager-btn', { active: layerManagerVisible }]"
+      :title="layerManagerVisible ? '关闭图层管理' : '打开图层管理'"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+      </svg>
+    </button>
+
+    <!-- 编辑组分隔线 -->
+    <div class="tool-separator"></div>
+    
+    <!-- 编辑组 -->
+    <button 
+      @click="startDraw('Point')" 
+      :class="['assistant-btn draw-btn', { active: currentDrawType === 'Point' }]"
+      title="绘制点"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+    </button>
+    <button 
+      @click="startDraw('LineString')" 
+      :class="['assistant-btn draw-btn', { active: currentDrawType === 'LineString' }]"
+      title="绘制线"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 12l6-6 6 6 6-6"/>
+      </svg>
+    </button>
+    <button 
+      @click="startDraw('Polygon')" 
+      :class="['assistant-btn draw-btn', { active: currentDrawType === 'Polygon' }]"
+      title="绘制面"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M3 3h18v18H3z"/>
       </svg>
     </button>
     
@@ -71,49 +116,10 @@
         <circle cx="15" cy="15" r="1" fill="currentColor"/>
       </svg>
     </button>
-    
-    <!-- 绘制工具分隔线 -->
-    <div class="tool-separator"></div>
-    
-    <!-- 绘制工具按钮 -->
-    <button 
-      @click="startDraw('Point')" 
-      :class="['assistant-btn draw-btn', { active: currentDrawType === 'Point' }]"
-      title="绘制点"
-    >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-        <circle cx="12" cy="12" r="3"/>
-      </svg>
-    </button>
-    <button 
-      @click="startDraw('LineString')" 
-      :class="['assistant-btn draw-btn', { active: currentDrawType === 'LineString' }]"
-      title="绘制线"
-    >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M3 12l6-6 6 6 6-6"/>
-      </svg>
-    </button>
-    <button 
-      @click="startDraw('Polygon')" 
-      :class="['assistant-btn draw-btn', { active: currentDrawType === 'Polygon' }]"
-      title="绘制面"
-    >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M3 3h18v18H3z"/>
-      </svg>
-    </button>
-
-    <button 
-      @click="clearDrawFeatures" 
-      class="assistant-btn clear-btn"
-      title="清除绘制内容"
-    >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-      </svg>
-    </button>
   </div>
+
+
+
   
   <!-- 确认对话框 -->
   <ConfirmDialog
@@ -140,13 +146,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { uselayermanager } from '@/composables/uselayermanager'
 import ConfirmDialog from '@/components/UI/ConfirmDialog.vue'
 import layerNameModal from '@/components/UI/LayerNameModal.vue'
 
+const route = useRoute()
 const mapStore = useMapStore()
 const analysisStore = useAnalysisStore()
 const layermanager = uselayermanager()
@@ -157,6 +165,19 @@ const drawSource = ref<any>(null)
 const drawlayer = ref<any>(null)
 const currentDrawType = ref<string | null>('None')
 let themeObserver: MutationObserver | null = null // 主题变化观察器
+
+// 图层管理相关状态
+const layerManagerVisible = ref(false)
+
+// 判断是否在大屏界面（view页面）
+const isViewPage = computed(() => {
+  return route.name === 'view-home'
+})
+
+// 判断是否在管理分析页面
+const isManagementPage = computed(() => {
+  return route.path.includes('/dashboard/management-analysis')
+})
 
 // 图层名称输入相关状态
 const layerNameModalVisible = ref(false)
@@ -258,11 +279,9 @@ const toggleDistanceMeasure = () => {
     mapStore.stopDistanceMeasure()
     analysisStore.setDistanceMeasureMode(false)
   } else {
-    // 如果面积测量正在运行，先停止它
-    if (mapStore.areaMeasureMode) {
-      mapStore.stopAreaMeasure()
-      analysisStore.setAreaMeasureMode(false)
-    }
+    // 关闭其他所有功能
+    closeAllOtherFeatures()
+    
     // 启动距离测量
     mapStore.startDistanceMeasure()
     analysisStore.setDistanceMeasureMode(true)
@@ -279,14 +298,54 @@ const toggleAreaMeasure = () => {
     mapStore.stopAreaMeasure()
     analysisStore.setAreaMeasureMode(false)
   } else {
-    // 如果距离测量正在运行，先停止它
-    if (mapStore.distanceMeasureMode) {
-      mapStore.stopDistanceMeasure()
-      analysisStore.setDistanceMeasureMode(false)
-    }
+    // 关闭其他所有功能
+    closeAllOtherFeatures()
+    
     // 启动面积测量
     mapStore.startAreaMeasure()
     analysisStore.setAreaMeasureMode(true)
+  }
+}
+
+const toggleLayerManager = () => {
+  // 在管理分析页面中不执行图层管理逻辑
+  if (isManagementPage.value) {
+    return
+  }
+  
+  // 如果当前图层管理面板是打开的，则关闭它
+  if (layerManagerVisible.value) {
+    layerManagerVisible.value = false
+    return
+  }
+  
+  // 关闭其他所有功能
+  closeAllOtherFeatures()
+  
+  // 打开图层管理面板
+  layerManagerVisible.value = true
+}
+
+// 关闭所有其他功能的函数
+const closeAllOtherFeatures = () => {
+  // 关闭图层管理面板
+  layerManagerVisible.value = false
+  
+  // 停止距离测量
+  if (mapStore.distanceMeasureMode) {
+    mapStore.stopDistanceMeasure()
+    analysisStore.setDistanceMeasureMode(false)
+  }
+  
+  // 停止面积测量
+  if (mapStore.areaMeasureMode) {
+    mapStore.stopAreaMeasure()
+    analysisStore.setAreaMeasureMode(false)
+  }
+  
+  // 停止绘制
+  if (currentDrawType.value && currentDrawType.value !== 'None') {
+    stopDraw()
   }
 }
 
@@ -437,6 +496,9 @@ const startDraw = (type: 'Point' | 'LineString' | 'Polygon') => {
     stopDraw()
     return
   }
+  
+  // 关闭其他所有功能
+  closeAllOtherFeatures()
   
   // 清除现有绘制交互
   clearDrawInteraction()
@@ -599,6 +661,11 @@ onUnmounted(() => {
   console.log('layerAssistant组件即将卸载')
   cleanupDrawlayer()
 })
+
+// 暴露状态给父组件
+defineExpose({
+  layerManagerVisible
+})
 </script>
 
 <style scoped>
@@ -607,8 +674,8 @@ onUnmounted(() => {
   top: 16px;
   left: 16px;
   z-index: 1000;
-  display: flex;
-  flex-direction: column;
+  display: flex !important;
+  flex-direction: column !important;
   gap: 4px;
   background: var(--panel);
   border: 1px solid var(--border);
@@ -674,6 +741,11 @@ onUnmounted(() => {
 }
 
 .area-measure-btn.active {
+  background: var(--accent);
+  color: white;
+}
+
+.layer-manager-btn.active {
   background: var(--accent);
   color: white;
 }

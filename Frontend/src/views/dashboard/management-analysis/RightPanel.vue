@@ -20,7 +20,7 @@ import PanelWindow from '@/components/UI/PanelWindow.vue'
   padding: 0;
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: 0 !important;
   box-shadow: var(--glow);
   display: flex;
   flex-direction: column;

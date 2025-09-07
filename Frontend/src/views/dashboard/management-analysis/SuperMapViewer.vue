@@ -46,6 +46,7 @@ onMounted(() => {
     setTimeout(initMap, 500)
   }
 
+
   // 当容器尺寸变化时，强制更新地图尺寸，避免容器初始为0导致"无地图可见"
   const el = mapContainer.value
   if (el && 'ResizeObserver' in window) {
@@ -69,13 +70,18 @@ onUnmounted(() => {
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 300px; /* 兜底，防止父级高度为0时地图不可见 */
+  min-width: 0;
+  min-height: 300px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: var(--glow);
+  padding: 0.625rem;
+  overflow: hidden;
 }
 
 .map-view {
   position: absolute;
-  inset: 0;
-  border-radius: 8px;
+  inset: 0.625rem;
 }
 
 /* 隐藏默认的 Openlayers 缩放控件 */

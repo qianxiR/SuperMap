@@ -90,7 +90,7 @@ export function useBufferAnalysis() {
       const features = layer.layer.getSource()?.getFeatures() || []
       const featureCount = features.length
       
-      // 分析图层中要素的几何类型
+      // 分析及绘制图层中要素的几何类型
       const geometryTypes = new Set<string>()
       features.forEach((feature: any) => {
         const geometry = feature.getGeometry()
@@ -109,16 +109,16 @@ export function useBufferAnalysis() {
     })
   })
   
-  // 设置选中的分析图层
+  // 设置选中的分析及绘制图层
   const setSelectedAnalysislayer = (layerId: string): void => {
     bufferAnalysisStore.setSelectedAnalysislayer(layerId)
     if (layerId) {
       const layer = mapStore.vectorlayers.find(l => l.id === layerId)
       if (layer) {
-              analysisStore.setAnalysisStatus(`已选择分析图层: ${layer.name}`)
+              analysisStore.setAnalysisStatus(`已选择分析及绘制图层: ${layer.name}`)
       }
     } else {
-      analysisStore.setAnalysisStatus('未选择分析图层')
+      analysisStore.setAnalysisStatus('未选择分析及绘制图层')
     }
   }
 

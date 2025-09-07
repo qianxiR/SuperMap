@@ -67,11 +67,11 @@ const router = createRouter({
         title: '地图系统'
       },
       children: [
-        // 默认子路由 - 重定向到地图视图
+        // 默认子路由 - 重定向到图层管理
         {
           path: '',
           name: 'dashboard-default',
-          redirect: '/dashboard/view/home'
+          redirect: '/dashboard/management-analysis/traditional/layer'
         },
         // 视图首页（带地图功能）
         {
@@ -99,11 +99,11 @@ const router = createRouter({
             requiresAuth: true
           },
           children: [
-            // 管理分析默认子路由
+            // 管理分析默认子路由 - 直接重定向到图层管理
             {
               path: '',
               name: 'management-analysis-default',
-              redirect: '/dashboard/management-analysis/llm'
+              redirect: '/dashboard/management-analysis/traditional/layer'
             },
             // LLM模式
             {
@@ -114,18 +114,36 @@ const router = createRouter({
                 title: 'AI助手',
                 mode: 'llm',
                 requiresAuth: true
-              }
-            },
-            // 历史聊天记录
-            {
-              path: 'chat-history',
-              name: 'chat-history',
-              component: () => import('@/views/dashboard/management-analysis/LLM/ChatHistory.vue'),
-              meta: {
-                title: '历史聊天记录',
-                mode: 'llm',
-                requiresAuth: true
-              }
+              },
+              children: [
+                // LLM模式默认子路由
+                {
+                  path: '',
+                  name: 'llm-mode-default',
+                  redirect: '/dashboard/management-analysis/llm/chat'
+                },
+                // 聊天界面
+                {
+                  path: 'chat',
+                  name: 'llm-chat',
+                  component: () => import('@/views/dashboard/management-analysis/LLM/tools/ChatAssistant.vue'),
+                  meta: {
+                    title: 'AI聊天',
+                    requiresAuth: true
+                  }
+                },
+                // 历史聊天记录
+                {
+                  path: 'chat-history',
+                  name: 'chat-history',
+                  component: () => import('@/views/dashboard/management-analysis/LLM/ChatHistory.vue'),
+                  meta: {
+                    title: '历史聊天记录',
+                    mode: 'llm',
+                    requiresAuth: true
+                  }
+                }
+              ]
             },
             // 传统模式
             {
@@ -138,38 +156,11 @@ const router = createRouter({
                 requiresAuth: true
               },
               children: [
-                // 传统模式默认子路由 - 根据状态管理决定重定向
+                // 传统模式默认子路由 - 直接重定向到图层管理
                 {
                   path: '',
                   name: 'traditional-mode-default',
-                  redirect: () => {
-                    // 从localStorage获取上次的工具状态
-                    const savedState = localStorage.getItem('traditionalModeState')
-                    if (savedState) {
-                      try {
-                        const state = JSON.parse(savedState)
-                        if (state.activeTool) {
-                          // 根据activeTool找到对应的路径
-                          const toolPathMap: { [key: string]: string } = {
-                            'layer': 'layer',
-                            'query': 'attribute-selection',
-                            'bianji': 'area-selection',
-                            'buffer': 'buffer',
-                            'distance': 'distance',
-                            'intersect': 'intersect',
-                            'erase': 'erase'
-                          }
-                          const path = toolPathMap[state.activeTool]
-                          if (path) {
-                            return `/dashboard/management-analysis/traditional/${path}`
-                          }
-                        }
-                      } catch (error) {
-                        console.warn('解析传统模式状态失败:', error)
-                      }
-                    }
-                    return '/dashboard/management-analysis/traditional/layer'
-                  }
+                  redirect: '/dashboard/management-analysis/traditional/layer'
                 },
                 // 图层管理
                 {

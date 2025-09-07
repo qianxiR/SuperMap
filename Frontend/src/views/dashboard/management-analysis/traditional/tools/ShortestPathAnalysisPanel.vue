@@ -207,7 +207,7 @@ const obstaclelayerOptions = computed(() => {
     const features = layer.layer.getSource()?.getFeatures() || []
     const featureCount = features.length
     
-    // 分析图层中要素的几何类型
+    // 分析及绘制图层中要素的几何类型
     const geometryTypes = new Set<string>()
     features.forEach((feature: any) => {
       const geometry = feature.getGeometry()

@@ -42,7 +42,6 @@
 
       <!-- 空状态 -->
       <div v-else-if="chatHistory.length === 0" class="empty-container">
-        <div class="empty-icon">💬</div>
         <div class="empty-text">暂无历史聊天记录</div>
         <div class="empty-desc">开始新的对话来创建聊天记录</div>
       </div>
@@ -159,14 +158,23 @@ const toggleRecord = (recordId: string) => {
   const record = chatHistory.value.find(r => r.id === recordId)
   if (!record) return
 
-  // 将所选历史对话写入 LLM 模式状态，并跳转回 LLM 模式
+  // 将所选历史对话写入 LLM 模式状态
+  const historyMessages = Array.isArray(record.messages) ? record.messages : []
   modeStateStore.saveLLMState({
-    messages: Array.isArray(record.messages) ? record.messages : [],
+    messages: historyMessages,
     inputText: '',
     scrollPosition: 0
   })
 
-  // 可选：提示已切换
+  // 发送自定义事件通知ChatAssistant组件状态已更新
+  window.dispatchEvent(new CustomEvent('chatHistoryRestored', {
+    detail: {
+      messages: historyMessages,
+      recordId: recordId
+    }
+  }))
+
+  // 提示已切换
   window.dispatchEvent(new CustomEvent('showNotification', {
     detail: {
       title: '已切换对话',
@@ -176,7 +184,8 @@ const toggleRecord = (recordId: string) => {
     }
   }))
 
-  router.push('/dashboard/management-analysis/llm')
+  // 跳转回 LLM 聊天界面
+  router.push('/dashboard/management-analysis/llm/chat')
 }
 
 const deleteRecord = (recordId: string) => {
@@ -246,7 +255,7 @@ const formatDate = (timestamp: string) => {
 }
 
 const goBack = () => {
-  router.push('/dashboard/management-analysis/llm')
+  router.push('/dashboard/management-analysis/llm/chat')
 }
 
 
@@ -461,10 +470,6 @@ onMounted(() => {
   color: var(--sub);
 }
 
-.empty-icon {
-  font-size: 48px;
-  margin-bottom: 12px;
-}
 
 .empty-text {
   font-size: 14px;

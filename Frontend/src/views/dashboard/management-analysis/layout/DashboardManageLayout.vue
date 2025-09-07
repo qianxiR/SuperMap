@@ -5,14 +5,10 @@
     <div class="screen-main">
       <splitpanes class="default-theme">
         <pane size="60" min-size="50">
-          <div class="map-container">
-            <SuperMapViewer />
-          </div>
+          <SuperMapViewer />
         </pane>
         <pane size="30" min-size="30">
-          <div class="right-panel-container">
-            <RightPanel />
-          </div>
+          <RightPanel />
         </pane>
       </splitpanes>
     </div>
@@ -94,26 +90,7 @@ const globalModal = useGlobalModalStore()
   min-width: 0;
 }
 
-.map-container {
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--glow);
-  padding: 0.625rem;
-  position: relative;
-  overflow: hidden;
-}
-
-.right-panel-container {
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
+/* 地图容器样式已移至SuperMapViewer组件内部 */
 
 .panel {
   background: var(--panel);
@@ -138,15 +115,6 @@ const globalModal = useGlobalModalStore()
   .screen-main { 
     padding: 0; 
     flex-direction: column;
-  }
-  .map-container { 
-    padding: 8px; 
-    flex: none;
-    height: 60%;
-  }
-  .right-panel-container {
-    flex: none;
-    height: 40%;
   }
 }
 </style>

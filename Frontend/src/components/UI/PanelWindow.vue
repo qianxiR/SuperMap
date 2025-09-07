@@ -216,7 +216,6 @@ onUnmounted(() => {
   position: absolute;
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
   box-shadow: var(--glow);
   padding: 12px;
   outline: none;
@@ -254,6 +253,7 @@ onUnmounted(() => {
   box-shadow: none;
   padding: 0;
   background: transparent;
+  border-radius: 0 !important;
 }
 
 .panel-window.focusable {

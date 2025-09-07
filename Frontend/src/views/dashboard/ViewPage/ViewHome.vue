@@ -5,7 +5,12 @@
       <div class="map-container">
         <div ref="mapContainer" class="map-view"></div>
         <!-- 图层辅助控件（左上角） -->
-        <LayerAssistant />
+        <LayerAssistant ref="layerAssistant" />
+        <!-- 图层管理器（右上角） -->
+        <ViewLayerManager 
+          :visible="layerManagerVisible" 
+          @close="handleLayerManagerClose"
+        />
         <!-- 要素弹窗 -->
         <FeaturePopup />
         <!-- 坐标显示（左下角） -->
@@ -28,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { useMap } from '@/composables/useMap'
 import { useMapStore } from '@/stores/mapStore'
 import { useGlobalModalStore } from '@/stores/modalStore'
@@ -39,6 +44,7 @@ import FeaturePopup from '@/components/Map/FeaturePopup.vue'
 import CoordinateDisplay from '@/components/Map/CoordinateDisplay.vue'
 import ScaleBar from '@/components/Map/ScaleBar.vue'
 import LayerAssistant from '@/components/Map/LayerAssistant.vue'
+import ViewLayerManager from '@/components/Map/ViewLayerManager.vue'
 import OverviewMap from '@/components/Map/OverviewMap.vue'
 import DistanceMeasurePanel from '@/components/Map/DistanceMeasurePanel.vue'
 import AreaMeasurePanel from '@/components/Map/AreaMeasurePanel.vue'
@@ -48,6 +54,26 @@ const { mapContainer, initMap } = useMap()
 const mapStore = useMapStore()
 const globalModal = useGlobalModalStore()
 let resizeObserver: ResizeObserver | null = null
+let openLayerManagerHandler: (() => void) | null = null
+
+// 图层管理相关状态
+const layerAssistant = ref()
+const layerManagerVisible = ref(false)
+
+// 监听LayerAssistant的图层管理按钮状态
+watch(() => layerAssistant.value?.layerManagerVisible, (newVal) => {
+  if (newVal !== undefined) {
+    layerManagerVisible.value = newVal
+  }
+}, { deep: true })
+
+// 处理图层管理器关闭
+const handleLayerManagerClose = () => {
+  layerManagerVisible.value = false
+  if (layerAssistant.value) {
+    layerAssistant.value.layerManagerVisible = false
+  }
+}
 
 // 生命周期
 onMounted(() => {
@@ -58,6 +84,16 @@ onMounted(() => {
     // 如果库还未加载，等待一下再初始化
     setTimeout(initMap, 500)
   }
+
+  // 监听来自Header的打开图层管理事件
+  openLayerManagerHandler = () => {
+    layerManagerVisible.value = true
+    if (layerAssistant.value) {
+      layerAssistant.value.layerManagerVisible = true
+    }
+  }
+  
+  window.addEventListener('openLayerManager', openLayerManagerHandler)
 
   // 当容器尺寸变化时，强制更新地图尺寸，避免容器初始为0导致"无地图可见"
   const el = mapContainer.value
@@ -70,6 +106,12 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  // 清理事件监听器
+  if (openLayerManagerHandler) {
+    window.removeEventListener('openLayerManager', openLayerManagerHandler)
+    openLayerManagerHandler = null
+  }
+  
   if (resizeObserver) {
     try { resizeObserver.disconnect() } catch (_) {}
     resizeObserver = null

@@ -58,7 +58,7 @@ const adjustHeight = () => {
       // 重置高度为auto，然后设置为scrollHeight
       textareaRef.value.style.height = 'auto';
       const scrollHeight = textareaRef.value.scrollHeight;
-      textareaRef.value.style.height = Math.max(40, scrollHeight) + 'px';
+      textareaRef.value.style.height = Math.max(100, scrollHeight) + 'px';
     }
   });
 };

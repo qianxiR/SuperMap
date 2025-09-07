@@ -33,7 +33,7 @@ const useMapStore = defineStore('map', () => {
   const areaMeasureInteraction = ref<any>(null) // 面积量算交互
   
   // 鹰眼相关状态
-  const overviewMapVisible = ref<boolean>(true)
+  const overviewMapVisible = ref<boolean>(false)
   
   // 预加载的底图源
   const preloadedBaseMapSources = ref<{ light?: any; dark?: any } | null>(null)
@@ -48,11 +48,14 @@ const useMapStore = defineStore('map', () => {
     try {
       const ol = window.ol
       
-      // 重新获取测量线条颜色
-      const measureColor = getComputedStyle(document.documentElement).getPropertyValue('--measure-line-color').trim() || '#212529'
-      const measureRgb = getComputedStyle(document.documentElement).getPropertyValue('--measure-line-rgb').trim() || '33, 37, 41'
+      // 强制重新获取最新的CSS变量值
+      const css = getComputedStyle(document.documentElement)
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'light'
       
-      console.log('更新测量图层样式，颜色:', measureColor, 'RGB:', measureRgb)
+      const measureColor = css.getPropertyValue('--measure-line-color').trim() || (currentTheme === 'dark' ? '#ffffff' : '#212529')
+      const measureRgb = css.getPropertyValue('--measure-line-rgb').trim() || (currentTheme === 'dark' ? '255, 255, 255' : '33, 37, 41')
+      
+      console.log(`更新测量图层样式，主题: ${currentTheme}, 颜色: ${measureColor}, RGB: ${measureRgb}`)
       
       // 创建新样式
       const newStyle = new ol.style.Style({

@@ -2,11 +2,11 @@
   <div class="screen-header">
     <div class="header-left">
       <img 
-        src="/628416edb5b7a1b2136a93f41b6e312b.png" 
+        src="/logo.jpg" 
         alt="Logo" 
         class="header-logo" 
         @click="goToManagement"
-        title="切换到管理分析平台"
+        title="切换到管理分析"
       />
       <div class="screen-title">基于LLM-Agent的智能交互式地理空间可视化平台</div>
     </div>
@@ -96,6 +96,7 @@ import IconButton from '@/components/UI/IconButton.vue'
 import { useThemeStore } from '@/stores/themeStore'
 import { useUserStore } from '@/stores/userStore'
 import { useGlobalModalStore } from '@/stores/modalStore'
+import { useMapStore } from '@/stores/mapStore'
 
 // 主题管理
 const themeStore = useThemeStore()
@@ -106,6 +107,12 @@ const { toggleTheme, applySystemTheme, setupSystemThemeListener } = themeStore
 const router = useRouter()
 const userStore = useUserStore()
 const globalModal = useGlobalModalStore()
+
+// 地图管理
+const mapStore = useMapStore()
+
+// 图层管理状态
+const layerManagerVisible = ref(false)
 
 // 用户信息计算属性
 const userInfo = computed(() => {
@@ -178,7 +185,7 @@ const goToAIManagement = () => {
 }
 
 const goToManagement = () => {
-  router.push('/dashboard/management-analysis/llm')
+  router.push('/dashboard/management-analysis')
 }
 
 
@@ -208,6 +215,14 @@ onMounted(() => {
   // 初始化主题
   applySystemTheme()
   setupSystemThemeListener()
+  
+  // 在View界面默认打开图层管理面板
+  layerManagerVisible.value = true
+  
+  // 通知ViewHome组件打开图层管理面板
+  setTimeout(() => {
+    window.dispatchEvent(new CustomEvent('openLayerManager'))
+  }, 100)
 })
 </script>
 
@@ -254,7 +269,6 @@ onMounted(() => {
 
 .header-logo:hover {
   transform: scale(1.05);
-  background: var(--surface-hover);
 }
 
 

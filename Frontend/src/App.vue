@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useThemeStore } from '@/stores/themeStore'
 import NotificationManager from '@/components/UI/NotificationManager.vue'
+import ThemeTransitionOverlay from '@/components/UI/ThemeTransitionOverlay.vue'
 import '@/styles/theme.css'
 
 // 确保主题在应用启动时正确初始化
@@ -30,6 +31,7 @@ onMounted(() => {
 <template>
   <router-view />
   <NotificationManager ref="notificationManager" />
+  <ThemeTransitionOverlay />
 </template>
 
 <style>

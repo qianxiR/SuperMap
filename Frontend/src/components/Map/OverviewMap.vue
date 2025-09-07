@@ -413,17 +413,31 @@ onUnmounted(() => {
   border-radius: var(--radius);
   box-shadow: var(--glow);
   overflow: hidden;
-  /* 禁用过渡动画，防止主题切换闪烁 */
-  transition: none !important;
+  animation: slideIn 0.2s ease-out;
 }
 
-/* 防闪烁类 - 禁用所有过渡和动画 */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 防闪烁类 - 禁用所有过渡和动画，但保留弹出动画 */
 .no-theme-flicker,
 .no-theme-flicker *,
 .no-theme-flicker *::before,
 .no-theme-flicker *::after {
   transition: none !important;
-  animation: none !important;
+}
+
+/* 保留弹出动画，但禁用其他动画 */
+.no-theme-flicker {
+  animation: slideIn 0.2s ease-out !important;
 }
 
 .overview-map-header {

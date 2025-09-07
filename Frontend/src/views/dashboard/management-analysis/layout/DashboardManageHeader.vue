@@ -2,7 +2,7 @@
   <div class="screen-header">
     <div class="header-left">
       <img 
-        src="/628416edb5b7a1b2136a93f41b6e312b.png" 
+        src="/logo.jpg" 
         alt="Logo" 
         class="header-logo" 
         @click="goToView"
@@ -185,7 +185,7 @@ const goToProfile = () => {
 }
 
 const goToView = () => {
-  router.push('/dashboard/view')
+  router.push('/dashboard/view/home')
 }
 
 const goToAIManagement = () => {
@@ -268,7 +268,6 @@ onMounted(() => {
     }
   }
 
-  // 预加载传统模式相关组件与重型依赖，降低首次切换延迟
   setTimeout(() => {
     void Promise.all([
       import('@/views/dashboard/management-analysis/traditional/TraditionalMode.vue'),
@@ -345,7 +344,6 @@ watch(() => router.currentRoute.value.path, (newPath: string) => {
 
 .header-logo:hover {
   transform: scale(1.05);
-  background: var(--surface-hover);
 }
 
 

@@ -114,7 +114,7 @@ export function useShortestPathAnalysis() {
     
     if (results.length === 0) return
     
-    // 创建新的分析图层
+    // 创建新的分析及绘制图层
     const analysisFeatures = results.map(result => {
       const geometry = new window.ol.format.GeoJSON().readGeometry(result.geometry)
       const feature = new window.ol.Feature({
@@ -132,7 +132,7 @@ export function useShortestPathAnalysis() {
       return feature
     })
     
-    // 设置分析图层样式
+    // 设置分析及绘制图层样式
     const analysislayer = new window.ol.layer.Vector({
       source: new window.ol.source.Vector({ features: analysisFeatures }),
       style: getAnalysislayerStyle(),
@@ -168,7 +168,7 @@ export function useShortestPathAnalysis() {
     }
   }
 
-  // 获取分析图层样式 - 使用主题色
+  // 获取分析及绘制图层样式 - 使用主题色
   const getAnalysislayerStyle = () => {
     return new window.ol.style.Style({
       stroke: new window.ol.style.Stroke({
@@ -261,7 +261,7 @@ export function useShortestPathAnalysis() {
   // 生成图层名称
   const generatelayerNameFromAnalysis = (): string => {
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-')
-    return `分析图层_${timestamp}`
+    return `分析及绘制图层_${timestamp}`
   }
   
   // ===== 清空图层方法 =====
@@ -553,7 +553,7 @@ export function useShortestPathAnalysis() {
         distance: stats.distance,
         duration: stats.duration,
         pathType: '最短路径',
-        sourcelayerName: '分析图层',
+        sourcelayerName: '分析及绘制图层',
         createdAt: new Date().toISOString()
       }
       

@@ -214,21 +214,19 @@ onMounted(() => {
   
   // 延迟执行，确保组件已完全渲染
   setTimeout(() => {
-    if (!analysisStore.toolPanel.visible && route.path === '/dashboard/management-analysis/traditional') {
-      // 从状态管理中获取上次激活的工具
-      const traditionalState = modeStateStore.getTraditionalState()
-      const activeTool = traditionalState.activeTool || 'layer'
-      const toolTitleMap: { [key: string]: string } = {
-        'layer': '图层管理',
-        'attribute-selection': '按属性选择要素',
-        'area-selection': '按区域选择要素',
-        'buffer': '缓冲区分析',
-        'distance': '最短路径分析',
-        'upload': '数据上传',
-        'intersect': '相交分析',
-        'erase': '擦除分析'
-      }
-      analysisStore.openTool(activeTool as any, toolTitleMap[activeTool] || '图层管理')
+    // 检查是否在传统模式路径下且没有激活的工具面板
+    if (!analysisStore.toolPanel.visible && route.path.includes('/dashboard/management-analysis/traditional')) {
+      // 默认打开图层管理
+      const activeTool = 'layer'
+      const toolTitle = '图层管理'
+      
+      // 打开图层管理工具
+      analysisStore.openTool(activeTool as any, toolTitle)
+      
+      // 同步到模式状态管理
+      modeStateStore.saveTraditionalState({
+        activeTool: activeTool
+      })
     }
   }, 100)
 })

@@ -26,15 +26,91 @@ export function useMap() {
   const disposers: Array<() => void> = []
 
   // 前置声明所有函数
+  const createLocalLayerStyle = (sourceType: string): any => {
+    const css = getComputedStyle(document.documentElement)
+    
+    // 创建红色样式（用于绘制、分析等图层）
+    const createRedStyle = (colorVar: string, strokeWidth: number) => {
+      const color = css.getPropertyValue(`--${colorVar}-color`).trim() || 
+                   css.getPropertyValue('--accent').trim() || 
+                   (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000')
+      const rgb = css.getPropertyValue(`--${colorVar}-rgb`).trim() || '0, 0, 0'
+      
+      return new ol.style.Style({
+        stroke: new ol.style.Stroke({
+          color: color,
+          width: strokeWidth
+        }),
+        fill: new ol.style.Fill({
+          color: `rgba(${rgb}, 0.3)`
+        }),
+        image: new ol.style.Circle({
+          radius: 6,
+          fill: new ol.style.Fill({
+            color: color
+          }),
+          stroke: new ol.style.Stroke({
+            color: css.getPropertyValue('--panel').trim() || '#ffffff',
+            width: 2
+          })
+        })
+      })
+    }
+    
+    switch (sourceType) {
+      case 'draw':
+        return createRedStyle('draw', 2)
+      case 'area':
+        return createRedStyle('analysis', 2)
+      case 'query':
+        return createRedStyle('analysis', 2)
+      case 'buffer':
+        return createRedStyle('analysis', 3)
+      case 'upload':
+        return createRedStyle('upload', 3)
+      case 'path':
+        // 路径分析使用蓝色
+        return new ol.style.Style({
+          stroke: new ol.style.Stroke({
+            color: '#0078D4',
+            width: 4
+          }),
+          fill: new ol.style.Fill({
+            color: '#0078D44D' // 蓝色，70%透明度
+          }),
+          image: new ol.style.Circle({
+            radius: 8,
+            fill: new ol.style.Fill({
+              color: '#0078D4'
+            }),
+            stroke: new ol.style.Stroke({
+              color: css.getPropertyValue('--panel').trim() || '#ffffff',
+              width: 2
+            })
+          })
+        })
+      case 'intersect':
+        return createRedStyle('analysis', 3)
+      case 'erase':
+        return createRedStyle('analysis', 3)
+      default:
+        return createRedStyle('analysis', 2)
+    }
+  }
+
   const createlayerStyle = (layerConfig: any, layerName: string): any => {
+    // 强制重新获取最新的CSS变量值
     const css = getComputedStyle(document.documentElement);
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    
     const strokeVar = css.getPropertyValue(`--layer-stroke-${layerName}`).trim();
     const fillVar = css.getPropertyValue(`--layer-fill-${layerName}`).trim();
-    const accentFallback = css.getPropertyValue('--accent').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#666666' : '#212529');
+    const accentFallback = css.getPropertyValue('--accent').trim() || (currentTheme === 'dark' ? '#666666' : '#212529');
 
     // 统一使用CSS变量，如果CSS变量为空则使用主题色作为fallback
     const resolvedStroke = strokeVar || accentFallback;
-    const resolvedFill = fillVar || (document.documentElement.getAttribute('data-theme') === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(33,37,41,0.1)');
+    const resolvedFill = fillVar || (currentTheme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(33,37,41,0.1)');
+    
     
     // 根据图层类型和重要性调整样式参数
     const getStyleParams = (type: string, layerName: string) => {
@@ -121,19 +197,32 @@ export function useMap() {
     const updatePromises: Promise<void>[] = []
     
     mapStore.vectorlayers.forEach(layerInfo => {
-      if (layerInfo.layer && layerInfo.source === 'supermap') {
-        const layerConfig = createAPIConfig().wuhanlayers.find(config => config.name === layerInfo.id);
-        if (layerConfig) {
-          // 使用异步更新避免阻塞主线程
-          const updatePromise = new Promise<void>(resolve => {
-            requestAnimationFrame(() => {
-              const newStyle = createlayerStyle(layerConfig, layerInfo.name);
-              layerInfo.layer.setStyle(newStyle);
+      if (layerInfo.layer) {
+        // 更新所有类型的图层，不仅仅是supermap图层
+        const updatePromise = new Promise<void>(resolve => {
+          requestAnimationFrame(() => {
+            try {
+              if (layerInfo.source === 'supermap') {
+                // SuperMap服务图层
+                const layerConfig = createAPIConfig().wuhanlayers.find(config => config.name === layerInfo.id);
+                if (layerConfig) {
+                  const newStyle = createlayerStyle(layerConfig, layerInfo.name);
+                  layerInfo.layer.setStyle(newStyle);
+                }
+              } else if (layerInfo.source === 'local') {
+                // 本地图层（绘制、分析、上传等）
+                const sourceType = layerInfo.layer.get('sourceType') || 'draw'
+                const newStyle = createLocalLayerStyle(sourceType)
+                layerInfo.layer.setStyle(newStyle)
+              }
               resolve()
-            })
+            } catch (error) {
+              console.error('更新图层样式失败:', error)
+              resolve()
+            }
           })
-          updatePromises.push(updatePromise)
-        }
+        })
+        updatePromises.push(updatePromise)
       }
     });
     
@@ -141,8 +230,13 @@ export function useMap() {
     if (mapStore.selectlayer) {
       const updateSelectPromise = new Promise<void>(resolve => {
         requestAnimationFrame(() => {
-          const grayFillColor = getComputedStyle(document.documentElement).getPropertyValue('--map-select-fill').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(33, 37, 41, 0.15)');
-          const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--map-highlight-color').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000');
+          const css = getComputedStyle(document.documentElement);
+          const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+          
+          const grayFillColor = css.getPropertyValue('--map-select-fill').trim() || (currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(33, 37, 41, 0.15)');
+          const highlightColor = css.getPropertyValue('--map-highlight-color').trim() || (currentTheme === 'dark' ? '#ffffff' : '#000000');
+          
+          console.log(`更新选择图层样式, 主题: ${currentTheme}, 高亮色: ${highlightColor}, 填充色: ${grayFillColor}`);
           
           const newSelectStyle = (feature: any) => {
             const geometry = feature.getGeometry();
@@ -213,8 +307,13 @@ export function useMap() {
     if (mapStore.hintersecter) {
       const updateHoverPromise = new Promise<void>(resolve => {
         requestAnimationFrame(() => {
-          const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--map-highlight-color').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000');
-          const hoverFillColor = getComputedStyle(document.documentElement).getPropertyValue('--map-hover-fill').trim() || 'rgba(0, 123, 255, 0.3)';
+          const css = getComputedStyle(document.documentElement);
+          const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+          
+          const highlightColor = css.getPropertyValue('--map-highlight-color').trim() || (currentTheme === 'dark' ? '#ffffff' : '#000000');
+          const hoverFillColor = css.getPropertyValue('--map-hover-fill').trim() || 'rgba(0, 123, 255, 0.3)';
+          
+          console.log(`更新悬停图层样式, 主题: ${currentTheme}, 高亮色: ${highlightColor}, 悬停填充色: ${hoverFillColor}`);
           
           const newHoverStyle = new ol.style.Style({
             image: new ol.style.Circle({ 
@@ -287,16 +386,25 @@ export function useMap() {
      // 防抖函数，避免频繁更新
      let debounceTimer: number | null = null
      
-     const debouncedUpdate = () => {
+     const debouncedUpdate = async () => {
        if (debounceTimer) {
          clearTimeout(debounceTimer)
        }
        debounceTimer = window.setTimeout(async () => {
-         // 更新底图和矢量图层样式
-         await updateBaseMap(themeStore.theme)
-         await updatelayerStyles() // 等待矢量图层样式更新完成
+         try {
+           // 使用优化的主题切换同步机制
+           const { useThemeOptimization } = await import('@/composables/useThemeOptimization')
+           const { syncThemeChange } = useThemeOptimization()
+           await syncThemeChange(async () => {
+             // 更新底图和矢量图层样式
+             await updateBaseMap(themeStore.theme)
+             await updatelayerStyles() // 等待矢量图层样式更新完成
+           })
+         } catch (error) {
+           console.error('地图主题更新失败:', error)
+         }
          debounceTimer = null
-       }, 50) // 50ms 防抖延迟
+       }, 100) // 增加防抖延迟到100ms，确保主题切换完成
      }
      
      const observer = new MutationObserver(debouncedUpdate);

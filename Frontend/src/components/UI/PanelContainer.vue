@@ -33,7 +33,7 @@ withDefaults(defineProps<Props>(), {
   width: 100%;
   height: 100%;
   background: var(--panel);
-  border-radius: var(--radius);
+  border-radius: 0;
   padding: 10px;
   position: relative;
   overflow: hidden;

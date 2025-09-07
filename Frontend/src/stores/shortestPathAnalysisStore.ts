@@ -30,7 +30,7 @@ interface ShortestPathOptions {
   resolution: number
 }
 
-// 分析图层引用接口
+// 分析及绘制图层引用接口
 interface AnalysisLayers {
   startPointlayer: any
   endPointlayer: any
@@ -53,7 +53,7 @@ interface ShortestPathAnalysisState {
   // 分析配置选项
   analysisOptions: ShortestPathOptions
   
-  // 分析图层引用
+  // 分析及绘制图层引用
   analysislayers: AnalysisLayers
   
   // 分析状态
@@ -80,7 +80,7 @@ export const useShortestPathAnalysisStore = defineStore('shortestPathAnalysis', 
       resolution: 1000
     },
     
-    // 分析图层引用
+    // 分析及绘制图层引用
     analysislayers: {
       startPointlayer: null,
       endPointlayer: null,

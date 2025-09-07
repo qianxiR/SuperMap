@@ -1,9 +1,8 @@
 <template>
   <PanelContainer class="llm-panel">
     <div class="chat-container">
-      <ChatAssistant 
-        :map-ready="mapStore.isMapReady"
-      />
+      <!-- 使用router-view渲染子路由 -->
+      <router-view :map-ready="mapStore.isMapReady" />
     </div>
   </PanelContainer>
 </template>
