@@ -334,6 +334,142 @@ pnpm build
   - 地图高亮通过 `mapStore.selectLayer` 统一管理。
   - 使用 `src/utils/selectionIO.ts` 中的工具函数进行要素的保存与读取。
 
+## 🧪 测试
+
+### 单元测试
+
+```bash
+# 运行单元测试
+npm run test
+
+# 运行测试并生成覆盖率报告
+npm run test:coverage
+```
+
+### 端到端测试
+
+```bash
+# 运行 E2E 测试
+npm run test:e2e
+```
+
+## 🚀 部署
+
+### 生产环境构建
+
+```bash
+# 构建生产版本
+npm run build
+
+# 预览构建结果
+npm run preview
+```
+
+### Docker 部署
+
+```bash
+# 构建 Docker 镜像
+docker build -t supermap-frontend .
+
+# 运行容器
+docker run -p 80:80 supermap-frontend
+```
+
+### 环境配置
+
+项目支持多环境配置：
+
+- **开发环境**: `.env.development`
+- **测试环境**: `.env.test`
+- **生产环境**: `.env.production`
+
+主要配置项：
+- `VITE_API_BASE_URL`: 后端 API 基础地址
+- `VITE_SUPERMAP_SERVER_URL`: SuperMap 服务器地址
+- `VITE_APP_TITLE`: 应用标题
+
+## 📚 使用指南
+
+### 快速上手
+
+1. **启动应用**: 访问 `http://localhost:5173`
+2. **选择模式**: 在顶部导航栏选择 LLM 模式或传统 GIS 模式
+3. **地图操作**: 使用鼠标进行缩放、平移等基础操作
+4. **图层管理**: 在传统模式下使用图层管理面板控制图层显示
+
+### LLM 智能模式
+
+- 在聊天界面输入自然语言指令
+- 支持的地图操作：缩放、平移、图层控制、要素查询
+- 示例指令：
+  - "显示所有学校"
+  - "放大到武汉市"
+  - "查询人口大于100万的区域"
+
+### 传统 GIS 模式
+
+- **图层管理**: 控制图层的显示/隐藏、顺序调整
+- **要素查询**: 按属性条件查询要素
+- **空间分析**: 执行缓冲区分析、最短路径分析
+- **编辑工具**: 创建、修改、删除地图要素
+
+## 🔧 故障排除
+
+### 常见问题
+
+1. **地图无法加载**
+   - 检查 SuperMap 服务器连接
+   - 确认网络连接正常
+   - 查看浏览器控制台错误信息
+
+2. **分析功能异常**
+   - 确认已选择正确的图层
+   - 检查输入参数是否有效
+   - 查看后端服务状态
+
+3. **主题切换问题**
+   - 清除浏览器缓存
+   - 检查 CSS 变量定义
+
+### 调试模式
+
+```bash
+# 启用详细日志
+npm run dev -- --debug
+
+# 查看网络请求
+# 打开浏览器开发者工具 -> Network 标签
+```
+
+## 📖 API 文档
+
+### 前端 API
+
+- **地图操作**: `useMap.ts` - 地图实例管理和视图控制
+- **图层管理**: `useLayerManager.ts` - 图层增删改查
+- **空间分析**: `useBufferAnalysis.ts`, `useShortestPathAnalysis.ts` - 各种分析功能
+- **要素查询**: `useFeatureQuery.ts` - 属性查询和空间查询
+
+### 后端 API
+
+详细的后端 API 文档请参考：
+- 用户认证: `Backend/user/docs/user-auth-api.md`
+- 空间分析: `Backend/analysis/README.md`
+
+## 🔄 更新日志
+
+### v1.0.0 (2024-01-XX)
+- ✨ 初始版本发布
+- 🎯 支持双模式设计（LLM + 传统 GIS）
+- 🗺️ 集成 SuperMap iServer 地图服务
+- 🧠 实现 AI 智能助手功能
+- 🛠️ 完整的空间分析工具集
+- 🎨 响应式 UI 设计和主题切换
+
+## 📄 许可证
+
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
+
 ## 🤝 贡献指南
 
 我们欢迎所有形式的贡献！
@@ -345,6 +481,20 @@ pnpm build
 5.  **打开** 一个 Pull Request。
 
 请确保你的代码遵循项目的开发规范和核心约定。
+
+## 📞 联系我们
+
+- **项目维护者**: [您的姓名]
+- **邮箱**: [your-email@example.com]
+- **项目地址**: [GitHub Repository URL]
+
+## 🙏 致谢
+
+感谢以下开源项目的支持：
+- [Vue.js](https://vuejs.org/) - 渐进式 JavaScript 框架
+- [OpenLayers](https://openlayers.org/) - 开源地图库
+- [SuperMap](https://www.supermap.com/) - 企业级 GIS 平台
+- [Ant Design Vue](https://antdv.com/) - 企业级 UI 组件库
 
 ---
 *此 README 文件旨在反映项目的当前状态。如有变更，请及时更新。*

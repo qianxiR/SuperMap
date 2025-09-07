@@ -2,16 +2,15 @@
   <div class="screen-header">
     <div class="header-left">
       <img src="/628416edb5b7a1b2136a93f41b6e312b.png" alt="Logo" class="header-logo" />
-      <div class="screen-title">多模态实时态势感知地理空间智能决策平台</div>
+      <div class="screen-title">基于LLM-Agent的智能交互式地理空间智能决策分析系统</div>
     </div>
     
           <div class="header-right">
-        <!-- 临时移除LLM模式和传统模式切换按钮 -->
-        <!-- <ButtonGroup
+        <ButtonGroup
           :buttons="modeButtons"
           :active-button="activeMode"
           @select="setMode"
-        /> -->
+        />
         
         <div class="right-controls">
           <div class="theme-toggle">
@@ -213,8 +212,8 @@ const activeMode = computed(() => {
 })
 
 const modeButtons = [
-  { id: 'llm', text: 'LLM 模式' },
-  { id: 'traditional', text: '传统模式' },
+  { id: 'llm', text: '对话模式' },
+  { id: 'traditional', text: '手动模式' },
 ];
 
 const setMode = (modeId: 'traditional' | 'llm') => {
