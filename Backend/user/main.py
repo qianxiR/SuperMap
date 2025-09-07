@@ -22,6 +22,9 @@ async def lifespan(app: FastAPI):
     print("🚀 User Service 正在启动...")
     print(f"📊 配置环境: {settings.environment}")
     print(f"🔐 JWT算法: {settings.algorithm}")
+    print("📚 DOCUMENT: http://localhost:8000/docs")
+    print("📄 JSON: http://localhost:8000/openapi.json")
+    print("🔍 健康检查: http://localhost:8000/health")
     yield
     # 关闭时执行
     print("🛑 User Service 正在关闭...")
