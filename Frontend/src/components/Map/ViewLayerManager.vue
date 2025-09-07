@@ -19,6 +19,7 @@
               </svg>
             </button>
             <span class="group-title">SuperMap 服务图层</span>
+            <span class="group-count">{{ getLayersBySource('supermap').length }}</span>
           </div>
           
           <LayerItem
@@ -44,6 +45,7 @@
               </svg>
             </button>
             <span class="group-title">分析及绘制图层</span>
+            <span class="group-count">{{ getLayersBySource('draw').length }}</span>
           </div>
           
           <LayerItem
@@ -81,6 +83,7 @@
               </svg>
             </button>
             <span class="group-title">查询图层</span>
+            <span class="group-count">{{ getLayersBySource('query').length }}</span>
           </div>
           
           <LayerItem
@@ -118,6 +121,7 @@
               </svg>
             </button>
             <span class="group-title">上传图层</span>
+            <span class="group-count">{{ getLayersBySource('upload').length }}</span>
           </div>
           
           <LayerItem
@@ -450,6 +454,19 @@ const emit = defineEmits<{
   text-align: left;
   transition: none !important;
   animation: none !important;
+}
+
+.group-count {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--accent);
+  background: var(--accent-bg, rgba(var(--accent-rgb), 0.1));
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 6px;
+  min-width: 16px;
+  text-align: center;
+  line-height: 1;
 }
 
 
