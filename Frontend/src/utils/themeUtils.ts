@@ -57,6 +57,10 @@ export const toggleTheme = (): Theme => {
   const currentTheme = getCurrentTheme()
   const newTheme = currentTheme === 'light' ? 'dark' : 'light'
   setTheme(newTheme)
+  
+  // 自动触发主题变化事件
+  dispatchThemeChangeEvent(newTheme)
+  
   return newTheme
 }
 

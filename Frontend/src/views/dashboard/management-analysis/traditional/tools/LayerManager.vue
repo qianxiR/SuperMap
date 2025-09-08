@@ -13,16 +13,11 @@
               SuperMap 服务图层
               <span class="group-count">{{ getLayersBySource('supermap').length }}</span>
             </div>
-            <button 
-              class="export-btn"
-              @click.stop="handleExportGroup('supermap')"
-              :title="`导出 ${getLayersBySource('supermap').length} 个图层为JSON`"
+            <DownloadButton
+              :title="`下载 ${getLayersBySource('supermap').length} 个图层为JSON`"
               :disabled="getLayersBySource('supermap').length === 0"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-              </svg>
-            </button>
+              @click="handleExportGroup('supermap')"
+            />
           </div>
           
           <div class="layer-items-container" v-show="expandedGroups.supermap">
@@ -46,16 +41,11 @@
               分析及绘制图层
               <span class="group-count">{{ getLayersBySource('draw').length }}</span>
             </div>
-            <button 
-              class="export-btn"
-              @click.stop="handleExportGroup('draw')"
-              :title="`导出 ${getLayersBySource('draw').length} 个图层为JSON`"
+            <DownloadButton
+              :title="`下载 ${getLayersBySource('draw').length} 个图层为JSON`"
               :disabled="getLayersBySource('draw').length === 0"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-              </svg>
-            </button>
+              @click="handleExportGroup('draw')"
+            />
           </div>
           
           <div class="layer-items-container" v-show="expandedGroups.draw">
@@ -91,16 +81,11 @@
               查询图层
               <span class="group-count">{{ getLayersBySource('query').length }}</span>
             </div>
-            <button 
-              class="export-btn"
-              @click.stop="handleExportGroup('query')"
-              :title="`导出 ${getLayersBySource('query').length} 个图层为JSON`"
+            <DownloadButton
+              :title="`下载 ${getLayersBySource('query').length} 个图层为JSON`"
               :disabled="getLayersBySource('query').length === 0"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-              </svg>
-            </button>
+              @click="handleExportGroup('query')"
+            />
           </div>
           
           <div class="layer-items-container" v-show="expandedGroups.query">
@@ -136,16 +121,11 @@
               上传图层
               <span class="group-count">{{ getLayersBySource('upload').length }}</span>
             </div>
-            <button 
-              class="export-btn"
-              @click.stop="handleExportGroup('upload')"
-              :title="`导出 ${getLayersBySource('upload').length} 个图层为JSON`"
+            <DownloadButton
+              :title="`下载 ${getLayersBySource('upload').length} 个图层为JSON`"
               :disabled="getLayersBySource('upload').length === 0"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-              </svg>
-            </button>
+              @click="handleExportGroup('upload')"
+            />
           </div>
           
           <div class="layer-items-container" v-show="expandedGroups.upload">
@@ -199,6 +179,7 @@ import { uselayermanager } from '@/composables/uselayermanager'
 import { useLayerExport } from '@/composables/useLayerExport'
 import LayerItem from '@/components/UI/LayerItem.vue'
 import ConfirmDialog from '@/components/UI/ConfirmDialog.vue'
+import DownloadButton from '@/components/UI/DownloadButton.vue'
 
 interface MaplayerItem {
   key: string;

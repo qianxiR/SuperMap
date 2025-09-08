@@ -20,27 +20,23 @@
             </button>
             <span class="group-title">SuperMap 服务图层</span>
             <span class="group-count">{{ getLayersBySource('supermap').length }}</span>
-            <button 
-              class="export-btn"
-              @click.stop="handleExportGroup('supermap')"
-              :title="`导出 ${getLayersBySource('supermap').length} 个图层为JSON`"
+            <DownloadButton
+              :title="`下载 ${getLayersBySource('supermap').length} 个图层为JSON`"
               :disabled="getLayersBySource('supermap').length === 0"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-              </svg>
-            </button>
+              @click="handleExportGroup('supermap')"
+            />
           </div>
           
-          <LayerItem
-            v-for="layer in getLayersBySource('supermap')" 
-            :key="layer.key"
-            :layer-name="layer.displayName"
-            :layer-desc="layer.desc"
-            :hidden="!layer.visible"
-            v-show="expandedGroups.supermap"
-            @toggle-visibility="handleToggleVisibility(layer)"
-          />
+          <div class="layer-items-container" v-show="expandedGroups.supermap">
+            <LayerItem
+              v-for="layer in getLayersBySource('supermap')" 
+              :key="layer.key"
+              :layer-name="layer.displayName"
+              :layer-desc="layer.desc"
+              :hidden="!layer.visible"
+              @toggle-visibility="handleToggleVisibility(layer)"
+            />
+          </div>
         </div>
 
         <!-- 分析及绘制图层组 -->
@@ -56,39 +52,35 @@
             </button>
             <span class="group-title">分析及绘制图层</span>
             <span class="group-count">{{ getLayersBySource('draw').length }}</span>
-            <button 
-              class="export-btn"
-              @click.stop="handleExportGroup('draw')"
-              :title="`导出 ${getLayersBySource('draw').length} 个图层为JSON`"
+            <DownloadButton
+              :title="`下载 ${getLayersBySource('draw').length} 个图层为JSON`"
               :disabled="getLayersBySource('draw').length === 0"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-              </svg>
-            </button>
+              @click="handleExportGroup('draw')"
+            />
           </div>
           
-          <LayerItem
-            v-for="layer in getLayersBySource('draw')" 
-            :key="layer.key"
-            :layer-name="layer.displayName"
-            :layer-desc="layer.desc"
-            :hidden="!layer.visible"
-            v-show="expandedGroups.draw"
-            @toggle-visibility="handleToggleVisibility(layer)"
-          >
-            <template #controls>
-              <button 
-                class="control-btn delete-btn"
-                @click="handleRemove(layer)"
-                :title="`删除图层: ${layer.displayName}`"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                </svg>
-              </button>
-            </template>
-          </LayerItem>
+          <div class="layer-items-container" v-show="expandedGroups.draw">
+            <LayerItem
+              v-for="layer in getLayersBySource('draw')" 
+              :key="layer.key"
+              :layer-name="layer.displayName"
+              :layer-desc="layer.desc"
+              :hidden="!layer.visible"
+              @toggle-visibility="handleToggleVisibility(layer)"
+            >
+              <template #controls>
+                <button 
+                  class="control-btn delete-btn"
+                  @click="handleRemove(layer)"
+                  :title="`删除图层: ${layer.displayName}`"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                  </svg>
+                </button>
+              </template>
+            </LayerItem>
+          </div>
         </div>
 
         <!-- 查询图层组 -->
@@ -104,39 +96,35 @@
             </button>
             <span class="group-title">查询图层</span>
             <span class="group-count">{{ getLayersBySource('query').length }}</span>
-            <button 
-              class="export-btn"
-              @click.stop="handleExportGroup('query')"
-              :title="`导出 ${getLayersBySource('query').length} 个图层为JSON`"
+            <DownloadButton
+              :title="`下载 ${getLayersBySource('query').length} 个图层为JSON`"
               :disabled="getLayersBySource('query').length === 0"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-              </svg>
-            </button>
+              @click="handleExportGroup('query')"
+            />
           </div>
           
-          <LayerItem
-            v-for="layer in getLayersBySource('query')" 
-            :key="layer.key"
-            :layer-name="layer.displayName"
-            :layer-desc="layer.desc"
-            :hidden="!layer.visible"
-            v-show="expandedGroups.query"
-            @toggle-visibility="handleToggleVisibility(layer)"
-          >
-            <template #controls>
-              <button 
-                class="control-btn delete-btn"
-                @click="handleRemove(layer)"
-                :title="`删除图层: ${layer.displayName}`"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                </svg>
-              </button>
-            </template>
-          </LayerItem>
+          <div class="layer-items-container" v-show="expandedGroups.query">
+            <LayerItem
+              v-for="layer in getLayersBySource('query')" 
+              :key="layer.key"
+              :layer-name="layer.displayName"
+              :layer-desc="layer.desc"
+              :hidden="!layer.visible"
+              @toggle-visibility="handleToggleVisibility(layer)"
+            >
+              <template #controls>
+                <button 
+                  class="control-btn delete-btn"
+                  @click="handleRemove(layer)"
+                  :title="`删除图层: ${layer.displayName}`"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                  </svg>
+                </button>
+              </template>
+            </LayerItem>
+          </div>
         </div>
 
         <!-- 上传图层组 -->
@@ -152,39 +140,35 @@
             </button>
             <span class="group-title">上传图层</span>
             <span class="group-count">{{ getLayersBySource('upload').length }}</span>
-            <button 
-              class="export-btn"
-              @click.stop="handleExportGroup('upload')"
-              :title="`导出 ${getLayersBySource('upload').length} 个图层为JSON`"
+            <DownloadButton
+              :title="`下载 ${getLayersBySource('upload').length} 个图层为JSON`"
               :disabled="getLayersBySource('upload').length === 0"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-              </svg>
-            </button>
+              @click="handleExportGroup('upload')"
+            />
           </div>
           
-          <LayerItem
-            v-for="layer in getLayersBySource('upload')" 
-            :key="layer.key"
-            :layer-name="layer.displayName"
-            :layer-desc="layer.desc"
-            :hidden="!layer.visible"
-            v-show="expandedGroups.upload"
-            @toggle-visibility="handleToggleVisibility(layer)"
-          >
-            <template #controls>
-              <button 
-                class="control-btn delete-btn"
-                @click="handleRemove(layer)"
-                :title="`删除图层: ${layer.displayName}`"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                </svg>
-              </button>
-            </template>
-          </LayerItem>
+          <div class="layer-items-container" v-show="expandedGroups.upload">
+            <LayerItem
+              v-for="layer in getLayersBySource('upload')" 
+              :key="layer.key"
+              :layer-name="layer.displayName"
+              :layer-desc="layer.desc"
+              :hidden="!layer.visible"
+              @toggle-visibility="handleToggleVisibility(layer)"
+            >
+              <template #controls>
+                <button 
+                  class="control-btn delete-btn"
+                  @click="handleRemove(layer)"
+                  :title="`删除图层: ${layer.displayName}`"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                  </svg>
+                </button>
+              </template>
+            </LayerItem>
+          </div>
         </div>
       </div>
     </div>
@@ -215,6 +199,7 @@ import LayerItem from '@/components/UI/LayerItem.vue'
 import type { Maplayer } from '@/types/map'
 import { clearLayersBySource, getLayerStats } from '@/utils/layerUtils'
 import { safeAddEventListener } from '@/utils/eventUtils'
+import DownloadButton from '@/components/UI/DownloadButton.vue'
 
 // 定义props
 interface Props {
@@ -351,6 +336,7 @@ const handleExportGroup = async (source: string) => {
   await exportLayersAsGeoJSON(layers, groupNames[source] || source)
 }
 
+
 // 暴露关闭面板的方法
 const emit = defineEmits<{
   close: []
@@ -439,6 +425,16 @@ const emit = defineEmits<{
   flex-direction: column;
   gap: 2px;
   margin-bottom: 8px;
+}
+
+.layer-items-container {
+  max-height: 200px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .group-header {

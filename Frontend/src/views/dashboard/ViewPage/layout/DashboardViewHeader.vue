@@ -13,6 +13,19 @@
     
     <div class="header-right">
       <div class="right-controls">
+        <!-- 上传按钮 -->
+        <div class="upload-control">
+          <button 
+            class="upload-btn"
+            title="上传GeoJSON数据到上传图层组"
+            @click="handleQuickUpload"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="transform: rotate(180deg);">
+              <path d="M19,9H15V3H9V9H5L12,16L19,9M5,18V20H19V18H5Z"/>
+            </svg>
+          </button>
+        </div>
+        
         <div class="theme-toggle">
           <IconButton 
             @click="toggleTheme" 
@@ -98,7 +111,8 @@ import { useUserStore } from '@/stores/userStore'
 import { useGlobalModalStore } from '@/stores/modalStore'
 import { useMapStore } from '@/stores/mapStore'
 import { safeAddEventListener } from '@/utils/eventUtils'
-import { toggleTheme as toggleThemeUtil } from '@/utils/themeUtils'
+import { toggleTheme as toggleThemeUtil, dispatchThemeChangeEvent } from '@/utils/themeUtils'
+import { uselayermanager } from '@/composables/uselayermanager'
 
 // 主题管理
 const themeStore = useThemeStore()
@@ -118,6 +132,7 @@ const globalModal = useGlobalModalStore()
 
 // 地图管理
 const mapStore = useMapStore()
+const layerManager = uselayermanager()
 
 // 图层管理状态
 const layerManagerVisible = ref(false)
@@ -209,6 +224,85 @@ const handleLogout = () => {
   router.push('/login')
 }
 
+// 简化的快速上传逻辑
+const handleQuickUpload = () => {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.geojson,.json'
+  input.multiple = true
+  
+  input.onchange = async (event) => {
+    const files = Array.from((event.target as HTMLInputElement).files || [])
+    if (files.length === 0) return
+    
+    try {
+      // 默认开启所有上传选项
+      const options = {
+        autoAddToMap: true,
+        generateStyle: true,
+        zoomTolayer: true
+      }
+      
+      // 生成默认图层名称 - 直接使用文件原来名称
+      let defaultLayerName = ''
+      if (files.length === 1) {
+        defaultLayerName = files[0].name.replace(/\.(geojson|json)$/i, '')
+      } else {
+        // 多文件时，使用第一个文件的名称作为基础
+        const firstFileName = files[0].name.replace(/\.(geojson|json)$/i, '')
+        defaultLayerName = `${firstFileName}_等${files.length}个文件`
+      }
+      
+      // 直接执行上传，使用默认选项
+      await performQuickUpload(files, options, defaultLayerName)
+      
+    } catch (error) {
+      console.error('上传失败:', error)
+    }
+  }
+  
+  input.click()
+}
+
+// 执行快速上传
+const performQuickUpload = async (files: File[], options: any, layerName: string) => {
+  const ol = (window as any).ol
+  const projection = mapStore.map.getView().getProjection()
+  
+  for (const file of files) {
+    try {
+      const text = await file.text()
+      const geojson = JSON.parse(text)
+      
+      const features = new ol.format.GeoJSON().readFeatures(geojson, { 
+        featureProjection: projection 
+      })
+      
+      // 使用文件原来的名称
+      const finalLayerName = file.name.replace(/\.(geojson|json)$/i, '')
+      
+      // 保存到上传图层组
+      await layerManager.saveFeaturesAslayer(features, finalLayerName, 'upload')
+      
+      // 自动缩放到图层
+      if (options.zoomTolayer) {
+        const extent = ol.extent.createEmpty()
+        for (const f of features) {
+          ol.extent.extend(extent, f.getGeometry().getExtent())
+        }
+        mapStore.map.getView().fit(extent, { 
+          duration: 300, 
+          maxZoom: 18, 
+          padding: [20, 20, 20, 20] 
+        })
+      }
+      
+    } catch (error) {
+      console.error(`处理文件 ${file.name} 失败:`, error)
+    }
+  }
+}
+
 // 点击外部关闭菜单
 const closeUserMenu = () => {
   showUserMenu.value = false
@@ -254,11 +348,12 @@ onMounted(() => {
 }
 
 .header-left {
-  flex: 1;
+  flex: 2;
   display: flex;
   align-items: center;
   justify-content: flex-start;
   gap: 12px;
+  min-width: 0;
 }
 
 .screen-title {
@@ -268,6 +363,10 @@ onMounted(() => {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   font-family: "Segoe UI", PingFang SC, Microsoft YaHei, Arial, sans-serif;
   transition: color 0.2s ease;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  max-width: 70%;
 }
 
 .header-logo {
@@ -292,6 +391,7 @@ onMounted(() => {
   align-items: center;
   justify-content: flex-end;
   gap: 16px;
+  min-width: 0;
 }
 
 .right-controls {
@@ -305,6 +405,36 @@ onMounted(() => {
 .theme-toggle {
   display: flex;
   align-items: center;
+}
+
+.upload-control {
+  display: flex;
+  align-items: center;
+}
+
+.upload-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.upload-btn:hover {
+  background: var(--accent);
+  color: white;
+  transform: scale(1.1);
+}
+
+.upload-btn:active {
+  transform: scale(0.95);
 }
 
 .user-dropdown {
