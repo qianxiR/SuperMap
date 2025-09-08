@@ -41,7 +41,7 @@
   /* ===== 地图相关颜色 ===== */
   --map-hover-fill: rgba(0, 0, 0, 0.06);
   --map-select-fill: rgba(0, 0, 0, 0.15);
-  --map-highlight-color: #0078D4; /* 浅色模式使用深蓝色边界 */
+  --map-highlight-color: #0078D4; /* 浅色模式使用主题蓝色边界 */
   --measure-line-color: #0078D4;
   --measure-line-rgb: 0, 120, 212;
   --overview-extent-color: #0078D4;
@@ -231,7 +231,7 @@ html {
   /* ===== 地图相关颜色 ===== */
   --map-hover-fill: rgba(255, 255, 255, 0.06);
   --map-select-fill: rgba(255, 255, 255, 0.15);
-  --map-highlight-color: #ffffff; /* 深色模式使用白色边界 */
+  --map-highlight-color: #0078D4; /* 深色模式使用主题蓝色边界 */
   --measure-line-color: #ffffff;
   --measure-line-rgb: 255, 255, 255;
   --overview-extent-color: #cccccc;
