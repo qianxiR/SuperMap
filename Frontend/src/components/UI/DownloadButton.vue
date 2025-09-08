@@ -6,7 +6,7 @@
     :disabled="disabled"
     @click="handleClick"
   >
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
       <path d="M19,9H15V3H9V9H5L12,16L19,9M5,18V20H19V18H5Z"/>
     </svg>
   </button>
@@ -38,8 +38,8 @@ const handleClick = () => {
 
 <style scoped>
 .download-btn {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   border: none;
   background: transparent;
   color: white;
@@ -47,10 +47,10 @@ const handleClick = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: 3px;
   transition: all 0.2s ease;
   flex-shrink: 0;
-  margin-left: 8px;
+  margin-left: 6px;
 }
 
 .download-btn:hover {

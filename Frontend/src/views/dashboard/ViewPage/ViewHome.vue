@@ -6,11 +6,6 @@
         <div ref="mapContainer" class="map-view"></div>
         <!-- 图层辅助控件（左上角） -->
         <LayerAssistant ref="layerAssistant" />
-        <!-- 图层管理器（右上角） -->
-        <ViewLayerManager 
-          :visible="layerManagerVisible" 
-          @close="handleLayerManagerClose"
-        />
         <!-- 要素弹窗 -->
         <FeaturePopup />
         <!-- 坐标显示（左下角） -->
@@ -26,6 +21,9 @@
       </div>
     </div>
 
+    <!-- 子路由视图 -->
+    <router-view />
+
     <!-- 全局窗口：个人中心 / Agent 管理 -->
     <UserProfile v-if="globalModal.visible && globalModal.type === 'profile'" />
     <AIManagement v-if="globalModal.visible && globalModal.type === 'agent'" />
@@ -37,7 +35,6 @@ import { onMounted, onUnmounted, ref, watch, computed } from 'vue'
 import { useMap } from '@/composables/useMap'
 import { useMapStore } from '@/stores/mapStore'
 import { useGlobalModalStore } from '@/stores/modalStore'
-import { useLayerUIStore } from '@/stores/layerUIStore'
 import { usePageStateStore } from '@/stores/pageStateStore'
 import { safeAddEventListener, createWindowEventHandler } from '@/utils/eventUtils'
 import DashboardViewHeader from '@/views/dashboard/ViewPage/layout/DashboardViewHeader.vue'
@@ -47,7 +44,6 @@ import FeaturePopup from '@/components/Map/FeaturePopup.vue'
 import CoordinateDisplay from '@/components/Map/CoordinateDisplay.vue'
 import ScaleBar from '@/components/Map/ScaleBar.vue'
 import LayerAssistant from '@/components/Map/LayerAssistant.vue'
-import ViewLayerManager from '@/components/Map/ViewLayerManager.vue'
 import OverviewMap from '@/components/Map/OverviewMap.vue'
 import DistanceMeasurePanel from '@/components/Map/DistanceMeasurePanel.vue'
 import AreaMeasurePanel from '@/components/Map/AreaMeasurePanel.vue'
@@ -56,30 +52,13 @@ import AreaMeasurePanel from '@/components/Map/AreaMeasurePanel.vue'
 const { mapContainer, initMap, cleanup } = useMap()
 const mapStore = useMapStore()
 const globalModal = useGlobalModalStore()
-const layerUIStore = useLayerUIStore()
 const pageStateStore = usePageStateStore()
 
 let resizeObserver: ResizeObserver | null = null
 let eventCleanup: (() => void) | null = null
 
-// 图层管理相关状态 - 使用Pinia管理
+// 图层辅助控件引用
 const layerAssistant = ref()
-const layerManagerVisible = computed(() => layerUIStore.layerManagerVisible)
-
-// 监听LayerAssistant的图层管理按钮状态
-watch(() => layerAssistant.value?.layerManagerVisible, (newVal) => {
-  if (newVal !== undefined) {
-    layerUIStore.layerManagerVisible = newVal
-  }
-}, { deep: true })
-
-// 处理图层管理器关闭
-const handleLayerManagerClose = () => {
-  layerUIStore.hideLayerManager()
-  if (layerAssistant.value) {
-    layerAssistant.value.layerManagerVisible = false
-  }
-}
 
 // 生命周期
 onMounted(() => {
@@ -91,19 +70,8 @@ onMounted(() => {
     setTimeout(initMap, 500)
   }
 
-  // 使用统一的事件管理工具
-  const openLayerManagerHandler = () => {
-    layerUIStore.showLayerManager()
-    if (layerAssistant.value) {
-      layerAssistant.value.layerManagerVisible = true
-    }
-  }
-  
   // 设置当前页面为视图页面
   pageStateStore.switchToPage('view')
-  
-  // 使用统一的事件管理工具
-  eventCleanup = safeAddEventListener(window, 'openLayerManager', openLayerManagerHandler)
 
   // 当容器尺寸变化时，强制更新地图尺寸，避免容器初始为0导致"无地图可见"
   const el = mapContainer.value
@@ -116,12 +84,6 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  // 使用统一的事件清理工具
-  if (eventCleanup) {
-    eventCleanup()
-    eventCleanup = null
-  }
-  
   if (resizeObserver) {
     try { resizeObserver.disconnect() } catch (_) {}
     resizeObserver = null

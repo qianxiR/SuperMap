@@ -20,11 +20,6 @@
             </button>
             <span class="group-title">SuperMap 服务图层</span>
             <span class="group-count">{{ getLayersBySource('supermap').length }}</span>
-            <DownloadButton
-              :title="`下载 ${getLayersBySource('supermap').length} 个图层为JSON`"
-              :disabled="getLayersBySource('supermap').length === 0"
-              @click="handleExportGroup('supermap')"
-            />
           </div>
           
           <div class="layer-items-container" v-show="expandedGroups.supermap">
@@ -207,7 +202,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  visible: false
+  visible: true  // 作为路由组件时默认显示
 })
 
 const mapStore = useMapStore()
@@ -327,7 +322,6 @@ const handleExportGroup = async (source: string) => {
   }
   
   const groupNames: Record<string, string> = {
-    supermap: 'SuperMap服务图层',
     draw: '分析及绘制图层', 
     query: '查询图层',
     upload: '上传图层'
@@ -346,14 +340,14 @@ const emit = defineEmits<{
 <style scoped>
 .view-layer-manager {
   position: absolute;
-  top: 16px;
+  top: 80px;  /* 增加 top 值，避免覆盖 header */
   right: 16px;
   z-index: 1000;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 8px;
-  max-height: calc(100vh - 120px);
+  max-height: calc(100vh - 160px);  /* 相应调整最大高度 */
 }
 
 
@@ -423,22 +417,22 @@ const emit = defineEmits<{
 .layer-group {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  margin-bottom: 8px;
+  gap: 1px;
+  margin-bottom: 6px;
 }
 
 .layer-items-container {
   max-height: 200px;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-right: 4px;
+  padding-right: 3px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .group-header {
-  padding: 6px 10px;
+  padding: 4px 8px;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -449,8 +443,8 @@ const emit = defineEmits<{
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 32px;
-  margin-bottom: 4px;
+  min-height: 28px;
+  margin-bottom: 3px;
   box-shadow: var(--glow);
 }
 
@@ -465,8 +459,8 @@ const emit = defineEmits<{
 }
 
 .group-toggle {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border: none;
   background: transparent;
   color: inherit;
@@ -474,7 +468,7 @@ const emit = defineEmits<{
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: 3px;
   transition: none !important;
   animation: none !important;
   flex-shrink: 0;
@@ -489,12 +483,12 @@ const emit = defineEmits<{
 }
 
 .group-title {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: inherit;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   flex: 1;
   text-align: left;
   transition: none !important;
@@ -502,16 +496,16 @@ const emit = defineEmits<{
 }
 
 .group-count {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 500;
   color: var(--accent);
   background: var(--accent-bg, rgba(var(--accent-rgb), 0.1));
-  padding: 2px 6px;
-  border-radius: 10px;
-  margin-left: 6px;
-  min-width: 16px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  margin-left: 4px;
+  min-width: 14px;
   text-align: center;
-  line-height: 1;
+  line-height: 1.2;
   transition: none !important;
   animation: none !important;
 }
@@ -596,7 +590,7 @@ const emit = defineEmits<{
 /* 响应式设计 */
 @media (max-width: 768px) {
   .view-layer-manager {
-    top: 12px;
+    top: 60px;  /* 移动端也要避免覆盖 header */
     right: 12px;
   }
   

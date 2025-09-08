@@ -337,13 +337,7 @@ onMounted(() => {
   applySystemTheme()
   setupSystemThemeListener()
   
-  // 在View界面默认打开图层管理面板
-  layerManagerVisible.value = true
-  
-  // 通知ViewHome组件打开图层管理面板
-  setTimeout(() => {
-    window.dispatchEvent(new CustomEvent('openLayerManager'))
-  }, 100)
+  // 不再默认打开图层管理面板
 })
 </script>
 

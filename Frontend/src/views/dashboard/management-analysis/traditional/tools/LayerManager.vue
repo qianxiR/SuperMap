@@ -13,11 +13,6 @@
               SuperMap 服务图层
               <span class="group-count">{{ getLayersBySource('supermap').length }}</span>
             </div>
-            <DownloadButton
-              :title="`下载 ${getLayersBySource('supermap').length} 个图层为JSON`"
-              :disabled="getLayersBySource('supermap').length === 0"
-              @click="handleExportGroup('supermap')"
-            />
           </div>
           
           <div class="layer-items-container" v-show="expandedGroups.supermap">
@@ -305,7 +300,6 @@ const handleExportGroup = async (source: string) => {
   }
   
   const groupNames: Record<string, string> = {
-    supermap: 'SuperMap服务图层',
     draw: '分析及绘制图层', 
     query: '查询图层',
     upload: '上传图层'
@@ -390,7 +384,7 @@ const handleExportGroup = async (source: string) => {
 .layer-container {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   margin-bottom: 8px;
 }
 
@@ -401,11 +395,11 @@ const handleExportGroup = async (source: string) => {
   padding-right: 4px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .group-header {
-  padding: 8px 12px;
+  padding: 6px 10px;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -415,7 +409,7 @@ const handleExportGroup = async (source: string) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 40px;
+  min-height: 32px;
   margin-bottom: 4px;
   box-shadow: var(--glow);
 }
@@ -461,7 +455,7 @@ const handleExportGroup = async (source: string) => {
   color: inherit;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex: 1;
   text-align: left;
 }

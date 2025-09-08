@@ -216,17 +216,7 @@ onMounted(() => {
   setTimeout(() => {
     // 检查是否在传统模式路径下且没有激活的工具面板
     if (!analysisStore.toolPanel.visible && route.path.includes('/dashboard/management-analysis/traditional')) {
-      // 默认打开图层管理
-      const activeTool = 'layer'
-      const toolTitle = '图层管理'
-      
-      // 打开图层管理工具
-      analysisStore.openTool(activeTool as any, toolTitle)
-      
-      // 同步到模式状态管理
-      modeStateStore.saveTraditionalState({
-        activeTool: activeTool
-      })
+      // 不再默认打开任何工具面板，显示欢迎消息
     }
   }, 100)
 })

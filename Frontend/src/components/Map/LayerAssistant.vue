@@ -32,8 +32,8 @@
       variant="assistant"
       size="medium"
       icon="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"
-      :title="layerManagerVisible ? '关闭图层管理' : '打开图层管理'"
-      :active="layerManagerVisible"
+      :title="route.path === '/dashboard/view/home/layermanage' ? '关闭图层管理' : '打开图层管理'"
+      :active="route.path === '/dashboard/view/home/layermanage'"
       @click="toggleLayerManager"
     />
 
@@ -125,7 +125,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { uselayermanager } from '@/composables/uselayermanager'
@@ -137,6 +137,7 @@ import { safeAddEventListener, createWindowEventHandler } from '@/utils/eventUti
 import { getCurrentTheme } from '@/utils/themeUtils'
 
 const route = useRoute()
+const router = useRouter()
 const mapStore = useMapStore()
 const analysisStore = useAnalysisStore()
 const layermanager = uselayermanager()
@@ -295,17 +296,13 @@ const toggleLayerManager = () => {
     return
   }
   
-  // 如果当前图层管理面板是打开的，则关闭它
-  if (layerManagerVisible.value) {
-    layerManagerVisible.value = false
-    return
+  // 如果当前已经在图层管理路由，则返回到父路由
+  if (route.path === '/dashboard/view/home/layermanage') {
+    router.push('/dashboard/view/home')
+  } else {
+    // 否则跳转到图层管理路由
+    router.push('/dashboard/view/home/layermanage')
   }
-  
-  // 关闭其他所有功能
-  closeAllOtherFeatures()
-  
-  // 打开图层管理面板
-  layerManagerVisible.value = true
 }
 
 // 关闭所有其他功能的函数

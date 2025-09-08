@@ -81,7 +81,19 @@ const router = createRouter({
           meta: { 
             requiresAuth: true,
             title: '地图视图'
-          }
+          },
+          children: [
+            // 图层管理子路由
+            {
+              path: 'layermanage',
+              name: 'view-layer-manage',
+              component: () => import('@/views/dashboard/ViewPage/ViewLayerManager.vue'),
+              meta: {
+                requiresAuth: true,
+                title: '图层管理'
+              }
+            }
+          ]
         },
         // 视图页面重定向
         {

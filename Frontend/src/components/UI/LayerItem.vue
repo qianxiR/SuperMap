@@ -61,10 +61,10 @@ defineEmits<{
   justify-content: space-between;
   background: var(--btn-secondary-bg);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 12px;
+  border-radius: 6px;
+  padding: 6px 10px;
   cursor: pointer;
-  margin-bottom: 2px;
+  margin-bottom: 1px;
   transition: none !important;
   animation: none !important;
 }
@@ -94,7 +94,7 @@ defineEmits<{
 }
 
 .layer-name {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--text);
   text-align: left;
@@ -107,7 +107,7 @@ defineEmits<{
 }
 
 .layer-desc {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--text-secondary);
   text-align: left;
   white-space: nowrap;
@@ -120,18 +120,18 @@ defineEmits<{
 .layer-controls {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex-shrink: 0;
   transition: none !important;
   animation: none !important;
 }
 
 .control-btn {
-  font-size: 10px;
-  padding: 4px 8px;
+  font-size: 9px;
+  padding: 3px 6px;
   min-width: auto;
   border: none;
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
   transition: none !important;
   animation: none !important;
