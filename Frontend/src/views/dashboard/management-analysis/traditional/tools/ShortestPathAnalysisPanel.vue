@@ -101,21 +101,18 @@
           v-if="currentResult"
           text="导出为json"
           @click="exportGeoJSON"
-          style="margin-top: 8px;"
         />
 
         <SecondaryButton 
           v-if="currentResult"
           text="保存为图层"
           @click="showlayerNameModal"
-          style="margin-top: 8px;"
         />
 
         <SecondaryButton 
           v-if="hasResults || startPointInfo || endPointInfo"
           text="清除状态"
           @click="handleClearState"
-          style="margin-top: 8px;"
         />
       </div>
       
@@ -157,7 +154,7 @@ import { useMapStore } from '@/stores/mapStore'
 import { useShortestPathAnalysis } from '@/composables/useShortestPathAnalysis'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
 import DropdownSelect from '@/components/UI/DropdownSelect.vue'
-import layerNameModal from '@/components/UI/layerNameModal.vue'
+import layerNameModal from '@/components/UI/LayerNameModal.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 
 const analysisStore = useAnalysisStore()
@@ -273,7 +270,7 @@ const handleExecuteAnalysis = async () => {
 }
 
 // 组件挂载时初始化
-onMounted(async () => {
+onMounted(() => {
   analysisStore.setAnalysisStatus('请点击选择起始点和目标点进行最短路径分析')
 })
 
@@ -442,7 +439,7 @@ onUnmounted(() => {
 .analysis-actions {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 /* 加载状态样式 */

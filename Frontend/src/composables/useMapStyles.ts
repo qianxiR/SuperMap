@@ -208,7 +208,6 @@ export function useMapStyles() {
    * 在主题切换时调用，更新所有图层的样式以适配新主题
    */
   const updateLayerStyles = async () => {
-    console.log('开始批量更新图层样式')
     
     // 批量更新矢量图层样式，避免频繁重绘
     const updatePromises: Promise<void>[] = []
@@ -255,7 +254,6 @@ export function useMapStyles() {
           const grayFillColor = css.getPropertyValue('--map-select-fill').trim() || (currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(33, 37, 41, 0.15)');
           const highlightColor = css.getPropertyValue('--map-highlight-color').trim() || (currentTheme === 'dark' ? '#ffffff' : '#000000');
           
-          console.log(`更新选择图层样式, 主题: ${currentTheme}, 高亮色: ${highlightColor}, 填充色: ${grayFillColor}`);
           
           const newSelectStyle = (feature: any) => {
             const geometry = feature.getGeometry();
@@ -329,7 +327,6 @@ export function useMapStyles() {
           const highlightColor = css.getPropertyValue('--map-highlight-color').trim() || (currentTheme === 'dark' ? '#ffffff' : '#000000');
           const hoverFillColor = css.getPropertyValue('--map-hover-fill').trim() || 'rgba(0, 123, 255, 0.3)';
           
-          console.log(`更新悬停图层样式, 主题: ${currentTheme}, 高亮色: ${highlightColor}, 悬停填充色: ${hoverFillColor}`);
           
           const newHoverStyle = new ol.style.Style({
             image: new ol.style.Circle({ 
@@ -350,7 +347,6 @@ export function useMapStyles() {
     
     // 等待所有样式更新完成
     await Promise.all(updatePromises)
-    console.log('图层样式更新完成')
   }
 
   /**
@@ -361,7 +357,6 @@ export function useMapStyles() {
    */
   const updateBaseMap = async (theme: 'light' | 'dark') => {
     if (mapStore.map && mapStore.baselayer) {
-      console.log(`开始更新底图到${theme}主题`)
       
       // 优先使用预加载的底图源
       const preloadedSources = mapStore.getPreloadedBaseMapSources()
@@ -370,7 +365,6 @@ export function useMapStyles() {
       if (preloadedSources && preloadedSources[theme]) {
         // 使用预加载的源，避免重新加载
         newBaseMapSource = preloadedSources[theme]
-        console.log(`使用预加载的${theme}主题底图`)
       } else {
         // 回退到动态创建
         const currentBaseMapUrl = getCurrentBaseMapUrl(theme)
@@ -385,7 +379,6 @@ export function useMapStyles() {
         }
         
         newBaseMapSource = new ol.source.TileSuperMapRest(sourceConfig)
-        console.log(`动态创建${theme}主题底图`)
       }
       
       // 直接切换底图源，不使用隐藏/显示机制
@@ -404,7 +397,6 @@ export function useMapStyles() {
         mapStore.map.render()
       }
       
-      console.log(`${theme}主题底图更新完成`)
     }
   }
 
@@ -419,13 +411,11 @@ export function useMapStyles() {
     const handleThemeChange = async (event: Event) => {
       const customEvent = event as CustomEvent
       const newTheme = customEvent.detail.theme
-      console.log(`收到主题变化事件: ${newTheme}`)
       
       try {
         // 立即更新底图和矢量图层样式，无需防抖
         await updateBaseMap(newTheme)
         await updateLayerStyles()
-        console.log(`地图主题更新完成: ${newTheme}`)
       } catch (error) {
         console.error('地图主题更新失败:', error)
       }
@@ -437,7 +427,6 @@ export function useMapStyles() {
     // 保留原有的MutationObserver作为备用监听
     const observer = new MutationObserver(async () => {
       // 只在没有收到themeChanged事件时才执行
-      console.log('MutationObserver检测到主题变化（备用机制）')
     });
     
     observer.observe(document.documentElement, {
@@ -480,7 +469,6 @@ export function useMapStyles() {
         dark: darkSource
       })
       
-      console.log('底图数据预加载完成')
     } catch (error) {
       console.warn('底图数据预加载失败:', error)
     }

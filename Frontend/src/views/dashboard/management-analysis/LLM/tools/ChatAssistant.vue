@@ -257,7 +257,7 @@ const handleChatHistoryRestored = (event: CustomEvent) => {
   restoreHistoryMessages(historyMessages)
 }
 
-onMounted(async () => {
+onMounted(() => {
   // 恢复LLM模式状态
   const llmState = modeStateStore.getLLMState()
   if (llmState.messages.length > 0) {
@@ -273,24 +273,25 @@ onMounted(async () => {
     maybeAnnounceInitiallayers();
   }
   
-  await nextTick();
-  
-  // 初始化滚动位置检测
-  checkScrollPosition();
-  
-  // 恢复滚动位置
-  if (llmState.scrollPosition > 0) {
-    setTimeout(() => {
-      const el = messagesContainer.value;
-      if (el) {
-        el.scrollTop = llmState.scrollPosition;
-        checkScrollPosition(); // 重新检测滚动位置
-      }
-    }, 100);
-  } else {
-    // 如果没有保存的滚动位置，滚动到底部
-    smoothScrollToBottom();
-  }
+  // 使用nextTick处理DOM更新
+  nextTick(() => {
+    // 初始化滚动位置检测
+    checkScrollPosition();
+    
+    // 恢复滚动位置
+    if (llmState.scrollPosition > 0) {
+      setTimeout(() => {
+        const el = messagesContainer.value;
+        if (el) {
+          el.scrollTop = llmState.scrollPosition;
+          checkScrollPosition(); // 重新检测滚动位置
+        }
+      }, 100);
+    } else {
+      // 如果没有保存的滚动位置，滚动到底部
+      smoothScrollToBottom();
+    }
+  });
   
   // 监听历史记录恢复事件
   window.addEventListener('chatHistoryRestored', handleChatHistoryRestored as EventListener)

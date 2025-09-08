@@ -180,9 +180,6 @@ export function useMapLifecycle() {
     cleanup()
   }
 
-  // 自动绑定Vue生命周期钩子
-  onMounted(handleMounted)
-  onUnmounted(handleUnmounted)
 
   return {
     mapContainer,

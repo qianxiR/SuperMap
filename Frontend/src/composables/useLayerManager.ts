@@ -155,7 +155,6 @@ export function uselayermanager() {
       // 显示图层逻辑
       if (layerInfo.isLazyLoaded && !layerInfo.isLoaded) {
         // 懒加载图层且未加载数据，需要先加载数据
-        console.log(`开始懒加载图层: ${layerInfo.name}`)
         
         const loadSuccess = await loadLazyLayer(layerInfo.name)
         if (!loadSuccess) {
@@ -163,14 +162,12 @@ export function uselayermanager() {
           return
         }
         
-        console.log(`懒加载图层成功: ${layerInfo.name}`)
       } else {
         // 非懒加载图层或已加载的懒加载图层，直接显示
         layerInfo.layer.setVisible(true)
       }
     } else {
       // 隐藏图层逻辑
-      console.log(`隐藏图层: ${layerInfo.name}`)
       
       // 清除该图层的选择高亮和组件状态
       clearlayerSelection(layerInfo.name)
@@ -197,13 +194,11 @@ export function uselayermanager() {
       
       if (layerInfo.isLazyLoaded && layerInfo.isLoaded) {
         // 懒加载图层且已加载数据，需要完全卸载数据
-        console.log(`卸载懒加载图层数据: ${layerInfo.name}`)
         
         const unloadSuccess = await unloadLazyLayer(layerInfo.name)
         if (!unloadSuccess) {
           console.error(`卸载懒加载图层失败: ${layerInfo.name}`)
         } else {
-          console.log(`懒加载图层数据卸载成功: ${layerInfo.name}`)
         }
       } else {
         // 非懒加载图层，只设置可见性

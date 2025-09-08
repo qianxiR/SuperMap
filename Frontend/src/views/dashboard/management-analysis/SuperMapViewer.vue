@@ -32,7 +32,7 @@ import AreaMeasurePanel from '@/components/Map/AreaMeasurePanel.vue'
 
 
 // 组合式函数
-const { mapContainer, initMap } = useMap()
+const { mapContainer, initMap, cleanup } = useMap()
 const mapStore = useMapStore()
 let resizeObserver: ResizeObserver | null = null
 
@@ -62,6 +62,8 @@ onUnmounted(() => {
     try { resizeObserver.disconnect() } catch (_) {}
     resizeObserver = null
   }
+  // 清理地图生命周期资源
+  cleanup()
 })
 </script>
 

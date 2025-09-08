@@ -283,14 +283,7 @@ export const getAllMapServiceUrls = (): Record<string, string> => {
 // 测试函数：验证图层配置
 export const testlayerConfig = () => {
   const config = createAPIConfig()
-  console.log('\n=== 图层列表 ===')
   config.wuhanlayers.forEach((layer, index) => {
-    console.log(`${index + 1}. ${layer.name}`)
-    console.log(`   类型: ${layer.type}`)
-    console.log(`   组: ${layer.group}`)
-    console.log(`   服务URL: ${config.baseUrl}/${layer.dataService}`)
-    console.log(`   图层名称: ${layer.name}`)
-    console.log('')
   })
   
   return config

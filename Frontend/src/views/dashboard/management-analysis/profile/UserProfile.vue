@@ -390,36 +390,40 @@ const formatDate = (dateString: string) => {
   })
 }
 
-onMounted(async () => {
+onMounted(() => {
   // 同步用户信息，确保从数据库获取最新信息
-  try {
-    const token = userStore.token
-    if (token) {
-      await syncUserInfo(token)
-    }
-  } catch (error) {
-    console.warn('同步用户信息失败:', error)
-  }
-  
-  // 检查用户信息是否完整
-  if (!isUserInfoComplete()) {
-    window.dispatchEvent(new CustomEvent('showNotification', {
-      detail: {
-        title: '用户信息不完整',
-        message: '无法加载个人中心，请重新登录',
-        type: 'error',
-        duration: 3000
+  const syncUserData = async () => {
+    try {
+      const token = userStore.token
+      if (token) {
+        await syncUserInfo(token)
       }
-    }))
-    return
+    } catch (error) {
+      console.warn('同步用户信息失败:', error)
+    }
+    
+    // 检查用户信息是否完整
+    if (!isUserInfoComplete()) {
+      window.dispatchEvent(new CustomEvent('showNotification', {
+        detail: {
+          title: '用户信息不完整',
+          message: '无法加载个人中心，请重新登录',
+          type: 'error',
+          duration: 3000
+        }
+      }))
+      return
+    }
+    
+    // 初始化编辑表单
+    editForm.value = {
+      username: userInfo.value.username,
+      email: userInfo.value.email,
+      phone: userInfo.value.phone
+    }
   }
   
-  // 初始化编辑表单
-  editForm.value = {
-    username: userInfo.value.username,
-    email: userInfo.value.email,
-    phone: userInfo.value.phone
-  }
+  syncUserData()
 })
 </script>
 

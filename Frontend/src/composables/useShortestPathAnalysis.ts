@@ -420,6 +420,14 @@ export function useShortestPathAnalysis() {
     
     pointFeature.setStyle(pointStyle)
     
+    // 保存到store
+    if (pointType === 'start') {
+      setStartPoint(pointFeature)
+      displayStartPoint(pointFeature)
+    } else {
+      setEndPoint(pointFeature)
+      displayEndPoint(pointFeature)
+    }
   }
   
   // 绘制起始点

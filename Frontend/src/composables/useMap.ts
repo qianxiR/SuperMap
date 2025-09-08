@@ -50,36 +50,29 @@ export function useMap() {
    * 在地图初始化前调用，清理所有相关状态和图层
    */
   const clearAllStatesAndLayers = (): void => {
-    console.log('=== 开始全局状态和图层清理 ===')
     
     // 1. 清理图层数据（SuperMap服务图层 + 本地图层）
     mapData.clearAllLayersBeforeInit()
     
     // 2. 清理选择状态
     selectionStore.clearSelection()
-    console.log('已清理选择状态')
     
     // 3. 清理分析状态
     analysisStore.closeTool()
     analysisStore.setDrawMode('')
-    console.log('已清理分析工具状态')
     
     // 4. 清理最短路径分析状态
     shortestPathStore.clearAll()
-    console.log('已清理最短路径分析状态')
     
     // 5. 清理地图量测状态
     if (mapStore.distanceMeasureMode) {
       mapStore.clearDistanceMeasure()
-      console.log('已清理距离量测状态')
     }
     
     if (mapStore.areaMeasureMode) {
       mapStore.clearAreaMeasure()
-      console.log('已清理面积量测状态')
     }
     
-    console.log('=== 全局状态和图层清理完成 ===')
   }
 
   /**

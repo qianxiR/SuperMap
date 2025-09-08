@@ -42,7 +42,6 @@ export function useMapData() {
     if (existingLayerInfo && existingLayerInfo.layer) {
       // 使用已存在的懒加载图层容器
       vectorlayer = existingLayerInfo.layer
-      console.log(`使用已存在的懒加载图层容器: ${layerName}`)
     } else {
       // 创建新的图层容器
       const style = createLayerStyle(layerConfig, layerName);
@@ -193,7 +192,6 @@ export function useMapData() {
         type: 'vector',
         source: 'supermap'
       });
-      console.log(`图层 ${layerName} 已添加到mapStore`)
     } else {
       // 懒加载图层已存在，只需要设置可见性
       vectorlayer.setVisible(resolvedVisible);
@@ -237,7 +235,6 @@ export function useMapData() {
       isLoaded: false
     })
     
-    console.log(`懒加载图层容器创建完成: ${layerName}`)
   }
 
   /**
@@ -254,7 +251,6 @@ export function useMapData() {
     }
     
     if (layerInfo.isLoaded) {
-      console.log(`图层 ${layerName} 已经加载过数据`)
       return true
     }
     
@@ -265,7 +261,6 @@ export function useMapData() {
         return false
       }
       
-      console.log(`开始加载懒加载图层数据: ${layerName}`)
       
       // 调用原有的loadVectorLayer函数加载数据
       await loadVectorLayer(mapStore.map, layerConfig, true)
@@ -274,7 +269,6 @@ export function useMapData() {
       layerInfo.isLoaded = true
       layerInfo.layer.set('isLoaded', true)
       
-      console.log(`懒加载图层数据加载完成: ${layerName}`)
       return true
       
     } catch (error) {
@@ -297,18 +291,15 @@ export function useMapData() {
     }
     
     if (!layerInfo.isLoaded) {
-      console.log(`图层 ${layerName} 数据未加载，无需卸载`)
       return true
     }
     
     try {
-      console.log(`开始卸载懒加载图层数据: ${layerName}`)
       
       // 清除图层源中的所有要素数据
       const source = layerInfo.layer.getSource()
       if (source) {
         source.clear()
-        console.log(`图层 ${layerName} 数据源已清空`)
       }
       
       // 设置图层不可见
@@ -321,7 +312,6 @@ export function useMapData() {
       // 强制触发图层重绘
       layerInfo.layer.changed()
       
-      console.log(`懒加载图层数据卸载完成: ${layerName}`)
       return true
       
     } catch (error) {
@@ -335,19 +325,15 @@ export function useMapData() {
    * 在页面刷新或重新初始化时调用，彻底清理所有图层避免重复
    */
   const clearAllLayersBeforeInit = (): void => {
-    console.log('=== 开始清空所有图层数据 ===')
     
     // 1. 清空SuperMap服务图层
     const supermapLayersCount = mapStore.vectorlayers.filter(l => l.source === 'supermap').length
-    console.log(`清理SuperMap图层: ${supermapLayersCount} 个`)
     
     // 2. 清空本地图层（分析、绘制、查询、上传等）
     const localLayersCount = mapStore.vectorlayers.filter(l => l.source === 'local').length
-    console.log(`清理本地图层: ${localLayersCount} 个`)
     
     // 3. 清空自定义图层
     const customLayersCount = mapStore.customlayers.length
-    console.log(`清理自定义图层: ${customLayersCount} 个`)
     
     // 4. 从地图中移除所有图层
     if (mapStore.map) {
@@ -355,7 +341,6 @@ export function useMapData() {
       mapStore.vectorlayers.forEach(item => {
         try { 
           mapStore.map.removeLayer(item.layer)
-          console.log(`已从地图移除图层: ${item.name} (${item.source})`)
         } catch (_) { /* 静默处理 */ }
       })
       
@@ -363,7 +348,6 @@ export function useMapData() {
       mapStore.customlayers.forEach(item => {
         try { 
           mapStore.map.removeLayer(item.layer)
-          console.log(`已从地图移除自定义图层: ${item.name}`)
         } catch (_) { /* 静默处理 */ }
       })
     }
@@ -377,11 +361,9 @@ export function useMapData() {
     if (mapStore.selectlayer?.getSource) {
       try {
         mapStore.selectlayer.getSource().clear()
-        console.log('已清空选择图层数据源')
       } catch (_) { /* 静默处理 */ }
     }
     
-    console.log(`=== 图层清理完成，共清理 ${totalBefore} 个图层 ===`)
   }
 
   /**
@@ -394,7 +376,6 @@ export function useMapData() {
     
     const apiConfig = createAPIConfig()
     
-    console.log('开始加载矢量图层，当前已有图层数量:', mapStore.vectorlayers.length)
     
     const loadTasks: Promise<void>[] = []
     for (const layerConfig of apiConfig.wuhanlayers) {
@@ -412,14 +393,11 @@ export function useMapData() {
         loadTasks.push(loadVectorLayer(map, layerConfig, true))
       } else {
         // 懒加载图层：创建空的图层容器，等待用户点击显示时再加载数据
-        console.log(`图层 ${layerName} 设置为懒加载模式`)
         createLazyLayerContainer(map, layerConfig)
       }
     }
     
-    console.log('图层加载任务创建完成，待加载图层数量:', loadTasks.length)
     await Promise.allSettled(loadTasks)
-    console.log('所有图层加载完成，当前图层总数:', mapStore.vectorlayers.length)
   }
 
   return {
