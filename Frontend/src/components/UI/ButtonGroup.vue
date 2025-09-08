@@ -1,75 +1,110 @@
 <template>
-  <div class="button-group">
-    <button
-      v-for="btn in buttons"
-      :key="btn.id"
-      class="group-btn"
-      :class="{ 'active': activeButton === btn.id }"
-      @click="$emit('select', btn.id)"
-    >
-      {{ btn.text }}
-    </button>
+  <div class="toggle-switch">
+    <div class="switch-track">
+      <div 
+        class="switch-slider"
+        :style="{ transform: `translateX(${sliderPosition}px)` }"
+      ></div>
+      <button
+        v-for="(btn, index) in buttons"
+        :key="btn.id"
+        class="switch-btn"
+        :class="{ 'active': activeButton === btn.id }"
+        @click="$emit('select', btn.id)"
+        :style="{ zIndex: activeButton === btn.id ? 2 : 1 }"
+      >
+        {{ btn.text }}
+      </button>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+
 interface Button {
   id: string;
   text: string;
 }
 
-defineProps<{
+const props = defineProps<{
   buttons: Button[];
   activeButton: string;
 }>();
 
 defineEmits(['select']);
+
+// 计算滑动条位置
+const sliderPosition = computed(() => {
+  const activeIndex = props.buttons.findIndex(btn => btn.id === props.activeButton);
+  if (activeIndex === -1) return 0;
+  
+  // 计算每个按钮的宽度（均分整个容器）
+  const buttonWidth = 100; // 每个按钮的基础宽度
+  return activeIndex * buttonWidth;
+});
 </script>
 
 <style scoped>
-.button-group {
+.toggle-switch {
+  display: inline-block;
+}
+
+.switch-track {
+  position: relative;
   display: flex;
   background-color: var(--panel);
   border-radius: 8px;
   border: 1px solid var(--border);
   padding: 4px;
-  width: fit-content;
+  width: 200px; /* 固定宽度，两个按钮均分 */
+  overflow: hidden;
 }
 
-.group-btn {
+.switch-slider {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: calc(50% - 4px); /* 占据一半宽度 */
+  height: calc(100% - 8px);
+  background-color: var(--accent);
+  border-radius: 6px;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+}
+
+.switch-btn {
+  position: relative;
   padding: 6px 16px;
   border: none;
   background-color: transparent;
   color: var(--text);
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
   font-family: inherit;
-  transition: all 0.2s ease;
+  transition: color 0.3s ease;
   user-select: none;
   outline: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 32px;
+  min-height: 24px;
+  flex: 1; /* 均分宽度 */
+  z-index: 2;
 }
 
-.group-btn.active {
-  background-color: var(--accent);
-  color: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+.switch-btn.active {
+  color: white !important;
 }
 
-.group-btn:not(.active):hover {
-  background-color: var(--accent);
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+.switch-btn:not(.active):hover {
+  color: var(--accent);
 }
 
-.group-btn:active:not(.active) {
-  transform: translateY(0);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+.switch-btn:active {
+  transform: scale(0.98);
 }
 </style>

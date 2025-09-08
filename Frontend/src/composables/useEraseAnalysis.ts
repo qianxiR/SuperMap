@@ -141,81 +141,14 @@ export function useEraseAnalysis() {
     }
   }
 
-  // 几何体拓扑验证和清理函数
+  // 简化的几何体验证函数 - 只进行基本检查
   const validateAndCleanGeometry = (geometry: any): any | null => {
     if (!geometry || !geometry.type || !geometry.coordinates) {
       return null
     }
 
-    try {
-      // 检查turf库是否可用
-      if (!window.turf) {
-        console.warn('[Erase] Turf库未加载，跳过拓扑验证')
-        return geometry
-      }
-
-      const turf = window.turf
-
-      // 创建turf要素进行验证
-      const turfFeature = {
-        type: 'Feature',
-        geometry: geometry,
-        properties: {}
-      }
-
-      // 1. 检查几何体有效性
-      if (!turf.booleanValid(turfFeature)) {
-        console.warn('[Erase] 几何体无效，尝试修复:', geometry.type)
-        
-        // 尝试修复几何体
-        try {
-          const fixedGeometry = turf.cleanCoords(turfFeature)
-          if (turf.booleanValid(fixedGeometry)) {
-            console.log('[Erase] 几何体修复成功')
-            return fixedGeometry.geometry
-          }
-        } catch (fixError) {
-          console.warn('[Erase] 几何体修复失败:', fixError)
-        }
-        
-        return null
-      }
-
-      // 2. 对于多边形，检查是否闭合
-      if (geometry.type === 'Polygon' || geometry.type === 'MultiPolygon') {
-        // 清理坐标，移除重复点
-        const cleanedFeature = turf.cleanCoords(turfFeature)
-        
-        // 检查多边形是否有效（闭合且面积大于0）
-        if (cleanedFeature.geometry.type === 'Polygon') {
-          const rings = cleanedFeature.geometry.coordinates
-          for (const ring of rings) {
-            if (ring.length < 4) {
-              console.warn('[Erase] 多边形环点数不足，移除:', ring.length)
-              return null
-            }
-            
-            // 检查首尾点是否相同（闭合检查）
-            const first = ring[0]
-            const last = ring[ring.length - 1]
-            if (first[0] !== last[0] || first[1] !== last[1]) {
-              console.warn('[Erase] 多边形未闭合，移除')
-              return null
-            }
-          }
-        }
-        
-        return cleanedFeature.geometry
-      }
-
-      // 3. 对于其他几何类型，只进行基本清理
-      const cleanedFeature = turf.cleanCoords(turfFeature)
-      return cleanedFeature.geometry
-
-    } catch (error) {
-      console.warn('[Erase] 几何体验证失败:', error)
-      return null
-    }
+    // 直接返回原始几何体，不进行复杂的拓扑验证
+    return geometry
   }
 
   const displayeraseResults = (items: EraseResultItem[]): void => {
@@ -243,61 +176,39 @@ export function useEraseAnalysis() {
     layer.set('eraseResults', items)
     mapStore.map.addLayer(layer)
 
-    // 处理所有要素，进行拓扑验证和清理
+    // 处理所有要素，直接使用原始几何体
     const validFeatures: any[] = []
-    const invalidCount = { total: 0, unclosed: 0, invalid: 0 }
 
     items.forEach((item, index) => {
       if (!item.geometry || !item.geometry.type || !item.geometry.coordinates) {
-        invalidCount.total++
         return
       }
 
-      // 进行拓扑验证和清理
-      const cleanedGeometry = validateAndCleanGeometry(item.geometry)
+      // 直接使用原始几何体，不进行复杂验证
+      const format = new GeoJSON()
+      const geometry = format.readGeometry(item.geometry)
       
-      if (cleanedGeometry) {
-        const format = new GeoJSON()
-        const geometry = format.readGeometry(cleanedGeometry)
-        
-        const f = new Feature({ 
-          geometry, 
-          properties: { 
-            id: item.id, 
-            name: item.name, 
-            sourceTarget: item.sourceTargetlayerName, 
-            sourceErase: item.sourceEraselayerName, 
-            createdAt: item.createdAt 
-          } 
-        })
-        validFeatures.push(f)
-      } else {
-        invalidCount.total++
-        if (item.geometry.type === 'Polygon' || item.geometry.type === 'MultiPolygon') {
-          invalidCount.unclosed++
-        } else {
-          invalidCount.invalid++
-        }
-      }
+      const f = new Feature({ 
+        geometry, 
+        properties: { 
+          id: item.id, 
+          name: item.name, 
+          sourceTarget: item.sourceTargetlayerName, 
+          sourceErase: item.sourceEraselayerName, 
+          createdAt: item.createdAt 
+        } 
+      })
+      validFeatures.push(f)
     })
 
-    // 记录清理结果
-    console.log('[Erase] 几何体清理完成:', {
+    // 记录处理结果
+    console.log('[Erase] 要素处理完成:', {
       total: items.length,
-      valid: validFeatures.length,
-      invalid: invalidCount.total,
-      unclosed: invalidCount.unclosed,
-      invalidGeometry: invalidCount.invalid
+      valid: validFeatures.length
     })
 
-    // 如果有无效几何体，显示警告
-    if (invalidCount.total > 0) {
-      analysisStore.setAnalysisStatus(
-        `擦除分析完成：共生成 ${items.length} 个结果，其中 ${validFeatures.length} 个有效，${invalidCount.total} 个无效（${invalidCount.unclosed} 个未闭合，${invalidCount.invalid} 个几何体无效）`
-      )
-    } else {
-      analysisStore.setAnalysisStatus(`擦除分析完成：共生成 ${validFeatures.length} 个有效结果，已渲染到地图。`)
-    }
+    // 显示分析状态
+    analysisStore.setAnalysisStatus(`擦除分析完成：共生成 ${validFeatures.length} 个结果，已渲染到地图。`)
 
     // 添加所有有效要素到图层
     if (validFeatures.length > 0) {

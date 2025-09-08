@@ -394,18 +394,21 @@ watch(() => props.externalUploading, (newUploading) => {
 }
 
 .clear-files-btn {
-  background: none;
-  border: none;
-  color: var(--accent);
+  background: var(--btn-danger-bg);
+  border: 1px solid var(--btn-danger-bg);
+  color: var(--btn-danger-color);
   font-size: 12px;
   cursor: pointer;
   padding: 4px 8px;
   border-radius: 4px;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
+  font-weight: 500;
 }
 
 .clear-files-btn:hover {
-  background: var(--surface);
+  background: var(--btn-danger-hover-bg);
+  border-color: var(--btn-danger-hover-bg);
+  color: var(--btn-danger-hover-color);
 }
 
 .files-list {

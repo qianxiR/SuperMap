@@ -329,14 +329,15 @@ onMounted(() => {
 }
 
 .icon-btn.danger {
-  background: var(--surface);
-  color: var(--text);
-  border-color: var(--border);
+  background: var(--btn-danger-bg);
+  color: var(--btn-danger-color);
+  border-color: var(--btn-danger-bg);
 }
 
 .icon-btn.danger:hover:not(:disabled) {
-  background: var(--surface-hover);
-  border-color: var(--border);
+  background: var(--btn-danger-hover-bg);
+  border-color: var(--btn-danger-hover-bg);
+  color: var(--btn-danger-hover-color);
 }
 
 /* 聊天记录列表样式 */
@@ -428,9 +429,15 @@ onMounted(() => {
 }
 
 .record-icon-btn.danger {
-  background: var(--btn-secondary-bg);
-  color: var(--text);
-  border-color: var(--border);
+  background: var(--btn-danger-bg);
+  color: var(--btn-danger-color);
+  border-color: var(--btn-danger-bg);
+}
+
+.record-icon-btn.danger:hover:not(:disabled) {
+  background: var(--btn-danger-hover-bg);
+  border-color: var(--btn-danger-hover-bg);
+  color: var(--btn-danger-hover-color);
 }
 
 

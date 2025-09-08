@@ -80,14 +80,108 @@
             </button>
           </div>
 
-          <div class="security-item">
-            <div class="security-info">
-              <div class="security-title">登录历史</div>
-              <div class="security-desc">查看最近的登录记录</div>
+        </div>
+      </div>
+
+      <!-- API密钥管理卡片 -->
+      <div class="profile-card">
+        <div class="card-header">
+          <h2 class="card-title">API密钥管理</h2>
+          <button class="add-btn" @click="openKeyModal()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            添加密钥
+          </button>
+        </div>
+
+        <div class="api-keys-list">
+          <div v-for="key in apiKeys" :key="key.id" class="api-key-item">
+            <div class="key-info">
+              <div class="key-name">{{ key.name }}</div>
+              <div class="key-provider">{{ key.provider }}</div>
+              <div class="key-url" v-if="key.url">{{ key.url }}</div>
+              <div class="key-status" :class="key.status">
+                {{ key.status === 'active' ? '已启用' : '已禁用' }}
+              </div>
             </div>
-            <button class="security-btn" @click="showLoginHistory = true">
-              查看
-            </button>
+            <div class="key-actions">
+              <button class="action-btn" @click="openKeyModal(key)" title="编辑">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button class="action-btn" @click="toggleKeyStatus(key.id)" :title="key.status === 'active' ? '禁用' : '启用'">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path v-if="key.status === 'active'" d="M18 6L6 18M6 6l12 12"></path>
+                  <path v-else d="M9 12l2 2 4-4"></path>
+                </svg>
+              </button>
+              <button class="action-btn delete" @click="deleteKey(key.id)" title="删除">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3,6 5,6 21,6"></polyline>
+                  <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <div v-if="apiKeys.length === 0" class="empty-state">
+            <p>暂无API密钥</p>
+            <button class="add-first-btn" @click="openKeyModal()">添加第一个密钥</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 提示词管理卡片 -->
+      <div class="profile-card">
+        <div class="card-header">
+          <h2 class="card-title">提示词管理</h2>
+          <button class="add-btn" @click="openPromptModal()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            添加提示词
+          </button>
+        </div>
+
+        <div class="prompts-list">
+          <div v-for="prompt in prompts" :key="prompt.id" class="prompt-item">
+            <div class="prompt-info">
+              <div class="prompt-name">{{ prompt.name }}</div>
+              <div class="prompt-description">{{ prompt.description }}</div>
+              <div class="prompt-tags">
+                <span v-for="tag in prompt.tags" :key="tag" class="tag">{{ tag }}</span>
+              </div>
+            </div>
+            <div class="prompt-actions">
+              <button class="action-btn" @click="openPromptModal(prompt)" title="编辑">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button class="action-btn" @click="copyPrompt(prompt)" title="复制">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              </button>
+              <button class="action-btn delete" @click="deletePrompt(prompt.id)" title="删除">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3,6 5,6 21,6"></polyline>
+                  <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <div v-if="prompts.length === 0" class="empty-state">
+            <p>暂无提示词</p>
+            <button class="add-first-btn" @click="openPromptModal()">添加第一个提示词</button>
           </div>
         </div>
       </div>
@@ -99,20 +193,6 @@
         </div>
 
         <div class="setting-items">
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-title">主题设置</div>
-              <div class="setting-desc">选择您喜欢的界面主题</div>
-            </div>
-            <div class="setting-control">
-              <ButtonGroup 
-                :buttons="themeButtons"
-                :active-button="theme"
-                @select="setTheme"
-              />
-            </div>
-          </div>
-
           <div class="setting-item">
             <div class="setting-info">
               <div class="setting-title">通知设置</div>
@@ -156,8 +236,19 @@
           <button class="btn-secondary" @click="showChangePassword = false">取消</button>
           <button class="btn-primary" @click="changePassword">确认修改</button>
         </div>
+        </div>
       </div>
-    </div>
+
+    <!-- 编辑弹窗 -->
+    <EditModal
+      :visible="showEditModal"
+      :type="editModalType"
+      :title="editModalTitle"
+      :initial-data="editModalData"
+      :api-keys="apiKeys"
+      @close="closeEditModal"
+      @save="handleSave"
+    />
       </PanelWindow>
     </div>
   </div>
@@ -168,14 +259,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore, type UserInfo } from '@/stores/userStore'
-import { useThemeStore } from '@/stores/themeStore'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
-import ButtonGroup from '@/components/UI/ButtonGroup.vue'
+import EditModal from '@/components/UI/EditModal.vue'
 import { useUserProfile } from '@/composables/useUserProfile'
 
 const router = useRouter()
 const userStore = useUserStore()
-const themeStore = useThemeStore()
 
 // 使用用户资料composable
 const {
@@ -189,7 +278,36 @@ const {
 // 响应式数据
 const isEditing = ref(false)
 const showChangePassword = ref(false)
-const showLoginHistory = ref(false)
+
+// 编辑弹窗相关
+const showEditModal = ref(false)
+const editModalType = ref<'api-key' | 'prompt'>('api-key')
+const editModalTitle = ref('')
+const editModalData = ref<any>(null)
+const editingItem = ref<any>(null)
+
+// API密钥数据
+const apiKeys = ref([
+  {
+    id: 1,
+    name: 'OpenAI GPT-4',
+    provider: 'openai',
+    key: 'sk-...',
+    url: 'https://api.openai.com/v1',
+    status: 'active'
+  }
+])
+
+// 提示词数据
+const prompts = ref([
+  {
+    id: 1,
+    name: '地图分析助手',
+    description: '专门用于地图数据分析和可视化的提示词',
+    content: '你是一个专业的地图数据分析助手，擅长处理地理空间数据和进行空间分析。',
+    tags: ['地图', '分析', '数据']
+  }
+])
 
 // 编辑表单
 const editForm = ref({
@@ -218,13 +336,6 @@ const userInfo = computed(() => {
   }
 })
 
-const theme = computed(() => themeStore.theme)
-
-// 主题按钮配置
-const themeButtons = [
-  { id: 'light', text: '浅色' },
-  { id: 'dark', text: '深色' }
-]
 
 // 方法
 import { useGlobalModalStore } from '@/stores/modalStore'
@@ -312,9 +423,6 @@ const saveUserInfo = async () => {
   }
 }
 
-const setTheme = (newTheme: 'light' | 'dark') => {
-  themeStore.setTheme(newTheme)
-}
 
 const changePassword = async () => {
   if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
@@ -388,6 +496,107 @@ const formatDate = (dateString: string) => {
     month: 'long',
     day: 'numeric'
   })
+}
+
+// API密钥管理方法
+const openKeyModal = (key?: any) => {
+  editingItem.value = key
+  editModalType.value = 'api-key'
+  editModalTitle.value = key ? '编辑API密钥' : '添加API密钥'
+  editModalData.value = key ? { ...key } : null
+  showEditModal.value = true
+}
+
+const toggleKeyStatus = (id: number) => {
+  const key = apiKeys.value.find(k => k.id === id)
+  if (key) {
+    key.status = key.status === 'active' ? 'inactive' : 'active'
+  }
+}
+
+const deleteKey = (id: number) => {
+  apiKeys.value = apiKeys.value.filter(k => k.id !== id)
+}
+
+// 提示词管理方法
+const openPromptModal = (prompt?: any) => {
+  editingItem.value = prompt
+  editModalType.value = 'prompt'
+  editModalTitle.value = prompt ? '编辑提示词' : '添加提示词'
+  editModalData.value = prompt ? { ...prompt } : null
+  showEditModal.value = true
+}
+
+const copyPrompt = (prompt: any) => {
+  navigator.clipboard.writeText(prompt.content)
+  window.dispatchEvent(new CustomEvent('showNotification', {
+    detail: {
+      title: '复制成功',
+      message: '提示词已复制到剪贴板',
+      type: 'success',
+      duration: 2000
+    }
+  }))
+}
+
+const deletePrompt = (id: number) => {
+  prompts.value = prompts.value.filter(p => p.id !== id)
+}
+
+// 编辑弹窗管理
+const closeEditModal = () => {
+  showEditModal.value = false
+  editModalData.value = null
+  editingItem.value = null
+}
+
+const handleSave = (data: any) => {
+  switch (editModalType.value) {
+    case 'api-key':
+      if (editingItem.value) {
+        // 更新现有密钥
+        const index = apiKeys.value.findIndex(k => k.id === editingItem.value.id)
+        if (index !== -1) {
+          apiKeys.value[index] = { ...editingItem.value, ...data, status: editingItem.value.status }
+        }
+      } else {
+        // 添加新密钥
+        const newKey = {
+          id: Date.now(),
+          ...data,
+          status: 'active'
+        }
+        apiKeys.value.push(newKey)
+      }
+      break
+      
+    case 'prompt':
+      if (editingItem.value) {
+        // 更新现有提示词
+        const index = prompts.value.findIndex(p => p.id === editingItem.value.id)
+        if (index !== -1) {
+          prompts.value[index] = { ...editingItem.value, ...data }
+        }
+      } else {
+        // 添加新提示词
+        const newPrompt = {
+          id: Date.now(),
+          ...data
+        }
+        prompts.value.push(newPrompt)
+      }
+      break
+  }
+  
+  // 显示成功通知
+  window.dispatchEvent(new CustomEvent('showNotification', {
+    detail: {
+      title: '保存成功',
+      message: '数据已成功保存',
+      type: 'success',
+      duration: 2000
+    }
+  }))
 }
 
 onMounted(() => {
@@ -663,6 +872,166 @@ onMounted(() => {
 .setting-control {
   display: flex;
   align-items: center;
+}
+
+/* API密钥和提示词管理样式 */
+.add-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-color);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  min-height: 32px;
+}
+
+.add-btn:hover {
+  opacity: 0.9;
+}
+
+.api-keys-list,
+.prompts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.api-key-item,
+.prompt-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: var(--surface);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.key-info,
+.prompt-info {
+  flex: 1;
+}
+
+.key-name,
+.prompt-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.key-provider,
+.key-url,
+.prompt-description {
+  font-size: 12px;
+  color: var(--sub);
+  margin-bottom: 4px;
+}
+
+.key-url {
+  font-size: 12px;
+  color: var(--sub);
+  opacity: 0.8;
+}
+
+.key-status {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+.key-status.active {
+  background: var(--selection-bg);
+  color: var(--text);
+}
+
+.key-status.inactive {
+  background: var(--surface);
+  color: var(--sub);
+}
+
+.prompt-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  background: var(--accent);
+  color: white;
+  border-radius: 12px;
+}
+
+.key-actions,
+.prompt-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--sub);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.action-btn.delete {
+  background: var(--btn-danger-bg);
+  color: var(--btn-danger-color);
+  border-color: var(--btn-danger-bg);
+}
+
+.action-btn.delete:hover {
+  background: var(--btn-danger-hover-bg);
+  color: var(--btn-danger-hover-color);
+  border-color: var(--btn-danger-hover-bg);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--sub);
+}
+
+.empty-state p {
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.add-first-btn {
+  padding: 6px 8px;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-color);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  min-height: 32px;
+}
+
+.add-first-btn:hover {
+  opacity: 0.9;
 }
 
 

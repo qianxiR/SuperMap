@@ -66,9 +66,9 @@ const handleClick = (event: MouseEvent) => {
   font-weight: 500;
   outline: none;
   gap: 6px;
-  padding: 6px 8px;
+  padding: 5px 7px;
   font-size: 12px;
-  min-height: 32px;
+  min-height: 28px;
 }
 
 .btn:disabled {

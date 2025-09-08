@@ -144,10 +144,21 @@
   --primary-color-rgb: 0, 120, 212;
   
   /* ===== 按钮危险操作颜色 ===== */
-  --btn-danger-bg: #dc3545;
+  --btn-danger-bg: #e74c3c;
   --btn-danger-color: #ffffff;
-  --btn-danger-hover-bg: #c82333;
+  --btn-danger-hover-bg: #c0392b;
   --btn-danger-hover-color: #ffffff;
+  
+  /* ===== 移除按钮专用颜色 ===== */
+  --btn-remove-bg: #dc3545;
+  --btn-remove-color: #ffffff;
+  --btn-remove-hover-bg: #c82333;
+  --btn-remove-hover-color: #ffffff;
+  --btn-remove-active-bg: #bd2130;
+  --btn-remove-active-color: #ffffff;
+  --btn-remove-border: #dc3545;
+  --btn-remove-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+  --btn-remove-shadow-hover: 0 4px 8px rgba(220, 53, 69, 0.4);
   
   /* ===== UI组件专用颜色 ===== */
   --ui-overlay-bg: rgba(0, 0, 0, 0.5);
@@ -215,9 +226,9 @@ html {
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.5);
   
   /* ===== 按钮危险操作颜色 - 深色模式 ===== */
-  --btn-danger-bg: #dc3545;
+  --btn-danger-bg: #e74c3c;
   --btn-danger-color: #ffffff;
-  --btn-danger-hover-bg: #c82333;
+  --btn-danger-hover-bg: #c0392b;
   --btn-danger-hover-color: #ffffff;
   
   /* ===== UI组件专用颜色 - 深色模式 ===== */

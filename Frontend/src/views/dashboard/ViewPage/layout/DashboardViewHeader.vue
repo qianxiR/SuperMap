@@ -2,11 +2,9 @@
   <div class="screen-header">
     <div class="header-left">
       <img 
-        src="/logo.jpg" 
+        src="/logoContent.png" 
         alt="Logo" 
         class="header-logo" 
-        @click="goToManagement"
-        title="切换到管理分析"
       />
       <div class="screen-title">基于LLM-Agent的多模态实时态势感知地理空间智能可视化平台</div>
     </div>
@@ -22,6 +20,21 @@
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="transform: rotate(180deg);">
               <path d="M19,9H15V3H9V9H5L12,16L19,9M5,18V20H19V18H5Z"/>
+            </svg>
+          </button>
+        </div>
+        
+        <!-- 地球按钮 -->
+        <div class="earth-toggle">
+          <button 
+            class="earth-logo" 
+            @click="goToManagement"
+            title="切换到管理分析系统页面"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M2 12h20"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
             </svg>
           </button>
         </div>
@@ -374,14 +387,47 @@ onMounted(() => {
   width: auto;
   object-fit: contain;
   flex-shrink: 0;
-  cursor: pointer;
-  transition: all 0.2s ease;
   border-radius: 4px;
   padding: 2px;
 }
 
-.header-logo:hover {
-  transform: scale(1.05);
+.earth-toggle {
+  display: flex;
+  align-items: center;
+}
+
+.earth-logo {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.earth-logo:hover {
+  background: var(--surface-hover, var(--btn-secondary-bg));
+  transform: translateY(-1px);
+  box-shadow: var(--glow);
+}
+
+.earth-logo:active {
+  transform: translateY(0);
+}
+
+.earth-logo svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
 }
 
 

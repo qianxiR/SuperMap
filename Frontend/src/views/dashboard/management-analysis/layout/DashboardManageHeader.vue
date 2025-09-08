@@ -2,11 +2,9 @@
   <div class="screen-header">
     <div class="header-left">
       <img 
-        src="/logo.jpg" 
+        src="/logoContent.png" 
         alt="Logo" 
         class="header-logo" 
-        @click="goToView"
-        title="切换到视图页面"
       />
       <div class="screen-title">基于LLM-Agent的多模态实时态势感知地理空间智能决策分析系统</div>
     </div>
@@ -19,6 +17,21 @@
         />
         
         <div class="right-controls">
+          <!-- 地球按钮 -->
+          <div class="earth-toggle">
+            <button 
+              class="earth-logo" 
+              @click="goToView"
+              title="切换到可视化平台页面"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M2 12h20"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+              </svg>
+            </button>
+          </div>
+          
           <div class="theme-toggle">
             <IconButton 
               @click="toggleTheme" 
@@ -339,14 +352,47 @@ watch(() => router.currentRoute.value.path, (newPath: string) => {
   width: auto;
   object-fit: contain;
   flex-shrink: 0;
-  cursor: pointer;
-  transition: all 0.2s ease;
   border-radius: 4px;
   padding: 2px;
 }
 
-.header-logo:hover {
-  transform: scale(1.05);
+.earth-toggle {
+  display: flex;
+  align-items: center;
+}
+
+.earth-logo {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.earth-logo:hover {
+  background: var(--surface-hover, var(--btn-secondary-bg));
+  transform: translateY(-1px);
+  box-shadow: var(--glow);
+}
+
+.earth-logo:active {
+  transform: translateY(0);
+}
+
+.earth-logo svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
 }
 
 

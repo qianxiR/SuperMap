@@ -8,7 +8,7 @@ from typing import Any, Union, Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import HTTPException, status, Depends
-from fastapi.security import HTTPBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from user.core.config import settings
 
 
@@ -75,6 +75,6 @@ def validate_password_strength(password: str) -> bool:
     return sum([has_upper, has_lower, has_digit, has_special]) >= 3
 
 
-def get_current_user_id(token = Depends(HTTPBearer())) -> str:
+def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())) -> str:
     """获取当前用户ID"""
-    return verify_token(token.credentials)
+    return verify_token(credentials.credentials)
