@@ -160,6 +160,7 @@
       @cancel="handleCancelRemove"
       @close="handleCancelRemove"
     />
+
   </div>
 </template>
 
@@ -201,6 +202,7 @@ const deleteDialog = ref({
   message: '',
   layerId: ''
 })
+
 
 // 定义图层项接口
 interface LayerItem {
@@ -467,6 +469,14 @@ const emit = defineEmits<{
   min-width: 16px;
   text-align: center;
   line-height: 1;
+  transition: none !important;
+  animation: none !important;
+}
+
+.group-header:hover .group-count {
+  color: white;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 

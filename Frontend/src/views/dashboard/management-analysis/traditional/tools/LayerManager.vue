@@ -19,6 +19,16 @@
               SuperMap 服务图层
               <span class="group-count">{{ getLayersBySource('supermap').length }}</span>
             </div>
+            <button 
+              class="export-btn"
+              @click.stop="handleExportGroup('supermap')"
+              :title="`导出 ${getLayersBySource('supermap').length} 个图层为JSON`"
+              :disabled="getLayersBySource('supermap').length === 0"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+              </svg>
+            </button>
           </div>
           
           <!-- 可折叠的图层列表 -->
@@ -45,6 +55,16 @@
               分析及绘制图层
               <span class="group-count">{{ getLayersBySource('draw').length }}</span>
             </div>
+            <button 
+              class="export-btn"
+              @click.stop="handleExportGroup('draw')"
+              :title="`导出 ${getLayersBySource('draw').length} 个图层为JSON`"
+              :disabled="getLayersBySource('draw').length === 0"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+              </svg>
+            </button>
           </div>
           
           <!-- 可折叠的图层列表 -->
@@ -83,6 +103,16 @@
               查询图层
               <span class="group-count">{{ getLayersBySource('query').length }}</span>
             </div>
+            <button 
+              class="export-btn"
+              @click.stop="handleExportGroup('query')"
+              :title="`导出 ${getLayersBySource('query').length} 个图层为JSON`"
+              :disabled="getLayersBySource('query').length === 0"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+              </svg>
+            </button>
           </div>
           
           <!-- 可折叠的图层列表 -->
@@ -121,6 +151,16 @@
               上传图层
               <span class="group-count">{{ getLayersBySource('upload').length }}</span>
             </div>
+            <button 
+              class="export-btn"
+              @click.stop="handleExportGroup('upload')"
+              :title="`导出 ${getLayersBySource('upload').length} 个图层为JSON`"
+              :disabled="getLayersBySource('upload').length === 0"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+              </svg>
+            </button>
           </div>
           
           <!-- 可折叠的图层列表 -->
@@ -173,6 +213,7 @@ import { computed, ref } from 'vue'
 import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { uselayermanager } from '@/composables/uselayermanager'
+import { useLayerExport } from '@/composables/useLayerExport'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import LayerItem from '@/components/UI/LayerItem.vue'
 import ConfirmDialog from '@/components/UI/ConfirmDialog.vue'
@@ -189,6 +230,7 @@ interface MaplayerItem {
 const mapStore = useMapStore()
 const analysisStore = useAnalysisStore()
 const { togglelayerVisibility, removeLayer } = uselayermanager()
+const { exportLayersAsGeoJSON } = useLayerExport()
 
 // 选中图层状态
 const selectedlayerKey = ref<string>('')
@@ -305,6 +347,23 @@ const handleConfirmRemove = () => {
 // 处理删除取消
 const handleCancelRemove = () => {
   deleteDialog.value.visible = false
+}
+
+// 处理图层组导出
+const handleExportGroup = async (source: string) => {
+  const layers = getLayersBySource(source)
+  if (layers.length === 0) {
+    return
+  }
+  
+  const groupNames: Record<string, string> = {
+    supermap: 'SuperMap服务图层',
+    draw: '分析及绘制图层', 
+    query: '查询图层',
+    upload: '上传图层'
+  }
+  
+  await exportLayersAsGeoJSON(layers, groupNames[source] || source)
 }
 </script>
 
@@ -457,6 +516,47 @@ const handleCancelRemove = () => {
   min-width: 16px;
   text-align: center;
   line-height: 1;
+  transition: none !important;
+  animation: none !important;
+}
+
+.group-header:hover .group-count {
+  color: white;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.export-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.export-btn:hover {
+  background: var(--accent);
+  color: white;
+  transform: scale(1.1);
+}
+
+.export-btn:disabled {
+  color: var(--sub);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.export-btn:disabled:hover {
+  background: transparent;
+  color: var(--sub);
 }
 
 

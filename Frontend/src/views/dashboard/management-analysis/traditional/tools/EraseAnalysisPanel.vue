@@ -17,7 +17,7 @@
       <div class="analysis-actions">
         <SecondaryButton text="开始执行擦除" @click="handleExecute" />
         <SecondaryButton v-if="results.length > 0" text="保存为图层" @click="showlayerNameModal" />
-        <SecondaryButton v-if="results.length > 0" text="导出为json" @click="handleExportJSON" />
+        <SecondaryButton v-if="results.length > 0" text="导出为GeoJSON" @click="handleExportJSON" />
         <SecondaryButton v-if="results.length > 0" text="清除擦除结果" @click="handleClear" />
       </div>
 
@@ -71,13 +71,14 @@
 import { computed, ref } from 'vue'
 import { useEraseAnalysis } from '@/composables/useEraseAnalysis'
 import { uselayermanager } from '@/composables/uselayermanager'
+import { useLayerExport } from '@/composables/useLayerExport'
 import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import DropdownSelect from '@/components/UI/DropdownSelect.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import TipWindow from '@/components/UI/TipWindow.vue'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
-import layerNameModal from '@/components/UI/layerNameModal.vue'
+import layerNameModal from '@/components/UI/LayerNameModal.vue'
 import GeoJSON from 'ol/format/GeoJSON'
 import { Feature } from 'ol'
 
@@ -100,6 +101,7 @@ const {
 const mapStore = useMapStore()
 const analysisStore = useAnalysisStore()
 const { saveFeaturesAslayer } = uselayermanager()
+const { exportFeaturesAsGeoJSON } = useLayerExport()
 
 // 图层名称弹窗状态
 const showlayerNameModalRef = ref<boolean>(false)
@@ -249,20 +251,27 @@ const handleSavelayer = async (customlayerName: string) => {
   }
 }
 
-const handleExportJSON = () => {
-  const featureCollection = {
-    type: 'FeatureCollection',
-    features: results.value.map((r: any) => ({ type: 'Feature', geometry: r.geometry, properties: { name: r.name } }))
-  }
-  const blob = new Blob([JSON.stringify(featureCollection)], { type: 'application/json;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `erase_${Date.now()}.geojson`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
+const handleExportJSON = async () => {
+  const features = results.value.map((r: any) => ({ 
+    type: 'Feature', 
+    geometry: r.geometry, 
+    properties: { 
+      name: r.name,
+      id: r.id,
+      createdAt: new Date().toISOString()
+    } 
+  }))
+  
+  await exportFeaturesAsGeoJSON(features, '擦除分析结果', {
+    analysisType: 'erase_analysis',
+    sourceLayer: targetlayerId.value,
+    description: '擦除分析生成的要素结果',
+    parameters: {
+      targetLayer: targetlayerId.value,
+      eraseLayer: eraselayerId.value,
+      resultCount: results.value.length
+    }
+  })
 }
 </script>
 

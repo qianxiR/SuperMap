@@ -17,7 +17,7 @@
       <div class="analysis-actions">
         <SecondaryButton text="开始执行相交" @click="handleExecute" />
         <SecondaryButton v-if="results.length > 0" text="保存为图层" @click="showlayerNameModal" />
-        <SecondaryButton v-if="results.length > 0" text="导出为json" @click="handleExportJSON" />
+        <SecondaryButton v-if="results.length > 0" text="导出为GeoJSON" @click="handleExportJSON" />
         <SecondaryButton v-if="results.length > 0" text="清除相交结果" @click="handleClear" />
       </div>
 
@@ -75,11 +75,12 @@ import { useIntersectionAnalysis } from '@/composables/useIntersectionAnalysis'
 import { uselayermanager } from '@/composables/uselayermanager'
 import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
+import { useLayerExport } from '@/composables/useLayerExport'
 import DropdownSelect from '@/components/UI/DropdownSelect.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import TipWindow from '@/components/UI/TipWindow.vue'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
-import layerNameModal from '@/components/UI/layerNameModal.vue'
+import layerNameModal from '@/components/UI/LayerNameModal.vue'
 import GeoJSON from 'ol/format/GeoJSON'
 import { Feature } from 'ol'
 
@@ -102,6 +103,7 @@ const {
 const mapStore = useMapStore()
 const analysisStore = useAnalysisStore()
 const { saveFeaturesAslayer } = uselayermanager()
+const { exportFeaturesAsGeoJSON } = useLayerExport()
 
 // 图层名称弹窗状态
 const showlayerNameModalRef = ref<boolean>(false)
@@ -252,20 +254,27 @@ const handleSavelayer = async (customlayerName: string) => {
   }
 }
 
-const handleExportJSON = () => {
-  const featureCollection = {
-    type: 'FeatureCollection',
-    features: results.value.map((r: any) => ({ type: 'Feature', geometry: r.geometry, properties: { name: r.name } }))
-  }
-  const blob = new Blob([JSON.stringify(featureCollection)], { type: 'application/json;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `intersection_${Date.now()}.geojson`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
+const handleExportJSON = async () => {
+  const features = results.value.map((r: any) => ({ 
+    type: 'Feature', 
+    geometry: r.geometry, 
+    properties: { 
+      name: r.name,
+      id: r.id,
+      createdAt: new Date().toISOString()
+    } 
+  }))
+  
+  await exportFeaturesAsGeoJSON(features, '相交分析结果', {
+    analysisType: 'intersection_analysis',
+    sourceLayer: targetlayerId.value,
+    description: '相交分析生成的要素结果',
+    parameters: {
+      targetLayer: targetlayerId.value,
+      maskLayer: masklayerId.value,
+      resultCount: results.value.length
+    }
+  })
 }
 </script>
 

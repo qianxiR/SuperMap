@@ -147,7 +147,7 @@
             @click="showlayerNameModal"
           />
           <SecondaryButton 
-            text="导出 GeoJSON"
+            text="导出为GeoJSON"
             @click="exportGeoJSON"
           />
         </div>
@@ -173,6 +173,7 @@ import { useAnalysisStore } from '@/stores/analysisStore'
 import { useMapStore } from '@/stores/mapStore'
 import { useBufferAnalysis } from '@/composables/useBufferAnalysis'
 import { uselayermanager } from '@/composables/uselayermanager'
+import { useLayerExport } from '@/composables/useLayerExport'
 import { useAreaSelectionStore } from '@/stores/areaSelectionStore'
 import PrimaryButton from '@/components/UI/PrimaryButton.vue'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
@@ -180,7 +181,7 @@ import TraditionalInputGroup from '@/components/UI/TraditionalInputGroup.vue'
 import DropdownSelect from '@/components/UI/DropdownSelect.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import TipWindow from '@/components/UI/TipWindow.vue'
-import layerNameModal from '@/components/UI/layerNameModal.vue'
+import layerNameModal from '@/components/UI/LayerNameModal.vue'
 
 const analysisStore = useAnalysisStore()
 const mapStore = useMapStore()
@@ -206,6 +207,9 @@ const {
 
 // 使用图层管理 hook
 const { saveFeaturesAslayer } = uselayermanager()
+
+// 使用图层导出 hook
+const { exportFeaturesAsGeoJSON } = useLayerExport()
 
 // 图层名称弹窗状态
 const showlayerNameModalRef = ref<boolean>(false)
@@ -264,7 +268,7 @@ const clearResults = () => {
   analysisStore.setAnalysisStatus('已清除缓冲区分析结果')
 }
 
-// 导出 GeoJSON
+// 导出为GeoJSON
 const exportGeoJSON = async () => {
   if (!bufferResults.value || bufferResults.value.length === 0) {
     analysisStore.setAnalysisStatus('没有可导出的结果')
@@ -328,28 +332,18 @@ const exportGeoJSON = async () => {
     
     console.log(`[Export] 总共导出 ${allFeatures.length} 个要素`)
     
-    const geoJSON = {
-      type: 'FeatureCollection',
-      features: allFeatures
-    }
-    
-    const blob = new Blob([JSON.stringify(geoJSON, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    // 文件名：buffer_analysis_结果_执行时间（时分秒）
-    const now = new Date()
-    const hh = String(now.getHours()).padStart(2, '0')
-    const mm = String(now.getMinutes()).padStart(2, '0')
-    const ss = String(now.getSeconds()).padStart(2, '0')
-    a.download = `buffer_analysis_结果_${hh}${mm}${ss}.geojson`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    await exportFeaturesAsGeoJSON(allFeatures, '缓冲区分析结果', {
+      analysisType: 'buffer_analysis',
+      sourceLayer: selectedAnalysislayerInfo.value?.name,
+      description: '缓冲区分析生成的要素结果',
+      parameters: {
+        radius: bufferSettings.value.radius,
+        semicircleLineSegment: bufferSettings.value.semicircleLineSegment,
+        resultCount: bufferResults.value.length
+      }
+    })
     
     analysisStore.setAnalysisStatus('GeoJSON 文件已导出')
-
     
   } catch (error) {
     analysisStore.setAnalysisStatus(`导出失败: ${error instanceof Error ? error.message : '未知错误'}`)

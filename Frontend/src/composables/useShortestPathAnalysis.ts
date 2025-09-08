@@ -1,6 +1,7 @@
 import { ref, computed, toRefs } from 'vue'
 import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
+import { useLayerExport } from '@/composables/useLayerExport'
 import { useShortestPathAnalysisStore } from '@/stores/shortestPathAnalysisStore'
 import { uselayermanager } from '@/composables/uselayermanager'
 import { getAnalysisServiceConfig } from '@/api/config'
@@ -50,6 +51,7 @@ export function useShortestPathAnalysis() {
   const analysisStore = useAnalysisStore()
   const shortestPathStore = useShortestPathAnalysisStore()
   const { saveFeaturesAslayer } = uselayermanager()
+  const { exportFeaturesAsGeoJSON } = useLayerExport()
   
   // 从 store 获取状态
   const {
@@ -312,9 +314,9 @@ export function useShortestPathAnalysis() {
     })
   }
   
-  // ===== 导出为JSON方法 =====
+  // ===== 导出为GeoJSON方法 =====
   
-  const exportGeoJSON = () => {
+  const exportGeoJSON = async () => {
     const allFeatures: any[] = []
     
     // 添加路径要素
@@ -375,20 +377,16 @@ export function useShortestPathAnalysis() {
       }
     }
     
-    const geoJSON = {
-      type: 'FeatureCollection',
-      features: allFeatures
-    }
-    
-    const blob = new Blob([JSON.stringify(geoJSON, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `shortest_path_analysis_${new Date().toISOString().slice(0, 10)}.geojson`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    await exportFeaturesAsGeoJSON(allFeatures, '最短路径分析结果', {
+      analysisType: 'shortest_path_analysis',
+      description: '最短路径分析生成的路径和起终点要素',
+      parameters: {
+        pathCount: state.analysisResults.length,
+        hasStartPoint: !!state.startPoint,
+        hasEndPoint: !!state.endPoint,
+        units: state.analysisOptions.units
+      }
+    })
   }
   
   // ===== 地图交互功能 =====

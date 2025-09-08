@@ -58,7 +58,7 @@
           :disabled="selectedFeatures.length === 0"
         />
         <SecondaryButton 
-          text="导出 GeoJSON"
+          text="导出为GeoJSON"
           @click="exportSelectedAsGeoJSON"
           :disabled="selectedFeatures.length === 0"
         />
@@ -95,11 +95,12 @@ import { useAnalysisStore } from '@/stores/analysisStore'
 import { useMapStore } from '@/stores/mapStore'
 import { useFeatureSelection } from '@/composables/useFeatureSelection'
 import { uselayermanager } from '@/composables/uselayermanager'
+import { useLayerExport } from '@/composables/useLayerExport'
 import { getFeatureCompleteInfo } from '@/utils/featureUtils'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import TipWindow from '@/components/UI/TipWindow.vue'
-import layerNameModal from '@/components/UI/layerNameModal.vue'
+import layerNameModal from '@/components/UI/LayerNameModal.vue'
 
 const analysisStore = useAnalysisStore()
 const mapStore = useMapStore()
@@ -120,6 +121,9 @@ const {
 
 // 使用图层管理 hook
 const { saveFeaturesAslayer } = uselayermanager()
+
+// 使用图层导出 hook
+const { exportFeaturesAsGeoJSON } = useLayerExport()
 
 // 图层名称弹窗状态
 const showlayerNameModalRef = ref<boolean>(false)
@@ -156,30 +160,25 @@ const saveSelectedAslayer = async (customlayerName: string) => {
 }
 
 // 导出区域选择结果为 GeoJSON 文件
-const exportSelectedAsGeoJSON = () => {
+const exportSelectedAsGeoJSON = async () => {
   if (!selectedFeatures.value.length) {
     return
   }
+  
   const ol = (window as any).ol
   const format = new ol.format.GeoJSON()
-  const featureCollection = format.writeFeaturesObject(selectedFeatures.value, {
+  const features = format.writeFeaturesObject(selectedFeatures.value, {
     featureProjection: mapStore.map?.getView()?.getProjection?.(),
     dataProjection: 'EPSG:4326'
   })
 
-  const now = new Date()
-  const hh = String(now.getHours()).padStart(2, '0')
-  const mm = String(now.getMinutes()).padStart(2, '0')
-  const ss = String(now.getSeconds()).padStart(2, '0')
-  const blob = new Blob([JSON.stringify(featureCollection, null, 2)], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `area_selection_结果_${hh}${mm}${ss}.geojson`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
+  await exportFeaturesAsGeoJSON(features.features, '区域选择结果', {
+    analysisType: 'area_selection',
+    description: '按区域选择的要素结果',
+    parameters: {
+      selectionCount: selectedFeatures.value.length
+    }
+  })
 }
 
 // 选中要素的详细信息

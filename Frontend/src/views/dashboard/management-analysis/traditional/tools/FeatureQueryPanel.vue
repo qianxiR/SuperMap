@@ -120,7 +120,7 @@
           :disabled="queryResults.length === 0"
         />
         <SecondaryButton 
-          text="导出 GeoJSON"
+          text="导出为GeoJSON"
           @click="exportQueryResultsAsGeoJSON"
           :disabled="queryResults.length === 0"
         />
@@ -160,13 +160,14 @@ import { useFeatureQueryStore } from '@/stores/featureQueryStore'
 import { useMapStore } from '@/stores/mapStore'
 import { useModeStateStore } from '@/stores/modeStateStore'
 import { uselayermanager } from '@/composables/uselayermanager'
+import { useLayerExport } from '@/composables/useLayerExport'
 import { getFeatureCompleteInfo, getFeatureGeometryDescription } from '@/utils/featureUtils'
 import DropdownSelect from '@/components/UI/DropdownSelect.vue'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import TipWindow from '@/components/UI/TipWindow.vue'
 import QueryConditionRow from '@/components/UI/QueryConditionRow.vue'
-import layerNameModal from '@/components/UI/layerNameModal.vue'
+import layerNameModal from '@/components/UI/LayerNameModal.vue'
 import type { QueryCondition } from '@/types/query'
  
 
@@ -177,6 +178,9 @@ const modeStateStore = useModeStateStore()
 
 // 使用图层管理 hook
 const { saveFeaturesAslayer } = uselayermanager()
+
+// 使用图层导出 hook
+const { exportFeaturesAsGeoJSON } = useLayerExport()
 
 // 生成基于SQL语句的图层名称
 const generatelayerNameFromQuery = () => {
@@ -232,30 +236,24 @@ const saveQueryResultsAslayer = async (customlayerName: string) => {
 }
  
 // 导出查询结果为 GeoJSON 文件
-const exportQueryResultsAsGeoJSON = () => {
+const exportQueryResultsAsGeoJSON = async () => {
   if (!queryResults.value.length) {
     return
   }
+  
   const ol = (window as any).ol
   const format = new ol.format.GeoJSON()
-  const featureCollection = format.writeFeaturesObject(queryResults.value, {
+  const features = format.writeFeaturesObject(queryResults.value, {
     featureProjection: mapStore.map?.getView()?.getProjection?.(),
     dataProjection: 'EPSG:4326'
   })
 
-  const now = new Date()
-  const hh = String(now.getHours()).padStart(2, '0')
-  const mm = String(now.getMinutes()).padStart(2, '0')
-  const ss = String(now.getSeconds()).padStart(2, '0')
-  const blob = new Blob([JSON.stringify(featureCollection, null, 2)], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `attribute_query_结果_${hh}${mm}${ss}.geojson`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
+  await exportFeaturesAsGeoJSON(features.features, '属性查询结果', {
+    analysisType: 'attribute_query',
+    sourceLayer: selectedlayerId.value,
+    description: '按属性查询的要素结果',
+    parameters: queryConfig.value.condition
+  })
 }
  
 

@@ -99,7 +99,7 @@
         
         <SecondaryButton 
           v-if="currentResult"
-          text="导出为json"
+          text="导出为GeoJSON"
           @click="exportGeoJSON"
         />
 
