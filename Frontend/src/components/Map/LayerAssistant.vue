@@ -116,6 +116,18 @@
         <circle cx="15" cy="15" r="1" fill="currentColor"/>
       </svg>
     </button>
+    
+    <!-- 清除绘制内容按钮 - 仅在绘制模式下显示 -->
+    <button 
+      v-if="currentDrawType && currentDrawType !== 'None'"
+      @click="clearDrawFeatures" 
+      class="assistant-btn clear-btn"
+      title="清除绘制内容"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+      </svg>
+    </button>
   </div>
 
 
@@ -404,9 +416,10 @@ const updateDrawlayerStyle = () => {
 const initDrawlayer = () => {
   console.log('开始初始化绘制图层...')
   console.log('地图实例:', mapStore.map)
+  console.log('地图准备状态:', mapStore.isMapReady)
   
-  if (!mapStore.map) {
-    console.warn('地图实例未准备好，延迟重试...')
+  if (!mapStore.map || !mapStore.isMapReady) {
+    console.warn('地图实例未准备好或未就绪，延迟重试...')
     setTimeout(initDrawlayer, 1000)
     return
   }
@@ -470,10 +483,11 @@ const initDrawlayer = () => {
 const startDraw = (type: 'Point' | 'LineString' | 'Polygon') => {
   console.log('开始绘制，类型:', type)
   console.log('地图实例:', mapStore.map)
+  console.log('地图准备状态:', mapStore.isMapReady)
   console.log('绘制数据源:', drawSource.value)
   
-  if (!mapStore.map) {
-    console.error('地图实例未准备好')
+  if (!mapStore.map || !mapStore.isMapReady) {
+    console.error('地图实例未准备好或未就绪')
     return
   }
   
@@ -486,7 +500,13 @@ const startDraw = (type: 'Point' | 'LineString' | 'Polygon') => {
   if (!drawSource.value) {
     console.error('绘制数据源未初始化，重新初始化...')
     initDrawlayer()
-    setTimeout(() => startDraw(type), 100)
+    setTimeout(() => {
+      if (drawSource.value) {
+        startDraw(type)
+      } else {
+        console.error('绘制数据源初始化失败，无法启动绘制')
+      }
+    }, 500)
     return
   }
   
@@ -652,8 +672,18 @@ const cleanupDrawlayer = () => {
 onMounted(() => {
   console.log('layerAssistant组件已挂载')
   
-  // 直接初始化，不等待地图准备
-  initDrawlayer()
+  // 等待地图准备就绪后再初始化绘制图层
+  const checkMapReady = () => {
+    if (mapStore.map && mapStore.isMapReady) {
+      console.log('地图已准备就绪，开始初始化绘制图层')
+      initDrawlayer()
+    } else {
+      console.log('地图未准备就绪，延迟重试...')
+      setTimeout(checkMapReady, 500)
+    }
+  }
+  
+  checkMapReady()
 })
 
 // 组件卸载时清理

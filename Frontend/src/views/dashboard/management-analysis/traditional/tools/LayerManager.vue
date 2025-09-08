@@ -59,7 +59,19 @@
                 :class="{ 'active': selectedlayerKey === item.key }"
                 @click="selectlayer(item.key)"
                 @toggle-visibility="handleToggleVisibility(item)"
-              />
+              >
+                <template #controls>
+                  <button 
+                    class="control-btn delete-btn"
+                    @click="handleRemove(item)"
+                    :title="`删除图层: ${item.displayName}`"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                  </button>
+                </template>
+              </LayerItem>
             </div>
           </div>
         </div>
@@ -85,7 +97,19 @@
                 :class="{ 'active': selectedlayerKey === item.key }"
                 @click="selectlayer(item.key)"
                 @toggle-visibility="handleToggleVisibility(item)"
-              />
+              >
+                <template #controls>
+                  <button 
+                    class="control-btn delete-btn"
+                    @click="handleRemove(item)"
+                    :title="`删除图层: ${item.displayName}`"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                  </button>
+                </template>
+              </LayerItem>
             </div>
           </div>
         </div>
@@ -111,12 +135,36 @@
                 :class="{ 'active': selectedlayerKey === item.key }"
                 @click="selectlayer(item.key)"
                 @toggle-visibility="handleToggleVisibility(item)"
-              />
+              >
+                <template #controls>
+                  <button 
+                    class="control-btn delete-btn"
+                    @click="handleRemove(item)"
+                    :title="`删除图层: ${item.displayName}`"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                  </button>
+                </template>
+              </LayerItem>
             </div>
           </div>
         </div>
       </div>
     </div>
+    
+    <!-- 删除确认对话框 -->
+    <ConfirmDialog
+      :visible="deleteDialog.visible"
+      :title="deleteDialog.title"
+      :message="deleteDialog.message"
+      confirm-text="确定移除"
+      cancel-text="取消"
+      @confirm="handleConfirmRemove"
+      @cancel="handleCancelRemove"
+      @close="handleCancelRemove"
+    />
   </PanelWindow>
 </template>
 
@@ -127,6 +175,7 @@ import { useAnalysisStore } from '@/stores/analysisStore'
 import { uselayermanager } from '@/composables/uselayermanager'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import LayerItem from '@/components/UI/LayerItem.vue'
+import ConfirmDialog from '@/components/UI/ConfirmDialog.vue'
 
 interface MaplayerItem {
   key: string;
@@ -139,10 +188,18 @@ interface MaplayerItem {
 
 const mapStore = useMapStore()
 const analysisStore = useAnalysisStore()
-const { togglelayerVisibility } = uselayermanager()
+const { togglelayerVisibility, removeLayer } = uselayermanager()
 
 // 选中图层状态
 const selectedlayerKey = ref<string>('')
+
+// 删除确认对话框
+const deleteDialog = ref({
+  visible: false,
+  title: '',
+  message: '',
+  layerId: ''
+})
 
 // 选择图层
 const selectlayer = (layerKey: string) => {
@@ -227,6 +284,27 @@ const alllayers = computed(() => {
 
 const handleToggleVisibility = (item: MaplayerItem) => {
   togglelayerVisibility(item.key)
+}
+
+// 处理图层删除
+const handleRemove = (item: MaplayerItem) => {
+  deleteDialog.value = {
+    visible: true,
+    title: '删除图层',
+    message: `确定要删除图层"${item.displayName}"吗？此操作不可撤销。`,
+    layerId: item.key
+  }
+}
+
+// 处理删除确认
+const handleConfirmRemove = () => {
+  removeLayer(deleteDialog.value.layerId)
+  deleteDialog.value.visible = false
+}
+
+// 处理删除取消
+const handleCancelRemove = () => {
+  deleteDialog.value.visible = false
 }
 </script>
 
@@ -397,6 +475,29 @@ const handleToggleVisibility = (item: MaplayerItem) => {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.control-btn {
+  font-size: 10px;
+  padding: 4px 8px;
+  min-width: auto;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-btn {
+  background: var(--btn-danger-bg);
+  color: var(--btn-danger-color);
+}
+
+.delete-btn:hover {
+  background: var(--btn-danger-hover-bg);
+  color: var(--btn-danger-hover-color);
 }
 /* 滚动条样式 */
 .layer-list::-webkit-scrollbar,

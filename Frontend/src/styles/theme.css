@@ -78,6 +78,12 @@
   --error-color: #dc3545;
   --primary-color: #0078D4;
   --primary-color-rgb: 0, 120, 212;
+  
+  /* ===== 按钮危险操作颜色 ===== */
+  --btn-danger-bg: #dc3545;
+  --btn-danger-color: #ffffff;
+  --btn-danger-hover-bg: #c82333;
+  --btn-danger-hover-color: #ffffff;
 }
 
 /* Fluid root font-size for responsive scaling */
@@ -127,6 +133,12 @@ html {
   --primary-color-rgb: 0, 120, 212;
   --scrollbar-thumb: rgba(255, 255, 255, 0.3);
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.5);
+  
+  /* ===== 按钮危险操作颜色 - 深色模式 ===== */
+  --btn-danger-bg: #dc3545;
+  --btn-danger-color: #ffffff;
+  --btn-danger-hover-bg: #c82333;
+  --btn-danger-hover-color: #ffffff;
   
   /* ===== 地图相关颜色 ===== */
   --map-hover-fill: rgba(255, 255, 255, 0.06);
