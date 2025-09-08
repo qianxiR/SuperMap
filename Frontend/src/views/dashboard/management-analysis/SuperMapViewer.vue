@@ -34,10 +34,18 @@ import AreaMeasurePanel from '@/components/Map/AreaMeasurePanel.vue'
 // 组合式函数
 const { mapContainer, initMap, cleanup } = useMap()
 const mapStore = useMapStore()
+
+// 导入新的状态管理
+import { usePageStateStore } from '@/stores/pageStateStore'
+const pageStateStore = usePageStateStore()
+
 let resizeObserver: ResizeObserver | null = null
 
 // 生命周期
 onMounted(() => {
+  // 设置当前页面为管理页面
+  pageStateStore.switchToPage('manage')
+  
   // 确保外部库已加载
   if (window.ol && window.ol.supermap) {
     initMap()

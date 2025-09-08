@@ -117,8 +117,8 @@
     />
 
     <!-- 图层名称弹窗 -->
-    <layerNameModal
-      :visible="showlayerNameModal"
+    <LayerNameModal
+      :visible="showLayerNameModal"
       :defaultName="defaultlayerName"
       title="设置图层名称"
       placeholder="请输入图层名称"
@@ -136,7 +136,7 @@ import { useDataUpload } from '@/composables/useDataUpload'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import DataUploadModal from '@/components/UI/DataUploadModal.vue'
-import layerNameModal from '@/components/UI/layerNameModal.vue'
+import LayerNameModal from '@/components/UI/LayerNameModal.vue'
 
 const analysisStore = useAnalysisStore()
 
@@ -145,7 +145,7 @@ const {
   isUploading,
   uploadProgress,
   showUploadModal,
-  showlayerNameModal,
+  showLayerNameModal,
   defaultlayerName,
   openUploadModal,
   closeUploadModal,

@@ -7,8 +7,6 @@ import { useShortestPathAnalysisStore } from '@/stores/shortestPathAnalysisStore
 import { superMapClient } from '@/api/supermap'
 import { handleError, notificationManager } from '@/utils/notification'
 import { getCurrentBaseMapUrl } from '@/utils/config'
-
-// 导入拆分后的模块
 import { useMapStyles } from './useMapStyles'
 import { useMapData } from './useMapData'
 import { useMapInteraction } from './useMapInteraction'
@@ -46,33 +44,41 @@ export function useMap() {
   const mapLifecycle = useMapLifecycle()
 
   /**
-   * 全局状态清理函数
-   * 在地图初始化前调用，清理所有相关状态和图层
+   * 状态清理函数
+   * 页面切换时直接全部清理，简化逻辑
    */
-  const clearAllStatesAndLayers = (): void => {
-    
-    // 1. 清理图层数据（SuperMap服务图层 + 本地图层）
-    mapData.clearAllLayersBeforeInit()
-    
-    // 2. 清理选择状态
-    selectionStore.clearSelection()
-    
-    // 3. 清理分析状态
-    analysisStore.closeTool()
-    analysisStore.setDrawMode('')
-    
-    // 4. 清理最短路径分析状态
-    shortestPathStore.clearAll()
-    
-    // 5. 清理地图量测状态
-    if (mapStore.distanceMeasureMode) {
-      mapStore.clearDistanceMeasure()
+  const clearAllStates = async (): Promise<void> => {
+    try {
+      console.log('执行页面切换状态清理')
+      
+      // 1. 清理SuperMap服务图层
+      mapStore.clearSuperMapLayers()
+      
+      // 2. 清理选择状态
+      selectionStore.clearSelection()
+      
+      // 3. 清理分析状态
+      analysisStore.closeTool()
+      analysisStore.setDrawMode('')
+      
+      // 4. 清理最短路径分析状态
+      shortestPathStore.clearAll()
+      
+      // 5. 清理地图量测状态
+      if (mapStore.distanceMeasureMode) {
+        mapStore.clearDistanceMeasure()
+      }
+      if (mapStore.areaMeasureMode) {
+        mapStore.clearAreaMeasure()
+      }
+      
+      console.log('页面切换状态清理完成')
+      
+    } catch (error) {
+      console.error('状态清理失败:', error)
+      // 降级到基本清理
+      selectionStore.clearSelection()
     }
-    
-    if (mapStore.areaMeasureMode) {
-      mapStore.clearAreaMeasure()
-    }
-    
   }
 
   /**
@@ -91,7 +97,7 @@ export function useMap() {
       
       // ===== 0. 全局状态和图层清理 =====
       loadingStore.updateLoading('map-init', '正在清理旧数据...')
-      clearAllStatesAndLayers()
+      await clearAllStates()
       
       // ===== 1. 服务健康检查 =====
       const healthCheck = await superMapClient.checkServiceHealth()

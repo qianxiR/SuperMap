@@ -33,10 +33,12 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { onMounted, onUnmounted, ref, watch, computed } from 'vue'
 import { useMap } from '@/composables/useMap'
 import { useMapStore } from '@/stores/mapStore'
 import { useGlobalModalStore } from '@/stores/modalStore'
+import { useLayerUIStore } from '@/stores/layerUIStore'
+import { usePageStateStore } from '@/stores/pageStateStore'
 import DashboardViewHeader from '@/views/dashboard/ViewPage/layout/DashboardViewHeader.vue'
 import UserProfile from '@/views/dashboard/management-analysis/profile/UserProfile.vue'
 import AIManagement from '@/views/dashboard/management-analysis/management/AIManagement.vue'
@@ -53,23 +55,26 @@ import AreaMeasurePanel from '@/components/Map/AreaMeasurePanel.vue'
 const { mapContainer, initMap, cleanup } = useMap()
 const mapStore = useMapStore()
 const globalModal = useGlobalModalStore()
+const layerUIStore = useLayerUIStore()
+const pageStateStore = usePageStateStore()
+
 let resizeObserver: ResizeObserver | null = null
 let openLayerManagerHandler: (() => void) | null = null
 
-// 图层管理相关状态
+// 图层管理相关状态 - 使用Pinia管理
 const layerAssistant = ref()
-const layerManagerVisible = ref(false)
+const layerManagerVisible = computed(() => layerUIStore.layerManagerVisible)
 
 // 监听LayerAssistant的图层管理按钮状态
 watch(() => layerAssistant.value?.layerManagerVisible, (newVal) => {
   if (newVal !== undefined) {
-    layerManagerVisible.value = newVal
+    layerUIStore.layerManagerVisible = newVal
   }
 }, { deep: true })
 
 // 处理图层管理器关闭
 const handleLayerManagerClose = () => {
-  layerManagerVisible.value = false
+  layerUIStore.hideLayerManager()
   if (layerAssistant.value) {
     layerAssistant.value.layerManagerVisible = false
   }
@@ -87,11 +92,14 @@ onMounted(() => {
 
   // 监听来自Header的打开图层管理事件
   openLayerManagerHandler = () => {
-    layerManagerVisible.value = true
+    layerUIStore.showLayerManager()
     if (layerAssistant.value) {
       layerAssistant.value.layerManagerVisible = true
     }
   }
+  
+  // 设置当前页面为视图页面
+  pageStateStore.switchToPage('view')
   
   window.addEventListener('openLayerManager', openLayerManagerHandler)
 

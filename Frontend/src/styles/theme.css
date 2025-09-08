@@ -52,9 +52,65 @@
   --analysis-color: #0078D4;
   --analysis-rgb: 0, 120, 212;
   
+  /* ===== 绘制图层样式配置 - 浅色模式 ===== */
+  --draw-stroke-color: #0078D4;
+  --draw-stroke-width: 2;
+  --draw-fill-opacity: 0.3;
+  --draw-point-radius: 6;
+  --draw-point-stroke-width: 2;
+  
+  /* ===== 区域选择图层样式配置 - 浅色模式 ===== */
+  --area-stroke-color: #0078D4;
+  --area-stroke-width: 2;
+  --area-fill-opacity: 0.3;
+  --area-point-radius: 6;
+  --area-point-stroke-width: 2;
+  
+  /* ===== 查询结果图层样式配置 - 浅色模式 ===== */
+  --query-stroke-color: #0078D4;
+  --query-stroke-width: 2;
+  --query-fill-opacity: 0.3;
+  --query-point-radius: 6;
+  --query-point-stroke-width: 2;
+  
+  /* ===== 缓冲区分析图层样式配置 - 浅色模式 ===== */
+  --buffer-stroke-color: #0078D4;
+  --buffer-stroke-width: 3;
+  --buffer-fill-opacity: 0.3;
+  --buffer-point-radius: 6;
+  --buffer-point-stroke-width: 2;
+  
+  /* ===== 相交分析图层样式配置 - 浅色模式 ===== */
+  --intersect-stroke-color: #0078D4;
+  --intersect-stroke-width: 3;
+  --intersect-fill-opacity: 0.3;
+  --intersect-point-radius: 6;
+  --intersect-point-stroke-width: 2;
+  
+  /* ===== 擦除分析图层样式配置 - 浅色模式 ===== */
+  --erase-stroke-color: #0078D4;
+  --erase-stroke-width: 3;
+  --erase-fill-opacity: 0.3;
+  --erase-point-radius: 6;
+  --erase-point-stroke-width: 2;
+  
+  /* ===== 路径分析图层样式配置 - 浅色模式 ===== */
+  --path-stroke-color: #0078D4;
+  --path-stroke-width: 4;
+  --path-fill-opacity: 0.3;
+  --path-point-radius: 8;
+  --path-point-stroke-width: 2;
+  
   /* ===== 上传图层颜色 - 浅色模式 ===== */
   --upload-color: #212529;
   --upload-rgb: 33, 37, 41;
+  
+  /* ===== 上传图层样式配置 - 浅色模式 ===== */
+  --upload-stroke-color: #212529;
+  --upload-stroke-width: 3;
+  --upload-fill-opacity: 0.3;
+  --upload-point-radius: 6;
+  --upload-point-stroke-width: 2;
 
   /* ===== 弹窗颜色 ===== */
   --field-label-color: #6c757d;
@@ -84,6 +140,14 @@
   --btn-danger-color: #ffffff;
   --btn-danger-hover-bg: #c82333;
   --btn-danger-hover-color: #ffffff;
+  
+  /* ===== UI组件专用颜色 ===== */
+  --ui-overlay-bg: rgba(0, 0, 0, 0.5);
+  --ui-shadow-light: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --ui-shadow-medium: 0 8px 32px rgba(0, 0, 0, 0.15);
+  --ui-shadow-heavy: 0 20px 60px rgba(0, 0, 0, 0.3);
+  --ui-focus-ring: 0 0 0 2px rgba(var(--accent-rgb), 0.1);
+  --ui-backdrop-blur: blur(10px);
 }
 
 /* Fluid root font-size for responsive scaling */
@@ -140,6 +204,14 @@ html {
   --btn-danger-hover-bg: #c82333;
   --btn-danger-hover-color: #ffffff;
   
+  /* ===== UI组件专用颜色 - 深色模式 ===== */
+  --ui-overlay-bg: rgba(0, 0, 0, 0.7);
+  --ui-shadow-light: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --ui-shadow-medium: 0 8px 32px rgba(0, 0, 0, 0.6);
+  --ui-shadow-heavy: 0 20px 60px rgba(0, 0, 0, 0.8);
+  --ui-focus-ring: 0 0 0 2px rgba(var(--accent-rgb), 0.2);
+  --ui-backdrop-blur: blur(10px);
+  
   /* ===== 地图相关颜色 ===== */
   --map-hover-fill: rgba(255, 255, 255, 0.06);
   --map-select-fill: rgba(255, 255, 255, 0.15);
@@ -159,9 +231,65 @@ html {
   --analysis-color: #0078D4;
   --analysis-rgb: 0, 120, 212;
   
+  /* ===== 绘制图层样式配置 - 深色模式 ===== */
+  --draw-stroke-color: #0078D4;
+  --draw-stroke-width: 2;
+  --draw-fill-opacity: 0.3;
+  --draw-point-radius: 6;
+  --draw-point-stroke-width: 2;
+  
+  /* ===== 区域选择图层样式配置 - 深色模式 ===== */
+  --area-stroke-color: #0078D4;
+  --area-stroke-width: 2;
+  --area-fill-opacity: 0.3;
+  --area-point-radius: 6;
+  --area-point-stroke-width: 2;
+  
+  /* ===== 查询结果图层样式配置 - 深色模式 ===== */
+  --query-stroke-color: #0078D4;
+  --query-stroke-width: 2;
+  --query-fill-opacity: 0.3;
+  --query-point-radius: 6;
+  --query-point-stroke-width: 2;
+  
+  /* ===== 缓冲区分析图层样式配置 - 深色模式 ===== */
+  --buffer-stroke-color: #0078D4;
+  --buffer-stroke-width: 3;
+  --buffer-fill-opacity: 0.3;
+  --buffer-point-radius: 6;
+  --buffer-point-stroke-width: 2;
+  
+  /* ===== 相交分析图层样式配置 - 深色模式 ===== */
+  --intersect-stroke-color: #0078D4;
+  --intersect-stroke-width: 3;
+  --intersect-fill-opacity: 0.3;
+  --intersect-point-radius: 6;
+  --intersect-point-stroke-width: 2;
+  
+  /* ===== 擦除分析图层样式配置 - 深色模式 ===== */
+  --erase-stroke-color: #0078D4;
+  --erase-stroke-width: 3;
+  --erase-fill-opacity: 0.3;
+  --erase-point-radius: 6;
+  --erase-point-stroke-width: 2;
+  
+  /* ===== 路径分析图层样式配置 - 深色模式 ===== */
+  --path-stroke-color: #0078D4;
+  --path-stroke-width: 4;
+  --path-fill-opacity: 0.3;
+  --path-point-radius: 8;
+  --path-point-stroke-width: 2;
+  
   /* ===== 上传图层颜色 - 深色模式 ===== */
   --upload-color: #ffffff;
   --upload-rgb: 255, 255, 255;
+  
+  /* ===== 上传图层样式配置 - 深色模式 ===== */
+  --upload-stroke-color: #ffffff;
+  --upload-stroke-width: 3;
+  --upload-fill-opacity: 0.3;
+  --upload-point-radius: 6;
+  --upload-point-stroke-width: 2;
 
   /* ===== 弹窗颜色 ===== */
   --field-label-color: #cccccc;
@@ -412,6 +540,100 @@ html {
   background: var(--btn-secondary-bg);
   color: var(--btn-secondary-color);
   border: 1px solid var(--border);
+}
+
+/* ===== UI组件通用样式类 ===== */
+.ui-overlay {
+  background: var(--ui-overlay-bg);
+}
+
+.ui-shadow-light {
+  box-shadow: var(--ui-shadow-light);
+}
+
+.ui-shadow-medium {
+  box-shadow: var(--ui-shadow-medium);
+}
+
+.ui-shadow-heavy {
+  box-shadow: var(--ui-shadow-heavy);
+}
+
+.ui-focus-ring {
+  box-shadow: var(--ui-focus-ring);
+}
+
+.ui-backdrop-blur {
+  backdrop-filter: var(--ui-backdrop-blur);
+}
+
+/* ===== 按钮通用样式 ===== */
+.btn-base {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: "Segoe UI", PingFang SC, Microsoft YaHei, Arial, sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.btn-base:focus {
+  box-shadow: var(--ui-focus-ring);
+}
+
+.btn-base:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ===== 输入框通用样式 ===== */
+.input-base {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: inherit;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.input-base:focus {
+  border-color: var(--accent);
+  box-shadow: var(--ui-focus-ring);
+}
+
+.input-base:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--surface-hover);
+}
+
+/* ===== 面板通用样式 ===== */
+.panel-base {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--glow);
+}
+
+/* ===== 滚动条通用样式 ===== */
+.scrollbar-base::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-base::-webkit-scrollbar-track {
+  background: var(--scrollbar-track, rgba(200, 200, 200, 0.1));
+  border-radius: 3px;
+}
+
+.scrollbar-base::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb, rgba(150, 150, 150, 0.3));
+  border-radius: 3px;
+}
+
+.scrollbar-base::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover, rgba(150, 150, 150, 0.5));
 }
 
 /* Openlayers controls theme */

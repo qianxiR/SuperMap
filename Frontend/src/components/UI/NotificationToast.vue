@@ -94,7 +94,7 @@ defineExpose({
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--ui-shadow-medium);
   padding: 16px;
   min-width: 300px;
   max-width: 400px;
@@ -102,7 +102,7 @@ defineExpose({
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  backdrop-filter: blur(10px);
+  backdrop-filter: var(--ui-backdrop-blur);
   border-left: 4px solid var(--accent);
   font-family: "Segoe UI", PingFang SC, Microsoft YaHei, Arial, sans-serif;
 }

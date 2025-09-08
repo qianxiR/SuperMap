@@ -27,31 +27,49 @@ export function useMapStyles() {
     const css = getComputedStyle(document.documentElement)
     
     /**
-     * 创建统一的红色主题样式
+     * 创建基于CSS变量的图层样式
      * 支持主题切换，自动适配浅色/深色模式
      */
-    const createRedStyle = (colorVar: string, strokeWidth: number) => {
-      const color = css.getPropertyValue(`--${colorVar}-color`).trim() || 
-                   css.getPropertyValue('--accent').trim() || 
-                   (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000')
-      const rgb = css.getPropertyValue(`--${colorVar}-rgb`).trim() || '0, 0, 0'
+    const createStyleFromCSS = (prefix: string) => {
+      const strokeColor = css.getPropertyValue(`--${prefix}-stroke-color`).trim() || 
+                         css.getPropertyValue('--accent').trim() || 
+                         (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000')
+      const strokeWidth = parseInt(css.getPropertyValue(`--${prefix}-stroke-width`).trim()) || 2
+      const fillOpacity = parseFloat(css.getPropertyValue(`--${prefix}-fill-opacity`).trim()) || 0.3
+      const pointRadius = parseInt(css.getPropertyValue(`--${prefix}-point-radius`).trim()) || 6
+      const pointStrokeWidth = parseInt(css.getPropertyValue(`--${prefix}-point-stroke-width`).trim()) || 2
+      
+      // 解析RGB值用于填充透明度
+      const rgbMatch = strokeColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/)
+      let fillColor = `rgba(0, 0, 0, ${fillOpacity})`
+      
+      if (rgbMatch) {
+        fillColor = `rgba(${rgbMatch[1]}, ${rgbMatch[2]}, ${rgbMatch[3]}, ${fillOpacity})`
+      } else if (strokeColor.startsWith('#')) {
+        // 处理十六进制颜色
+        const hex = strokeColor.replace('#', '')
+        const r = parseInt(hex.substr(0, 2), 16)
+        const g = parseInt(hex.substr(2, 2), 16)
+        const b = parseInt(hex.substr(4, 2), 16)
+        fillColor = `rgba(${r}, ${g}, ${b}, ${fillOpacity})`
+      }
       
       return new ol.style.Style({
         stroke: new ol.style.Stroke({
-          color: color,
+          color: strokeColor,
           width: strokeWidth
         }),
         fill: new ol.style.Fill({
-          color: `rgba(${rgb}, 0.3)`
+          color: fillColor
         }),
         image: new ol.style.Circle({
-          radius: 6,
+          radius: pointRadius,
           fill: new ol.style.Fill({
-            color: color
+            color: strokeColor
           }),
           stroke: new ol.style.Stroke({
             color: css.getPropertyValue('--panel').trim() || '#ffffff',
-            width: 2
+            width: pointStrokeWidth
           })
         })
       })
@@ -60,41 +78,23 @@ export function useMapStyles() {
     // 根据图层来源类型返回对应样式
     switch (sourceType) {
       case 'draw':      // 绘制图层
-        return createRedStyle('draw', 2)
+        return createStyleFromCSS('draw')
       case 'area':      // 区域选择图层
-        return createRedStyle('analysis', 2)
+        return createStyleFromCSS('area')
       case 'query':     // 查询结果图层
-        return createRedStyle('analysis', 2)
+        return createStyleFromCSS('query')
       case 'buffer':    // 缓冲区分析图层
-        return createRedStyle('analysis', 3)
+        return createStyleFromCSS('buffer')
       case 'upload':    // 上传图层
-        return createRedStyle('upload', 3)
-      case 'path':      // 路径分析图层（使用蓝色主题）
-        return new ol.style.Style({
-          stroke: new ol.style.Stroke({
-            color: '#0078D4',
-            width: 4
-          }),
-          fill: new ol.style.Fill({
-            color: '#0078D44D' // 蓝色，70%透明度
-          }),
-          image: new ol.style.Circle({
-            radius: 8,
-            fill: new ol.style.Fill({
-              color: '#0078D4'
-            }),
-            stroke: new ol.style.Stroke({
-              color: css.getPropertyValue('--panel').trim() || '#ffffff',
-              width: 2
-            })
-          })
-        })
+        return createStyleFromCSS('upload')
+      case 'path':      // 路径分析图层
+        return createStyleFromCSS('path')
       case 'intersect': // 相交分析图层
-        return createRedStyle('analysis', 3)
+        return createStyleFromCSS('intersect')
       case 'erase':     // 擦除分析图层
-        return createRedStyle('analysis', 3)
+        return createStyleFromCSS('erase')
       default:          // 默认分析图层
-        return createRedStyle('analysis', 2)
+        return createStyleFromCSS('analysis')
     }
   }
 
@@ -424,20 +424,8 @@ export function useMapStyles() {
     // 监听自定义主题变化事件
     window.addEventListener('themeChanged', handleThemeChange)
     
-    // 保留原有的MutationObserver作为备用监听
-    const observer = new MutationObserver(async () => {
-      // 只在没有收到themeChanged事件时才执行
-    });
-    
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['data-theme'],
-      subtree: false
-    });
-    
     return () => {
       window.removeEventListener('themeChanged', handleThemeChange)
-      try { observer.disconnect(); } catch (_) {}
     }
   }
 

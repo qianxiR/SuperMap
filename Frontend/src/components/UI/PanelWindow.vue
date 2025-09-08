@@ -221,6 +221,7 @@ onUnmounted(() => {
   outline: none;
   display: flex;
   flex-direction: column;
+  border-radius: 10px;
   /* 启用GPU加速 */
   will-change: opacity, transform;
   transform: translateZ(0);

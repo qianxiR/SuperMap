@@ -29,7 +29,7 @@ export function useDataUpload() {
   const isUploading = ref<boolean>(false)
   const uploadProgress = ref<number>(0)
   const showUploadModal = ref<boolean>(false)
-  const showlayerNameModal = ref<boolean>(false)
+  const showLayerNameModal = ref<boolean>(false)
   const defaultlayerName = ref<string>('')
   const pendingUploadData = ref<{files: File[], options: UploadOptions} | null>(null)
   
@@ -60,7 +60,7 @@ export function useDataUpload() {
     
     // 保存上传数据，显示图层名称弹窗
     pendingUploadData.value = { files, options }
-    showlayerNameModal.value = true
+    showLayerNameModal.value = true
     closeUploadModal()
   }
 
@@ -68,7 +68,7 @@ export function useDataUpload() {
   const handlelayerNameConfirm = async (layerName: string) => {
     if (!pendingUploadData.value) return
     
-    showlayerNameModal.value = false
+    showLayerNameModal.value = false
     const { files, options } = pendingUploadData.value
     pendingUploadData.value = null
     
@@ -77,7 +77,7 @@ export function useDataUpload() {
 
   // 处理图层名称弹窗关闭
   const handlelayerNameClose = () => {
-    showlayerNameModal.value = false
+    showLayerNameModal.value = false
     pendingUploadData.value = null
   }
 
@@ -192,7 +192,7 @@ export function useDataUpload() {
     isUploading,
     uploadProgress,
     showUploadModal,
-    showlayerNameModal,
+    showLayerNameModal,
     defaultlayerName,
     
     // Computed

@@ -116,7 +116,7 @@
         />
         <SecondaryButton 
           text="另存为图层"
-          @click="showlayerNameModal"
+          @click="showLayerNameModal"
           :disabled="queryResults.length === 0"
         />
         <SecondaryButton 
@@ -142,8 +142,8 @@
   </PanelWindow>
   
   <!-- 图层名称输入弹窗 -->
-  <layerNameModal
-    :visible="showlayerNameModalRef"
+  <LayerNameModal
+    :visible="showLayerNameModalRef"
     title="保存属性查询结果"
     placeholder="请输入图层名称"
     hint="图层名称将用于在图层管理器中识别此属性查询结果"
@@ -167,7 +167,7 @@ import SecondaryButton from '@/components/UI/SecondaryButton.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import TipWindow from '@/components/UI/TipWindow.vue'
 import QueryConditionRow from '@/components/UI/QueryConditionRow.vue'
-import layerNameModal from '@/components/UI/LayerNameModal.vue'
+import LayerNameModal from '@/components/UI/LayerNameModal.vue'
 import type { QueryCondition } from '@/types/query'
  
 
@@ -202,28 +202,28 @@ const generatelayerNameFromQuery = () => {
 }
 
 // 图层名称弹窗状态
-const showlayerNameModalRef = ref<boolean>(false)
+const showLayerNameModalRef = ref<boolean>(false)
 const defaultlayerName = ref<string>('')
 
 // 显示图层名称输入弹窗
-const showlayerNameModal = () => {
+const showLayerNameModal = () => {
   if (queryResults.value.length === 0) {
     return
   }
   
   defaultlayerName.value = generatelayerNameFromQuery()
-  showlayerNameModalRef.value = true
+  showLayerNameModalRef.value = true
 }
 
 // 处理图层名称确认
 const handlelayerNameConfirm = async (layerName: string) => {
-  showlayerNameModalRef.value = false
+  showLayerNameModalRef.value = false
   await saveQueryResultsAslayer(layerName)
 }
 
 // 处理图层名称弹窗关闭
 const handlelayerNameClose = () => {
-  showlayerNameModalRef.value = false
+  showLayerNameModalRef.value = false
 }
 
 // 保存查询结果为图层

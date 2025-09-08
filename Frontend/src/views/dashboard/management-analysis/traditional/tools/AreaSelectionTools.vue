@@ -54,7 +54,7 @@
         />
         <SecondaryButton 
           text="另存为图层"
-          @click="showlayerNameModal"
+          @click="showLayerNameModal"
           :disabled="selectedFeatures.length === 0"
         />
         <SecondaryButton 
@@ -78,8 +78,8 @@
   </PanelWindow>
   
   <!-- 图层名称输入弹窗 -->
-  <layerNameModal
-    :visible="showlayerNameModalRef"
+  <LayerNameModal
+    :visible="showLayerNameModalRef"
     title="保存区域选择结果"
     placeholder="请输入图层名称"
     hint="图层名称将用于在图层管理器中识别此区域选择结果"
@@ -100,7 +100,7 @@ import { getFeatureCompleteInfo } from '@/utils/featureUtils'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import TipWindow from '@/components/UI/TipWindow.vue'
-import layerNameModal from '@/components/UI/LayerNameModal.vue'
+import LayerNameModal from '@/components/UI/LayerNameModal.vue'
 
 const analysisStore = useAnalysisStore()
 const mapStore = useMapStore()
@@ -126,28 +126,28 @@ const { saveFeaturesAslayer } = uselayermanager()
 const { exportFeaturesAsGeoJSON } = useLayerExport()
 
 // 图层名称弹窗状态
-const showlayerNameModalRef = ref<boolean>(false)
+const showLayerNameModalRef = ref<boolean>(false)
 const defaultlayerName = ref<string>('')
 
 // 显示图层名称输入弹窗
-const showlayerNameModal = () => {
+const showLayerNameModal = () => {
   if (selectedFeatures.value.length === 0) {
     return
   }
   
   defaultlayerName.value = `区域选择`
-  showlayerNameModalRef.value = true
+  showLayerNameModalRef.value = true
 }
 
 // 处理图层名称确认
 const handlelayerNameConfirm = async (layerName: string) => {
-  showlayerNameModalRef.value = false
+  showLayerNameModalRef.value = false
   await saveSelectedAslayer(layerName)
 }
 
 // 处理图层名称弹窗关闭
 const handlelayerNameClose = () => {
-  showlayerNameModalRef.value = false
+  showLayerNameModalRef.value = false
 }
 
 // 保存选中要素为图层

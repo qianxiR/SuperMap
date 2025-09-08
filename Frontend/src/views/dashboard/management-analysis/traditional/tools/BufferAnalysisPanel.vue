@@ -144,7 +144,7 @@
         <div class="button-group">
           <PrimaryButton 
             text="保存为图层"
-            @click="showlayerNameModal"
+            @click="showLayerNameModal"
           />
           <SecondaryButton 
             text="导出为GeoJSON"
@@ -156,8 +156,8 @@
   </PanelWindow>
   
   <!-- 图层名称输入弹窗 -->
-  <layerNameModal
-    :visible="showlayerNameModalRef"
+  <LayerNameModal
+    :visible="showLayerNameModalRef"
     title="保存缓冲区分析结果"
     placeholder="请输入图层名称"
     hint="图层名称将用于在图层管理器中识别此缓冲区分析结果"
@@ -181,7 +181,7 @@ import TraditionalInputGroup from '@/components/UI/TraditionalInputGroup.vue'
 import DropdownSelect from '@/components/UI/DropdownSelect.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import TipWindow from '@/components/UI/TipWindow.vue'
-import layerNameModal from '@/components/UI/LayerNameModal.vue'
+import LayerNameModal from '@/components/UI/LayerNameModal.vue'
 
 const analysisStore = useAnalysisStore()
 const mapStore = useMapStore()
@@ -212,7 +212,7 @@ const { saveFeaturesAslayer } = uselayermanager()
 const { exportFeaturesAsGeoJSON } = useLayerExport()
 
 // 图层名称弹窗状态
-const showlayerNameModalRef = ref<boolean>(false)
+const showLayerNameModalRef = ref<boolean>(false)
 const defaultlayerName = ref<string>('')
 
 // 获取已选择要素信息
@@ -392,25 +392,25 @@ const generatelayerNameFromBuffer = () => {
 }
 
 // 显示图层名称输入弹窗
-const showlayerNameModal = () => {
+const showLayerNameModal = () => {
   if (!bufferResults.value || bufferResults.value.length === 0) {
     analysisStore.setAnalysisStatus('没有可保存的缓冲区结果')
     return
   }
   
   defaultlayerName.value = generatelayerNameFromBuffer()
-  showlayerNameModalRef.value = true
+  showLayerNameModalRef.value = true
 }
 
 // 处理图层名称确认
 const handlelayerNameConfirm = async (layerName: string) => {
-  showlayerNameModalRef.value = false
+  showLayerNameModalRef.value = false
   await saveBufferlayer(layerName)
 }
 
 // 处理图层名称弹窗关闭
 const handlelayerNameClose = () => {
-  showlayerNameModalRef.value = false
+  showLayerNameModalRef.value = false
 }
 
 // 保存缓冲区结果为图层

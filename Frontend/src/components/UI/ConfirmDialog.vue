@@ -82,7 +82,7 @@ watch(() => props.visible, (newVisible) => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--ui-overlay-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -94,7 +94,7 @@ watch(() => props.visible, (newVisible) => {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--ui-shadow-heavy);
   max-width: 400px;
   width: 90%;
   max-height: 90vh;

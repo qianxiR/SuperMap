@@ -146,8 +146,8 @@
   />
 
   <!-- 图层名称输入对话框 -->
-  <layerNameModal
-    :visible="layerNameModalVisible"
+  <LayerNameModal
+    :visible="LayerNameModalVisible"
     title="保存绘制图层"
     placeholder="请输入图层名称"
     :hint="layerNameHint"
@@ -164,7 +164,7 @@ import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { uselayermanager } from '@/composables/uselayermanager'
 import ConfirmDialog from '@/components/UI/ConfirmDialog.vue'
-import layerNameModal from '@/components/UI/LayerNameModal.vue'
+import LayerNameModal from '@/components/UI/LayerNameModal.vue'
 
 const route = useRoute()
 const mapStore = useMapStore()
@@ -192,7 +192,7 @@ const isManagementPage = computed(() => {
 })
 
 // 图层名称输入相关状态
-const layerNameModalVisible = ref(false)
+const LayerNameModalVisible = ref(false)
 const pendingDrawSave = ref<(() => Promise<void>) | null>(null)
 
 // 生成默认图层名称
@@ -590,7 +590,7 @@ const clearDrawFeatures = () => {
         () => {
           // 用户确认保存，显示图层名称输入对话框
           console.log('用户确认保存绘制内容，显示图层名称输入对话框')
-          layerNameModalVisible.value = true
+          LayerNameModalVisible.value = true
         },
         () => {
           // 用户取消，直接清除
@@ -612,7 +612,7 @@ const clearDrawFeatures = () => {
 // 处理图层名称确认
 const handlelayerNameConfirm = async (layerName: string) => {
   console.log('用户输入图层名称:', layerName)
-  layerNameModalVisible.value = false
+  LayerNameModalVisible.value = false
   
   try {
     const success = await layermanager.saveDrawAslayer(layerName)
@@ -630,7 +630,7 @@ const handlelayerNameConfirm = async (layerName: string) => {
 // 处理图层名称输入取消
 const handlelayerNameClose = () => {
   console.log('用户取消图层名称输入')
-  layerNameModalVisible.value = false
+  LayerNameModalVisible.value = false
 }
 
 // 清理绘制图层

@@ -20,6 +20,16 @@
             </button>
             <span class="group-title">SuperMap 服务图层</span>
             <span class="group-count">{{ getLayersBySource('supermap').length }}</span>
+            <button 
+              class="export-btn"
+              @click.stop="handleExportGroup('supermap')"
+              :title="`导出 ${getLayersBySource('supermap').length} 个图层为JSON`"
+              :disabled="getLayersBySource('supermap').length === 0"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+              </svg>
+            </button>
           </div>
           
           <LayerItem
@@ -46,6 +56,16 @@
             </button>
             <span class="group-title">分析及绘制图层</span>
             <span class="group-count">{{ getLayersBySource('draw').length }}</span>
+            <button 
+              class="export-btn"
+              @click.stop="handleExportGroup('draw')"
+              :title="`导出 ${getLayersBySource('draw').length} 个图层为JSON`"
+              :disabled="getLayersBySource('draw').length === 0"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+              </svg>
+            </button>
           </div>
           
           <LayerItem
@@ -84,6 +104,16 @@
             </button>
             <span class="group-title">查询图层</span>
             <span class="group-count">{{ getLayersBySource('query').length }}</span>
+            <button 
+              class="export-btn"
+              @click.stop="handleExportGroup('query')"
+              :title="`导出 ${getLayersBySource('query').length} 个图层为JSON`"
+              :disabled="getLayersBySource('query').length === 0"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+              </svg>
+            </button>
           </div>
           
           <LayerItem
@@ -122,6 +152,16 @@
             </button>
             <span class="group-title">上传图层</span>
             <span class="group-count">{{ getLayersBySource('upload').length }}</span>
+            <button 
+              class="export-btn"
+              @click.stop="handleExportGroup('upload')"
+              :title="`导出 ${getLayersBySource('upload').length} 个图层为JSON`"
+              :disabled="getLayersBySource('upload').length === 0"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+              </svg>
+            </button>
           </div>
           
           <LayerItem
@@ -165,9 +205,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { useMapStore } from '@/stores/mapStore'
+import { useLayerUIStore } from '@/stores/layerUIStore'
 import { uselayermanager } from '@/composables/uselayermanager'
+import { useLayerExport } from '@/composables/useLayerExport'
 import ConfirmDialog from '@/components/UI/ConfirmDialog.vue'
 import LayerItem from '@/components/UI/LayerItem.vue'
 import type { Maplayer } from '@/types/map'
@@ -182,26 +224,13 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const mapStore = useMapStore()
+const layerUIStore = useLayerUIStore()
 const layerManager = uselayermanager()
+const { exportLayersAsGeoJSON } = useLayerExport()
 
-// 面板状态
-const layerList = ref<HTMLElement>()
-
-// 分组展开状态
-const expandedGroups = ref({
-  supermap: false,
-  draw: false,
-  query: false,
-  upload: false
-})
-
-// 删除确认对话框
-const deleteDialog = ref({
-  visible: false,
-  title: '',
-  message: '',
-  layerId: ''
-})
+// 使用Pinia管理的状态 - 使用computed确保响应式
+const expandedGroups = computed(() => layerUIStore.expandedGroups)
+const deleteDialog = computed(() => layerUIStore.deleteDialog)
 
 
 // 定义图层项接口
@@ -274,8 +303,8 @@ const getLayersBySource = (source: string): LayerItem[] => {
 
 
 // 切换分组展开状态
-const toggleGroup = (groupName: keyof typeof expandedGroups.value) => {
-  expandedGroups.value[groupName] = !expandedGroups.value[groupName]
+const toggleGroup = (groupName: string) => {
+  layerUIStore.toggleGroupExpanded(groupName)
 }
 
 // 处理图层可见性切换
@@ -285,23 +314,39 @@ const handleToggleVisibility = (item: LayerItem) => {
 
 // 处理图层删除
 const handleRemove = (item: LayerItem) => {
-  deleteDialog.value = {
-    visible: true,
+  layerUIStore.showDeleteDialog({
     title: '删除图层',
     message: `确定要删除图层"${item.displayName}"吗？此操作不可撤销。`,
     layerId: item.key
-  }
+  })
 }
 
 // 处理删除确认
 const handleConfirmRemove = () => {
   layerManager.removeLayer(deleteDialog.value.layerId)
-  deleteDialog.value.visible = false
+  layerUIStore.hideDeleteDialog()
 }
 
 // 处理删除取消
 const handleCancelRemove = () => {
-  deleteDialog.value.visible = false
+  layerUIStore.hideDeleteDialog()
+}
+
+// 处理图层组导出
+const handleExportGroup = async (source: string) => {
+  const layers = getLayersBySource(source)
+  if (layers.length === 0) {
+    return
+  }
+  
+  const groupNames: Record<string, string> = {
+    supermap: 'SuperMap服务图层',
+    draw: '分析及绘制图层', 
+    query: '查询图层',
+    upload: '上传图层'
+  }
+  
+  await exportLayersAsGeoJSON(layers, groupNames[source] || source)
 }
 
 // 暴露关闭面板的方法
@@ -479,6 +524,17 @@ const emit = defineEmits<{
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
+.group-header:hover .export-btn {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.group-header:hover .export-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
 
 
 
@@ -503,6 +559,39 @@ const emit = defineEmits<{
 .delete-btn:hover {
   background: var(--btn-danger-hover-bg);
   color: var(--btn-danger-hover-color);
+}
+
+.export-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.export-btn:hover {
+  background: var(--accent);
+  color: white;
+  transform: scale(1.1);
+}
+
+.export-btn:disabled {
+  color: var(--sub);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.export-btn:disabled:hover {
+  background: transparent;
+  color: var(--sub);
 }
 
 

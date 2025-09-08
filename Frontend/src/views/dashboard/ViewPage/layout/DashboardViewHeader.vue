@@ -8,7 +8,7 @@
         @click="goToManagement"
         title="切换到管理分析"
       />
-      <div class="screen-title">基于LLM-Agent的智能交互式地理空间可视化平台</div>
+      <div class="screen-title">基于LLM-Agent的多模态实时态势感知地理空间智能决策平台</div>
     </div>
     
     <div class="header-right">

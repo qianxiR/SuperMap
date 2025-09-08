@@ -16,7 +16,7 @@
 
       <div class="analysis-actions">
         <SecondaryButton text="开始执行擦除" @click="handleExecute" />
-        <SecondaryButton v-if="results.length > 0" text="保存为图层" @click="showlayerNameModal" />
+        <SecondaryButton v-if="results.length > 0" text="保存为图层" @click="showLayerNameModal" />
         <SecondaryButton v-if="results.length > 0" text="导出为GeoJSON" @click="handleExportJSON" />
         <SecondaryButton v-if="results.length > 0" text="清除擦除结果" @click="handleClear" />
       </div>
@@ -56,8 +56,8 @@
   </PanelWindow>
   
   <!-- 图层名称输入弹窗 -->
-  <layerNameModal
-    :visible="showlayerNameModalRef"
+  <LayerNameModal
+    :visible="showLayerNameModalRef"
     title="保存擦除分析结果"
     placeholder="请输入图层名称"
     hint="图层名称将用于在图层管理器中识别此擦除分析结果"
@@ -78,7 +78,7 @@ import DropdownSelect from '@/components/UI/DropdownSelect.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import TipWindow from '@/components/UI/TipWindow.vue'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
-import layerNameModal from '@/components/UI/LayerNameModal.vue'
+import LayerNameModal from '@/components/UI/LayerNameModal.vue'
 import GeoJSON from 'ol/format/GeoJSON'
 import { Feature } from 'ol'
 
@@ -104,7 +104,7 @@ const { saveFeaturesAslayer } = uselayermanager()
 const { exportFeaturesAsGeoJSON } = useLayerExport()
 
 // 图层名称弹窗状态
-const showlayerNameModalRef = ref<boolean>(false)
+const showLayerNameModalRef = ref<boolean>(false)
 const defaultlayerName = ref<string>('')
 
 const layerOptionsWithNone = computed(() => [{ value: '', label: '无', disabled: false }, ...layerOptions.value])
@@ -168,7 +168,7 @@ const handleClear = () => {
 }
 
 // 显示图层名称输入弹窗
-const showlayerNameModal = () => {
+const showLayerNameModal = () => {
   if (results.value.length === 0) {
     window.dispatchEvent(new CustomEvent('showNotification', {
       detail: {
@@ -182,18 +182,18 @@ const showlayerNameModal = () => {
   }
   
   defaultlayerName.value = `擦除分析结果`
-  showlayerNameModalRef.value = true
+  showLayerNameModalRef.value = true
 }
 
 // 处理图层名称确认
 const handlelayerNameConfirm = async (layerName: string) => {
-  showlayerNameModalRef.value = false
+  showLayerNameModalRef.value = false
   await handleSavelayer(layerName)
 }
 
 // 处理图层名称弹窗关闭
 const handlelayerNameClose = () => {
-  showlayerNameModalRef.value = false
+  showLayerNameModalRef.value = false
 }
 
 const handleSavelayer = async (customlayerName: string) => {

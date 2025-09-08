@@ -1,11 +1,5 @@
 <template>
-  <PanelWindow 
-    :visible="analysisStore.toolPanel.visible && analysisStore.toolPanel.activeTool === 'layer'"
-    :embed="true"
-    :width="'100%'"
-    :height="'100%'"
-    class="layer-manager-panel"
-  >
+  <div class="layer-manager-panel">
     <!-- 地图图层管理 -->
     <div class="analysis-section">
       <div class="section-title">地图图层管理</div>
@@ -31,21 +25,17 @@
             </button>
           </div>
           
-          <!-- 可折叠的图层列表 -->
-          <div class="group-content" v-show="!collapsedGroups.supermap">
-            <div class="group-scroll-container">
-              <LayerItem
-                v-for="item in getLayersBySource('supermap')" 
-                :key="item.key"
-                :layer-name="item.displayName"
-                :layer-desc="item.desc"
-                :hidden="!item.visible"
-                :class="{ 'active': selectedlayerKey === item.key }"
-                @click="selectlayer(item.key)"
-                @toggle-visibility="handleToggleVisibility(item)"
-              />
-            </div>
-          </div>
+          <LayerItem
+            v-for="item in getLayersBySource('supermap')" 
+            :key="item.key"
+            :layer-name="item.displayName"
+            :layer-desc="item.desc"
+            :hidden="!item.visible"
+            :class="{ 'active': selectedlayerKey === item.key }"
+            v-show="expandedGroups.supermap"
+            @click="selectlayer(item.key)"
+            @toggle-visibility="handleToggleVisibility(item)"
+          />
         </div>
 
         <!-- 分析及绘制图层容器 -->
@@ -67,33 +57,29 @@
             </button>
           </div>
           
-          <!-- 可折叠的图层列表 -->
-          <div class="group-content" v-show="!collapsedGroups.draw">
-            <div class="group-scroll-container">
-              <LayerItem
-                v-for="item in getLayersBySource('draw')" 
-                :key="item.key"
-                :layer-name="item.displayName"
-                :layer-desc="item.desc"
-                :hidden="!item.visible"
-                :class="{ 'active': selectedlayerKey === item.key }"
-                @click="selectlayer(item.key)"
-                @toggle-visibility="handleToggleVisibility(item)"
+          <LayerItem
+            v-for="item in getLayersBySource('draw')" 
+            :key="item.key"
+            :layer-name="item.displayName"
+            :layer-desc="item.desc"
+            :hidden="!item.visible"
+            :class="{ 'active': selectedlayerKey === item.key }"
+            v-show="expandedGroups.draw"
+            @click="selectlayer(item.key)"
+            @toggle-visibility="handleToggleVisibility(item)"
+          >
+            <template #controls>
+              <button 
+                class="control-btn delete-btn"
+                @click="handleRemove(item)"
+                :title="`删除图层: ${item.displayName}`"
               >
-                <template #controls>
-                  <button 
-                    class="control-btn delete-btn"
-                    @click="handleRemove(item)"
-                    :title="`删除图层: ${item.displayName}`"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                    </svg>
-                  </button>
-                </template>
-              </LayerItem>
-            </div>
-          </div>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+              </button>
+            </template>
+          </LayerItem>
         </div>
 
         <!-- 查询图层容器 -->
@@ -115,33 +101,29 @@
             </button>
           </div>
           
-          <!-- 可折叠的图层列表 -->
-          <div class="group-content" v-show="!collapsedGroups.query">
-            <div class="group-scroll-container">
-              <LayerItem
-                v-for="item in getLayersBySource('query')" 
-                :key="item.key"
-                :layer-name="item.displayName"
-                :layer-desc="item.desc"
-                :hidden="!item.visible"
-                :class="{ 'active': selectedlayerKey === item.key }"
-                @click="selectlayer(item.key)"
-                @toggle-visibility="handleToggleVisibility(item)"
+          <LayerItem
+            v-for="item in getLayersBySource('query')" 
+            :key="item.key"
+            :layer-name="item.displayName"
+            :layer-desc="item.desc"
+            :hidden="!item.visible"
+            :class="{ 'active': selectedlayerKey === item.key }"
+            v-show="expandedGroups.query"
+            @click="selectlayer(item.key)"
+            @toggle-visibility="handleToggleVisibility(item)"
+          >
+            <template #controls>
+              <button 
+                class="control-btn delete-btn"
+                @click="handleRemove(item)"
+                :title="`删除图层: ${item.displayName}`"
               >
-                <template #controls>
-                  <button 
-                    class="control-btn delete-btn"
-                    @click="handleRemove(item)"
-                    :title="`删除图层: ${item.displayName}`"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                    </svg>
-                  </button>
-                </template>
-              </LayerItem>
-            </div>
-          </div>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+              </button>
+            </template>
+          </LayerItem>
         </div>
 
         <!-- 上传图层容器 -->
@@ -163,33 +145,29 @@
             </button>
           </div>
           
-          <!-- 可折叠的图层列表 -->
-          <div class="group-content" v-show="!collapsedGroups.upload">
-            <div class="group-scroll-container">
-              <LayerItem
-                v-for="item in getLayersBySource('upload')" 
-                :key="item.key"
-                :layer-name="item.displayName"
-                :layer-desc="item.desc"
-                :hidden="!item.visible"
-                :class="{ 'active': selectedlayerKey === item.key }"
-                @click="selectlayer(item.key)"
-                @toggle-visibility="handleToggleVisibility(item)"
+          <LayerItem
+            v-for="item in getLayersBySource('upload')" 
+            :key="item.key"
+            :layer-name="item.displayName"
+            :layer-desc="item.desc"
+            :hidden="!item.visible"
+            :class="{ 'active': selectedlayerKey === item.key }"
+            v-show="expandedGroups.upload"
+            @click="selectlayer(item.key)"
+            @toggle-visibility="handleToggleVisibility(item)"
+          >
+            <template #controls>
+              <button 
+                class="control-btn delete-btn"
+                @click="handleRemove(item)"
+                :title="`删除图层: ${item.displayName}`"
               >
-                <template #controls>
-                  <button 
-                    class="control-btn delete-btn"
-                    @click="handleRemove(item)"
-                    :title="`删除图层: ${item.displayName}`"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                    </svg>
-                  </button>
-                </template>
-              </LayerItem>
-            </div>
-          </div>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+              </button>
+            </template>
+          </LayerItem>
         </div>
       </div>
     </div>
@@ -205,16 +183,16 @@
       @cancel="handleCancelRemove"
       @close="handleCancelRemove"
     />
-  </PanelWindow>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
+import { useLayerUIStore } from '@/stores/layerUIStore'
 import { uselayermanager } from '@/composables/uselayermanager'
 import { useLayerExport } from '@/composables/useLayerExport'
-import PanelWindow from '@/components/UI/PanelWindow.vue'
 import LayerItem from '@/components/UI/LayerItem.vue'
 import ConfirmDialog from '@/components/UI/ConfirmDialog.vue'
 
@@ -229,37 +207,23 @@ interface MaplayerItem {
 
 const mapStore = useMapStore()
 const analysisStore = useAnalysisStore()
+const layerUIStore = useLayerUIStore()
 const { togglelayerVisibility, removeLayer } = uselayermanager()
 const { exportLayersAsGeoJSON } = useLayerExport()
 
-// 选中图层状态
-const selectedlayerKey = ref<string>('')
-
-// 删除确认对话框
-const deleteDialog = ref({
-  visible: false,
-  title: '',
-  message: '',
-  layerId: ''
-})
+// 使用Pinia管理的状态 - 使用computed确保响应式
+const selectedlayerKey = computed(() => layerUIStore.selectedLayerKey)
+const deleteDialog = computed(() => layerUIStore.deleteDialog)
+const expandedGroups = computed(() => layerUIStore.expandedGroups)
 
 // 选择图层
 const selectlayer = (layerKey: string) => {
-  selectedlayerKey.value = layerKey
+  layerUIStore.selectLayer(layerKey)
 }
 
-// 折叠状态管理
-const collapsedGroups = ref<Record<string, boolean>>({
-  supermap: true,
-  draw: true,
-  query: true,
-  external: true,
-  upload: true
-})
-
-// 切换分组折叠状态
+// 切换分组折叠状态（注意：LayerManager使用折叠逻辑，与ViewLayerManager相反）
 const toggleGroupCollapse = (source: string) => {
-  collapsedGroups.value[source] = !collapsedGroups.value[source]
+  layerUIStore.toggleGroupExpanded(source)
 }
 
 
@@ -330,23 +294,22 @@ const handleToggleVisibility = (item: MaplayerItem) => {
 
 // 处理图层删除
 const handleRemove = (item: MaplayerItem) => {
-  deleteDialog.value = {
-    visible: true,
+  layerUIStore.showDeleteDialog({
     title: '删除图层',
     message: `确定要删除图层"${item.displayName}"吗？此操作不可撤销。`,
     layerId: item.key
-  }
+  })
 }
 
 // 处理删除确认
 const handleConfirmRemove = () => {
   removeLayer(deleteDialog.value.layerId)
-  deleteDialog.value.visible = false
+  layerUIStore.hideDeleteDialog()
 }
 
 // 处理删除取消
 const handleCancelRemove = () => {
-  deleteDialog.value.visible = false
+  layerUIStore.hideDeleteDialog()
 }
 
 // 处理图层组导出
@@ -374,6 +337,7 @@ const handleExportGroup = async (source: string) => {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  overflow: hidden;
   /* 使用全局滚动条样式 */
 }
 
@@ -441,6 +405,7 @@ const handleExportGroup = async (source: string) => {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  margin-bottom: 8px;
 }
 
 .group-header {
@@ -526,6 +491,17 @@ const handleExportGroup = async (source: string) => {
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
+.group-header:hover .export-btn {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.group-header:hover .export-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
 .export-btn {
   width: 24px;
   height: 24px;
@@ -561,21 +537,6 @@ const handleExportGroup = async (source: string) => {
 
 
 
-.group-content {
-  background: var(--panel);
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  box-shadow: var(--glow);
-}
-
-.group-scroll-container {
-  max-height: 360px;
-  overflow-y: auto;
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
 
 .control-btn {
   font-size: 10px;
@@ -601,28 +562,24 @@ const handleExportGroup = async (source: string) => {
 }
 /* 滚动条样式 */
 .layer-list::-webkit-scrollbar,
-.layer-groups::-webkit-scrollbar,
-.group-scroll-container::-webkit-scrollbar {
+.layer-groups::-webkit-scrollbar {
   width: 3px;
 }
 
 .layer-list::-webkit-scrollbar-track,
-.layer-groups::-webkit-scrollbar-track,
-.group-scroll-container::-webkit-scrollbar-track {
+.layer-groups::-webkit-scrollbar-track {
   background: var(--scrollbar-track, rgba(200, 200, 200, 0.1));
   border-radius: 1.5px;
 }
 
 .layer-list::-webkit-scrollbar-thumb,
-.layer-groups::-webkit-scrollbar-thumb,
-.group-scroll-container::-webkit-scrollbar-thumb {
+.layer-groups::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb, rgba(150, 150, 150, 0.3));
   border-radius: 1.5px;
 }
 
 .layer-list::-webkit-scrollbar-thumb:hover,
-.layer-groups::-webkit-scrollbar-thumb:hover,
-.group-scroll-container::-webkit-scrollbar-thumb:hover {
+.layer-groups::-webkit-scrollbar-thumb:hover {
   background: var(--scrollbar-thumb-hover, rgba(150, 150, 150, 0.5));
 }
 

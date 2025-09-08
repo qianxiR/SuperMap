@@ -155,14 +155,14 @@ onUnmounted(() => {
   outline: none !important;
   border-color: var(--accent);
   background: var(--bg);
-  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.1);
+  box-shadow: var(--ui-focus-ring);
 }
 
 .dropdown-select:focus-visible {
   outline: none !important;
   border-color: var(--accent);
   background: var(--bg);
-  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.1);
+  box-shadow: var(--ui-focus-ring);
 }
 
 .dropdown-select:hover:not(.dropdown-disabled) {
@@ -175,7 +175,7 @@ onUnmounted(() => {
   outline: none !important;
   border-color: var(--accent);
   background: var(--bg);
-  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.1);
+  box-shadow: var(--ui-focus-ring);
 }
 
 .dropdown-select.dropdown-open:hover {
@@ -187,7 +187,7 @@ onUnmounted(() => {
   outline: none !important;
   border-color: var(--accent);
   background: var(--bg);
-  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.1);
+  box-shadow: var(--ui-focus-ring);
 }
 
 .dropdown-disabled {
