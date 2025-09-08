@@ -111,29 +111,29 @@
           text="执行查询"
           variant="secondary"
           @click="executeQuery"
-          :disabled="queryConfig.condition === null || queryConfig.condition.fieldName === '' || isQuerying"
           :loading="isQuerying"
         />
+        
         <SecondaryButton 
+          v-if="queryResults.length > 0"
           text="另存为图层"
           @click="showLayerNameModal"
-          :disabled="queryResults.length === 0"
         />
         <SecondaryButton 
+          v-if="queryResults.length > 0"
           text="导出为GeoJSON"
           @click="exportQueryResultsAsGeoJSON"
-          :disabled="queryResults.length === 0"
         />
         <SecondaryButton 
+          v-if="queryResults.length > 0"
           text="反选当前要素"
           @click="invertSelectedlayer"
-          :disabled="isQuerying"
         />
         <SecondaryButton 
+          v-if="queryResults.length > 0"
           text="清空查询结果"
           variant="danger"
           @click="clearQueryResults"
-          :disabled="false"
         />
       </div>
     </div>

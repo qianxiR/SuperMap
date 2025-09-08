@@ -51,48 +51,58 @@ const handleClick = (event: MouseEvent) => {
 
 <style scoped>
 .btn { 
-  padding: 6px 8px; 
-  border: 1px solid var(--border); 
-  border-radius: 6px; 
-  background: var(--btn-secondary-bg); 
-  color: var(--btn-secondary-color); 
-  font-size: 12px; 
+  border: none;
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  user-select: none;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  font-family: inherit;
+  font-weight: 500;
+  outline: none;
   gap: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
   min-height: 32px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .btn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
   transform: none;
+}
+
+.btn:disabled:hover {
+  background: var(--panel);
+  color: var(--text);
   box-shadow: none;
 }
 
 .btn:hover:not(:disabled) {
-  background: var(--btn-secondary-bg);
-  border-color: var(--border);
-  color: var(--btn-secondary-color);
+  background: var(--accent);
+  color: white;
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
 .btn.primary { 
   background: var(--btn-primary-bg); 
-  color: var(--btn-primary-color); 
-  border-color: var(--btn-primary-bg);
+  color: var(--btn-primary-color);
 }
 
 .btn.primary:hover:not(:disabled) {
   background: var(--btn-primary-bg);
   color: var(--btn-primary-color);
-  border-color: var(--btn-primary-bg);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .btn.secondary {
@@ -100,32 +110,24 @@ const handleClick = (event: MouseEvent) => {
   color: var(--btn-secondary-color);
 }
 
+.btn.secondary:hover:not(:disabled) {
+  background: var(--accent);
+  color: white;
+}
+
 .btn.danger {
-  background: var(--surface);
-  color: var(--text);
-  border-color: var(--border);
+  background: var(--btn-danger-bg);
+  color: var(--btn-danger-color);
 }
 
 .btn.danger:hover:not(:disabled) {
-  background: var(--surface-hover);
-  color: var(--text);
-  border-color: var(--border);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: var(--btn-danger-hover-bg);
+  color: var(--btn-danger-hover-color);
 }
 
 .btn.active {
-  background: var(--btn-secondary-bg);
-  color: var(--btn-secondary-color);
-  border-color: var(--border);
-  box-shadow: none;
-}
-
-.btn.danger.active {
-  background: var(--surface);
-  color: var(--text);
-  border-color: var(--border);
-  box-shadow: none;
+  background: var(--accent);
+  color: white;
 }
 
 /* 加载动画 */

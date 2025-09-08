@@ -4,6 +4,19 @@ import { useSelectionStore } from '@/stores/selectionStore'
 import { usePopupStore } from '@/stores/popupStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
 
+// 交互配置常量
+const INTERACTION_CONFIG = {
+  HOVER_TIMEOUT: 120,
+  HIT_TOLERANCE: 5,
+  STYLE: {
+    HOVER_RADIUS: 6,
+    HOVER_STROKE_WIDTH: 2,
+    SELECT_RADIUS: 8,
+    SELECT_STROKE_WIDTH: 3,
+    SELECT_LINE_WIDTH: 5
+  }
+} as const;
+
 /**
  * 地图交互管理 Composable
  * 
@@ -87,7 +100,7 @@ export function useMapInteraction() {
         return undefined;
       },
       {
-        hitTolerance: 5
+        hitTolerance: INTERACTION_CONFIG.HIT_TOLERANCE
       }
     );
 
@@ -345,7 +358,7 @@ export function useMapInteraction() {
       if (hoverTimer.value) clearTimeout(hoverTimer.value)
       hoverTimer.value = window.setTimeout(() => {
         handleFeatureHover(hoverSource)
-      }, 120)
+      }, INTERACTION_CONFIG.HOVER_TIMEOUT)
     })
     
     map.on('click', (evt: any) => {
@@ -372,11 +385,11 @@ export function useMapInteraction() {
     
     return new (window as any).ol.style.Style({
       image: new (window as any).ol.style.Circle({ 
-        radius: 6, 
-        stroke: new (window as any).ol.style.Stroke({color: highlightColor, width: 2}), 
+        radius: INTERACTION_CONFIG.STYLE.HOVER_RADIUS, 
+        stroke: new (window as any).ol.style.Stroke({color: highlightColor, width: INTERACTION_CONFIG.STYLE.HOVER_STROKE_WIDTH}), 
         fill: new (window as any).ol.style.Fill({color: hoverFillColor}) 
       }),
-      stroke: new (window as any).ol.style.Stroke({color: highlightColor, width: 2}),
+      stroke: new (window as any).ol.style.Stroke({color: highlightColor, width: INTERACTION_CONFIG.STYLE.HOVER_STROKE_WIDTH}),
       fill: new (window as any).ol.style.Fill({color: hoverFillColor})
     });
   };
@@ -396,11 +409,11 @@ export function useMapInteraction() {
       if (!geometry) {
         return new (window as any).ol.style.Style({
           image: new (window as any).ol.style.Circle({ 
-            radius: 8, 
-            stroke: new (window as any).ol.style.Stroke({color: highlightColor, width: 3}), 
+            radius: INTERACTION_CONFIG.STYLE.SELECT_RADIUS, 
+            stroke: new (window as any).ol.style.Stroke({color: highlightColor, width: INTERACTION_CONFIG.STYLE.SELECT_STROKE_WIDTH}), 
             fill: new (window as any).ol.style.Fill({color: grayFillColor})
           }),
-          stroke: new (window as any).ol.style.Stroke({color: highlightColor, width: 3}),
+          stroke: new (window as any).ol.style.Stroke({color: highlightColor, width: INTERACTION_CONFIG.STYLE.SELECT_STROKE_WIDTH}),
           fill: new (window as any).ol.style.Fill({color: grayFillColor})
         });
       }
@@ -412,8 +425,8 @@ export function useMapInteraction() {
         case 'MultiPoint':
           return new (window as any).ol.style.Style({
             image: new (window as any).ol.style.Circle({ 
-              radius: 8, 
-              stroke: new (window as any).ol.style.Stroke({color: highlightColor, width: 3}), 
+              radius: INTERACTION_CONFIG.STYLE.SELECT_RADIUS, 
+              stroke: new (window as any).ol.style.Stroke({color: highlightColor, width: INTERACTION_CONFIG.STYLE.SELECT_STROKE_WIDTH}), 
               fill: new (window as any).ol.style.Fill({color: grayFillColor})
             })
           });
@@ -423,7 +436,7 @@ export function useMapInteraction() {
           return new (window as any).ol.style.Style({
             stroke: new (window as any).ol.style.Stroke({
               color: highlightColor, 
-              width: 5,
+              width: INTERACTION_CONFIG.STYLE.SELECT_LINE_WIDTH,
               lineCap: 'round',
               lineJoin: 'round'
             })
@@ -432,18 +445,18 @@ export function useMapInteraction() {
         case 'Polygon':
         case 'MultiPolygon':
           return new (window as any).ol.style.Style({
-            stroke: new (window as any).ol.style.Stroke({color: highlightColor, width: 3}),
+            stroke: new (window as any).ol.style.Stroke({color: highlightColor, width: INTERACTION_CONFIG.STYLE.SELECT_STROKE_WIDTH}),
             fill: new (window as any).ol.style.Fill({color: grayFillColor})
           });
           
         default:
           return new (window as any).ol.style.Style({
             image: new (window as any).ol.style.Circle({ 
-              radius: 8, 
-              stroke: new (window as any).ol.style.Stroke({color: highlightColor, width: 3}), 
+              radius: INTERACTION_CONFIG.STYLE.SELECT_RADIUS, 
+              stroke: new (window as any).ol.style.Stroke({color: highlightColor, width: INTERACTION_CONFIG.STYLE.SELECT_STROKE_WIDTH}), 
               fill: new (window as any).ol.style.Fill({color: grayFillColor})
             }),
-            stroke: new (window as any).ol.style.Stroke({color: highlightColor, width: 3}),
+            stroke: new (window as any).ol.style.Stroke({color: highlightColor, width: INTERACTION_CONFIG.STYLE.SELECT_STROKE_WIDTH}),
             fill: new (window as any).ol.style.Fill({color: grayFillColor})
           });
       }

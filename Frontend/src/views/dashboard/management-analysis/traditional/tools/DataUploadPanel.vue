@@ -292,6 +292,12 @@ function getStatusText(status: string): string {
   align-items: center;
 }
 
+.upload-actions .btn:first-child {
+  flex: 1 !important;
+  width: 100% !important;
+  flex-shrink: 1 !important;
+}
+
 .file-list {
   display: flex;
   flex-direction: column;

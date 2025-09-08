@@ -1,8 +1,38 @@
 import { useMapStore } from '@/stores/mapStore'
 import { useThemeStore } from '@/stores/themeStore'
 import { createAPIConfig, getCurrentBaseMapUrl } from '@/utils/config'
+import { 
+  createLayerStyle, 
+  createHoverStyle, 
+  createSelectStyle
+} from '@/utils/styleUtils'
+import { getCurrentTheme, dispatchThemeChangeEvent } from '@/utils/themeUtils'
 
 const ol = window.ol;
+
+// 样式配置常量
+const STYLE_CONFIG = {
+  DEFAULT_STROKE_WIDTH: 2,
+  DEFAULT_FILL_OPACITY: 0.3,
+  DEFAULT_POINT_RADIUS: 6,
+  DEFAULT_POINT_STROKE_WIDTH: 2,
+  HOVER_TIMEOUT: 120,
+  IMPORTANT_LAYERS: ['武汉_县级', '公路', '铁路'],
+  IMPORTANT_STYLE: {
+    POINT_RADIUS: 8,
+    STROKE_WIDTH: 2.5,
+    FILL_OPACITY: 0.8,
+    LINE_WIDTH: 3,
+    POLYGON_WIDTH: 2
+  },
+  NORMAL_STYLE: {
+    POINT_RADIUS: 6,
+    STROKE_WIDTH: 2,
+    FILL_OPACITY: 0.6,
+    LINE_WIDTH: 2,
+    POLYGON_WIDTH: 1.5
+  }
+} as const;
 
 /**
  * 地图样式管理 Composable
@@ -24,78 +54,7 @@ export function useMapStyles() {
    * @returns {ol.style.Style} OpenLayers 样式对象
    */
   const createLocalLayerStyle = (sourceType: string): any => {
-    const css = getComputedStyle(document.documentElement)
-    
-    /**
-     * 创建基于CSS变量的图层样式
-     * 支持主题切换，自动适配浅色/深色模式
-     */
-    const createStyleFromCSS = (prefix: string) => {
-      const strokeColor = css.getPropertyValue(`--${prefix}-stroke-color`).trim() || 
-                         css.getPropertyValue('--accent').trim() || 
-                         (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000')
-      const strokeWidth = parseInt(css.getPropertyValue(`--${prefix}-stroke-width`).trim()) || 2
-      const fillOpacity = parseFloat(css.getPropertyValue(`--${prefix}-fill-opacity`).trim()) || 0.3
-      const pointRadius = parseInt(css.getPropertyValue(`--${prefix}-point-radius`).trim()) || 6
-      const pointStrokeWidth = parseInt(css.getPropertyValue(`--${prefix}-point-stroke-width`).trim()) || 2
-      
-      // 解析RGB值用于填充透明度
-      const rgbMatch = strokeColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/)
-      let fillColor = `rgba(0, 0, 0, ${fillOpacity})`
-      
-      if (rgbMatch) {
-        fillColor = `rgba(${rgbMatch[1]}, ${rgbMatch[2]}, ${rgbMatch[3]}, ${fillOpacity})`
-      } else if (strokeColor.startsWith('#')) {
-        // 处理十六进制颜色
-        const hex = strokeColor.replace('#', '')
-        const r = parseInt(hex.substr(0, 2), 16)
-        const g = parseInt(hex.substr(2, 2), 16)
-        const b = parseInt(hex.substr(4, 2), 16)
-        fillColor = `rgba(${r}, ${g}, ${b}, ${fillOpacity})`
-      }
-      
-      return new ol.style.Style({
-        stroke: new ol.style.Stroke({
-          color: strokeColor,
-          width: strokeWidth
-        }),
-        fill: new ol.style.Fill({
-          color: fillColor
-        }),
-        image: new ol.style.Circle({
-          radius: pointRadius,
-          fill: new ol.style.Fill({
-            color: strokeColor
-          }),
-          stroke: new ol.style.Stroke({
-            color: css.getPropertyValue('--panel').trim() || '#ffffff',
-            width: pointStrokeWidth
-          })
-        })
-      })
-    }
-    
-    // 根据图层来源类型返回对应样式
-    switch (sourceType) {
-      case 'draw':      // 绘制图层
-        return createStyleFromCSS('draw')
-      case 'area':      // 区域选择图层
-        return createStyleFromCSS('area')
-      case 'query':     // 查询结果图层
-        return createStyleFromCSS('query')
-      case 'buffer':    // 缓冲区分析图层
-        return createStyleFromCSS('buffer')
-      case 'upload':    // 上传图层
-        return createStyleFromCSS('upload')
-      case 'path':      // 路径分析图层
-        return createStyleFromCSS('path')
-      case 'intersect': // 相交分析图层
-        return createStyleFromCSS('intersect')
-      case 'erase':     // 擦除分析图层
-        return createStyleFromCSS('erase')
-      default:          // 默认分析图层
-        return createStyleFromCSS('analysis')
-    }
+    return createLayerStyle(sourceType)
   }
 
   /**
@@ -106,10 +65,10 @@ export function useMapStyles() {
    * @param {string} layerName - 图层名称
    * @returns {ol.style.Style} OpenLayers 样式对象
    */
-  const createLayerStyle = (layerConfig: any, layerName: string): any => {
+  const createSuperMapLayerStyle = (layerConfig: any, layerName: string): any => {
     // 获取当前主题的CSS变量值
     const css = getComputedStyle(document.documentElement);
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    const currentTheme = getCurrentTheme();
     
     // 获取图层特定的样式变量
     const strokeVar = css.getPropertyValue(`--layer-stroke-${layerName}`).trim();
@@ -125,30 +84,31 @@ export function useMapStyles() {
      * 重要图层（如县级边界、主要交通线）使用更粗的线条和更大的点
      */
     const getStyleParams = (type: string, layerName: string) => {
-      const isImportant = ['武汉_县级', '公路', '铁路'].includes(layerName);
+      const isImportant = STYLE_CONFIG.IMPORTANT_LAYERS.includes(layerName as any);
+      const style = isImportant ? STYLE_CONFIG.IMPORTANT_STYLE : STYLE_CONFIG.NORMAL_STYLE;
       
       switch (type) {
         case 'point':
           return {
-            radius: isImportant ? 8 : 6,
-            strokeWidth: isImportant ? 2.5 : 2,
-            fillOpacity: 0.8
+            radius: style.POINT_RADIUS,
+            strokeWidth: style.STROKE_WIDTH,
+            fillOpacity: style.FILL_OPACITY
           };
         case 'line':
           return {
-            width: isImportant ? 3 : 2,
+            width: style.LINE_WIDTH,
             lineCap: 'round',
             lineJoin: 'round'
           };
         case 'polygon':
           return {
-            width: isImportant ? 2 : 1.5,
-            fillOpacity: 0.6
+            width: style.POLYGON_WIDTH,
+            fillOpacity: style.FILL_OPACITY
           };
         default:
           return {
-            width: 1.5,
-            fillOpacity: 0.6
+            width: style.POLYGON_WIDTH,
+            fillOpacity: style.FILL_OPACITY
           };
       }
     };
@@ -227,7 +187,7 @@ export function useMapStyles() {
                 // SuperMap服务图层
                 const layerConfig = createAPIConfig().wuhanlayers.find(config => config.name === layerInfo.id);
                 if (layerConfig) {
-                  const newStyle = createLayerStyle(layerConfig, layerInfo.name);
+                  const newStyle = createSuperMapLayerStyle(layerConfig, layerInfo.name);
                   layerInfo.layer.setStyle(newStyle);
                 }
               } else if (layerInfo.source === 'local') {
@@ -251,68 +211,7 @@ export function useMapStyles() {
     if (mapStore.selectlayer) {
       const updateSelectPromise = new Promise<void>(resolve => {
         requestAnimationFrame(() => {
-          const grayFillColor = css.getPropertyValue('--map-select-fill').trim() || (currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(33, 37, 41, 0.15)');
-          const highlightColor = css.getPropertyValue('--map-highlight-color').trim() || (currentTheme === 'dark' ? '#ffffff' : '#000000');
-          
-          
-          const newSelectStyle = (feature: any) => {
-            const geometry = feature.getGeometry();
-            if (!geometry) {
-              return new ol.style.Style({
-                image: new ol.style.Circle({ 
-                  radius: 8, 
-                  stroke: new ol.style.Stroke({color: highlightColor, width: 3}), 
-                  fill: new ol.style.Fill({color: grayFillColor})
-                }),
-                stroke: new ol.style.Stroke({color: highlightColor, width: 3}),
-                fill: new ol.style.Fill({color: grayFillColor})
-              });
-            }
-            
-            const geometryType = geometry.getType();
-            
-            switch (geometryType) {
-              case 'Point':
-              case 'MultiPoint':
-                return new ol.style.Style({
-                  image: new ol.style.Circle({ 
-                    radius: 8, 
-                    stroke: new ol.style.Stroke({color: highlightColor, width: 3}), 
-                    fill: new ol.style.Fill({color: grayFillColor})
-                  })
-                });
-                
-              case 'LineString':
-              case 'MultiLineString':
-                return new ol.style.Style({
-                  stroke: new ol.style.Stroke({
-                    color: highlightColor, 
-                    width: 5,
-                    lineCap: 'round',
-                    lineJoin: 'round'
-                  })
-                });
-                
-              case 'Polygon':
-              case 'MultiPolygon':
-                return new ol.style.Style({
-                  stroke: new ol.style.Stroke({color: highlightColor, width: 3}),
-                  fill: new ol.style.Fill({color: grayFillColor})
-                });
-                
-              default:
-                return new ol.style.Style({
-                  image: new ol.style.Circle({ 
-                    radius: 8, 
-                    stroke: new ol.style.Stroke({color: highlightColor, width: 3}), 
-                    fill: new ol.style.Fill({color: grayFillColor})
-                  }),
-                  stroke: new ol.style.Stroke({color: highlightColor, width: 3}),
-                  fill: new ol.style.Fill({color: grayFillColor})
-                });
-            }
-          };
-          
+          const newSelectStyle = createSelectStyle();
           mapStore.selectlayer.setStyle(newSelectStyle);
           resolve()
         })
@@ -324,20 +223,7 @@ export function useMapStyles() {
     if (mapStore.hintersecter) {
       const updateHoverPromise = new Promise<void>(resolve => {
         requestAnimationFrame(() => {
-          const highlightColor = css.getPropertyValue('--map-highlight-color').trim() || (currentTheme === 'dark' ? '#ffffff' : '#000000');
-          const hoverFillColor = css.getPropertyValue('--map-hover-fill').trim() || 'rgba(0, 123, 255, 0.3)';
-          
-          
-          const newHoverStyle = new ol.style.Style({
-            image: new ol.style.Circle({ 
-              radius: 6, 
-              stroke: new ol.style.Stroke({color: highlightColor, width: 2}), 
-              fill: new ol.style.Fill({color: hoverFillColor}) 
-            }),
-            stroke: new ol.style.Stroke({color: highlightColor, width: 2}),
-            fill: new ol.style.Fill({color: hoverFillColor})
-          });
-          
+          const newHoverStyle = createHoverStyle();
           mapStore.hintersecter.setStyle(newHoverStyle);
           resolve()
         })
@@ -464,7 +350,7 @@ export function useMapStyles() {
 
   return {
     createLocalLayerStyle,
-    createLayerStyle,
+    createLayerStyle: createSuperMapLayerStyle,
     updateLayerStyles,
     updateBaseMap,
     observeThemeChanges,

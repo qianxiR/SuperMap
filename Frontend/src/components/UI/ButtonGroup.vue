@@ -3,6 +3,7 @@
     <button
       v-for="btn in buttons"
       :key="btn.id"
+      class="group-btn"
       :class="{ 'active': activeButton === btn.id }"
       @click="$emit('select', btn.id)"
     >
@@ -28,34 +29,47 @@ defineEmits(['select']);
 <style scoped>
 .button-group {
   display: flex;
-  background-color: var(--btn-secondary-bg);
-  border-radius: var(--radius);
+  background-color: var(--panel);
+  border-radius: 8px;
   border: 1px solid var(--border);
   padding: 4px;
   width: fit-content;
 }
 
-button {
+.group-btn {
   padding: 6px 16px;
   border: none;
   background-color: transparent;
-  color: var(--sub);
+  color: var(--text);
   cursor: pointer;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
-  font-family: "Segoe UI", PingFang SC, Microsoft YaHei, Arial, sans-serif;
+  font-family: inherit;
   transition: all 0.2s ease;
+  user-select: none;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
 }
 
-button.active {
+.group-btn.active {
   background-color: var(--accent);
-  color: var(--btn-primary-color);
-  box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.3);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-button:not(.active):hover {
-  color: var(--text);
-  background-color: var(--surface-hover);
+.group-btn:not(.active):hover {
+  background-color: var(--accent);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.group-btn:active:not(.active) {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 </style>

@@ -94,7 +94,6 @@
         <SecondaryButton 
           :text="isAnalyzing ? '计算中...' : '计算最短路径'"
           @click="handleExecuteAnalysis"
-          :disabled="!canAnalyze || isAnalyzing"
         />
         
         <SecondaryButton 

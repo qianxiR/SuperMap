@@ -49,20 +49,27 @@
       <div class="section-title">选择操作</div>
       <div class="button-column">
         <SecondaryButton 
+          text="开始框选"
+          @click="startAreaSelection"
+        />
+        
+        <SecondaryButton 
+          v-if="selectedFeatures.length > 0"
           text="反选当前要素"
           @click="invertSelectedlayer"
         />
         <SecondaryButton 
+          v-if="selectedFeatures.length > 0"
           text="另存为图层"
           @click="showLayerNameModal"
-          :disabled="selectedFeatures.length === 0"
         />
         <SecondaryButton 
+          v-if="selectedFeatures.length > 0"
           text="导出为GeoJSON"
           @click="exportSelectedAsGeoJSON"
-          :disabled="selectedFeatures.length === 0"
         />
         <SecondaryButton 
+          v-if="selectedFeatures.length > 0"
           text="清除选择"
           variant="danger"
           @click="clearSelection"
@@ -200,6 +207,12 @@ watch(() => analysisStore.toolPanel?.activeTool, (tool) => {
     clearSelectionInteractions()
   }
 })
+
+// 开始区域选择
+const startAreaSelection = () => {
+  setupSelectionInteractions()
+  analysisStore.setAnalysisStatus('请在地图上拖拽鼠标进行框选要素')
+}
 
 // 组件挂载时设置交互
 onMounted(() => {

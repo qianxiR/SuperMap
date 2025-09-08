@@ -25,17 +25,18 @@
             </button>
           </div>
           
-          <LayerItem
-            v-for="item in getLayersBySource('supermap')" 
-            :key="item.key"
-            :layer-name="item.displayName"
-            :layer-desc="item.desc"
-            :hidden="!item.visible"
-            :class="{ 'active': selectedlayerKey === item.key }"
-            v-show="expandedGroups.supermap"
-            @click="selectlayer(item.key)"
-            @toggle-visibility="handleToggleVisibility(item)"
-          />
+          <div class="layer-items-container" v-show="expandedGroups.supermap">
+            <LayerItem
+              v-for="item in getLayersBySource('supermap')" 
+              :key="item.key"
+              :layer-name="item.displayName"
+              :layer-desc="item.desc"
+              :hidden="!item.visible"
+              :class="{ 'active': selectedlayerKey === item.key }"
+              @click="selectlayer(item.key)"
+              @toggle-visibility="handleToggleVisibility(item)"
+            />
+          </div>
         </div>
 
         <!-- 分析及绘制图层容器 -->
@@ -57,29 +58,30 @@
             </button>
           </div>
           
-          <LayerItem
-            v-for="item in getLayersBySource('draw')" 
-            :key="item.key"
-            :layer-name="item.displayName"
-            :layer-desc="item.desc"
-            :hidden="!item.visible"
-            :class="{ 'active': selectedlayerKey === item.key }"
-            v-show="expandedGroups.draw"
-            @click="selectlayer(item.key)"
-            @toggle-visibility="handleToggleVisibility(item)"
-          >
-            <template #controls>
-              <button 
-                class="control-btn delete-btn"
-                @click="handleRemove(item)"
-                :title="`删除图层: ${item.displayName}`"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                </svg>
-              </button>
-            </template>
-          </LayerItem>
+          <div class="layer-items-container" v-show="expandedGroups.draw">
+            <LayerItem
+              v-for="item in getLayersBySource('draw')" 
+              :key="item.key"
+              :layer-name="item.displayName"
+              :layer-desc="item.desc"
+              :hidden="!item.visible"
+              :class="{ 'active': selectedlayerKey === item.key }"
+              @click="selectlayer(item.key)"
+              @toggle-visibility="handleToggleVisibility(item)"
+            >
+              <template #controls>
+                <button 
+                  class="control-btn delete-btn"
+                  @click="handleRemove(item)"
+                  :title="`删除图层: ${item.displayName}`"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                  </svg>
+                </button>
+              </template>
+            </LayerItem>
+          </div>
         </div>
 
         <!-- 查询图层容器 -->
@@ -101,29 +103,30 @@
             </button>
           </div>
           
-          <LayerItem
-            v-for="item in getLayersBySource('query')" 
-            :key="item.key"
-            :layer-name="item.displayName"
-            :layer-desc="item.desc"
-            :hidden="!item.visible"
-            :class="{ 'active': selectedlayerKey === item.key }"
-            v-show="expandedGroups.query"
-            @click="selectlayer(item.key)"
-            @toggle-visibility="handleToggleVisibility(item)"
-          >
-            <template #controls>
-              <button 
-                class="control-btn delete-btn"
-                @click="handleRemove(item)"
-                :title="`删除图层: ${item.displayName}`"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                </svg>
-              </button>
-            </template>
-          </LayerItem>
+          <div class="layer-items-container" v-show="expandedGroups.query">
+            <LayerItem
+              v-for="item in getLayersBySource('query')" 
+              :key="item.key"
+              :layer-name="item.displayName"
+              :layer-desc="item.desc"
+              :hidden="!item.visible"
+              :class="{ 'active': selectedlayerKey === item.key }"
+              @click="selectlayer(item.key)"
+              @toggle-visibility="handleToggleVisibility(item)"
+            >
+              <template #controls>
+                <button 
+                  class="control-btn delete-btn"
+                  @click="handleRemove(item)"
+                  :title="`删除图层: ${item.displayName}`"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                  </svg>
+                </button>
+              </template>
+            </LayerItem>
+          </div>
         </div>
 
         <!-- 上传图层容器 -->
@@ -145,29 +148,30 @@
             </button>
           </div>
           
-          <LayerItem
-            v-for="item in getLayersBySource('upload')" 
-            :key="item.key"
-            :layer-name="item.displayName"
-            :layer-desc="item.desc"
-            :hidden="!item.visible"
-            :class="{ 'active': selectedlayerKey === item.key }"
-            v-show="expandedGroups.upload"
-            @click="selectlayer(item.key)"
-            @toggle-visibility="handleToggleVisibility(item)"
-          >
-            <template #controls>
-              <button 
-                class="control-btn delete-btn"
-                @click="handleRemove(item)"
-                :title="`删除图层: ${item.displayName}`"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                </svg>
-              </button>
-            </template>
-          </LayerItem>
+          <div class="layer-items-container" v-show="expandedGroups.upload">
+            <LayerItem
+              v-for="item in getLayersBySource('upload')" 
+              :key="item.key"
+              :layer-name="item.displayName"
+              :layer-desc="item.desc"
+              :hidden="!item.visible"
+              :class="{ 'active': selectedlayerKey === item.key }"
+              @click="selectlayer(item.key)"
+              @toggle-visibility="handleToggleVisibility(item)"
+            >
+              <template #controls>
+                <button 
+                  class="control-btn delete-btn"
+                  @click="handleRemove(item)"
+                  :title="`删除图层: ${item.displayName}`"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                  </svg>
+                </button>
+              </template>
+            </LayerItem>
+          </div>
         </div>
       </div>
     </div>
@@ -337,7 +341,8 @@ const handleExportGroup = async (source: string) => {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   /* 使用全局滚动条样式 */
 }
 
@@ -349,8 +354,8 @@ const handleExportGroup = async (source: string) => {
   /* 禁用动画，防止主题切换闪烁 */
   animation: none !important;
   margin-bottom: 16px;
-  /* 确保内容可以滚动 */
-  overflow: hidden;
+  /* 允许内容滚动 */
+  overflow: visible;
   display: flex;
   flex-direction: column;
 }
@@ -406,6 +411,16 @@ const handleExportGroup = async (source: string) => {
   flex-direction: column;
   gap: 4px;
   margin-bottom: 8px;
+}
+
+.layer-items-container {
+  max-height: 200px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .group-header {

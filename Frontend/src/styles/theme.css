@@ -17,6 +17,14 @@
   --btn-primary-color: #ffffff;
   --btn-secondary-bg: #e0e0e0;
   --btn-secondary-color: #212529;
+  
+  /* ===== 基础按钮颜色 ===== */
+  --base-btn-bg: var(--panel);
+  --base-btn-color: var(--text);
+  --base-btn-hover-bg: var(--accent);
+  --base-btn-hover-color: #ffffff;
+  --base-btn-active-bg: var(--accent);
+  --base-btn-active-color: #ffffff;
 
   /* ===== 链接颜色 ===== */
   --link-color: #0078D4;
@@ -174,6 +182,14 @@ html {
   --btn-primary-color: #ffffff;
   --btn-secondary-bg: #373737;
   --btn-secondary-color: #ffffff;
+  
+  /* ===== 基础按钮颜色 - 深色模式 ===== */
+  --base-btn-bg: var(--panel);
+  --base-btn-color: var(--text);
+  --base-btn-hover-bg: var(--accent);
+  --base-btn-hover-color: #ffffff;
+  --base-btn-active-bg: var(--accent);
+  --base-btn-active-color: #ffffff;
 
   /* ===== 链接颜色 ===== */
   --link-color: #ffffff;

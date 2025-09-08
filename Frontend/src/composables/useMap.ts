@@ -14,6 +14,18 @@ import { useMapLifecycle } from './useMapLifecycle'
 
 const ol = window.ol;
 
+// 地图配置常量
+const MAP_CONFIG = {
+  ZOOM_LEVELS: 19,
+  BASE_RESOLUTION: 180 / 256,
+  LAYER_Z_INDEX: {
+    BASE: -1000,
+    HOVER: 999,
+    SELECT: 1000
+  },
+  UPDATE_SIZE_DELAY: 100
+} as const;
+
 /**
  * 地图管理主 Composable
  * 
@@ -86,8 +98,6 @@ export function useMap() {
    * 整合各模块功能，完成地图的完整初始化流程
    */
   const initMap = async (): Promise<void> => {
-    let currentMapStore = useMapStore()
-    
     try {
       if (!window.ol || !mapLifecycle.mapContainer.value) {
         throw new Error('地图容器或SuperMap SDK未准备就绪')
@@ -111,8 +121,8 @@ export function useMap() {
       
       // ===== 3. 创建地图实例 =====
       const resolutions: number[] = [];
-      for (let i = 0; i < 19; i++) {
-          resolutions[i] = 180 / 256 / Math.pow(2, i);
+      for (let i = 0; i < MAP_CONFIG.ZOOM_LEVELS; i++) {
+          resolutions[i] = MAP_CONFIG.BASE_RESOLUTION / Math.pow(2, i);
       }
 
       const map = new ol.Map({
@@ -124,10 +134,10 @@ export function useMap() {
           })
         ]),
         view: new ol.View({
-          projection: currentMapStore.mapConfig.projection,
+          projection: mapStore.mapConfig.projection,
           resolutions: resolutions,
-          center: currentMapStore.mapConfig.center,
-          zoom: currentMapStore.mapConfig.zoom
+          center: mapStore.mapConfig.center,
+          zoom: mapStore.mapConfig.zoom
         })
       })
       
@@ -155,7 +165,7 @@ export function useMap() {
       const baseMapLayer = new ol.layer.Tile({
         source: new ol.source.TileSuperMapRest(sourceConfig),
         visible: true,
-        zIndex: -1000
+        zIndex: MAP_CONFIG.LAYER_Z_INDEX.BASE
       })
       
       map.addLayer(baseMapLayer)
@@ -164,7 +174,7 @@ export function useMap() {
       setTimeout(() => {
         map.updateSize()
         baseMapLayer.changed()
-      }, 100)
+      }, MAP_CONFIG.UPDATE_SIZE_DELAY)
       
       // ===== 5. 加载矢量图层 =====
       loadingStore.updateLoading('map-init', '正在加载图层...')
@@ -176,7 +186,7 @@ export function useMap() {
       const hoverLayer = new ol.layer.Vector({
         source: hoverSource,
         style: mapInteraction.createHoverStyle(),
-        zIndex: 999
+        zIndex: MAP_CONFIG.LAYER_Z_INDEX.HOVER
       })
       map.addLayer(hoverLayer)
         
@@ -185,26 +195,26 @@ export function useMap() {
       const selectLayer = new ol.layer.Vector({
         source: selectSource,
         style: mapInteraction.createSelectStyle(),
-        zIndex: 1000
+        zIndex: MAP_CONFIG.LAYER_Z_INDEX.SELECT
       })
       map.addLayer(selectLayer)
         
       // ===== 7. 存储地图实例和图层引用 =====
-      currentMapStore.setMap(map)
-      currentMapStore.setlayers({
+      mapStore.setMap(map)
+      mapStore.setlayers({
         base: baseMapLayer,
         hover: hoverLayer,
         select: selectLayer
       })
         
       // ===== 8. 设置事件监听 =====
-      const disposeMapEvents = mapInteraction.setupMapEvents(map, hoverSource, selectSource)
-      const disposeThemeObserver = mapStyles.observeThemeChanges()
+      mapInteraction.setupMapEvents(map, hoverSource, selectSource)
+      mapStyles.observeThemeChanges()
       
       // ===== 9. 最终初始化步骤 =====
       setTimeout(() => {
         map.updateSize()
-      }, 100)
+      }, MAP_CONFIG.UPDATE_SIZE_DELAY)
 
       // 初始化生命周期管理
       mapLifecycle.initializeLifecycle()
@@ -238,8 +248,5 @@ export function useMap() {
     // 交互功能
     queryFeaturesAtPoint: mapInteraction.queryFeaturesAtPoint,
     
-    // 向后兼容的别名
-    updatelayerStyles: mapStyles.updateLayerStyles,
-    createlayerStyle: mapStyles.createLayerStyle
   }
 }

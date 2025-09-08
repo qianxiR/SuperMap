@@ -8,7 +8,7 @@
         @click="goToView"
         title="切换到视图页面"
       />
-      <div class="screen-title">基于LLM-Agent的智能交互式地理空间智能决策分析系统</div>
+      <div class="screen-title">基于LLM-Agent的多模态实时态势感知地理空间智能决策分析系统</div>
     </div>
     
           <div class="header-right">
@@ -185,7 +185,10 @@ const goToProfile = () => {
 }
 
 const goToView = () => {
-  router.push('/dashboard/view/home')
+  router.push('/dashboard/view/home').then(() => {
+    // 路由切换后刷新页面
+    window.location.reload()
+  })
 }
 
 const goToAIManagement = () => {
@@ -223,7 +226,7 @@ const activeMode = computed(() => {
 
 const modeButtons = [
   { id: 'llm', text: '对话模式' },
-  { id: 'traditional', text: '手动模式' },
+  { id: 'traditional', text: '点击模式' },
 ];
 
 const setMode = (modeId: 'traditional' | 'llm') => {

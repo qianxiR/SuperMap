@@ -1,133 +1,99 @@
 <template>
   <div class="layer-assistant">
     <!-- 图层组 -->
-    <button 
-      class="assistant-btn zoom-in" 
-      @click="zoomIn"
+    <BaseButton 
+      variant="assistant"
+      size="medium"
+      icon="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
       title="放大"
-    >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-      </svg>
-    </button>
-    <button 
-      class="assistant-btn zoom-out" 
-      @click="zoomOut"
+      @click="zoomIn"
+    />
+    <BaseButton 
+      variant="assistant"
+      size="medium"
+      icon="M19 13H5v-2h14v2z"
       title="缩小"
-    >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M19 13H5v-2h14v2z"/>
-      </svg>
-    </button>
+      @click="zoomOut"
+    />
     
     <!-- 鹰眼按钮 -->
-    <button 
-      @click="toggleOverviewMap" 
-      :class="['assistant-btn overview-btn', { active: mapStore.overviewMapVisible }]"
+    <BaseButton 
+      variant="assistant"
+      size="medium"
+      :icon="getEyeIcon()"
       :title="mapStore.overviewMapVisible ? '隐藏鹰眼' : '显示鹰眼'"
-    >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-      </svg>
-    </button>
+      :active="mapStore.overviewMapVisible"
+      @click="toggleOverviewMap"
+    />
 
     <!-- 图层管理按钮 - 仅在view页面显示 -->
-    <button 
+    <BaseButton 
       v-if="!isManagementPage"
-      @click="toggleLayerManager" 
-      :class="['assistant-btn layer-manager-btn', { active: layerManagerVisible }]"
+      variant="assistant"
+      size="medium"
+      icon="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"
       :title="layerManagerVisible ? '关闭图层管理' : '打开图层管理'"
-    >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
-      </svg>
-    </button>
+      :active="layerManagerVisible"
+      @click="toggleLayerManager"
+    />
 
     <!-- 编辑组分隔线 -->
     <div class="tool-separator"></div>
     
     <!-- 编辑组 -->
-    <button 
-      @click="startDraw('Point')" 
-      :class="['assistant-btn draw-btn', { active: currentDrawType === 'Point' }]"
+    <BaseButton 
+      variant="assistant"
+      size="medium"
+      icon="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"
       title="绘制点"
-    >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-        <circle cx="12" cy="12" r="3"/>
-      </svg>
-    </button>
-    <button 
-      @click="startDraw('LineString')" 
-      :class="['assistant-btn draw-btn', { active: currentDrawType === 'LineString' }]"
+      :active="currentDrawType === 'Point'"
+      @click="startDraw('Point')"
+    />
+    <BaseButton 
+      variant="assistant"
+      size="medium"
+      icon="M3 12l6-6 6 6 6-6"
       title="绘制线"
-    >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M3 12l6-6 6 6 6-6"/>
-      </svg>
-    </button>
-    <button 
-      @click="startDraw('Polygon')" 
-      :class="['assistant-btn draw-btn', { active: currentDrawType === 'Polygon' }]"
+      :active="currentDrawType === 'LineString'"
+      @click="startDraw('LineString')"
+    />
+    <BaseButton 
+      variant="assistant"
+      size="medium"
+      :icon="getPolygonIcon()"
       title="绘制面"
-    >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M3 3h18v18H3z"/>
-      </svg>
-    </button>
+      :active="currentDrawType === 'Polygon'"
+      @click="startDraw('Polygon')"
+    />
     
-    <button 
-      @click="toggleDistanceMeasure" 
-      :class="['assistant-btn measure-btn', { active: mapStore.distanceMeasureMode }]"
+    <BaseButton 
+      variant="assistant"
+      size="medium"
+      icon="M3 12h18M3 8h2M3 16h2M7 8h2M7 16h2M11 8h2M11 16h2M15 8h2M15 16h2M19 8h2M19 16h2M6 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM18 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"
       :title="mapStore.distanceMeasureMode ? '停止距离量算' : '开始距离量算'"
-    >
-      <svg class="measure-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M3 12h18"/>
-        <path d="M3 8h2"/>
-        <path d="M3 16h2"/>
-        <path d="M7 8h2"/>
-        <path d="M7 16h2"/>
-        <path d="M11 8h2"/>
-        <path d="M11 16h2"/>
-        <path d="M15 8h2"/>
-        <path d="M15 16h2"/>
-        <path d="M19 8h2"/>
-        <path d="M19 16h2"/>
-        <circle cx="6" cy="12" r="1" fill="currentColor"/>
-        <circle cx="18" cy="12" r="1" fill="currentColor"/>
-      </svg>
-    </button>
+      :active="mapStore.distanceMeasureMode"
+      @click="toggleDistanceMeasure"
+    />
     
     <!-- 面积测量按钮 -->
-    <button 
-      @click="toggleAreaMeasure" 
-      :class="['assistant-btn area-measure-btn', { active: mapStore.areaMeasureMode }]"
+    <BaseButton 
+      variant="assistant"
+      size="medium"
+      :icon="getAreaMeasureIcon()"
       :title="mapStore.areaMeasureMode ? '停止面积量算' : '开始面积量算'"
-    >
-      <svg class="area-measure-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M3 3h18v18H3z"/>
-        <path d="M6 6h12v12H6z" fill="currentColor" opacity="0.2"/>
-        <path d="M6 6h12"/>
-        <path d="M6 12h12"/>
-        <path d="M6 18h12"/>
-        <path d="M6 6v12"/>
-        <path d="M12 6v12"/>
-        <path d="M18 6v12"/>
-        <circle cx="9" cy="9" r="1" fill="currentColor"/>
-        <circle cx="15" cy="15" r="1" fill="currentColor"/>
-      </svg>
-    </button>
+      :active="mapStore.areaMeasureMode"
+      @click="toggleAreaMeasure"
+    />
     
     <!-- 清除绘制内容按钮 - 仅在绘制模式下显示 -->
-    <button 
+    <BaseButton 
       v-if="currentDrawType && currentDrawType !== 'None'"
-      @click="clearDrawFeatures" 
-      class="assistant-btn clear-btn"
+      variant="assistant"
+      size="medium"
+      icon="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
       title="清除绘制内容"
-    >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-      </svg>
-    </button>
+      @click="clearDrawFeatures"
+    />
   </div>
 
 
@@ -165,6 +131,10 @@ import { useAnalysisStore } from '@/stores/analysisStore'
 import { uselayermanager } from '@/composables/uselayermanager'
 import ConfirmDialog from '@/components/UI/ConfirmDialog.vue'
 import LayerNameModal from '@/components/UI/LayerNameModal.vue'
+import BaseButton from '@/components/UI/BaseButton.vue'
+import { createLayerStyle } from '@/utils/styleUtils'
+import { safeAddEventListener, createWindowEventHandler } from '@/utils/eventUtils'
+import { getCurrentTheme } from '@/utils/themeUtils'
 
 const route = useRoute()
 const mapStore = useMapStore()
@@ -366,36 +336,10 @@ const updateDrawlayerStyle = () => {
   if (!drawlayer.value) return
   
   try {
-    const ol = window.ol
+    console.log('更新绘制图层样式...')
     
-    // 重新获取绘制线条颜色 - 使用专门的绘制颜色变量
-    const drawColor = getComputedStyle(document.documentElement).getPropertyValue('--draw-color').trim() || '#0078D4'
-    const drawRgb = getComputedStyle(document.documentElement).getPropertyValue('--draw-rgb').trim() || '0, 120, 212'
-    
-    console.log('更新绘制图层样式，颜色:', drawColor, 'RGB:', drawRgb)
-    
-    // 创建新样式
-    const newStyle = new ol.style.Style({
-      stroke: new ol.style.Stroke({
-        color: drawColor,
-        width: 3,
-        lineCap: 'round',
-        lineJoin: 'round'
-      }),
-      fill: new ol.style.Fill({
-        color: `rgba(${drawRgb}, 0.1)`
-      }),
-              image: new ol.style.Circle({
-          radius: 6,
-          fill: new ol.style.Fill({
-            color: drawColor
-          }),
-          stroke: new ol.style.Stroke({
-            color: getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || '#ffffff',
-            width: 2
-          })
-        })
-    })
+    // 使用统一的样式创建工具
+    const newStyle = createLayerStyle('draw')
     
     // 设置新样式
     drawlayer.value.setStyle(newStyle)
@@ -434,36 +378,15 @@ const initDrawlayer = () => {
     drawSource.value = new ol.source.Vector({ wrapX: false })
     console.log('绘制数据源创建成功:', drawSource.value)
     
-    // 获取绘制线条颜色 - 使用专门的绘制颜色变量
-    const drawColor = getComputedStyle(document.documentElement).getPropertyValue('--draw-color').trim() || '#0078D4'
-    const drawRgb = getComputedStyle(document.documentElement).getPropertyValue('--draw-rgb').trim() || '0, 120, 212'
+    console.log('初始化绘制图层...')
     
-    console.log('初始化绘制图层，颜色:', drawColor, 'RGB:', drawRgb)
+    // 使用统一的样式创建工具
+    const drawStyle = createLayerStyle('draw')
     
     // 创建绘制图层
     drawlayer.value = new ol.layer.Vector({
       source: drawSource.value,
-      style: new ol.style.Style({
-        stroke: new ol.style.Stroke({
-          color: drawColor,
-          width: 3,
-          lineCap: 'round',
-          lineJoin: 'round'
-        }),
-        fill: new ol.style.Fill({
-          color: `rgba(${drawRgb}, 0.1)`
-        }),
-        image: new ol.style.Circle({
-          radius: 6,
-          fill: new ol.style.Fill({
-            color: drawColor
-          }),
-          stroke: new ol.style.Stroke({
-            color: getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || '#ffffff',
-            width: 2
-          })
-        })
-      })
+      style: drawStyle
     })
     
     // 设置绘制图层标识
@@ -692,6 +615,34 @@ onUnmounted(() => {
   cleanupDrawlayer()
 })
 
+// 图标处理方法
+const getEyeIcon = () => {
+  return {
+    paths: "M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zM12 12a1 1 0 1 0 0-2 1 1 0 0 0 0 2z",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "2"
+  }
+}
+
+const getPolygonIcon = () => {
+  return {
+    paths: "M3 3h18v18H3z",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "2"
+  }
+}
+
+const getAreaMeasureIcon = () => {
+  return {
+    paths: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "2"
+  }
+}
+
 // 暴露状态给父组件
 defineExpose({
   layerManagerVisible
@@ -715,90 +666,10 @@ defineExpose({
   min-height: fit-content;
 }
 
-.assistant-btn {
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: var(--panel);
-  color: var(--text);
-  border-radius: 4px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  user-select: none;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.assistant-btn:hover {
-  background: var(--accent);
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.assistant-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
-}
-
-.assistant-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.assistant-btn:disabled:hover {
-  background: var(--panel);
-  color: var(--text);
-  box-shadow: none;
-}
-
-.measure-btn.active {
-  background: var(--accent);
-  color: white;
-}
-
-.draw-btn.active {
-  background: var(--accent);
-  color: white;
-}
-
-.overview-btn.active {
-  background: var(--accent);
-  color: white;
-}
-
-.area-measure-btn.active {
-  background: var(--accent);
-  color: white;
-}
-
-.layer-manager-btn.active {
-  background: var(--accent);
-  color: white;
-}
-
-.clear-btn:hover {
-  background: var(--btn-secondary-bg);
-  color: var(--btn-secondary-color);
-}
-
 .tool-separator {
   height: 1px;
   background: var(--border);
   margin: 2px 0;
   flex-shrink: 0;
-}
-
-.measure-icon {
-  width: 16px;
-  height: 16px;
-}
-
-.area-measure-icon {
-  width: 16px;
-  height: 16px;
 }
 </style>

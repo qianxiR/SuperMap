@@ -4,6 +4,15 @@ import { useAnalysisStore } from '@/stores/analysisStore'
 import { usePopupStore } from '@/stores/popupStore'
 import { uselayermanager } from '@/composables/uselayermanager'
 
+// 生命周期配置常量
+const LIFECYCLE_CONFIG = {
+  DRAW_MODES: ['point', 'line', 'polygon'],
+  CURSOR_STYLES: {
+    DRAWING: 'crosshair',
+    DEFAULT: 'default'
+  }
+} as const;
+
 /**
  * 地图生命周期管理 Composable
  * 
@@ -70,10 +79,10 @@ export function useMapLifecycle() {
     const unwatchDrawMode = watch(() => analysisStore.drawMode, (newMode) => {
       if (!mapStore.map) return;
       const targetElement = mapStore.map.getTargetElement();
-      if (['point', 'line', 'polygon'].includes(newMode)) {
-        targetElement.style.cursor = 'crosshair';
+      if (LIFECYCLE_CONFIG.DRAW_MODES.includes(newMode as any)) {
+        targetElement.style.cursor = LIFECYCLE_CONFIG.CURSOR_STYLES.DRAWING;
       } else {
-        targetElement.style.cursor = 'default';
+        targetElement.style.cursor = LIFECYCLE_CONFIG.CURSOR_STYLES.DEFAULT;
       }
     });
     

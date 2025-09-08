@@ -213,6 +213,8 @@ import { useLayerExport } from '@/composables/useLayerExport'
 import ConfirmDialog from '@/components/UI/ConfirmDialog.vue'
 import LayerItem from '@/components/UI/LayerItem.vue'
 import type { Maplayer } from '@/types/map'
+import { clearLayersBySource, getLayerStats } from '@/utils/layerUtils'
+import { safeAddEventListener } from '@/utils/eventUtils'
 
 // 定义props
 interface Props {

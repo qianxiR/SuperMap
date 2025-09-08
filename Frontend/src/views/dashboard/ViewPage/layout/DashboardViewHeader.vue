@@ -8,7 +8,7 @@
         @click="goToManagement"
         title="切换到管理分析"
       />
-      <div class="screen-title">基于LLM-Agent的多模态实时态势感知地理空间智能决策平台</div>
+      <div class="screen-title">基于LLM-Agent的多模态实时态势感知地理空间智能可视化平台</div>
     </div>
     
     <div class="header-right">
@@ -97,11 +97,19 @@ import { useThemeStore } from '@/stores/themeStore'
 import { useUserStore } from '@/stores/userStore'
 import { useGlobalModalStore } from '@/stores/modalStore'
 import { useMapStore } from '@/stores/mapStore'
+import { safeAddEventListener } from '@/utils/eventUtils'
+import { toggleTheme as toggleThemeUtil } from '@/utils/themeUtils'
 
 // 主题管理
 const themeStore = useThemeStore()
 const { theme } = storeToRefs(themeStore)
-const { toggleTheme, applySystemTheme, setupSystemThemeListener } = themeStore
+const { applySystemTheme, setupSystemThemeListener } = themeStore
+
+// 使用统一的主题工具
+const toggleTheme = () => {
+  const newTheme = toggleThemeUtil()
+  themeStore.setTheme(newTheme)
+}
 
 // 用户管理
 const router = useRouter()
@@ -185,7 +193,10 @@ const goToAIManagement = () => {
 }
 
 const goToManagement = () => {
-  router.push('/dashboard/management-analysis')
+  router.push('/dashboard/management-analysis').then(() => {
+    // 路由切换后刷新页面
+    window.location.reload()
+  })
 }
 
 
@@ -205,12 +216,15 @@ const closeUserMenu = () => {
 
 // 监听点击外部事件
 onMounted(() => {
-  document.addEventListener('click', (e) => {
+  // 使用统一的事件管理工具
+  const clickHandler = (e: Event) => {
     const target = e.target as HTMLElement
     if (!target.closest('.user-dropdown')) {
       closeUserMenu()
     }
-  })
+  }
+  
+  safeAddEventListener(document, 'click', clickHandler)
   
   // 初始化主题
   applySystemTheme()

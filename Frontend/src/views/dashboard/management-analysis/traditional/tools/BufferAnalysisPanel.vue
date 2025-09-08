@@ -94,7 +94,6 @@
         <PrimaryButton 
           text="执行缓冲区分析"
           :loading="isAnalyzing"
-          :disabled="!selectedAnalysislayerId"
           @click="executeBufferAnalysis"
         />
         <SecondaryButton 

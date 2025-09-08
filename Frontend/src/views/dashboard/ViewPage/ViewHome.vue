@@ -39,6 +39,7 @@ import { useMapStore } from '@/stores/mapStore'
 import { useGlobalModalStore } from '@/stores/modalStore'
 import { useLayerUIStore } from '@/stores/layerUIStore'
 import { usePageStateStore } from '@/stores/pageStateStore'
+import { safeAddEventListener, createWindowEventHandler } from '@/utils/eventUtils'
 import DashboardViewHeader from '@/views/dashboard/ViewPage/layout/DashboardViewHeader.vue'
 import UserProfile from '@/views/dashboard/management-analysis/profile/UserProfile.vue'
 import AIManagement from '@/views/dashboard/management-analysis/management/AIManagement.vue'
@@ -59,7 +60,7 @@ const layerUIStore = useLayerUIStore()
 const pageStateStore = usePageStateStore()
 
 let resizeObserver: ResizeObserver | null = null
-let openLayerManagerHandler: (() => void) | null = null
+let eventCleanup: (() => void) | null = null
 
 // 图层管理相关状态 - 使用Pinia管理
 const layerAssistant = ref()
@@ -90,8 +91,8 @@ onMounted(() => {
     setTimeout(initMap, 500)
   }
 
-  // 监听来自Header的打开图层管理事件
-  openLayerManagerHandler = () => {
+  // 使用统一的事件管理工具
+  const openLayerManagerHandler = () => {
     layerUIStore.showLayerManager()
     if (layerAssistant.value) {
       layerAssistant.value.layerManagerVisible = true
@@ -101,7 +102,8 @@ onMounted(() => {
   // 设置当前页面为视图页面
   pageStateStore.switchToPage('view')
   
-  window.addEventListener('openLayerManager', openLayerManagerHandler)
+  // 使用统一的事件管理工具
+  eventCleanup = safeAddEventListener(window, 'openLayerManager', openLayerManagerHandler)
 
   // 当容器尺寸变化时，强制更新地图尺寸，避免容器初始为0导致"无地图可见"
   const el = mapContainer.value
@@ -114,10 +116,10 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  // 清理事件监听器
-  if (openLayerManagerHandler) {
-    window.removeEventListener('openLayerManager', openLayerManagerHandler)
-    openLayerManagerHandler = null
+  // 使用统一的事件清理工具
+  if (eventCleanup) {
+    eventCleanup()
+    eventCleanup = null
   }
   
   if (resizeObserver) {

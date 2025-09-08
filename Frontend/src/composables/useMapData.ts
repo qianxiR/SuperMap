@@ -6,6 +6,19 @@ import { useMapStyles } from './useMapStyles'
 
 const ol = window.ol;
 
+// 数据加载配置常量
+const DATA_CONFIG = {
+  PAGE_SIZE: 10000,
+  PAGINATION_DELAY: 100,
+  HIT_TOLERANCE: 5,
+  DEFAULT_FEATURE_COUNT: 20,
+  DEFAULT_START_INDEX: 0,
+  Z_INDEX: {
+    COUNTY_BOUNDARY: 0,
+    DEFAULT_OFFSET: 10
+  }
+} as const;
+
 /**
  * 地图数据加载 Composable
  * 
@@ -96,7 +109,7 @@ export function useMapData() {
       [mapExtent[0], mapExtent[1]]  // 闭合 [minLon, minLat]
     ]]);
 
-    const pageSize = 10000;
+    const pageSize = DATA_CONFIG.PAGE_SIZE;
     const initialToIndex = Math.min(computedFromIndexBounds + pageSize - 1, computedToIndexBounds);
 
     // 移除对 count.json 和 info.json 接口的调用，避免 400/404 错误
@@ -151,7 +164,7 @@ export function useMapData() {
 
         // ===== 异步分页加载循环 =====
         // 调用者: loadVectorLayer() -> setTimeout() -> addPage()
-        // 作用: 延迟100ms后开始分页加载剩余要素，避免阻塞主线程
+        // 作用: 延迟后开始分页加载剩余要素，避免阻塞主线程
         setTimeout(() => {
           (async () => {
             try {
@@ -163,7 +176,7 @@ export function useMapData() {
               // 静默处理分页加载错误
             }
           })();
-        }, 100);
+        }, DATA_CONFIG.PAGINATION_DELAY);
         
         // ===== 加载完成通知（使用自定义API获取的统计信息） =====
         // 调用者: loadVectorLayer()
@@ -177,7 +190,7 @@ export function useMapData() {
     
     const resolvedVisible = typeof visibleOverride === 'boolean' ? visibleOverride : !!layerConfig.visible
     vectorlayer.setVisible(resolvedVisible);
-    const zIndex = layerName === '武汉_县级' ? 0 : 10 + mapStore.vectorlayers.length;
+    const zIndex = layerName === '武汉_县级' ? DATA_CONFIG.Z_INDEX.COUNTY_BOUNDARY : DATA_CONFIG.Z_INDEX.DEFAULT_OFFSET + mapStore.vectorlayers.length;
     vectorlayer.setZIndex(zIndex);
     
     // 只有非懒加载图层才需要添加到地图和mapStore
