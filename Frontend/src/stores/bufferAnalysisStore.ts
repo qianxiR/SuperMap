@@ -34,7 +34,7 @@ export const useBufferAnalysisStore = defineStore('bufferAnalysis', () => {
   const state = reactive<BufferAnalysisState>({
     selectedAnalysislayerId: '',
     bufferSettings: {
-      radius: 100,
+      radius: 1000,
       semicircleLineSegment: 10
     },
     bufferResults: [],
@@ -91,7 +91,7 @@ export const useBufferAnalysisStore = defineStore('bufferAnalysis', () => {
     state.layerName = ''
     // 重置为默认设置
     state.bufferSettings = {
-      radius: 100,
+      radius: 1000,
       semicircleLineSegment: 10
     }
   }
