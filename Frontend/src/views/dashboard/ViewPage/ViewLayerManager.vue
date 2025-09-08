@@ -69,7 +69,7 @@
                   @click="handleRemove(layer)"
                   :title="`删除图层: ${layer.displayName}`"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
                   </svg>
                 </button>
@@ -113,7 +113,7 @@
                   @click="handleRemove(layer)"
                   :title="`删除图层: ${layer.displayName}`"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
                   </svg>
                 </button>
@@ -157,7 +157,7 @@
                   @click="handleRemove(layer)"
                   :title="`删除图层: ${layer.displayName}`"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
                   </svg>
                 </button>
@@ -428,11 +428,11 @@ const emit = defineEmits<{
   padding-right: 3px;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 3px;
 }
 
 .group-header {
-  padding: 4px 8px;
+  padding: 8px 12px;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -443,8 +443,8 @@ const emit = defineEmits<{
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 28px;
-  margin-bottom: 3px;
+  min-height: 40px;
+  margin-bottom: 4px;
   box-shadow: var(--glow);
 }
 
@@ -459,8 +459,8 @@ const emit = defineEmits<{
 }
 
 .group-toggle {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border: none;
   background: transparent;
   color: inherit;
@@ -468,7 +468,7 @@ const emit = defineEmits<{
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 3px;
+  border-radius: 4px;
   transition: none !important;
   animation: none !important;
   flex-shrink: 0;
@@ -483,12 +483,12 @@ const emit = defineEmits<{
 }
 
 .group-title {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   color: inherit;
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   flex: 1;
   text-align: left;
   transition: none !important;
@@ -496,14 +496,14 @@ const emit = defineEmits<{
 }
 
 .group-count {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--accent);
   background: var(--accent-bg, rgba(var(--accent-rgb), 0.1));
-  padding: 1px 5px;
-  border-radius: 8px;
-  margin-left: 4px;
-  min-width: 14px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 6px;
+  min-width: 18px;
   text-align: center;
   line-height: 1.2;
   transition: none !important;
@@ -531,9 +531,10 @@ const emit = defineEmits<{
 
 
 .control-btn {
-  font-size: 10px;
-  padding: 4px 8px;
-  min-width: auto;
+  font-size: 12px;
+  padding: 6px 8px;
+  min-width: 32px;
+  min-height: 32px;
   border: none;
   border-radius: 6px;
   cursor: pointer;

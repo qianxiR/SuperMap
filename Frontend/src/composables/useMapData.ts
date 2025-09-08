@@ -14,7 +14,7 @@ const DATA_CONFIG = {
   DEFAULT_FEATURE_COUNT: 20,
   DEFAULT_START_INDEX: 0,
   Z_INDEX: {
-    COUNTY_BOUNDARY: 0,
+    COUNTY_BOUNDARY: -500,
     DEFAULT_OFFSET: 10
   }
 } as const;
@@ -71,6 +71,7 @@ export function useMapData() {
         source: new ol.source.Vector({}),
         style: style
       });
+
     }
     
     // ===== 连接SuperMap iServer数据服务 =====

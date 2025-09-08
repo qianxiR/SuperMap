@@ -166,6 +166,13 @@ export function uselayermanager() {
         // 非懒加载图层或已加载的懒加载图层，直接显示
         layerInfo.layer.setVisible(true)
       }
+      
+      // 检查是否为建筑物图层，如果是则启用2.5D渲染
+      if (layerInfo.name === '建筑物面' && mapStore.map) {
+        const { enablePolygonExtrusion } = await import('@/composables/useBuildingExtrusion')
+        const color = getComputedStyle(document.documentElement).getPropertyValue('--building-3d-color').trim()
+        enablePolygonExtrusion(layerInfo.layer, mapStore.map, color)
+      }
     } else {
       // 隐藏图层逻辑
       

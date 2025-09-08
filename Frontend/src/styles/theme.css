@@ -48,6 +48,8 @@
   --overview-extent-rgb: 0, 120, 212;
   --coordinate-color: #0078D4;
   --scale-color: #0078D4;
+  /* 3D 建筑颜色（浅色） */
+  --building-3d-color: rgba(0, 120, 212, 0.35);
   
   /* ===== 绘制颜色 - 浅色模式 ===== */
   --draw-color: #0078D4;
@@ -249,6 +251,8 @@ html {
   --overview-extent-rgb: 204, 204, 204;
   --coordinate-color: #0078D4;
   --scale-color: #0078D4;
+  /* 3D 建筑颜色（深色） */
+  --building-3d-color: rgba(255, 255, 255, 0.35);
   
   /* ===== 绘制颜色 - 深色模式 ===== */
   --draw-color: #0078D4;

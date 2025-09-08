@@ -60,7 +60,7 @@
                   @click="handleRemove(item)"
                   :title="`删除图层: ${item.displayName}`"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
                   </svg>
                 </button>
@@ -100,7 +100,7 @@
                   @click="handleRemove(item)"
                   :title="`删除图层: ${item.displayName}`"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
                   </svg>
                 </button>
@@ -140,7 +140,7 @@
                   @click="handleRemove(item)"
                   :title="`删除图层: ${item.displayName}`"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
                   </svg>
                 </button>
@@ -395,11 +395,11 @@ const handleExportGroup = async (source: string) => {
   padding-right: 4px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .group-header {
-  padding: 6px 10px;
+  padding: 8px 12px;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -409,7 +409,7 @@ const handleExportGroup = async (source: string) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 32px;
+  min-height: 40px;
   margin-bottom: 4px;
   box-shadow: var(--glow);
 }
@@ -450,7 +450,7 @@ const handleExportGroup = async (source: string) => {
 }
 
 .group-title {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: inherit;
   display: flex;
@@ -461,16 +461,16 @@ const handleExportGroup = async (source: string) => {
 }
 
 .group-count {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--accent);
   background: var(--accent-bg, rgba(var(--accent-rgb), 0.1));
   padding: 2px 6px;
   border-radius: 10px;
   margin-left: 6px;
-  min-width: 16px;
+  min-width: 18px;
   text-align: center;
-  line-height: 1;
+  line-height: 1.2;
   transition: none !important;
   animation: none !important;
 }
@@ -529,9 +529,10 @@ const handleExportGroup = async (source: string) => {
 
 
 .control-btn {
-  font-size: 10px;
-  padding: 4px 8px;
-  min-width: auto;
+  font-size: 12px;
+  padding: 6px 8px;
+  min-width: 32px;
+  min-height: 32px;
   border: none;
   border-radius: 6px;
   cursor: pointer;
