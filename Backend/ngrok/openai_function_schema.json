@@ -1,0 +1,72 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Simple Sum API",
+    "description": "计算两数之和的简单API服务",
+    "version": "v1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://da0009c04375.ngrok-free.app"
+    }
+  ],
+  "paths": {
+    "/sum": {
+      "post": {
+        "description": "计算两数之和",
+        "operationId": "SumNumbers",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "a": {
+                    "type": "number",
+                    "description": "加数 a"
+                  },
+                  "b": {
+                    "type": "number",
+                    "description": "加数 b"
+                  }
+                },
+                "required": ["a", "b"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功返回计算结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "a": {
+                      "type": "number",
+                      "description": "加数 a"
+                    },
+                    "b": {
+                      "type": "number",
+                      "description": "加数 b"
+                    },
+                    "result": {
+                      "type": "number",
+                      "description": "计算结果"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    }
+  },
+  "components": {
+    "schemas": {}
+  }
+}

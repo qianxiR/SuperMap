@@ -1,0 +1,701 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "SuperMap Analysis API",
+    "description": "空间分析服务API - 支持缓冲区分析、擦除分析、相交分析、最短路径分析",
+    "version": "v1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://19bba03fbbad.ngrok-free.app"
+    }
+  ],
+  "paths": {
+    "/api/v1/spatial-analysis/buffer": {
+      "post": {
+        "description": "执行缓冲区分析",
+        "operationId": "ExecuteBufferAnalysis",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "sourceData": {
+                  "$ref": "#/components/schemas/FeatureCollection",
+                  "description": "源数据GeoJSON格式"
+                },
+                "bufferSettings": {
+                  "type": "object",
+                  "properties": {
+                    "radius": {
+                      "type": "number",
+                      "description": "缓冲区半径（米）",
+                      "minimum": 0
+                    },
+                    "semicircleLineSegment": {
+                      "type": "integer",
+                      "description": "半圆线段数，默认10",
+                      "minimum": 1,
+                      "maximum": 64,
+                      "default": 10
+                    }
+                  },
+                  "required": ["radius"]
+                },
+                "featureFilter": {
+                  "type": "object",
+                  "properties": {
+                    "featureIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "要过滤的要素ID列表"
+                    },
+                    "spatialFilter": {
+                      "type": "object",
+                      "description": "空间过滤条件"
+                    }
+                  },
+                  "description": "要素过滤条件"
+                },
+                "options": {
+                  "type": "object",
+                  "properties": {
+                    "returnGeometry": {
+                      "type": "boolean",
+                      "default": true,
+                      "description": "是否返回几何信息"
+                    },
+                    "returnProperties": {
+                      "type": "boolean", 
+                      "default": true,
+                      "description": "是否返回属性信息"
+                    },
+                    "resultLayerName": {
+                      "type": "string",
+                      "default": "缓冲区分析结果",
+                      "description": "结果图层名称"
+                    }
+                  },
+                  "description": "分析选项"
+                }
+              },
+              "required": ["sourceData", "bufferSettings"]
+            }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "缓冲区分析执行成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/spatial-analysis/buffer/result/{resultId}": {
+      "get": {
+        "description": "获取缓冲区分析结果",
+        "operationId": "GetBufferAnalysisResult",
+        "parameters": [
+          {
+            "name": "resultId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "分析结果ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取分析结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResultResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/spatial-analysis/erase": {
+      "post": {
+        "description": "执行擦除分析",
+        "operationId": "ExecuteEraseAnalysis",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "targetData": {
+                    "$ref": "#/components/schemas/FeatureCollection"
+                  },
+                  "eraseData": {
+                    "$ref": "#/components/schemas/FeatureCollection"
+                  }
+                },
+                "required": ["targetData", "eraseData"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "擦除分析执行成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/spatial-analysis/erase/options": {
+      "get": {
+        "description": "获取擦除分析选项",
+        "operationId": "GetEraseAnalysisOptions",
+        "responses": {
+          "200": {
+            "description": "成功获取分析选项",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/spatial-analysis/erase/validate": {
+      "post": {
+        "description": "验证擦除分析数据",
+        "operationId": "ValidateEraseAnalysisData",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "targetData": {
+                    "$ref": "#/components/schemas/FeatureCollection"
+                  },
+                  "eraseData": {
+                    "$ref": "#/components/schemas/FeatureCollection"
+                  }
+                },
+                "required": ["targetData", "eraseData"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "数据验证完成",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/spatial-analysis/erase/statistics": {
+      "post": {
+        "description": "获取擦除分析统计信息",
+        "operationId": "GetEraseAnalysisStatistics",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "targetData": {
+                    "$ref": "#/components/schemas/FeatureCollection"
+                  },
+                  "eraseData": {
+                    "$ref": "#/components/schemas/FeatureCollection"
+                  }
+                },
+                "required": ["targetData", "eraseData"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功获取统计信息",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatisticsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/spatial-analysis/intersection": {
+      "post": {
+        "description": "执行相交分析",
+        "operationId": "ExecuteIntersectionAnalysis",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "targetData": {
+                    "$ref": "#/components/schemas/FeatureCollection"
+                  },
+                  "maskData": {
+                    "$ref": "#/components/schemas/FeatureCollection"
+                  }
+                },
+                "required": ["targetData", "maskData"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "相交分析执行成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/spatial-analysis/intersection/options": {
+      "get": {
+        "description": "获取相交分析选项",
+        "operationId": "GetIntersectionAnalysisOptions",
+        "responses": {
+          "200": {
+            "description": "成功获取分析选项",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/spatial-analysis/intersection/validate": {
+      "post": {
+        "description": "验证相交分析数据",
+        "operationId": "ValidateIntersectionAnalysisData",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "targetData": {
+                    "$ref": "#/components/schemas/FeatureCollection"
+                  },
+                  "maskData": {
+                    "$ref": "#/components/schemas/FeatureCollection"
+                  }
+                },
+                "required": ["targetData", "maskData"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "数据验证完成",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/spatial-analysis/intersection/statistics": {
+      "post": {
+        "description": "获取相交分析统计信息",
+        "operationId": "GetIntersectionAnalysisStatistics",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "targetData": {
+                    "$ref": "#/components/schemas/FeatureCollection"
+                  },
+                  "maskData": {
+                    "$ref": "#/components/schemas/FeatureCollection"
+                  }
+                },
+                "required": ["targetData", "maskData"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功获取统计信息",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatisticsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/spatial-analysis/shortest-path": {
+      "post": {
+        "description": "执行最短路径分析",
+        "operationId": "ExecuteShortestPathAnalysis",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "startPoint": {
+                    "$ref": "#/components/schemas/Point"
+                  },
+                  "endPoint": {
+                    "$ref": "#/components/schemas/Point"
+                  },
+                  "analysisOptions": {
+                    "type": "object",
+                    "properties": {
+                      "units": {
+                        "type": "string",
+                        "enum": ["kilometers", "miles", "meters"],
+                        "description": "距离单位"
+                      },
+                      "resolution": {
+                        "type": "number",
+                        "minimum": 0,
+                        "description": "分析分辨率"
+                      }
+                    }
+                  }
+                },
+                "required": ["startPoint", "endPoint"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "最短路径分析执行成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/spatial-analysis/shortest-path/result/{resultId}": {
+      "get": {
+        "description": "获取最短路径分析结果",
+        "operationId": "GetShortestPathAnalysisResult",
+        "parameters": [
+          {
+            "name": "resultId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "分析结果ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取分析结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResultResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "FeatureCollection": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["FeatureCollection"]
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Feature"
+            }
+          }
+        },
+        "required": ["type", "features"]
+      },
+      "Feature": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["Feature"]
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/Geometry"
+          },
+          "properties": {
+            "type": "object"
+          }
+        },
+        "required": ["type", "geometry"]
+      },
+      "Geometry": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["Point", "LineString", "Polygon", "MultiPoint", "MultiLineString", "MultiPolygon", "GeometryCollection"]
+          },
+          "coordinates": {
+            "type": "array"
+          }
+        },
+        "required": ["type", "coordinates"]
+      },
+      "Point": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["Point"]
+          },
+          "coordinates": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2,
+            "maxItems": 3
+          }
+        },
+        "required": ["type", "coordinates"]
+      },
+      "AnalysisResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "results": {
+                "type": "array"
+              },
+              "statistics": {
+                "type": "object"
+              }
+            }
+          },
+          "message": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string"
+          }
+        }
+      },
+      "AnalysisResultResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "resultId": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "ValidationResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "StatisticsResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [false]
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              }
+            }
+          },
+          "message": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
