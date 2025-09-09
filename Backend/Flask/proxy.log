@@ -1,0 +1,219 @@
+2025-09-09 14:40:18,697 - __main__ - INFO - Æô¶¯Dify´úÀí·þÎñÆ÷...
+2025-09-09 14:40:18,698 - __main__ - INFO - Ä¿±ê·þÎñ: http://127.0.0.1:8087
+2025-09-09 14:40:18,698 - __main__ - INFO - ¼àÌýµØÖ·: 0.0.0.0:5001
+2025-09-09 14:40:20,058 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://26.26.26.1:5001
+2025-09-09 14:40:20,058 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-09-09 14:41:08,619 - __main__ - INFO - ÊÕµ½ÇëÇó: GET http://127.0.0.1:5001/
+2025-09-09 14:41:08,621 - __main__ - INFO - ÇëÇóÍ·: {'Host': '127.0.0.1:5001', 'Connection': 'keep-alive', 'Sec-Ch-Ua': '"Chromium";v="140", "Not=A?Brand";v="24", "Microsoft Edge";v="140"', 'Sec-Ch-Ua-Mobile': '?0', 'Sec-Ch-Ua-Platform': '"Windows"', 'Upgrade-Insecure-Requests': '1', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7', 'Sec-Fetch-Site': 'none', 'Sec-Fetch-Mode': 'navigate', 'Sec-Fetch-User': '?1', 'Sec-Fetch-Dest': 'document', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6,zh-TW;q=0.5'}
+2025-09-09 14:41:08,623 - __main__ - INFO - ÏìÓ¦×´Ì¬: 404
+2025-09-09 14:41:08,623 - werkzeug - INFO - 127.0.0.1 - - [09/Sep/2025 14:41:08] "[33mGET / HTTP/1.1[0m" 404 -
+2025-09-09 14:41:08,858 - __main__ - INFO - ÊÕµ½ÇëÇó: GET http://127.0.0.1:5001/favicon.ico
+2025-09-09 14:41:08,859 - __main__ - INFO - ÇëÇóÍ·: {'Host': '127.0.0.1:5001', 'Connection': 'keep-alive', 'Sec-Ch-Ua-Platform': '"Windows"', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0', 'Sec-Ch-Ua': '"Chromium";v="140", "Not=A?Brand";v="24", "Microsoft Edge";v="140"', 'Sec-Ch-Ua-Mobile': '?0', 'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Dest': 'image', 'Referer': 'http://127.0.0.1:5001/', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6,zh-TW;q=0.5'}
+2025-09-09 14:41:08,859 - __main__ - INFO - ×ª·¢ÇëÇóµ½: http://127.0.0.1:8087/favicon.ico
+2025-09-09 14:41:08,869 - __main__ - INFO - ÏìÓ¦Ê±¼ä: 0.010s
+2025-09-09 14:41:08,871 - __main__ - INFO - ÏìÓ¦×´Ì¬: 404
+2025-09-09 14:41:08,872 - werkzeug - INFO - 127.0.0.1 - - [09/Sep/2025 14:41:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-09-09 14:41:31,941 - __main__ - INFO - Æô¶¯Dify´úÀí·þÎñÆ÷...
+2025-09-09 14:41:31,942 - __main__ - INFO - Ä¿±ê·þÎñ: http://127.0.0.1:8087
+2025-09-09 14:41:31,942 - __main__ - INFO - ¼àÌýµØÖ·: 0.0.0.0:5001
+2025-09-09 14:41:33,286 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://26.26.26.1:5001
+2025-09-09 14:41:33,287 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-09-09 14:43:32,266 - __main__ - INFO - Ê¹ÓÃGunicornÉú²ú·þÎñÆ÷Æô¶¯...
+2025-09-09 14:43:32,266 - __main__ - INFO - Ä¿±ê·þÎñ: http://127.0.0.1:8087
+2025-09-09 14:43:32,267 - __main__ - INFO - ¼àÌýµØÖ·: 0.0.0.0:5001
+2025-09-09 14:43:32,267 - __main__ - INFO - Æô¶¯ÃüÁî: gunicorn -w 4 -b 0.0.0.0:5001 proxy_server:app
+2025-09-09 14:44:30,013 - __main__ - INFO - ¼ì²âµ½²Ù×÷ÏµÍ³: Windows
+2025-09-09 14:44:30,014 - __main__ - WARNING - WaitressÎ´°²×°£¬Ê¹ÓÃFlask¿ª·¢·þÎñÆ÷
+2025-09-09 14:44:30,014 - __main__ - INFO - Ê¹ÓÃFlask¿ª·¢·þÎñÆ÷Æô¶¯...
+2025-09-09 14:44:30,015 - __main__ - INFO - Ä¿±ê·þÎñ: http://127.0.0.1:8087
+2025-09-09 14:44:30,016 - __main__ - INFO - ¼àÌýµØÖ·: 0.0.0.0:5001
+2025-09-09 14:44:30,017 - __main__ - WARNING - ¾¯¸æ: ÕâÊÇ¿ª·¢·þÎñÆ÷£¬½¨Òé°²×°WaitressÓÃÓÚÉú²ú»·¾³
+2025-09-09 14:45:20,166 - __main__ - INFO - ¼ì²âµ½²Ù×÷ÏµÍ³: Windows
+2025-09-09 14:45:20,175 - __main__ - INFO - Ê¹ÓÃWaitressÉú²ú·þÎñÆ÷Æô¶¯ (Windows¼æÈÝ)...
+2025-09-09 14:45:20,175 - __main__ - INFO - Ä¿±ê·þÎñ: http://127.0.0.1:8087
+2025-09-09 14:45:20,175 - __main__ - INFO - ¼àÌýµØÖ·: 0.0.0.0:5001
+2025-09-09 14:45:20,175 - __main__ - INFO - ¹¤×÷Ïß³Ì: 4
+2025-09-09 14:45:20,177 - waitress - INFO - Serving on http://0.0.0.0:5001
+2025-09-09 14:46:29,560 - __main__ - INFO - ¼ì²âµ½²Ù×÷ÏµÍ³: Windows
+2025-09-09 14:46:29,569 - __main__ - INFO - Ê¹ÓÃWaitressÉú²ú·þÎñÆ÷Æô¶¯ (Windows¼æÈÝ)...
+2025-09-09 14:46:29,569 - __main__ - INFO - Ä¿±ê·þÎñ: http://127.0.0.1:8087
+2025-09-09 14:46:29,569 - __main__ - INFO - ¼àÌýµØÖ·: 0.0.0.0:5001
+2025-09-09 14:46:29,569 - __main__ - INFO - ¹¤×÷Ïß³Ì: 4
+2025-09-09 14:46:29,571 - waitress - INFO - Serving on http://0.0.0.0:5001
+2025-09-09 15:05:57,267 - __main__ - INFO - ¼ì²âµ½²Ù×÷ÏµÍ³: Windows
+2025-09-09 15:05:57,282 - __main__ - INFO - Ê¹ÓÃWaitressÉú²ú·þÎñÆ÷Æô¶¯ (Windows¼æÈÝ)...
+2025-09-09 15:05:57,282 - __main__ - INFO - Ä¿±ê·þÎñ: http://127.0.0.1:8087
+2025-09-09 15:05:57,282 - __main__ - INFO - ¼àÌýµØÖ·: 0.0.0.0:5001
+2025-09-09 15:05:57,282 - __main__ - INFO - ¹¤×÷Ïß³Ì: 4
+2025-09-09 15:05:57,285 - waitress - INFO - Serving on http://0.0.0.0:5001
+2025-09-09 15:10:06,047 - __main__ - INFO - ÊÕµ½ÇëÇó: GET http://localhost:5001/health
+2025-09-09 15:10:06,049 - __main__ - INFO - ÇëÇóÍ·: {'User-Agent': 'Mozilla/5.0 (Windows NT; Windows NT 10.0; zh-CN) WindowsPowerShell/5.1.26100.4768', 'Host': 'localhost:5001', 'Connection': 'Keep-Alive'}
+2025-09-09 15:10:06,051 - __main__ - INFO - ÏìÓ¦×´Ì¬: 200
+2025-09-09 15:10:34,282 - __main__ - INFO - ÊÕµ½ÇëÇó: POST http://localhost:5001/api/v1/spatial-analysis/buffer
+2025-09-09 15:10:34,283 - __main__ - INFO - ÇëÇóÍ·: {'User-Agent': 'Mozilla/5.0 (Windows NT; Windows NT 10.0; zh-CN) WindowsPowerShell/5.1.26100.4768', 'Content-Type': 'application/json', 'Host': 'localhost:5001', 'Content-Length': '194'}
+2025-09-09 15:10:34,285 - __main__ - INFO - ÇëÇóÌå: {'bufferSettings': {'semicircleLineSegment': 10, 'radius': 100}, 'sourceLayerId': 'test_layer'}
+2025-09-09 15:10:34,285 - __main__ - INFO - ×ª·¢ÇëÇóµ½: http://127.0.0.1:8087/api/v1/spatial-analysis/buffer
+2025-09-09 15:10:34,587 - __main__ - INFO - ÏìÓ¦Ê±¼ä: 0.302s
+2025-09-09 15:10:34,588 - __main__ - INFO - ÏìÓ¦×´Ì¬: 500
+2025-09-09 15:10:34,588 - waitress - ERROR - Exception while serving /api/v1/spatial-analysis/buffer
+Traceback (most recent call last):
+  File "D:\anaconda3\Lib\site-packages\waitress\channel.py", line 428, in service
+    task.service()
+    ~~~~~~~~~~~~^^
+  File "D:\anaconda3\Lib\site-packages\waitress\task.py", line 168, in service
+    self.execute()
+    ~~~~~~~~~~~~^^
+  File "D:\anaconda3\Lib\site-packages\waitress\task.py", line 434, in execute
+    app_iter = self.channel.server.application(environ, start_response)
+  File "D:\anaconda3\Lib\site-packages\flask\app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda3\Lib\site-packages\flask\app.py", line 2197, in wsgi_app
+    return response(environ, start_response)
+  File "D:\anaconda3\Lib\site-packages\werkzeug\wrappers\response.py", line 579, in __call__
+    start_response(status, headers)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "D:\anaconda3\Lib\site-packages\waitress\task.py", line 423, in start_response
+    raise AssertionError(
+    ...<2 lines>...
+    )
+AssertionError: Connection is a "hop-by-hop" header; it cannot be used by a WSGI application (see PEP 3333)
+2025-09-09 15:19:39,069 - __main__ - INFO - ¼ì²âµ½²Ù×÷ÏµÍ³: Windows
+2025-09-09 15:19:39,072 - __main__ - WARNING - WaitressÎ´°²×°£¬Ê¹ÓÃFlask¿ª·¢·þÎñÆ÷
+2025-09-09 15:19:39,073 - __main__ - INFO - Ê¹ÓÃFlask¿ª·¢·þÎñÆ÷Æô¶¯...
+2025-09-09 15:19:39,073 - __main__ - INFO - Ä¿±ê·þÎñ: http://127.0.0.1:8087
+2025-09-09 15:19:39,074 - __main__ - INFO - ¼àÌýµØÖ·: 0.0.0.0:5001
+2025-09-09 15:19:39,074 - __main__ - WARNING - ¾¯¸æ: ÕâÊÇ¿ª·¢·þÎñÆ÷£¬½¨Òé°²×°WaitressÓÃÓÚÉú²ú»·¾³
+2025-09-09 15:19:40,503 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://26.26.26.1:5001
+2025-09-09 15:19:40,503 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-09-09 15:19:57,294 - __main__ - INFO - ÊÕµ½ÇëÇó: POST http://localhost:5001/api/v1/spatial-analysis/buffer
+2025-09-09 15:19:57,295 - __main__ - INFO - ÇëÇóÍ·: {'User-Agent': 'Mozilla/5.0 (Windows NT; Windows NT 10.0; zh-CN) WindowsPowerShell/5.1.26100.4768', 'Content-Type': 'application/json', 'Host': 'localhost:5001', 'Content-Length': '194', 'Expect': '100-continue', 'Connection': 'Keep-Alive'}
+2025-09-09 15:19:57,296 - __main__ - INFO - ÇëÇóÌå: {'bufferSettings': {'semicircleLineSegment': 10, 'radius': 100}, 'sourceLayerId': 'test_layer'}
+2025-09-09 15:19:57,296 - __main__ - INFO - ×ª·¢ÇëÇóµ½: http://127.0.0.1:8087/api/v1/spatial-analysis/buffer
+2025-09-09 15:19:57,311 - __main__ - INFO - ÏìÓ¦Ê±¼ä: 0.015s
+2025-09-09 15:19:57,312 - __main__ - INFO - ÏìÓ¦×´Ì¬: 500
+2025-09-09 15:19:57,313 - waitress - ERROR - Exception while serving /api/v1/spatial-analysis/buffer
+Traceback (most recent call last):
+  File "D:\anaconda3\Lib\site-packages\waitress\channel.py", line 428, in service
+    task.service()
+    ~~~~~~~~~~~~^^
+  File "D:\anaconda3\Lib\site-packages\waitress\task.py", line 168, in service
+    self.execute()
+    ~~~~~~~~~~~~^^
+  File "D:\anaconda3\Lib\site-packages\waitress\task.py", line 434, in execute
+    app_iter = self.channel.server.application(environ, start_response)
+  File "D:\anaconda3\Lib\site-packages\flask\app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda3\Lib\site-packages\flask\app.py", line 2197, in wsgi_app
+    return response(environ, start_response)
+  File "D:\anaconda3\Lib\site-packages\werkzeug\wrappers\response.py", line 579, in __call__
+    start_response(status, headers)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "D:\anaconda3\Lib\site-packages\waitress\task.py", line 423, in start_response
+    raise AssertionError(
+    ...<2 lines>...
+    )
+AssertionError: Connection is a "hop-by-hop" header; it cannot be used by a WSGI application (see PEP 3333)
+2025-09-09 15:20:05,359 - __main__ - INFO - ÊÕµ½ÇëÇó: POST http://localhost:5001/api/v1/spatial-analysis/buffer
+2025-09-09 15:20:05,360 - __main__ - INFO - ÇëÇóÍ·: {'User-Agent': 'Mozilla/5.0 (Windows NT; Windows NT 10.0; zh-CN) WindowsPowerShell/5.1.26100.4768', 'Content-Type': 'application/json', 'Host': 'localhost:5001', 'Content-Length': '194', 'Expect': '100-continue'}
+2025-09-09 15:20:05,361 - __main__ - INFO - ÇëÇóÌå: {'bufferSettings': {'semicircleLineSegment': 10, 'radius': 100}, 'sourceLayerId': 'test_layer'}
+2025-09-09 15:20:05,362 - __main__ - INFO - ×ª·¢ÇëÇóµ½: http://127.0.0.1:8087/api/v1/spatial-analysis/buffer
+2025-09-09 15:20:05,373 - __main__ - INFO - ÏìÓ¦Ê±¼ä: 0.012s
+2025-09-09 15:20:05,374 - __main__ - INFO - ÏìÓ¦×´Ì¬: 500
+2025-09-09 15:20:05,375 - waitress - ERROR - Exception while serving /api/v1/spatial-analysis/buffer
+Traceback (most recent call last):
+  File "D:\anaconda3\Lib\site-packages\waitress\channel.py", line 428, in service
+    task.service()
+    ~~~~~~~~~~~~^^
+  File "D:\anaconda3\Lib\site-packages\waitress\task.py", line 168, in service
+    self.execute()
+    ~~~~~~~~~~~~^^
+  File "D:\anaconda3\Lib\site-packages\waitress\task.py", line 434, in execute
+    app_iter = self.channel.server.application(environ, start_response)
+  File "D:\anaconda3\Lib\site-packages\flask\app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda3\Lib\site-packages\flask\app.py", line 2197, in wsgi_app
+    return response(environ, start_response)
+  File "D:\anaconda3\Lib\site-packages\werkzeug\wrappers\response.py", line 579, in __call__
+    start_response(status, headers)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "D:\anaconda3\Lib\site-packages\waitress\task.py", line 423, in start_response
+    raise AssertionError(
+    ...<2 lines>...
+    )
+AssertionError: Connection is a "hop-by-hop" header; it cannot be used by a WSGI application (see PEP 3333)
+2025-09-09 15:20:14,433 - __main__ - INFO - ÊÕµ½ÇëÇó: POST http://localhost:5001/api/v1/spatial-analysis/buffer
+2025-09-09 15:20:14,434 - __main__ - INFO - ÇëÇóÍ·: {'User-Agent': 'Mozilla/5.0 (Windows NT; Windows NT 10.0; zh-CN) WindowsPowerShell/5.1.26100.4768', 'Content-Type': 'application/json', 'Host': 'localhost:5001', 'Content-Length': '194', 'Expect': '100-continue'}
+2025-09-09 15:20:14,435 - __main__ - INFO - ÇëÇóÌå: {'bufferSettings': {'semicircleLineSegment': 10, 'radius': 100}, 'sourceLayerId': 'test_layer'}
+2025-09-09 15:20:14,435 - __main__ - INFO - ×ª·¢ÇëÇóµ½: http://127.0.0.1:8087/api/v1/spatial-analysis/buffer
+2025-09-09 15:20:14,462 - __main__ - INFO - ÏìÓ¦Ê±¼ä: 0.027s
+2025-09-09 15:20:14,471 - __main__ - INFO - ÏìÓ¦×´Ì¬: 500
+2025-09-09 15:20:14,472 - waitress - ERROR - Exception while serving /api/v1/spatial-analysis/buffer
+Traceback (most recent call last):
+  File "D:\anaconda3\Lib\site-packages\waitress\channel.py", line 428, in service
+    task.service()
+    ~~~~~~~~~~~~^^
+  File "D:\anaconda3\Lib\site-packages\waitress\task.py", line 168, in service
+    self.execute()
+    ~~~~~~~~~~~~^^
+  File "D:\anaconda3\Lib\site-packages\waitress\task.py", line 434, in execute
+    app_iter = self.channel.server.application(environ, start_response)
+  File "D:\anaconda3\Lib\site-packages\flask\app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda3\Lib\site-packages\flask\app.py", line 2197, in wsgi_app
+    return response(environ, start_response)
+  File "D:\anaconda3\Lib\site-packages\werkzeug\wrappers\response.py", line 579, in __call__
+    start_response(status, headers)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "D:\anaconda3\Lib\site-packages\waitress\task.py", line 423, in start_response
+    raise AssertionError(
+    ...<2 lines>...
+    )
+AssertionError: Connection is a "hop-by-hop" header; it cannot be used by a WSGI application (see PEP 3333)
+2025-09-09 15:20:16,902 - __main__ - INFO - ÊÕµ½ÇëÇó: POST http://localhost:5001/api/v1/spatial-analysis/buffer
+2025-09-09 15:20:16,903 - __main__ - INFO - ÇëÇóÍ·: {'User-Agent': 'Mozilla/5.0 (Windows NT; Windows NT 10.0; zh-CN) WindowsPowerShell/5.1.26100.4768', 'Content-Type': 'application/json', 'Host': 'localhost:5001', 'Content-Length': '194', 'Expect': '100-continue'}
+2025-09-09 15:20:16,904 - __main__ - INFO - ÇëÇóÌå: {'bufferSettings': {'semicircleLineSegment': 10, 'radius': 100}, 'sourceLayerId': 'test_layer'}
+2025-09-09 15:20:16,905 - __main__ - INFO - ×ª·¢ÇëÇóµ½: http://127.0.0.1:8087/api/v1/spatial-analysis/buffer
+2025-09-09 15:20:16,913 - __main__ - INFO - ÏìÓ¦Ê±¼ä: 0.009s
+2025-09-09 15:20:16,914 - __main__ - INFO - ÏìÓ¦×´Ì¬: 500
+2025-09-09 15:20:16,914 - waitress - ERROR - Exception while serving /api/v1/spatial-analysis/buffer
+Traceback (most recent call last):
+  File "D:\anaconda3\Lib\site-packages\waitress\channel.py", line 428, in service
+    task.service()
+    ~~~~~~~~~~~~^^
+  File "D:\anaconda3\Lib\site-packages\waitress\task.py", line 168, in service
+    self.execute()
+    ~~~~~~~~~~~~^^
+  File "D:\anaconda3\Lib\site-packages\waitress\task.py", line 434, in execute
+    app_iter = self.channel.server.application(environ, start_response)
+  File "D:\anaconda3\Lib\site-packages\flask\app.py", line 2213, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda3\Lib\site-packages\flask\app.py", line 2197, in wsgi_app
+    return response(environ, start_response)
+  File "D:\anaconda3\Lib\site-packages\werkzeug\wrappers\response.py", line 579, in __call__
+    start_response(status, headers)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "D:\anaconda3\Lib\site-packages\waitress\task.py", line 423, in start_response
+    raise AssertionError(
+    ...<2 lines>...
+    )
+AssertionError: Connection is a "hop-by-hop" header; it cannot be used by a WSGI application (see PEP 3333)
+2025-09-09 15:20:31,537 - __main__ - INFO - ÊÕµ½ÇëÇó: GET http://localhost:5001/health
+2025-09-09 15:20:31,538 - __main__ - INFO - ÇëÇóÍ·: {'User-Agent': 'Mozilla/5.0 (Windows NT; Windows NT 10.0; zh-CN) WindowsPowerShell/5.1.26100.4768', 'Host': 'localhost:5001'}
+2025-09-09 15:20:31,539 - __main__ - INFO - ÏìÓ¦×´Ì¬: 200
+2025-09-09 15:40:56,898 - __main__ - INFO - ÊÕµ½ÇëÇó: GET http://127.0.0.1:5001/
+2025-09-09 15:40:56,900 - __main__ - INFO - ÇëÇóÍ·: {'Host': '127.0.0.1:5001', 'Connection': 'keep-alive', 'Sec-Ch-Ua': '"Chromium";v="140", "Not=A?Brand";v="24", "Microsoft Edge";v="140"', 'Sec-Ch-Ua-Mobile': '?0', 'Sec-Ch-Ua-Platform': '"Windows"', 'Upgrade-Insecure-Requests': '1', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7', 'Sec-Fetch-Site': 'none', 'Sec-Fetch-Mode': 'navigate', 'Sec-Fetch-User': '?1', 'Sec-Fetch-Dest': 'document', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6,zh-TW;q=0.5'}
+2025-09-09 15:40:56,903 - __main__ - INFO - ÏìÓ¦×´Ì¬: 404
