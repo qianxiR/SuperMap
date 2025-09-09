@@ -171,7 +171,7 @@ export function useEraseAnalysis() {
 
       // 调用后端API
       const API_BASE_URL = getAnalysisServiceConfig().baseUrl
-      const response = await fetch(`${API_BASE_URL}/spatial-analysis/erase`, {
+      const response = await fetch(`${API_BASE_URL}/erase`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

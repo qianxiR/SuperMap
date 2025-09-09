@@ -535,7 +535,7 @@ export function useShortestPathAnalysis() {
       
       // 调用后端API
       const API_BASE_URL = getAnalysisServiceConfig().baseUrl
-      const response = await fetch(`${API_BASE_URL}/spatial-analysis/shortest-path`, {
+      const response = await fetch(`${API_BASE_URL}/shortest-path`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

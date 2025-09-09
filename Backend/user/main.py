@@ -11,7 +11,7 @@ from user.core.config import settings
 from user.api.v1 import api_v1_router
 
 '''
-python -m uvicorn user.main:app --reload --host 0.0.0.0 --port 8000
+python -m uvicorn user.main:app --reload --host 0.0.0.0 --port 8088
 
 '''
 
@@ -22,9 +22,9 @@ async def lifespan(app: FastAPI):
     print("🚀 User Service 正在启动...")
     print(f"📊 配置环境: {settings.environment}")
     print(f"🔐 JWT算法: {settings.algorithm}")
-    print("📚 DOCUMENT: http://localhost:8000/docs")
-    print("📄 JSON: http://localhost:8000/openapi.json")
-    print("🔍 健康检查: http://localhost:8000/health")
+    print("📚 DOCUMENT: http://localhost:8088/docs")
+    print("📄 JSON: http://localhost:8088/openapi.json")
+    print("🔍 健康检查: http://localhost:8088/health")
     yield
     # 关闭时执行
     print("🛑 User Service 正在关闭...")
@@ -104,7 +104,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "user.main:app",
         host="localhost",
-        port=8000,
+        port=8088,
         reload=settings.debug,
         log_level=settings.log_level.lower()
     )

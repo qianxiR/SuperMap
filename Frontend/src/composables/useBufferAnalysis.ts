@@ -189,7 +189,7 @@ export function useBufferAnalysis() {
       }
     }
 
-    const response = await fetch(`${API_BASE_URL}/spatial-analysis/buffer`, {
+    const response = await fetch(`${API_BASE_URL}/buffer`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

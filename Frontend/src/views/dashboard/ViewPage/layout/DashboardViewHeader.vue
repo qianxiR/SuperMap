@@ -136,6 +136,16 @@ const { applySystemTheme, setupSystemThemeListener } = themeStore
 const toggleTheme = () => {
   const newTheme = toggleThemeUtil()
   themeStore.setTheme(newTheme)
+  
+  // 触发主题切换通知
+  window.dispatchEvent(new CustomEvent('showNotification', {
+    detail: {
+      title: '主题已切换',
+      message: `已切换到${newTheme === 'light' ? '浅色' : '深色'}主题`,
+      type: 'info',
+      duration: 2000
+    }
+  }))
 }
 
 // 用户管理

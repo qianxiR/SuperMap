@@ -1,28 +1,6 @@
 import type { ServiceResponse } from '@/types/map'
 import { createAPIConfig } from '@/utils/config'
 
-/**
- * SuperMap iClient API 优化使用指南
- * 
- * 官方推荐的最佳实践：
- * 1. 设置 returnFeaturesOnly = true 来提升性能
- * 2. 合理使用分页加载大数据集
- * 
- * 性能优化要点：
- * - 设置 returnFeaturesOnly = true 减少数据传输
- * - 使用空间边界过滤减少查询范围
- * - 合理设置分页大小（建议10000-50000）
- * 
- * 使用示例：
- * ```typescript
- * // ✅ 推荐：使用优化的要素查询
- * const featuresResult = await superMapClient.getFeaturesByBoundsOptimized(
- *   ['wuhan:武汉_县级'],
- *   [113.7, 29.97, 115.08, 31.36],
- *   { fromIndex: 0, toIndex: 9999 }
- * )
- * ```
- */
 export class SuperMapError extends Error {
   constructor(
     message: string,
@@ -133,7 +111,6 @@ export class SuperMapClient {
 
 
   /**
-   * 优化的要素查询方法 - 使用官方推荐的参数配置
    * @param datasetNames 数据集名称数组
    * @param bounds 空间边界范围
    * @param options 查询选项

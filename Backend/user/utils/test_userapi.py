@@ -22,7 +22,7 @@ from user.core.config import get_settings
 
 # API基础URL
 settings = get_settings()
-BASE_URL = "http://localhost:8000"  # 直接使用服务器地址
+BASE_URL = "http://localhost:8088"  # 直接使用服务器地址
 API_PREFIX = settings.api_v1_prefix  # 单独获取API前缀
 
 # 测试用户数据

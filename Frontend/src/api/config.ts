@@ -9,40 +9,40 @@ export interface APIConfig {
 // 用户服务配置
 const userServiceConfigs: Record<string, APIConfig> = {
   development: {
-    baseUrl: 'http://localhost:8000/api/v1',
-    timeout: 10000,
-    retryCount: 3,
+    baseUrl: `${import.meta.env.VITE_USER_SERVICE_BASE_URL || 'http://localhost:8088'}${import.meta.env.VITE_USER_SERVICE_API_PREFIX || '/api/v1'}`,
+    timeout: parseInt(import.meta.env.VITE_API_TIMEOUT) || 10000,
+    retryCount: parseInt(import.meta.env.VITE_API_RETRY_COUNT) || 3,
   },
   production: {
-    baseUrl: 'https://your-production-api.com/api',
-    timeout: 15000,
-    retryCount: 3,
+    baseUrl: `${import.meta.env.VITE_USER_SERVICE_BASE_URL}${import.meta.env.VITE_USER_SERVICE_API_PREFIX}`,
+    timeout: parseInt(import.meta.env.VITE_API_TIMEOUT) || 15000,
+    retryCount: parseInt(import.meta.env.VITE_API_RETRY_COUNT) || 3,
     apiKey: import.meta.env.VITE_API_KEY,
   },
   test: {
-    baseUrl: 'http://localhost:3001/api',
-    timeout: 5000,
-    retryCount: 1,
+    baseUrl: `${import.meta.env.VITE_USER_SERVICE_BASE_URL || 'http://localhost:8088'}${import.meta.env.VITE_USER_SERVICE_API_PREFIX || '/api/v1'}`,
+    timeout: parseInt(import.meta.env.VITE_API_TIMEOUT) || 5000,
+    retryCount: parseInt(import.meta.env.VITE_API_RETRY_COUNT) || 1,
   },
 }
 
 // 分析服务配置
 const analysisServiceConfigs: Record<string, APIConfig> = {
   development: {
-    baseUrl: 'http://localhost:8087/api/v1',
-    timeout: 30000,
-    retryCount: 3,
+    baseUrl: `${import.meta.env.VITE_ANALYSIS_SERVICE_BASE_URL || 'http://localhost:8087'}${import.meta.env.VITE_ANALYSIS_SERVICE_API_PREFIX || '/api/v1/spatial-analysis'}`,
+    timeout: parseInt(import.meta.env.VITE_API_TIMEOUT) || 30000,
+    retryCount: parseInt(import.meta.env.VITE_API_RETRY_COUNT) || 3,
   },
   production: {
-    baseUrl: 'https://your-analysis-api.com/api/v1',
-    timeout: 45000,
-    retryCount: 3,
+    baseUrl: `${import.meta.env.VITE_ANALYSIS_SERVICE_BASE_URL}${import.meta.env.VITE_ANALYSIS_SERVICE_API_PREFIX}`,
+    timeout: parseInt(import.meta.env.VITE_API_TIMEOUT) || 45000,
+    retryCount: parseInt(import.meta.env.VITE_API_RETRY_COUNT) || 3,
     apiKey: import.meta.env.VITE_ANALYSIS_API_KEY,
   },
   test: {
-    baseUrl: 'http://localhost:8087/api/v1',
-    timeout: 15000,
-    retryCount: 1,
+    baseUrl: `${import.meta.env.VITE_ANALYSIS_SERVICE_BASE_URL || 'http://localhost:8087'}${import.meta.env.VITE_ANALYSIS_SERVICE_API_PREFIX || '/api/v1/spatial-analysis'}`,
+    timeout: parseInt(import.meta.env.VITE_API_TIMEOUT) || 15000,
+    retryCount: parseInt(import.meta.env.VITE_API_RETRY_COUNT) || 1,
   },
 }
 
