@@ -11,7 +11,6 @@
 import { onMounted, onUnmounted } from 'vue'
 import { useMapStore } from '@/stores/mapStore'
 import { useModeStateStore } from '@/stores/modeStateStore'
-import ChatAssistant from './tools/ChatAssistant.vue'
 import PanelContainer from '@/components/UI/PanelContainer.vue'
 
 const mapStore = useMapStore()

@@ -138,7 +138,7 @@ const router = createRouter({
                 {
                   path: 'chat',
                   name: 'llm-chat',
-                  component: () => import('@/views/dashboard/management-analysis/LLM/tools/ChatAssistant.vue'),
+                  component: () => import('@/views/dashboard/management-analysis/LLM/ChatAssistant.vue'),
                   meta: {
                     title: 'AI聊天',
                     requiresAuth: true

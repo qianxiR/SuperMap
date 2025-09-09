@@ -239,7 +239,7 @@ const activeMode = computed(() => {
 
 const modeButtons = [
   { id: 'llm', text: '对话模式' },
-  { id: 'traditional', text: '点击模式' },
+  { id: 'traditional', text: '手动模式' },
 ];
 
 const setMode = (modeId: 'traditional' | 'llm') => {
