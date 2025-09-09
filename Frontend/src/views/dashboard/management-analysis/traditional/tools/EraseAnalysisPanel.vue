@@ -228,7 +228,7 @@ const handleSavelayer = async (customlayerName: string) => {
   }
   
   try {
-    // 将擦除结果转换为 Openlayers Feature
+    // 将擦除结果转换为 Openlayers Feature，保留完整属性
     const format = new GeoJSON()
     const features = results.value.map((item: any) => {
       if (item.geometry && item.geometry.type && item.geometry.coordinates) {
@@ -236,8 +236,11 @@ const handleSavelayer = async (customlayerName: string) => {
         const feature = new Feature({ 
           geometry, 
           properties: { 
-            id: item.id, 
-            name: item.name, 
+            // 保留完整的原始属性数据
+            ...item.properties,
+            // 添加或覆盖分析元数据
+            id: item.properties?.id || item.id, 
+            name: item.properties?.name || item.name, 
             sourceTarget: item.sourceTargetlayerName, 
             sourceErase: item.sourceEraselayerName, 
             createdAt: item.createdAt,
@@ -282,9 +285,13 @@ const handleExportJSON = async () => {
     type: 'Feature', 
     geometry: r.geometry, 
     properties: { 
-      name: r.name,
-      id: r.id,
-      createdAt: new Date().toISOString()
+      // 保留完整的原始属性数据
+      ...r.properties,
+      // 添加或覆盖导出元数据
+      name: r.properties?.name || r.name,
+      id: r.properties?.id || r.id,
+      createdAt: new Date().toISOString(),
+      analysisType: 'erase'
     } 
   }))
   

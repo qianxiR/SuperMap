@@ -2,7 +2,7 @@
   <PanelWindow
     :visible="popupStore.visible"
     title="要素信息"
-    :width="175"
+    :width="300"
     :height="popupHeight"
     position="absolute"
     :left="adjustedPosition.x"
@@ -167,7 +167,7 @@ const popupHeight = computed(() => {
 const adjustedPosition = computed(() => {
   const windowWidth = window.innerWidth
   const windowHeight = window.innerHeight
-  const popupWidth = 175 // 宽度缩小一半
+  const popupWidth = 300 // 增加宽度以容纳对象内容
   
   // 将弹窗放在鼠标位置的右侧
   let x = popupStore.position.x + 10 // 鼠标位置右侧，留10px间距
@@ -220,11 +220,13 @@ const adjustedPosition = computed(() => {
 .popup-body :deep(.v) {
   color: var(--text);
   text-overflow: unset;
-  white-space: nowrap;
+  white-space: pre-wrap;
   flex: 1;
   font-weight: 400;
   font-size: 12px;
-  word-break: keep-all;
+  word-break: break-word;
+  max-width: 250px;
+  overflow-wrap: break-word;
 }
 
 .popup-body :deep(.section-title) {
@@ -286,11 +288,13 @@ const adjustedPosition = computed(() => {
 .popup-body :deep(.field-value) {
   color: var(--text);
   text-overflow: unset;
-  white-space: nowrap;
+  white-space: pre-wrap;
   flex: 1;
   font-weight: 400;
   font-size: 12px;
-  word-break: keep-all;
+  word-break: break-word;
+  max-width: 250px;
+  overflow-wrap: break-word;
 }
 
 

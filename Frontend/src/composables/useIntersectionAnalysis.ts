@@ -22,6 +22,7 @@ interface IntersectionResultItem {
   id: string
   name: string
   geometry: any
+  properties: Record<string, any> // 保留完整属性数据
   sourceTargetlayerName: string
   sourceMasklayerName: string
   createdAt: string
@@ -188,24 +189,39 @@ export function useIntersectionAnalysis() {
         body: JSON.stringify(requestData)
       })
 
-      const apiResponse = await response.json()
-
-      if (!apiResponse.success) {
-        throw new Error(`API请求失败: ${apiResponse.error?.message || '未知错误'}`)
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(`API请求失败: ${errorData.error?.message || '未知错误'}`)
       }
 
-      const analysisData = apiResponse.data
-      const features = analysisData.features
+      const apiResponse = await response.json()
+
+      // 后端现在直接返回 FeatureCollection 格式
+      if (!apiResponse.features) {
+        throw new Error('API响应格式错误：缺少features数据')
+      }
+
+      const features = apiResponse.features
 
       console.log('[Intersection] API响应成功:', {
-        featuresCount: features.length,
-        statistics: analysisData.statistics
+        featuresCount: features.length
       })
 
+      // 将后端返回的features转换为IntersectionResultItem格式，保留完整属性
+      const intersectionResults = features.map((feature: any, index: number) => ({
+        id: feature.properties?.id || `intersection_${Date.now()}_${index}`,
+        name: feature.properties?.name || `相交结果_${index + 1}`,
+        geometry: feature.geometry,
+        properties: feature.properties || {}, // 保留完整属性数据
+        sourceTargetlayerName: target!.name,
+        sourceMasklayerName: mask!.name,
+        createdAt: feature.properties?.createdAt || new Date().toISOString()
+      }));
+
       // 更新状态和显示结果
-      store.setResults(features)
-      displayIntersectionResults(features)
-      analysisStore.setAnalysisStatus(`相交分析完成：共生成 ${features.length} 个结果，已渲染到地图。`)
+      store.setResults(intersectionResults)
+      displayIntersectionResults(intersectionResults)
+      analysisStore.setAnalysisStatus(`相交分析完成：共生成 ${intersectionResults.length} 个结果，已渲染到地图。`)
 
     } catch (error: any) {
       store.setIsAnalyzing(false)
@@ -258,11 +274,15 @@ export function useIntersectionAnalysis() {
         const f = new Feature({ 
           geometry, 
           properties: { 
-            id: item.id, 
-            name: item.name, 
+            // 保留后端传来的完整属性数据
+            ...item.properties,
+            // 添加分析元数据（如果不存在）
+            id: item.properties?.id || item.id, 
+            name: item.properties?.name || item.name, 
             sourceTarget: item.sourceTargetlayerName, 
             sourceMask: item.sourceMasklayerName, 
-            createdAt: item.createdAt 
+            createdAt: item.createdAt,
+            analysisType: 'intersection'
           } 
         })
         validFeatures.push(f)
@@ -328,7 +348,7 @@ export function useIntersectionAnalysis() {
     if (!mapStore.map || items.length === 0) return
 
     try {
-      // 将相交结果转换为 Openlayers Feature
+      // 将相交结果转换为 Openlayers Feature，保留完整属性
       const features = items.map(item => {
         const format = new GeoJSON()
         if (item.geometry && item.geometry.type && item.geometry.coordinates) {
@@ -336,8 +356,11 @@ export function useIntersectionAnalysis() {
           const feature = new Feature({ 
             geometry, 
             properties: { 
-              id: item.id, 
-              name: item.name, 
+              // 保留完整的原始属性数据
+              ...item.properties,
+              // 添加或覆盖分析元数据
+              id: item.properties?.id || item.id, 
+              name: item.properties?.name || item.name, 
               sourceTarget: item.sourceTargetlayerName, 
               sourceMask: item.sourceMasklayerName, 
               createdAt: item.createdAt,

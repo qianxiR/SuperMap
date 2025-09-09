@@ -101,6 +101,31 @@ export function getFeatureGeometryDescription(feature: any): string {
 }
 
 /**
+ * 格式化属性值以便在UI中显示
+ * @param value 原始属性值
+ * @returns 格式化后的显示字符串，或undefined表示不显示此属性
+ */
+export function formatPropertyValue(value: any): string | undefined {
+  if (value === null || value === undefined) return '(空值)'
+  if (typeof value === 'string') return value
+  if (typeof value === 'number') return String(value)
+  if (typeof value === 'boolean') return value ? 'true' : 'false'
+  if (value instanceof Date) return value.toLocaleDateString()
+  if (Array.isArray(value)) {
+    if (value.length === 0) return '[]'
+    if (value.length <= 3) {
+      return `[${value.map(v => formatPropertyValue(v)).join(', ')}]`
+    }
+    return `[${value.length}个元素]`
+  }
+  // 跳过对象类型，不显示
+  if (typeof value === 'object') {
+    return undefined // 返回undefined表示不显示此属性
+  }
+  return String(value)
+}
+
+/**
  * 获取要素的完整信息（包括几何信息）
  * @param feature 要素对象
  * @returns 完整的要素信息数组
@@ -111,12 +136,14 @@ export function getFeatureCompleteInfo(feature: any): Array<{label: string, valu
   const properties = feature.getProperties ? feature.getProperties() : feature.properties || {}
   const info: Array<{label: string, value: string}> = []
   
-  // 所有属性字段
+  // 所有属性字段，排除对象类型
   Object.keys(properties).forEach(key => {
     if (key !== 'geometry') {
       const value = properties[key]
-      const displayValue = value !== undefined && value !== null ? String(value) : '(空值)'
-      info.push({ label: key, value: displayValue })
+      const displayValue = formatPropertyValue(value)
+      if (displayValue !== undefined) {
+        info.push({ label: key, value: displayValue })
+      }
     }
   })
   

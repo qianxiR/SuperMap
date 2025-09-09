@@ -24,6 +24,7 @@ interface ShortestPathResult {
   id: string
   name: string
   geometry: any
+  properties: Record<string, any> // 保留完整属性数据
   distance: number
   duration: number
   pathType: string
@@ -122,13 +123,17 @@ export function useShortestPathAnalysis() {
       const feature = new window.ol.Feature({
         geometry: geometry,
         properties: {
-          id: result.id,
-          name: result.name,
+          // 保留后端传来的完整属性数据
+          ...result.properties,
+          // 添加分析元数据（如果不存在）
+          id: result.properties?.id || result.id,
+          name: result.properties?.name || result.name,
           distance: result.distance,
           duration: result.duration,
           pathType: result.pathType,
           sourcelayer: result.sourcelayerName,
-          createdAt: result.createdAt
+          createdAt: result.createdAt,
+          analysisType: 'shortestPath'
         }
       })
       return feature
@@ -543,15 +548,19 @@ export function useShortestPathAnalysis() {
         body: JSON.stringify(requestData)
       })
       
-      const apiResponse = await response.json()
-      
-      if (!apiResponse.success) {
-        throw new Error(`API请求失败: ${apiResponse.error?.message || '未知错误'}`)
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(`API请求失败: ${errorData.error?.message || '未知错误'}`)
       }
       
-      const pathData = apiResponse.data
-      const features = pathData.features
-      const stats = pathData.statistics
+      const apiResponse = await response.json()
+      
+      // 后端现在直接返回 FeatureCollection 格式
+      if (!apiResponse.features) {
+        throw new Error('API响应格式错误：缺少features数据')
+      }
+      
+      const features = apiResponse.features
       
       // 从features数组中提取路径数据
       const pathFeature = features.length > 0 ? features[0] : null
@@ -561,11 +570,12 @@ export function useShortestPathAnalysis() {
       }
       
       const result: ShortestPathResult = {
-        id: pathFeature.properties?.id || pathData.resultId,
-        name: pathFeature.properties?.name || pathData.resultName,
+        id: pathFeature.properties?.id || `path_${Date.now()}`,
+        name: pathFeature.properties?.name || '最短路径',
         geometry: pathFeature.geometry,
-        distance: stats.distance,
-        duration: stats.duration,
+        properties: pathFeature.properties || {}, // 保留完整属性数据
+        distance: pathFeature.properties?.distance || 0,
+        duration: pathFeature.properties?.duration || 0,
         pathType: '最短路径',
         sourcelayerName: '分析及绘制图层',
         createdAt: pathFeature.properties?.createdAt || new Date().toISOString()
@@ -574,7 +584,7 @@ export function useShortestPathAnalysis() {
       setAnalysisResults([result])
       displayAnalysisResults([result])
       
-      const statusMessage = `最短路径分析完成，距离: ${stats.distance} ${stats.distanceUnit}，预计时间: ${stats.duration} ${stats.durationUnit}`
+      const statusMessage = `最短路径分析完成，距离: ${result.distance} 米，预计时间: ${result.duration} 分钟`
       analysisStore.setAnalysisStatus(statusMessage)
       
     } catch (error) {

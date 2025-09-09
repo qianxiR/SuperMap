@@ -2,6 +2,7 @@ import { ref } from 'vue'
 import { useMapStore } from '@/stores/mapStore'
 import { useSelectionStore } from '@/stores/selectionStore'
 import { usePopupStore } from '@/stores/popupStore'
+import { formatPropertyValue } from '@/utils/featureUtils'
 import { useAnalysisStore } from '@/stores/analysisStore'
 
 // 交互配置常量
@@ -179,12 +180,14 @@ export function useMapInteraction() {
         
         let content = '<div class="feature-info">';
         
-        // 显示所有GeoJSON属性字段
+        // 显示所有GeoJSON属性字段，排除对象类型
         Object.keys(properties).forEach(key => {
           if (key !== 'geometry') {
             const value = properties[key];
-            const displayValue = value !== undefined && value !== null ? value : '(空值)';
-            content += `<div class="field-row"><span class="field-label">${key}:</span><span class="field-value">${displayValue}</span></div>`;
+            const displayValue = formatPropertyValue(value);
+            if (displayValue !== undefined) {
+              content += `<div class="field-row"><span class="field-label">${key}:</span><span class="field-value">${displayValue}</span></div>`;
+            }
           }
         });
         
@@ -307,12 +310,20 @@ export function useMapInteraction() {
           content += `<div class="field-row"><span class="field-label">几何类型:</span><span class="field-value">${feature.geometry?.type || '未知'}</span></div>`;
           
           const properties = feature.properties || {};
-          content += `<div class="field-row"><span class="field-label">属性字段数:</span><span class="field-value">${Object.keys(properties).length}个</span></div>`;
+          // 统计非几何且非对象类型的字段数量
+          const displayableFieldsCount = Object.keys(properties).filter(key => {
+            if (key === 'geometry') return false;
+            const value = properties[key];
+            return !(typeof value === 'object' && value !== null && !Array.isArray(value));
+          }).length;
+          content += `<div class="field-row"><span class="field-label">属性字段数:</span><span class="field-value">${displayableFieldsCount}个</span></div>`;
           Object.keys(properties).forEach(key => {
             if (key !== 'geometry') {
               const value = properties[key];
-              const displayValue = value !== undefined && value !== null ? value : '(空值)';
-              content += `<div class="field-row"><span class="field-label">${key}:</span><span class="field-value">${displayValue}</span></div>`;
+              const displayValue = formatPropertyValue(value);
+              if (displayValue !== undefined) {
+                content += `<div class="field-row"><span class="field-label">${key}:</span><span class="field-value">${displayValue}</span></div>`;
+              }
             }
           });
           

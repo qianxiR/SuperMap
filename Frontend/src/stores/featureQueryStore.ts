@@ -5,6 +5,7 @@ import { useMapStore } from '@/stores/mapStore'
 import { useSelectionStore } from '@/stores/selectionStore'
 import { useModeStateStore } from '@/stores/modeStateStore'
 import type { QueryCondition, QueryConfig, FieldInfo } from '@/types/query'
+import { formatPropertyValue } from '@/utils/featureUtils'
 
 interface FeatureLike {
   getProperties?: () => Record<string, any>
@@ -82,14 +83,9 @@ export const useFeatureQueryStore = defineStore('featureQuery', () => {
   }
 
   const getSampleValue = (value: any): string => {
-    if (value === null || value === undefined) return '(空值)'
-    if (typeof value === 'string') return value.length > 20 ? value.substring(0, 20) + '...' : value
-    if (typeof value === 'number') return String(value)
-    if (typeof value === 'boolean') return value ? 'true' : 'false'
-    if (value instanceof Date) return value.toLocaleDateString()
-    if (Array.isArray(value)) return `[${value.length}个元素]`
-    if (typeof value === 'object') return '{对象}'
-    return String(value)
+    const formatted = formatPropertyValue(value)
+    if (formatted === undefined) return '(已隐藏对象)'
+    return formatted.length > 20 ? formatted.substring(0, 20) + '...' : formatted
   }
 
   const getFieldDescription = (fieldName: string, fieldType: string): string => {
@@ -115,15 +111,18 @@ export const useFeatureQueryStore = defineStore('featureQuery', () => {
         const features = source.getFeatures()
         if (features.length > 0) {
           const first = features[0]
-          // 获取属性字段信息（不包含几何信息）
+          // 获取属性字段信息（不包含几何信息和对象类型）
           const properties = first.getProperties()
           const fields: FieldInfo[] = []
           Object.keys(properties).forEach(key => {
             if (key !== 'geometry') {
               const value = properties[key]
-              const type = getFieldType(value)
-              const sample = getSampleValue(value)
-              fields.push({ name: key, type, sampleValue: sample, description: getFieldDescription(key, type) })
+              // 排除对象类型属性
+              if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+                const type = getFieldType(value)
+                const sample = getSampleValue(value)
+                fields.push({ name: key, type, sampleValue: sample, description: getFieldDescription(key, type) })
+              }
             }
           })
           fields.sort((a, b) => a.name.localeCompare(b.name))

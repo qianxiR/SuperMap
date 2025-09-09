@@ -31,6 +31,7 @@ interface BufferResult {
   id: string
   name: string
   geometry: any
+  properties: Record<string, any> // 保留完整属性数据
   distance: number
   unit: string
   sourcelayerName: string
@@ -197,35 +198,58 @@ export function useBufferAnalysis() {
     })
 
     if (!response.ok) {
-      throw new Error(`API请求失败: ${response.status} ${response.statusText}`)
+      const errorData = await response.json()
+      throw new Error(errorData.error?.message || `API请求失败: ${response.status} ${response.statusText}`)
     }
 
     const apiResponse = await response.json()
 
-    if (!apiResponse.success) {
-      throw new Error(apiResponse.error?.message || '缓冲区分析失败')
+    // 打印完整的API响应数据
+    console.log('=== 缓冲区分析 - 后端API完整响应数据 ===')
+    console.log('响应类型:', typeof apiResponse)
+    console.log('响应结构:', JSON.stringify(apiResponse, null, 2))
+    console.log('是否为FeatureCollection:', apiResponse.type === 'FeatureCollection')
+    console.log('features数量:', apiResponse.features?.length || 0)
+    
+    if (apiResponse.features && apiResponse.features.length > 0) {
+      console.log('第一个feature详细结构:')
+      console.log(JSON.stringify(apiResponse.features[0], null, 2))
+      
+      if (apiResponse.features.length > 1) {
+        console.log(`还有其他 ${apiResponse.features.length - 1} 个features...`)
+      }
     }
+    console.log('=== API响应数据打印完毕 ===')
 
-    if (!apiResponse.data || !apiResponse.data.features) {
+    // 后端现在直接返回 FeatureCollection 格式
+    if (!apiResponse.features) {
       throw new Error('API响应格式错误：缺少features数据')
     }
 
-    const results: BufferResult[] = apiResponse.data.features.map((feature: any, index: number) => ({
+    // 将后端返回的features转换为BufferResult格式，保留完整属性
+    const bufferResults = apiResponse.features.map((feature: any, index: number) => ({
       id: feature.properties?.id || `buffer_${Date.now()}_${index}`,
       name: feature.properties?.name || `缓冲区_${index + 1}`,
       geometry: feature.geometry,
+      properties: feature.properties || {}, // 保留完整属性数据
       distance: radiusMeters,
       unit: 'meters',
       sourcelayerName: target.name,
       createdAt: new Date().toISOString()
     }))
 
-    const stats = apiResponse.data.statistics
-    const statusMessage = `缓冲区分析完成，成功处理 ${sourceData.features.length} 个要素，生成 ${stats?.outputFeatureCount || results.length} 个缓冲区，总面积 ${stats?.totalArea?.toFixed(2) || '未知'} 平方米`
+    console.log('[Buffer] 处理分析结果:', {
+      inputFeatures: sourceData.features.length,
+      outputResults: bufferResults.length,
+      firstResult: bufferResults[0]
+    })
+
+    const statusMessage = `缓冲区分析完成，成功处理 ${sourceData.features.length} 个要素，生成 ${bufferResults.length} 个缓冲区`
     analysisStore.setAnalysisStatus(statusMessage)
     
-    bufferAnalysisStore.setBufferResults(results as any)
-    displayBufferResults(results as any)
+    // 更新状态和显示结果
+    bufferAnalysisStore.setBufferResults(bufferResults as any)
+    displayBufferResults(bufferResults)
     bufferAnalysisStore.setIsAnalyzing(false)
     
     } catch (error) {
@@ -239,32 +263,72 @@ export function useBufferAnalysis() {
   const displayBufferResults = (results: BufferResult[]): void => {
     removeBufferlayers()
     
+    console.log('=== displayBufferResults - 开始处理缓冲区结果 ===')
+    console.log('结果数量:', results.length)
+    console.log('完整结果数据:', JSON.stringify(results, null, 2))
+    
     const bufferFeatures: any[] = []
     
-    results.forEach(result => {
+    results.forEach((result, resultIndex) => {
+      console.log(`=== 处理第 ${resultIndex + 1} 个结果 ===`)
+      console.log('result.geometry.type:', result.geometry.type)
+      console.log('result完整结构:', JSON.stringify(result, null, 2))
+      // 处理不同的GeoJSON格式
       if (result.geometry.type === 'FeatureCollection') {
+        // 如果是FeatureCollection类型，处理所有features
         const features = new GeoJSON().readFeatures(result.geometry)
-        features.forEach((olFeature, index) => {
-          const feature = new Feature({
-            geometry: olFeature.getGeometry(),
-            properties: {
-              id: `${result.id}_${index}`,
-              name: `${result.name}_${index + 1}`,
-              distance: result.distance,
-              unit: result.unit,
-              sourcelayer: result.sourcelayerName,
-              createdAt: result.createdAt
-            }
-          })
-          bufferFeatures.push(feature)
+        console.log(`[Display] FeatureCollection包含 ${features.length} 个要素`)
+        
+        features.forEach((olFeature: any, index: number) => {
+          const geometry = olFeature.getGeometry()
+          if (geometry) {
+            const feature = new Feature({
+              geometry: geometry,
+              properties: {
+                // 保留后端传来的完整属性数据
+                ...result.properties,
+                // 添加前端显示需要的元数据
+                id: `${result.id}_${index}`,
+                name: `${result.name}_${index + 1}`,
+                distance: result.distance,
+                unit: result.unit,
+                sourcelayer: result.sourcelayerName,
+                createdAt: result.createdAt,
+                featureIndex: index
+              }
+            })
+            bufferFeatures.push(feature)
+          }
         })
+      } else if (result.geometry.type === 'Feature') {
+        // 如果是Feature类型，提取geometry部分
+        const geometry = new GeoJSON().readGeometry(result.geometry.geometry)
+        const feature = new Feature({
+          geometry: geometry,
+          properties: {
+            // 保留后端传来的完整属性数据
+            ...result.properties,
+            // 添加前端显示需要的元数据
+            id: result.properties?.id || result.id,
+            name: result.properties?.name || result.name,
+            distance: result.distance,
+            unit: result.unit,
+            sourcelayer: result.sourcelayerName,
+            createdAt: result.createdAt
+          }
+        })
+        bufferFeatures.push(feature)
       } else {
+        // 直接是Geometry类型
         const geometry = new GeoJSON().readGeometry(result.geometry)
         const feature = new Feature({
           geometry: geometry,
           properties: {
-            id: result.id,
-            name: result.name,
+            // 保留后端传来的完整属性数据
+            ...result.properties,
+            // 添加前端显示需要的元数据
+            id: result.properties?.id || result.id,
+            name: result.properties?.name || result.name,
             distance: result.distance,
             unit: result.unit,
             sourcelayer: result.sourcelayerName,
@@ -274,6 +338,14 @@ export function useBufferAnalysis() {
         bufferFeatures.push(feature)
       }
     })
+    
+    console.log('=== displayBufferResults - 处理完成 ===')
+    console.log('最终生成的要素数量:', bufferFeatures.length)
+    console.log('所有生成要素的属性信息:')
+    bufferFeatures.forEach((feature, index) => {
+      console.log(`要素${index + 1}:`, feature.getProperties?.())
+    })
+    console.log('=== 开始添加到地图 ===')
     
     const bufferSource = new VectorSource({
       features: bufferFeatures
