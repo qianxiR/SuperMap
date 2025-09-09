@@ -37,6 +37,21 @@
         </div>
       </TipWindow>
 
+      <!-- 错误提示 -->
+      <TipWindow 
+        v-if="errorMessage"
+        :visible="!!errorMessage"
+        variant="error"
+        :show-icon="true"
+      >
+        <div>
+          <div style="font-weight: 600; margin-bottom: 4px;">图层类型错误</div>
+          <div style="font-size: 11px; opacity: 0.8;">
+            {{ errorMessage }}
+          </div>
+        </div>
+      </TipWindow>
+
       <div class="group-title" style="margin-top:16px">结果</div>
       
       <!-- 结果提示 -->
@@ -109,12 +124,18 @@ const { exportFeaturesAsGeoJSON } = useLayerExport()
 const showLayerNameModalRef = ref<boolean>(false)
 const defaultlayerName = ref<string>('')
 
+// 错误消息状态
+const errorMessage = ref<string>('')
+
 const layerOptionsWithNone = computed(() => [{ value: '', label: '无', disabled: false }, ...layerOptions.value])
 
 const selectedTargetId = computed({ get: () => targetlayerId.value, set: (v: string) => setTargetlayer(v) })
 const selectedMaskId = computed({ get: () => masklayerId.value, set: (v: string) => setMasklayer(v) })
 
-const handleExecute = () => {
+const handleExecute = async () => {
+  // 清除之前的错误信息
+  errorMessage.value = ''
+  
   const tCount = targetFeaturesCache.value?.length || 0
   const mCount = maskFeaturesCache.value?.length || 0
   if (tCount < 1 || mCount < 1) {
@@ -157,13 +178,18 @@ const handleExecute = () => {
     maskFirstType: mGeom?.getType?.()
   })
 
-  // 执行相交分析
-  executeIntersectionAnalysis({
-    targetlayerId: targetlayerId.value,
-    masklayerId: masklayerId.value,
-    targetFeatures: targetFeaturesCache.value,
-    maskFeatures: maskFeaturesCache.value
-  })
+  try {
+    // 执行相交分析
+    await executeIntersectionAnalysis({
+      targetlayerId: targetlayerId.value,
+      masklayerId: masklayerId.value,
+      targetFeatures: targetFeaturesCache.value,
+      maskFeatures: maskFeaturesCache.value
+    })
+  } catch (error) {
+    // 捕获错误并显示在 TipWindow 中
+    errorMessage.value = error instanceof Error ? error.message : '执行相交分析时发生未知错误'
+  }
 }
 
 const handleClear = () => {

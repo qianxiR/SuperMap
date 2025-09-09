@@ -5,6 +5,7 @@ import { useEraseAnalysisStore } from '@/stores/eraseAnalysisStore'
 import { uselayermanager } from '@/composables/uselayermanager'
 import { getAnalysisServiceConfig } from '@/api/config'
 import { extractGeoJSONFromlayer } from '@/utils/featureUtils'
+import { checkLayerGeometryType } from '@/utils/layerValidation'
 import { Feature } from 'ol'
 import { Vector as VectorSource } from 'ol/source'
 import { Vector as Vectorlayer } from 'ol/layer'
@@ -55,6 +56,45 @@ export function useEraseAnalysis() {
     store.setEraseFeaturesCache(features)
   }
 
+
+  // 等待图层分页加载完成
+  const waitForLayerPaginationComplete = async (layer: any, layerName: string): Promise<void> => {
+    return new Promise((resolve) => {
+      const source = layer.getSource()
+      if (!source) {
+        resolve()
+        return
+      }
+
+      let lastFeatureCount = 0
+      let stableCount = 0
+      const maxStableChecks = 3 // 连续3次检查要素数量不变则认为加载完成
+      const checkInterval = 500 // 每500ms检查一次
+
+      const checkPagination = () => {
+        const currentFeatureCount = source.getFeatures().length
+        
+        if (currentFeatureCount === lastFeatureCount) {
+          stableCount++
+          if (stableCount >= maxStableChecks) {
+            console.log(`[Erase] 图层 ${layerName} 分页加载完成，共 ${currentFeatureCount} 个要素`)
+            resolve()
+            return
+          }
+        } else {
+          stableCount = 0
+          lastFeatureCount = currentFeatureCount
+          console.log(`[Erase] 图层 ${layerName} 正在分页加载，当前 ${currentFeatureCount} 个要素`)
+        }
+        
+        setTimeout(checkPagination, checkInterval)
+      }
+
+      // 开始检查
+      checkPagination()
+    })
+  }
+
   // 擦除分析（调用后端API）
   const executeEraseAnalysis = async (params: { targetlayerId: string; eraselayerId: string; targetFeatures: any[]; eraseFeatures: any[]; }): Promise<void> => {
     const tId = params.targetlayerId
@@ -69,9 +109,35 @@ export function useEraseAnalysis() {
     store.setEraseFeaturesCache(eraseFeatures)
 
     store.setIsAnalyzing(true)
-    analysisStore.setAnalysisStatus('正在执行擦除分析...')
+    analysisStore.setAnalysisStatus('正在检查图层类型...')
 
     try {
+      // 检查图层几何类型
+      const targetCheck = checkLayerGeometryType(target!.layer, target!.name, 'polygon')
+      const eraseCheck = checkLayerGeometryType(erase!.layer, erase!.name, 'polygon')
+
+      if (!targetCheck.isValid) {
+        store.setIsAnalyzing(false)
+        analysisStore.setAnalysisStatus(targetCheck.message!)
+        throw new Error(targetCheck.message!)
+      }
+
+      if (!eraseCheck.isValid) {
+        store.setIsAnalyzing(false)
+        analysisStore.setAnalysisStatus(eraseCheck.message!)
+        throw new Error(eraseCheck.message!)
+      }
+
+      analysisStore.setAnalysisStatus('正在等待图层数据加载完成...')
+
+      // 等待目标图层和擦除图层的分页加载完成
+      await Promise.all([
+        waitForLayerPaginationComplete(target!.layer, target!.name),
+        waitForLayerPaginationComplete(erase!.layer, erase!.name)
+      ])
+
+      analysisStore.setAnalysisStatus('正在提取图层数据...')
+
       // 提取目标图层和擦除图层的GeoJSON数据
       const targetData = extractGeoJSONFromlayer(target!.layer, mapStore.map, {
         enableLogging: true
@@ -120,36 +186,26 @@ export function useEraseAnalysis() {
       }
 
       const analysisData = apiResponse.data
-      const results = analysisData.results
+      const features = analysisData.features
 
       console.log('[Erase] API响应成功:', {
-        resultsCount: results.length,
+        featuresCount: features.length,
         statistics: analysisData.statistics
       })
 
       // 更新状态和显示结果
-      store.setResults(results)
-      displayeraseResults(results)
-      analysisStore.setAnalysisStatus(`擦除分析完成：共生成 ${results.length} 个结果，已渲染到地图。`)
+      store.setResults(features)
+      displayeraseResults(features)
+      analysisStore.setAnalysisStatus(`擦除分析完成：共生成 ${features.length} 个结果，已渲染到地图。`)
 
     } catch (error: any) {
-      console.error('[Erase] 擦除分析失败:', error)
-      analysisStore.setAnalysisStatus(`擦除分析失败: ${error.message}`)
+      store.setIsAnalyzing(false)
+      throw error // 重新抛出错误，让面板能够捕获
     } finally {
       store.setIsAnalyzing(false)
-      console.log('[Erase] 分析状态更新完成')
     }
   }
 
-  // 简化的几何体验证函数 - 只进行基本检查
-  const validateAndCleanGeometry = (geometry: any): any | null => {
-    if (!geometry || !geometry.type || !geometry.coordinates) {
-      return null
-    }
-
-    // 直接返回原始几何体，不进行复杂的拓扑验证
-    return geometry
-  }
 
   const displayeraseResults = (items: EraseResultItem[]): void => {
     if (!mapStore.map) return
@@ -189,15 +245,15 @@ export function useEraseAnalysis() {
       const geometry = format.readGeometry(item.geometry)
       
       const f = new Feature({ 
-        geometry, 
-        properties: { 
-          id: item.id, 
-          name: item.name, 
+          geometry,
+          properties: {
+            id: item.id,
+            name: item.name,
           sourceTarget: item.sourceTargetlayerName, 
           sourceErase: item.sourceEraselayerName, 
-          createdAt: item.createdAt 
-        } 
-      })
+            createdAt: item.createdAt
+          }
+        })
       validFeatures.push(f)
     })
 
@@ -216,16 +272,16 @@ export function useEraseAnalysis() {
       
       // 缩放到结果图层范围
       try {
-        const extent = source.getExtent()
+      const extent = source.getExtent()
         if (extent && 
             !extent.every((coord: number) => coord === Infinity) &&
             !extent.every((coord: number) => coord === -Infinity) &&
             extent[0] !== extent[2] && 
             extent[1] !== extent[3]) {
-          mapStore.map.getView().fit(extent, {
-            padding: [50, 50, 50, 50],
-            duration: 1000
-          })
+        mapStore.map.getView().fit(extent, {
+          padding: [50, 50, 50, 50],
+          duration: 1000
+        })
           console.log('[Erase] 已缩放到擦除结果范围')
         }
       } catch (error) {

@@ -124,6 +124,44 @@ export function useBufferAnalysis() {
 
   // 从Openlayers图层中提取GeoJSON数据
   
+  // 等待图层分页加载完成
+  const waitForLayerPaginationComplete = async (layer: any, layerName: string): Promise<void> => {
+    return new Promise((resolve) => {
+      const source = layer.getSource()
+      if (!source) {
+        resolve()
+        return
+      }
+
+      let lastFeatureCount = 0
+      let stableCount = 0
+      const maxStableChecks = 3 // 连续3次检查要素数量不变则认为加载完成
+      const checkInterval = 500 // 每500ms检查一次
+
+      const checkPagination = () => {
+        const currentFeatureCount = source.getFeatures().length
+        
+        if (currentFeatureCount === lastFeatureCount) {
+          stableCount++
+          if (stableCount >= maxStableChecks) {
+            console.log(`[Buffer] 图层 ${layerName} 分页加载完成，共 ${currentFeatureCount} 个要素`)
+            resolve()
+            return
+          }
+        } else {
+          stableCount = 0
+          lastFeatureCount = currentFeatureCount
+          console.log(`[Buffer] 图层 ${layerName} 正在分页加载，当前 ${currentFeatureCount} 个要素`)
+        }
+        
+        setTimeout(checkPagination, checkInterval)
+      }
+
+      // 开始检查
+      checkPagination()
+    })
+  }
+
   const executeBufferAnalysis = async (): Promise<void> => {
     const layerId = selectedAnalysislayerId.value
     const target = mapStore.vectorlayers.find(l => l.id === layerId)!
@@ -133,10 +171,12 @@ export function useBufferAnalysis() {
     bufferAnalysisStore.setIsAnalyzing(true)
 
     try {
+      // 等待图层分页加载完成
+      await waitForLayerPaginationComplete(target.layer, target.name)
 
-    const sourceData = extractGeoJSONFromlayer(target.layer, mapStore.map, {
-      enableLogging: false
-    })
+      const sourceData = extractGeoJSONFromlayer(target.layer, mapStore.map, {
+        enableLogging: false
+      })
 
     const requestData = {
       sourceData: sourceData,

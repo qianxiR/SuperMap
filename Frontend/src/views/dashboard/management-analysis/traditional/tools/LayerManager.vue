@@ -450,18 +450,20 @@ const handleExportGroup = async (source: string) => {
 }
 
 .group-title {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
   color: inherit;
   display: flex;
   align-items: center;
   gap: 4px;
   flex: 1;
   text-align: left;
+  line-height: 1.4;
+  letter-spacing: 0.2px;
 }
 
 .group-count {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
   color: var(--accent);
   background: var(--accent-bg, rgba(var(--accent-rgb), 0.1));

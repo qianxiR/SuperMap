@@ -5,6 +5,7 @@ import { useIntersectionAnalysisStore } from '@/stores/intersectionAnalysisStore
 import { uselayermanager } from '@/composables/uselayermanager'
 import { getAnalysisServiceConfig } from '@/api/config'
 import { extractGeoJSONFromlayer } from '@/utils/featureUtils'
+import { checkLayerGeometryType } from '@/utils/layerValidation'
 import { Feature } from 'ol'
 import { Vector as VectorSource } from 'ol/source'
 import { Vector as Vectorlayer } from 'ol/layer'
@@ -64,6 +65,45 @@ export function useIntersectionAnalysis() {
 
 
 
+
+  // 等待图层分页加载完成
+  const waitForLayerPaginationComplete = async (layer: any, layerName: string): Promise<void> => {
+    return new Promise((resolve) => {
+      const source = layer.getSource()
+      if (!source) {
+        resolve()
+        return
+      }
+
+      let lastFeatureCount = 0
+      let stableCount = 0
+      const maxStableChecks = 3 // 连续3次检查要素数量不变则认为加载完成
+      const checkInterval = 500 // 每500ms检查一次
+
+      const checkPagination = () => {
+        const currentFeatureCount = source.getFeatures().length
+        
+        if (currentFeatureCount === lastFeatureCount) {
+          stableCount++
+          if (stableCount >= maxStableChecks) {
+            console.log(`[Intersection] 图层 ${layerName} 分页加载完成，共 ${currentFeatureCount} 个要素`)
+            resolve()
+            return
+          }
+        } else {
+          stableCount = 0
+          lastFeatureCount = currentFeatureCount
+          console.log(`[Intersection] 图层 ${layerName} 正在分页加载，当前 ${currentFeatureCount} 个要素`)
+        }
+        
+        setTimeout(checkPagination, checkInterval)
+      }
+
+      // 开始检查
+      checkPagination()
+    })
+  }
+
   // 相交分析（调用后端API）
   const executeIntersectionAnalysis = async (params: { targetlayerId: string; masklayerId: string; targetFeatures: any[]; maskFeatures: any[]; }): Promise<void> => {
     const tId = params.targetlayerId
@@ -78,9 +118,35 @@ export function useIntersectionAnalysis() {
     store.setMaskFeaturesCache(maskFeatures)
 
     store.setIsAnalyzing(true)
-    analysisStore.setAnalysisStatus('正在执行相交分析...')
+    analysisStore.setAnalysisStatus('正在检查图层类型...')
 
     try {
+      // 检查图层几何类型
+      const targetCheck = checkLayerGeometryType(target!.layer, target!.name, 'polygon')
+      const maskCheck = checkLayerGeometryType(mask!.layer, mask!.name, 'polygon')
+
+      if (!targetCheck.isValid) {
+        store.setIsAnalyzing(false)
+        analysisStore.setAnalysisStatus(targetCheck.message!)
+        throw new Error(targetCheck.message!)
+      }
+
+      if (!maskCheck.isValid) {
+        store.setIsAnalyzing(false)
+        analysisStore.setAnalysisStatus(maskCheck.message!)
+        throw new Error(maskCheck.message!)
+      }
+
+      analysisStore.setAnalysisStatus('正在等待图层数据加载完成...')
+
+      // 等待目标图层和遮罩图层的分页加载完成
+      await Promise.all([
+        waitForLayerPaginationComplete(target!.layer, target!.name),
+        waitForLayerPaginationComplete(mask!.layer, mask!.name)
+      ])
+
+      analysisStore.setAnalysisStatus('正在提取图层数据...')
+
       // 提取目标图层和遮罩图层的GeoJSON数据
       const targetData = extractGeoJSONFromlayer(target!.layer, mapStore.map, {
         enableLogging: true
@@ -129,103 +195,26 @@ export function useIntersectionAnalysis() {
       }
 
       const analysisData = apiResponse.data
-      const results = analysisData.results
+      const features = analysisData.features
 
       console.log('[Intersection] API响应成功:', {
-        resultsCount: results.length,
+        featuresCount: features.length,
         statistics: analysisData.statistics
       })
 
       // 更新状态和显示结果
-      store.setResults(results)
-      displayIntersectionResults(results)
-      analysisStore.setAnalysisStatus(`相交分析完成：共生成 ${results.length} 个结果，已渲染到地图。`)
+      store.setResults(features)
+      displayIntersectionResults(features)
+      analysisStore.setAnalysisStatus(`相交分析完成：共生成 ${features.length} 个结果，已渲染到地图。`)
 
     } catch (error: any) {
-      console.error('[Intersection] 相交分析失败:', error)
-      analysisStore.setAnalysisStatus(`相交分析失败: ${error.message}`)
+      store.setIsAnalyzing(false)
+      throw error // 重新抛出错误，让面板能够捕获
     } finally {
       store.setIsAnalyzing(false)
-      console.log('[Intersection] 分析状态更新完成')
     }
   }
 
-  // 几何体拓扑验证和清理函数
-  const validateAndCleanGeometry = (geometry: any): any | null => {
-    if (!geometry || !geometry.type || !geometry.coordinates) {
-      return null
-    }
-
-    try {
-      // 检查turf库是否可用
-      if (!window.turf) {
-        console.warn('[Intersection] Turf库未加载，跳过拓扑验证')
-        return geometry
-      }
-
-      const turf = window.turf
-
-      // 创建turf要素进行验证
-      const turfFeature = {
-        type: 'Feature',
-        geometry: geometry,
-        properties: {}
-      }
-
-      // 1. 检查几何体有效性
-      if (!turf.booleanValid(turfFeature)) {
-        console.warn('[Intersection] 几何体无效，尝试修复:', geometry.type)
-        
-        // 尝试修复几何体
-        try {
-          const fixedGeometry = turf.cleanCoords(turfFeature)
-          if (turf.booleanValid(fixedGeometry)) {
-            console.log('[Intersection] 几何体修复成功')
-            return fixedGeometry.geometry
-          }
-        } catch (fixError) {
-          console.warn('[Intersection] 几何体修复失败:', fixError)
-        }
-        
-        return null
-      }
-
-      // 2. 对于多边形，检查是否闭合
-      if (geometry.type === 'Polygon' || geometry.type === 'MultiPolygon') {
-        // 清理坐标，移除重复点
-        const cleanedFeature = turf.cleanCoords(turfFeature)
-        
-        // 检查多边形是否有效（闭合且面积大于0）
-        if (cleanedFeature.geometry.type === 'Polygon') {
-          const rings = cleanedFeature.geometry.coordinates
-          for (const ring of rings) {
-            if (ring.length < 4) {
-              console.warn('[Intersection] 多边形环点数不足，移除:', ring.length)
-              return null
-            }
-            
-            // 检查首尾点是否相同（闭合检查）
-            const first = ring[0]
-            const last = ring[ring.length - 1]
-            if (first[0] !== last[0] || first[1] !== last[1]) {
-              console.warn('[Intersection] 多边形未闭合，移除')
-              return null
-            }
-          }
-        }
-        
-        return cleanedFeature.geometry
-      }
-
-      // 3. 对于其他几何类型，只进行基本清理
-      const cleanedFeature = turf.cleanCoords(turfFeature)
-      return cleanedFeature.geometry
-
-    } catch (error) {
-      console.warn('[Intersection] 几何体验证失败:', error)
-      return null
-    }
-  }
 
   const displayIntersectionResults = (items: IntersectionResultItem[]): void => {
     if (!mapStore.map) return
@@ -251,23 +240,21 @@ export function useIntersectionAnalysis() {
     layer.set('intersectionResults', items)
     mapStore.map.addLayer(layer)
 
-    // 处理所有要素，进行拓扑验证和清理
+    // 处理所有要素
     const validFeatures: any[] = []
-    const invalidCount = { total: 0, unclosed: 0, invalid: 0 }
+    let invalidCount = 0
 
     items.forEach((item, index) => {
       if (!item.geometry || !item.geometry.type || !item.geometry.coordinates) {
-        invalidCount.total++
+        invalidCount++
         return
       }
 
-      // 进行拓扑验证和清理
-      const cleanedGeometry = validateAndCleanGeometry(item.geometry)
+      // 直接使用原始几何体
+      const format = new GeoJSON()
+      const geometry = format.readGeometry(item.geometry)
       
-      if (cleanedGeometry) {
-        const format = new GeoJSON()
-        const geometry = format.readGeometry(cleanedGeometry)
-        
+      if (geometry) {
         const f = new Feature({ 
           geometry, 
           properties: { 
@@ -280,32 +267,19 @@ export function useIntersectionAnalysis() {
         })
         validFeatures.push(f)
       } else {
-        invalidCount.total++
-        if (item.geometry.type === 'Polygon' || item.geometry.type === 'MultiPolygon') {
-          invalidCount.unclosed++
-        } else {
-          invalidCount.invalid++
-        }
+        invalidCount++
       }
     })
 
-    // 记录清理结果
-    console.log('[Intersection] 几何体清理完成:', {
+    // 记录处理结果
+    console.log('[Intersection] 要素处理完成:', {
       total: items.length,
       valid: validFeatures.length,
-      invalid: invalidCount.total,
-      unclosed: invalidCount.unclosed,
-      invalidGeometry: invalidCount.invalid
+      invalid: invalidCount
     })
 
-    // 如果有无效几何体，显示警告
-    if (invalidCount.total > 0) {
-      analysisStore.setAnalysisStatus(
-        `相交分析完成：共生成 ${items.length} 个结果，其中 ${validFeatures.length} 个有效，${invalidCount.total} 个无效（${invalidCount.unclosed} 个未闭合，${invalidCount.invalid} 个几何体无效）`
-      )
-    } else {
-      analysisStore.setAnalysisStatus(`相交分析完成：共生成 ${validFeatures.length} 个有效结果，已渲染到地图。`)
-    }
+    // 显示分析状态
+    analysisStore.setAnalysisStatus(`相交分析完成：共生成 ${validFeatures.length} 个结果，已渲染到地图。`)
 
     // 添加所有有效要素到图层
     if (validFeatures.length > 0) {

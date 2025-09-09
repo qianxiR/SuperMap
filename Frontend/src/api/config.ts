@@ -29,7 +29,7 @@ const userServiceConfigs: Record<string, APIConfig> = {
 // 分析服务配置
 const analysisServiceConfigs: Record<string, APIConfig> = {
   development: {
-    baseUrl: 'http://localhost:8001/api/v1',
+    baseUrl: 'http://localhost:8087/api/v1',
     timeout: 30000,
     retryCount: 3,
   },
@@ -40,7 +40,7 @@ const analysisServiceConfigs: Record<string, APIConfig> = {
     apiKey: import.meta.env.VITE_ANALYSIS_API_KEY,
   },
   test: {
-    baseUrl: 'http://localhost:8001/api/v1',
+    baseUrl: 'http://localhost:8087/api/v1',
     timeout: 15000,
     retryCount: 1,
   },

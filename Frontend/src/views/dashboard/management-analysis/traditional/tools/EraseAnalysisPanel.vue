@@ -31,7 +31,22 @@
         <div>
           <div style="font-weight: 600; margin-bottom: 4px;">正在执行擦除分析...</div>
           <div style="font-size: 11px; opacity: 0.8;">
-            正在对目标要素 ({{ targetFeatureCount }} 个) 和擦除要素 ({{ eraseFeatureCount }} 个) 进行Web Worker异步擦除分析
+            正在对目标要素 ({{ targetFeatureCount }} 个) 和擦除要素 ({{ eraseFeatureCount }} 个) 进行擦除分析
+          </div>
+        </div>
+      </TipWindow>
+
+      <!-- 错误提示 -->
+      <TipWindow 
+        v-if="errorMessage"
+        :visible="!!errorMessage"
+        variant="error"
+        :show-icon="true"
+      >
+        <div>
+          <div style="font-weight: 600; margin-bottom: 4px;">图层类型错误</div>
+          <div style="font-size: 11px; opacity: 0.8;">
+            {{ errorMessage }}
           </div>
         </div>
       </TipWindow>
@@ -107,12 +122,18 @@ const { exportFeaturesAsGeoJSON } = useLayerExport()
 const showLayerNameModalRef = ref<boolean>(false)
 const defaultlayerName = ref<string>('')
 
+// 错误消息状态
+const errorMessage = ref<string>('')
+
 const layerOptionsWithNone = computed(() => [{ value: '', label: '无', disabled: false }, ...layerOptions.value])
 
 const selectedTargetId = computed({ get: () => targetlayerId.value, set: (v: string) => setTargetlayer(v) })
 const selectedEraseId = computed({ get: () => eraselayerId.value, set: (v: string) => setEraselayer(v) })
 
-const handleExecute = () => {
+const handleExecute = async () => {
+  // 清除之前的错误信息
+  errorMessage.value = ''
+  
   const tCount = targetFeaturesCache.value?.length || 0
   const eCount = eraseFeaturesCache.value?.length || 0
   if (tCount < 1 || eCount < 1) {
@@ -155,12 +176,17 @@ const handleExecute = () => {
     eraseFirstType: eGeom?.getType?.()
   })
 
-  executeEraseAnalysis({
-    targetlayerId: targetlayerId.value,
-    eraselayerId: eraselayerId.value,
-    targetFeatures: targetFeaturesCache.value,
-    eraseFeatures: eraseFeaturesCache.value
-  })
+  try {
+    await executeEraseAnalysis({
+      targetlayerId: targetlayerId.value,
+      eraselayerId: eraselayerId.value,
+      targetFeatures: targetFeaturesCache.value,
+      eraseFeatures: eraseFeaturesCache.value
+    })
+  } catch (error) {
+    // 捕获错误并显示在 TipWindow 中
+    errorMessage.value = error instanceof Error ? error.message : '执行擦除分析时发生未知错误'
+  }
 }
 
 const handleClear = () => {

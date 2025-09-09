@@ -51,8 +51,8 @@ const handleClick = (event: MouseEvent) => {
 
 <style scoped>
 .btn { 
-  border: none;
-  background: var(--panel);
+  border: 1px solid var(--border);
+  background: transparent;
   color: var(--text);
   border-radius: 8px;
   cursor: pointer;
@@ -69,6 +69,7 @@ const handleClick = (event: MouseEvent) => {
   padding: 5px 7px;
   font-size: 12px;
   min-height: 28px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .btn:disabled {
@@ -86,48 +87,60 @@ const handleClick = (event: MouseEvent) => {
 .btn:hover:not(:disabled) {
   background: var(--accent);
   color: white;
+  border-color: var(--accent);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
 }
 
 .btn:active:not(:disabled) {
   transform: translateY(0);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(8px);
 }
 
 .btn.primary { 
-  background: var(--btn-primary-bg); 
-  color: var(--btn-primary-color);
+  background: transparent;
+  color: var(--btn-primary-bg);
+  border-color: var(--btn-primary-bg);
 }
 
 .btn.primary:hover:not(:disabled) {
   background: var(--btn-primary-bg);
   color: var(--btn-primary-color);
+  border-color: var(--btn-primary-bg);
 }
 
 .btn.secondary {
-  background: var(--btn-secondary-bg);
+  background: transparent;
   color: var(--btn-secondary-color);
+  border-color: var(--btn-secondary-bg);
 }
 
 .btn.secondary:hover:not(:disabled) {
   background: var(--accent);
   color: white;
+  border-color: var(--accent);
 }
 
 .btn.danger {
-  background: var(--btn-danger-bg);
-  color: var(--btn-danger-color);
+  background: transparent;
+  color: var(--btn-danger-bg);
+  border-color: var(--btn-danger-bg);
 }
 
 .btn.danger:hover:not(:disabled) {
   background: var(--btn-danger-hover-bg);
   color: var(--btn-danger-hover-color);
+  border-color: var(--btn-danger-hover-bg);
 }
 
 .btn.active {
   background: var(--accent);
   color: white;
+  border-color: var(--accent);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* 加载动画 */

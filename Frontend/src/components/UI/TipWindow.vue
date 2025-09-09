@@ -3,7 +3,7 @@
     <div class="tip-content">
       <div class="tip-icon" v-if="showIcon">
         <slot name="icon">
-          <span class="default-icon">💡</span>
+          <span class="default-icon"></span>
         </slot>
       </div>
       <div class="tip-text">
@@ -86,19 +86,19 @@ const tipClass = computed(() => {
 
 .tip-warning {
   background: var(--surface);
-  border-left-color: var(--accent);
+  border-left-color: #f59e0b;
   color: var(--text);
 }
 
 .tip-success {
   background: var(--surface);
-  border-left-color: var(--accent);
+  border-left-color: #10b981;
   color: var(--text);
 }
 
 .tip-error {
   background: var(--surface);
-  border-left-color: var(--accent);
+  border-left-color: #ef4444;
   color: var(--text);
 }
 

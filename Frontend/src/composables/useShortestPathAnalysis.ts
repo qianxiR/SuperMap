@@ -550,17 +550,25 @@ export function useShortestPathAnalysis() {
       }
       
       const pathData = apiResponse.data
+      const features = pathData.features
       const stats = pathData.statistics
       
+      // 从features数组中提取路径数据
+      const pathFeature = features.length > 0 ? features[0] : null
+      
+      if (!pathFeature) {
+        throw new Error('未获取到路径数据')
+      }
+      
       const result: ShortestPathResult = {
-        id: pathData.resultId,
-        name: pathData.resultName,
-        geometry: pathData.pathGeometry,
+        id: pathFeature.properties?.id || pathData.resultId,
+        name: pathFeature.properties?.name || pathData.resultName,
+        geometry: pathFeature.geometry,
         distance: stats.distance,
         duration: stats.duration,
         pathType: '最短路径',
         sourcelayerName: '分析及绘制图层',
-        createdAt: new Date().toISOString()
+        createdAt: pathFeature.properties?.createdAt || new Date().toISOString()
       }
       
       setAnalysisResults([result])
