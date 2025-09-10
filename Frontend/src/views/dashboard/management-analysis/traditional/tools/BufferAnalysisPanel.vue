@@ -34,25 +34,6 @@
         </div>
       </div>
       
-      <!-- 显示已选择要素信息 -->
-      <div v-if="hasSelectedFeatures" class="selected-features-info">
-        <div class="info-item">
-          <span class="info-label">已选择要素:</span>
-          <span class="info-value">{{ selectedFeatures.length }} 个</span>
-        </div>
-        <div v-if="selectedFeatures.length <= 10" class="feature-names">
-          <div class="info-label">要素名称:</div>
-          <div class="feature-name-list">
-            <span 
-              v-for="(feature, index) in selectedFeatures.slice(0, 10)" 
-              :key="index"
-              class="feature-name-tag"
-            >
-              {{ getFeatureDisplayName(feature, index) }}
-            </span>
-          </div>
-        </div>
-      </div>
     </div>
     
     <!-- 参数设置 -->
@@ -173,7 +154,6 @@ import { useMapStore } from '@/stores/mapStore'
 import { useBufferAnalysis } from '@/composables/useBufferAnalysis'
 import { uselayermanager } from '@/composables/uselayermanager'
 import { useLayerExport } from '@/composables/useLayerExport'
-import { useAreaSelectionStore } from '@/stores/areaSelectionStore'
 import PrimaryButton from '@/components/UI/PrimaryButton.vue'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
 import TraditionalInputGroup from '@/components/UI/TraditionalInputGroup.vue'
@@ -184,7 +164,6 @@ import LayerNameModal from '@/components/UI/LayerNameModal.vue'
 
 const analysisStore = useAnalysisStore()
 const mapStore = useMapStore()
-const areaSelectionStore = useAreaSelectionStore()
 
 const {
   selectedAnalysislayerId,
@@ -214,26 +193,7 @@ const { exportFeaturesAsGeoJSON } = useLayerExport()
 const showLayerNameModalRef = ref<boolean>(false)
 const defaultlayerName = ref<string>('')
 
-// 获取已选择要素信息
-const selectedFeatures = computed(() => areaSelectionStore.selectedFeatures)
-const hasSelectedFeatures = computed(() => selectedFeatures.value.length > 0)
 
-// 获取要素显示名称
-const getFeatureDisplayName = (feature: any, index: number): string => {
-  const properties = feature.getProperties?.() || {}
-  const featureName = properties.name || properties.NAME || properties.Name || 
-                     properties.title || properties.TITLE || properties.Title ||
-                     properties.label || properties.LABEL || properties.Label
-  
-  if (featureName) {
-    return featureName
-  }
-  
-  // 如果没有名称属性，使用几何类型和索引
-  const geometry = feature.getGeometry?.()
-  const geometryType = geometry?.getType?.() || '未知'
-  return `${geometryType}_${index + 1}`
-}
 
 // 包含"无"选项的图层选项
 const layerOptionsWithNone = computed(() => {
@@ -358,34 +318,6 @@ const generatelayerNameFromBuffer = () => {
   const sourcelayerName = selectedAnalysislayerInfo.value.name
   const distanceText = `${bufferSettings.value.radius}米`
   
-  // 如果有已选择的要素，尝试从要素中获取更详细的名称信息
-  if (hasSelectedFeatures.value && selectedFeatures.value.length > 0) {
-    const featureNames = selectedFeatures.value.map((feature, index) => {
-      // 尝试从要素属性中获取名称
-      const properties = feature.getProperties?.() || {}
-      const featureName = properties.name || properties.NAME || properties.Name || 
-                         properties.title || properties.TITLE || properties.Title ||
-                         properties.label || properties.LABEL || properties.Label
-      
-      if (featureName) {
-        return featureName
-      }
-      
-      // 如果没有名称属性，使用几何类型和索引
-      const geometry = feature.getGeometry?.()
-      const geometryType = geometry?.getType?.() || '未知'
-      return `${geometryType}_${index + 1}`
-    })
-    
-    // 如果要素数量较少，在名称中包含具体要素信息
-    if (selectedFeatures.value.length <= 5) {
-      const featureNamesStr = featureNames.join('_')
-      return `缓冲区_${sourcelayerName}_${featureNamesStr}_${distanceText}`
-    } else {
-      // 如果要素数量较多，只显示数量和主要信息
-      return `缓冲区_${sourcelayerName}_${selectedFeatures.value.length}个要素_${distanceText}`
-    }
-  }
   
   return `缓冲区_${sourcelayerName}_${distanceText}`
 }
@@ -643,45 +575,6 @@ watch(bufferResults, (results) => {
   box-shadow: 0 2px 6px rgba(var(--accent-rgb), 0.15);
 }
 
-.selected-features-info {
-  margin-top: 12px;
-  padding: 16px;
-  background: rgba(var(--accent-rgb), 0.05);
-  border: 1px solid rgba(var(--accent-rgb), 0.2);
-  border-radius: 12px;
-  transition: all 0.2s ease;
-}
-
-.selected-features-info:hover {
-  background: rgba(var(--accent-rgb), 0.08);
-  border-color: rgba(var(--accent-rgb), 0.3);
-}
-
-.feature-names {
-  margin-top: 8px;
-}
-
-.feature-name-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 4px;
-}
-
-.feature-name-tag {
-  display: inline-block;
-  padding: 2px 8px;
-  background: rgba(var(--accent-rgb), 0.1);
-  border: 1px solid rgba(var(--accent-rgb), 0.2);
-  border-radius: 6px;
-  font-size: 10px;
-  color: var(--text);
-  font-weight: 500;
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 
 .info-item {
   display: flex;
