@@ -27,6 +27,26 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr :8088') do (
 
 echo 端口检查完成
 echo.
+:: 询问是否启动 ngrok 隧道
+echo [INFO] 是否启动 ngrok 隧道？(y/n)
+set /p ngrok_choice="请输入选择 (y/n): "
+
+if /i "%ngrok_choice%"=="y" (
+    echo [INFO] 正在启动 ngrok 隧道...
+    start "ngrok tunnel" cmd /k "cd /d %~dp0ngrok && echo 启动 ngrok 隧道... && ngrok http 8087"
+    echo 等待 ngrok 启动...
+    timeout /t 3 /nobreak >nul
+    echo [INFO] 正在更新配置文件...
+    cd /d %~dp0ngrok
+    python update_config.py
+    cd /d %~dp0
+    echo ngrok 隧道启动完成！
+    echo.
+) else (
+    echo 跳过 ngrok 隧道启动
+    echo.
+)
+
 echo [INFO] 正在启动后端服务...
 echo.
 
@@ -48,6 +68,10 @@ echo ========================================
 echo.
 echo Analysis 服务: 运行在独立窗口 (http://0.0.0.0:8087)
 echo User 服务: 运行在独立窗口 (http://0.0.0.0:8088)
+if /i "%ngrok_choice%"=="y" (
+    echo ngrok 隧道: 运行在独立窗口 (公网访问)
+    echo 配置文件已自动更新为最新的 ngrok 地址
+)
 echo.
 echo 按任意键关闭此窗口...
 pause >nul
