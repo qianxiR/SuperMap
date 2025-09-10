@@ -2,7 +2,8 @@
 用户数据传输对象
 """
 from typing import Optional
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field
+from pydantic import field_validator, model_validator
 import re
 
 
@@ -14,23 +15,25 @@ class UserRegisterDTO(BaseModel):
     password: str = Field(..., min_length=6, max_length=100, description="密码")
     confirm_password: str = Field(..., description="确认密码")
     
-    @validator('username')
+    @field_validator('username')
+    @classmethod
     def validate_username(cls, v):
         if not re.match(r'^[a-zA-Z0-9_]+$', v):
             raise ValueError('用户名只能包含字母、数字和下划线')
         return v
     
-    @validator('phone')
+    @field_validator('phone')
+    @classmethod
     def validate_phone(cls, v):
         if v and not re.match(r'^1[3-9]\d{9}$', v):
             raise ValueError('手机号格式不正确')
         return v
-    
-    @validator('confirm_password')
-    def validate_confirm_password(cls, v, values):
-        if 'password' in values and v != values['password']:
+
+    @model_validator(mode='after')
+    def validate_passwords_match(self):
+        if self.confirm_password != self.password:
             raise ValueError('密码和确认密码不匹配')
-        return v
+        return self
 
 
 class UserLoginDTO(BaseModel):
@@ -58,13 +61,15 @@ class UserUpdateDTO(BaseModel):
     old_phone: str = Field(..., description="原手机号")
     new_phone: Optional[str] = Field(None, max_length=20, description="新手机号")
     
-    @validator('new_username')
+    @field_validator('new_username')
+    @classmethod
     def validate_new_username(cls, v):
         if v and not re.match(r'^[a-zA-Z0-9_]+$', v):
             raise ValueError('用户名只能包含字母、数字和下划线')
         return v
     
-    @validator('new_phone')
+    @field_validator('new_phone')
+    @classmethod
     def validate_new_phone(cls, v):
         if v and not re.match(r'^1[3-9]\d{9}$', v):
             raise ValueError('手机号格式不正确')
@@ -77,11 +82,11 @@ class PasswordChangeDTO(BaseModel):
     new_password: str = Field(..., min_length=6, max_length=100, description="新密码")
     confirm_new_password: str = Field(..., description="确认新密码")
     
-    @validator('confirm_new_password')
-    def validate_confirm_new_password(cls, v, values):
-        if 'new_password' in values and v != values['new_password']:
+    @model_validator(mode='after')
+    def validate_new_passwords_match(self):
+        if self.confirm_new_password != self.new_password:
             raise ValueError('新密码和确认密码不匹配')
-        return v
+        return self
 
 
 class UserStatsDTO(BaseModel):

@@ -1,7 +1,7 @@
 """
 用户相关的数据传输对象 (DTO)
 """
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional
 from datetime import datetime
 
@@ -14,7 +14,8 @@ class UserRegisterRequest(BaseModel):
     password: str
     confirm_password: str
 
-    @validator('username')
+    @field_validator('username')
+    @classmethod
     def validate_username(cls, v):
         if len(v.strip()) < 2:
             raise ValueError('用户名至少2个字符')
@@ -22,13 +23,15 @@ class UserRegisterRequest(BaseModel):
             raise ValueError('用户名不能超过50个字符')
         return v.strip()
 
-    @validator('email')
+    @field_validator('email')
+    @classmethod
     def validate_email(cls, v):
         if not v or '@' not in v:
             raise ValueError('邮箱格式不正确')
         return v.lower().strip()
 
-    @validator('password')
+    @field_validator('password')
+    @classmethod
     def validate_password(cls, v):
         if len(v) < 6:
             raise ValueError('密码至少6个字符')
@@ -36,9 +39,10 @@ class UserRegisterRequest(BaseModel):
             raise ValueError('密码不能超过100个字符')
         return v
 
-    @validator('confirm_password')
-    def validate_confirm_password(cls, v, values):
-        if 'password' in values and v != values['password']:
+    @field_validator('confirm_password')
+    @classmethod
+    def validate_confirm_password(cls, v, info):
+        if 'password' in info.data and v != info.data['password']:
             raise ValueError('密码和确认密码不匹配')
         return v
 
@@ -48,13 +52,15 @@ class UserLoginRequest(BaseModel):
     login_identifier: str  # 用户名/邮箱/手机号
     password: str
 
-    @validator('login_identifier')
+    @field_validator('login_identifier')
+    @classmethod
     def validate_login_identifier(cls, v):
         if not v or len(v.strip()) < 2:
             raise ValueError('登录标识不能为空且至少2个字符')
         return v.strip()
 
-    @validator('password')
+    @field_validator('password')
+    @classmethod
     def validate_password(cls, v):
         if not v:
             raise ValueError('密码不能为空')
@@ -80,7 +86,8 @@ class UserUpdateRequest(BaseModel):
     old_phone: Optional[str] = None
     new_phone: Optional[str] = None
 
-    @validator('new_username')
+    @field_validator('new_username')
+    @classmethod
     def validate_new_username(cls, v):
         if v is not None:
             if len(v.strip()) < 2:
@@ -90,7 +97,8 @@ class UserUpdateRequest(BaseModel):
             return v.strip()
         return v
 
-    @validator('new_email')
+    @field_validator('new_email')
+    @classmethod
     def validate_new_email(cls, v):
         if v is not None:
             if not v or '@' not in v:
@@ -105,13 +113,15 @@ class ChangePasswordRequest(BaseModel):
     new_password: str
     confirm_new_password: str
 
-    @validator('current_password')
+    @field_validator('current_password')
+    @classmethod
     def validate_current_password(cls, v):
         if not v:
             raise ValueError('当前密码不能为空')
         return v
 
-    @validator('new_password')
+    @field_validator('new_password')
+    @classmethod
     def validate_new_password(cls, v):
         if len(v) < 6:
             raise ValueError('新密码至少6个字符')
@@ -119,9 +129,10 @@ class ChangePasswordRequest(BaseModel):
             raise ValueError('新密码不能超过100个字符')
         return v
 
-    @validator('confirm_new_password')
-    def validate_confirm_new_password(cls, v, values):
-        if 'new_password' in values and v != values['new_password']:
+    @field_validator('confirm_new_password')
+    @classmethod
+    def validate_confirm_new_password(cls, v, info):
+        if 'new_password' in info.data and v != info.data['new_password']:
             raise ValueError('新密码和确认密码不匹配')
         return v
 
