@@ -47,19 +47,26 @@ if /i "%ngrok_choice%"=="y" (
     echo.
 )
 
-echo [INFO] 正在启动后端服务...
+echo [INFO] 正在启动后端服务和前端服务...
 echo.
 
 :: 启动 Analysis 服务 (Node.js)
-echo [1/2] 启动 Analysis 服务 (Node.js)...
-start "Analysis Service" cmd /k "cd /d %~dp0analysis && echo 启动 Analysis 服务... && npm run dev"
+echo [1/3] 启动 Analysis 服务 (Node.js)...
+start "Analysis Service" cmd /k "cd /d %~dp0Backend\analysis && echo 启动 Analysis 服务... && npm run dev"
 
 :: 等待2秒
 timeout /t 2 /nobreak >nul
 
 :: 启动 User 服务 (Python FastAPI)
-echo [2/2] 启动 User 服务 (Python FastAPI)...
-start "User Service" cmd /k "cd /d %~dp0 && echo 激活 conda py310 环境... && conda activate py310 && echo 启动 User 服务... && python -m uvicorn user.main:app --reload --host 0.0.0.0 --port 8088"
+echo [2/3] 启动 User 服务 (Python FastAPI)...
+start "User Service" cmd /k "cd /d %~dp0Backend && echo 激活 conda py310 环境... && conda activate py310 && echo 启动 User 服务... && python -m uvicorn user.main:app --reload --host 0.0.0.0 --port 8088"
+
+:: 等待2秒
+timeout /t 2 /nobreak >nul
+
+:: 启动 Frontend 服务 (Vue.js)
+echo [3/3] 启动 Frontend 服务 (Vue.js)...
+start "Frontend Service" cmd /k "cd /d %~dp0Frontend && echo 启动 Frontend 服务... && npm run dev"
 
 echo.
 echo ========================================
@@ -68,6 +75,7 @@ echo ========================================
 echo.
 echo Analysis 服务: 运行在独立窗口 (http://0.0.0.0:8087)
 echo User 服务: 运行在独立窗口 (http://0.0.0.0:8088)
+echo Frontend 服务: 运行在独立窗口 (http://localhost:5173)
 if /i "%ngrok_choice%"=="y" (
     echo ngrok 隧道: 运行在独立窗口 (公网访问)
     echo 配置文件已自动更新为最新的 ngrok 地址
