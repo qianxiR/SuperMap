@@ -5,7 +5,7 @@
 from functools import lru_cache
 from typing import Optional, List
 from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -71,9 +71,17 @@ class Settings(BaseSettings):
     # 日志配置
     log_level: str = Field(alias="LOG_LEVEL")
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
+    # DashScope / Vite 相关配置
+    vite_dashscope_api_key: str = Field(alias="VITE_DASHSCOPE_API_KEY")
+    vite_dashscope_base_url: str = Field(alias="VITE_DASHSCOPE_BASE_URL")
+    vite_dashscope_model: str = Field(alias="VITE_DASHSCOPE_MODEL")
+    vite_dashscope_temperature: float = Field(alias="VITE_DASHSCOPE_TEMPERATURE")
+    vite_dashscope_max_tokens: int = Field(alias="VITE_DASHSCOPE_MAX_TOKENS")
+    
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+    )
 
 
 @lru_cache()
