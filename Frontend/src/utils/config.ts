@@ -301,4 +301,43 @@ export const getBaseMapConfig = () => {
   return config.baseMaps
 }
 
+// ===== LLM 接入配置 =====
+export interface LLMApiConfig {
+  apiKey: string
+  baseUrl: string
+  model: string
+  temperature: number
+  maxTokens: number
+}
+
+export const getLLMApiConfig = (): LLMApiConfig => {
+  const apiKey = (import.meta.env.VITE_DASHSCOPE_API_KEY as string)
+    || (import.meta.env as any).DASHSCOPE_API_KEY
+    || ''
+  const baseUrl = (
+    (import.meta.env.VITE_DASHSCOPE_BASE_URL as string)
+    || (import.meta.env as any).DASHSCOPE_BASE_URL
+    || 'https://dashscope.aliyuncs.com/compatible-mode/v1'
+  ).replace(/\/$/, '')
+  const model = (
+    (import.meta.env.VITE_DASHSCOPE_MODEL as string)
+    || (import.meta.env as any).DASHSCOPE_MODEL
+    || 'qwen-plus'
+  )
+  const temperature = Number(
+    (import.meta.env.VITE_DASHSCOPE_TEMPERATURE as any) ?? (import.meta.env as any).DASHSCOPE_TEMPERATURE ?? 0.7
+  )
+  const maxTokens = Number(
+    (import.meta.env.VITE_DASHSCOPE_MAX_TOKENS as any) ?? (import.meta.env as any).DASHSCOPE_MAX_TOKENS ?? 3000
+  )
+  return { apiKey, baseUrl, model, temperature, maxTokens }
+}
+
+// ===== Agent Service Base URL =====
+export const getAgentApiBaseUrl = (): string => {
+  const base = (import.meta.env as any).AGENT_API_BASE_URL
+    || (import.meta.env.VITE_AGENT_API_BASE_URL as string)
+  return base.replace(/\/$/, '')
+}
+
 export default createAPIConfig

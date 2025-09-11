@@ -95,7 +95,7 @@ defineEmits<{
 }
 
 .layer-name {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--text);
   text-align: left;
@@ -195,7 +195,7 @@ defineEmits<{
   }
   
   .layer-name {
-    font-size: 13px;
+    font-size: 12px;
   }
   
   .layer-desc {

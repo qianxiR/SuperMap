@@ -316,6 +316,7 @@ const handleExportGroup = async (source: string) => {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  font-size: 12px;
   overflow-y: auto;
   overflow-x: hidden;
   /* 使用全局滚动条样式 */
@@ -356,7 +357,7 @@ const handleExportGroup = async (source: string) => {
 }
 
 .section-title {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text);
   margin-bottom: 12px;
   font-weight: 600;
@@ -399,7 +400,7 @@ const handleExportGroup = async (source: string) => {
 }
 
 .group-header {
-  padding: 8px 12px;
+  padding: 4px 8px;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -409,7 +410,7 @@ const handleExportGroup = async (source: string) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 40px;
+  min-height: 20px;
   margin-bottom: 4px;
   box-shadow: var(--glow);
 }
@@ -450,7 +451,7 @@ const handleExportGroup = async (source: string) => {
 }
 
 .group-title {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: inherit;
   display: flex;
@@ -463,7 +464,7 @@ const handleExportGroup = async (source: string) => {
 }
 
 .group-count {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--accent);
   background: var(--accent-bg, rgba(var(--accent-rgb), 0.1));

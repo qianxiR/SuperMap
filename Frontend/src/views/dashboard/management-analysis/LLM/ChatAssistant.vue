@@ -53,6 +53,7 @@ import { useModeStateStore } from '@/stores/modeStateStore';
 import LLMInputWindow from '@/components/Agent/LLMInputWindow.vue';
 import ChatMessagesPanel from '@/components/Agent/ChatMessagesPanel.vue';
 import SecondaryButton from '@/components/UI/SecondaryButton.vue';
+import { getAgentApiBaseUrl } from '@/utils/config'
 
 interface Message {
   id: number;
@@ -174,32 +175,40 @@ watch(messages, async () => {
 }, { deep: true });
 
 // 发送消息
-const sendMessage = () => {
-  const message = newMessage.value.trim();
-  if (!message) return;
+const sendMessage = async () => {
+  const message = newMessage.value.trim()
+  if (!message) return
 
-  // 添加用户消息
-  messages.value.push({
-    id: Date.now(),
-    text: message,
-    sender: 'user'
-  });
+  messages.value.push({ id: Date.now(), text: message, sender: 'user' })
 
-  // 处理用户输入并生成AI响应
-  
-  let aiResponse = `我理解您的需求：正在处理中...`;
-  
-  // 添加AI响应
-  messages.value.push({
-    id: Date.now() + 1,
-    text: aiResponse,
-    sender: 'system'
-  });
+  const apiBase = getAgentApiBaseUrl()
+  const userMsg = { role: 'user', content: message }
 
-  newMessage.value = '';
-  
-  // 智能滚动逻辑现在由ChatMessagesPanel组件内部处理
-};
+  try {
+    const resp = await fetch(`${apiBase}/agent/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messages: [userMsg]
+      })
+    })
+
+    if (!resp.ok) {
+      const errText = await resp.text()
+      messages.value.push({ id: Date.now() + 1, text: `LLM请求失败(${resp.status}): ${errText}`, sender: 'system' })
+    } else {
+      const data = await resp.json()
+      const content = data?.data?.choices?.[0]?.message?.content || '[空响应]'
+      messages.value.push({ id: Date.now() + 1, text: content, sender: 'system' })
+    }
+  } catch (e: any) {
+    messages.value.push({ id: Date.now() + 2, text: `LLM请求异常: ${e?.message || e}`, sender: 'system' })
+  }
+
+  newMessage.value = ''
+}
 
 // 跳转到历史聊天记录页面
 const showChatHistory = () => {
