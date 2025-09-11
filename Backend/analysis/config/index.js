@@ -25,7 +25,7 @@ const config = {
       'http://host.docker.internal:3000',
       'http://172.17.0.1:3000',
       'https://cloud.dify.ai',
-      'https://dify.ai',
+      'https://dify.ai'
     ],
     credentials: true
   },

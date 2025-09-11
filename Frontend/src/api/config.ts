@@ -29,7 +29,7 @@ const userServiceConfigs: Record<string, APIConfig> = {
 // 分析服务配置
 const analysisServiceConfigs: Record<string, APIConfig> = {
   development: {
-    baseUrl: `${import.meta.env.VITE_ANALYSIS_SERVICE_BASE_URL || 'https://ffa1d42eff91.ngrok-free.app'}${import.meta.env.VITE_ANALYSIS_SERVICE_API_PREFIX || '/api/v1/spatial-analysis'}`,
+    baseUrl: `${import.meta.env.VITE_ANALYSIS_SERVICE_BASE_URL || 'http://localhost:8087'}${import.meta.env.VITE_ANALYSIS_SERVICE_API_PREFIX || '/api/v1/spatial-analysis'}`,
     timeout: parseInt(import.meta.env.VITE_API_TIMEOUT) || 30000,
     retryCount: parseInt(import.meta.env.VITE_API_RETRY_COUNT) || 3,
   },
@@ -40,7 +40,7 @@ const analysisServiceConfigs: Record<string, APIConfig> = {
     apiKey: import.meta.env.VITE_ANALYSIS_API_KEY,
   },
   test: {
-    baseUrl: `${import.meta.env.VITE_ANALYSIS_SERVICE_BASE_URL || 'https://ffa1d42eff91.ngrok-free.app'}${import.meta.env.VITE_ANALYSIS_SERVICE_API_PREFIX || '/api/v1/spatial-analysis'}`,
+    baseUrl: `${import.meta.env.VITE_ANALYSIS_SERVICE_BASE_URL || 'http://localhost:8087'}${import.meta.env.VITE_ANALYSIS_SERVICE_API_PREFIX || '/api/v1/spatial-analysis'}`,
     timeout: parseInt(import.meta.env.VITE_API_TIMEOUT) || 15000,
     retryCount: parseInt(import.meta.env.VITE_API_RETRY_COUNT) || 1,
   },

@@ -755,6 +755,83 @@ export function useShortestPathAnalysis() {
   
  
   
+  // Agent事件驱动的最短路径分析执行方法
+  const executeShortestPathAnalysisByAgent = async (startLayerName: string, endLayerName: string, obstacleLayerName?: string): Promise<void> => {
+    // 根据图层名称查找图层
+    const startLayer = mapStore.vectorlayers.find(l => l.name === startLayerName)
+    const endLayer = mapStore.vectorlayers.find(l => l.name === endLayerName)
+    
+    if (!startLayer) {
+      throw new Error(`未找到起点图层: ${startLayerName}`)
+    }
+    
+    if (!endLayer) {
+      throw new Error(`未找到终点图层: ${endLayerName}`)
+    }
+    
+    // 获取起点和终点的第一个要素作为分析点
+    const startFeatures = startLayer.layer?.getSource()?.getFeatures() || []
+    const endFeatures = endLayer.layer?.getSource()?.getFeatures() || []
+    
+    if (startFeatures.length === 0) {
+      throw new Error(`起点图层 ${startLayerName} 没有要素`)
+    }
+    
+    if (endFeatures.length === 0) {
+      throw new Error(`终点图层 ${endLayerName} 没有要素`)
+    }
+    
+    // 使用第一个要素的几何中心作为起点和终点
+    const startFeature = startFeatures[0]
+    const endFeature = endFeatures[0]
+    
+    const startGeometry = startFeature.getGeometry()
+    const endGeometry = endFeature.getGeometry()
+    
+    if (!startGeometry || !endGeometry) {
+      throw new Error('无法获取起点或终点的几何信息')
+    }
+    
+    // 获取几何中心点坐标
+    const startCoords = startGeometry.getType() === 'Point' 
+      ? startGeometry.getCoordinates()
+      : startGeometry.getExtent()
+    
+    const endCoords = endGeometry.getType() === 'Point'
+      ? endGeometry.getCoordinates()
+      : endGeometry.getExtent()
+    
+    // 对于非点要素，使用几何中心
+    const startPoint = startGeometry.getType() === 'Point' 
+      ? startCoords
+      : [(startCoords[0] + startCoords[2]) / 2, (startCoords[1] + startCoords[3]) / 2]
+    
+    const endPoint = endGeometry.getType() === 'Point'
+      ? endCoords
+      : [(endCoords[0] + endCoords[2]) / 2, (endCoords[1] + endCoords[3]) / 2]
+    
+    // 创建起点和终点要素
+    const startPointFeature = new window.ol.Feature({
+      geometry: new window.ol.geom.Point(startPoint)
+    })
+    
+    const endPointFeature = new window.ol.Feature({
+      geometry: new window.ol.geom.Point(endPoint)
+    })
+    
+    // 设置起点和终点
+    setStartPoint(startPointFeature)
+    setEndPoint(endPointFeature)
+    
+    // 如果有障碍物图层，设置障碍物
+    if (obstacleLayerName) {
+      setObstaclelayer(obstacleLayerName)
+    }
+    
+    // 执行最短路径分析
+    await executePathAnalysis()
+  }
+
   return {
     // 状态 (从 store 获取)
     analysisResults: computed(() => state.analysisResults),
@@ -771,6 +848,7 @@ export function useShortestPathAnalysis() {
     selectStartPoint,
     selectEndPoint,
     executePathAnalysis,
+    executeShortestPathAnalysisByAgent,
     clearResults,
     exportGeoJSON,
     setObstaclelayer,

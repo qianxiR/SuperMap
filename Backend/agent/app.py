@@ -116,6 +116,69 @@ def export_query_results_as_json(file_name: str) -> str:
     return f"导出操作已发送到前端，文件名：{file_name}"
 
 
+@tool
+def execute_buffer_analysis(layer_name: str, radius: float, unit: str = "meters") -> str:
+    """
+    执行缓冲区分析（前端执行）。
+    输入参数：
+      - layer_name: string 图层名称
+      - radius: float 缓冲区半径
+      - unit: string 单位（默认meters）
+    业务处理：
+      - 后端不直接操作地图，仅返回分析参数供前端执行
+    输出数据格式：
+      - string: 格式 "buffer_analysis:layer_name:radius:unit"
+    """
+    return f"缓冲区分析操作已发送到前端，图层：{layer_name}，半径：{radius}{unit}"
+
+
+@tool
+def execute_intersection_analysis(target_layer_name: str, mask_layer_name: str) -> str:
+    """
+    执行相交分析（前端执行）。
+    输入参数：
+      - target_layer_name: string 目标图层名称
+      - mask_layer_name: string 掩膜图层名称
+    业务处理：
+      - 后端不直接操作地图，仅返回分析参数供前端执行
+    输出数据格式：
+      - string: 格式 "intersection_analysis:target_layer_name:mask_layer_name"
+    """
+    return f"相交分析操作已发送到前端，目标图层：{target_layer_name}，掩膜图层：{mask_layer_name}"
+
+
+@tool
+def execute_erase_analysis(target_layer_name: str, erase_layer_name: str) -> str:
+    """
+    执行擦除分析（前端执行）。
+    输入参数：
+      - target_layer_name: string 目标图层名称
+      - erase_layer_name: string 擦除图层名称
+    业务处理：
+      - 后端不直接操作地图，仅返回分析参数供前端执行
+    输出数据格式：
+      - string: 格式 "erase_analysis:target_layer_name:erase_layer_name"
+    """
+    return f"擦除分析操作已发送到前端，目标图层：{target_layer_name}，擦除图层：{erase_layer_name}"
+
+
+@tool
+def execute_shortest_path_analysis(start_layer_name: str, end_layer_name: str, obstacle_layer_name: str = "") -> str:
+    """
+    执行最短路径分析（前端执行）。
+    输入参数：
+      - start_layer_name: string 起点图层名称
+      - end_layer_name: string 终点图层名称
+      - obstacle_layer_name: string 障碍物图层名称（可选）
+    业务处理：
+      - 后端不直接操作地图，仅返回分析参数供前端执行
+    输出数据格式：
+      - string: 格式 "shortest_path_analysis:start_layer_name:end_layer_name:obstacle_layer_name"
+    """
+    obstacle_info = f"，障碍物图层：{obstacle_layer_name}" if obstacle_layer_name else ""
+    return f"最短路径分析操作已发送到前端，起点图层：{start_layer_name}，终点图层：{end_layer_name}{obstacle_info}"
+
+
 def load_system_prompt() -> str:
     """加载系统提示词，优先从prompt/tools.md读取"""
     base = Path(__file__).resolve().parent
@@ -175,7 +238,7 @@ async def tool_chat(req: ToolChatRequest):
       - { success: true, data: { first_call: AIMessage(JSON), tool_result: string, final_answer: string } }
     """
     model = init_chat_model(f"openai:{req.model}")
-    llm_with_tools = model.bind_tools([toggle_layer_visibility, query_features_by_attribute, save_query_results_as_layer, export_query_results_as_json])
+    llm_with_tools = model.bind_tools([toggle_layer_visibility, query_features_by_attribute, save_query_results_as_layer, export_query_results_as_json, execute_buffer_analysis, execute_intersection_analysis, execute_erase_analysis, execute_shortest_path_analysis])
     history_list = _conversation_layer_history.get(req.conversation_id, [])
     parsed_lines: List[str] = []
     last_action_text = ""
@@ -191,7 +254,7 @@ async def tool_chat(req: ToolChatRequest):
     history_text = "\n".join(parsed_lines)
     first_ai: AIMessage = llm_with_tools.invoke([
         SystemMessage(content=(
-            "你有四个工具:\n"
+            "你有九个工具:\n"
             "1) toggle_layer_visibility(layer_name:str, action:'show'|'hide'|'toggle')\n"
             "- 当用户说'打开@图层名称'或'隐藏@图层名称'或'切换@图层名称'时调用。\n"
             "- 使用图层名称而非图层ID进行操作。\n"
@@ -212,6 +275,18 @@ async def tool_chat(req: ToolChatRequest):
             "4) export_query_results_as_json(file_name:str)\n"
             "- 当用户说'导出为JSON'、'导出为GeoJSON'、'导出查询结果'时调用。\n"
             "- 需要指定文件名（不包含扩展名）。\n"
+            "5) execute_buffer_analysis(layer_name:str, radius:float, unit:str)\n"
+            "- 当用户说'对@图层名称进行缓冲区分析'、'创建@图层名称的缓冲区'、'缓冲区分析'时调用。\n"
+            "- 需要指定图层名称、半径和单位（默认meters）。\n"
+            "6) execute_intersection_analysis(target_layer_name:str, mask_layer_name:str)\n"
+            "- 当用户说'对@图层名称进行相交分析'、'计算@图层名称与@图层名称的相交'、'相交分析'时调用。\n"
+            "- 需要指定目标图层名称和掩膜图层名称。\n"
+            "7) execute_erase_analysis(target_layer_name:str, erase_layer_name:str)\n"
+            "- 当用户说'对@图层名称进行擦除分析'、'从@图层名称中擦除@图层名称'、'擦除分析'时调用。\n"
+            "- 需要指定目标图层名称和擦除图层名称。\n"
+            "8) execute_shortest_path_analysis(start_layer_name:str, end_layer_name:str, obstacle_layer_name:str)\n"
+            "- 当用户说'计算@图层名称到@图层名称的最短路径'、'最短路径分析'时调用。\n"
+            "- 需要指定起点图层名称、终点图层名称，障碍物图层名称可选。\n"
             "- 若用户使用@图层名称，请将@后的文本作为图层名称传递。\n"
             "严禁自行执行这些操作，必须通过工具完成。\n"
             f"历史操作(顺序, 最新在下):\n{history_text}\n"
@@ -234,6 +309,14 @@ async def tool_chat(req: ToolChatRequest):
         tool_result = save_query_results_as_layer.invoke(tool_args)
     elif tool_name == "export_query_results_as_json":
         tool_result = export_query_results_as_json.invoke(tool_args)
+    elif tool_name == "execute_buffer_analysis":
+        tool_result = execute_buffer_analysis.invoke(tool_args)
+    elif tool_name == "execute_intersection_analysis":
+        tool_result = execute_intersection_analysis.invoke(tool_args)
+    elif tool_name == "execute_erase_analysis":
+        tool_result = execute_erase_analysis.invoke(tool_args)
+    elif tool_name == "execute_shortest_path_analysis":
+        tool_result = execute_shortest_path_analysis.invoke(tool_args)
     else:
         tool_result = f"未知工具: {tool_name}"
     history_entry = str(tool_result)
@@ -244,7 +327,7 @@ async def tool_chat(req: ToolChatRequest):
     tool_message = ToolMessage(content=str(tool_result), tool_call_id=tool_call["id"])
     final_ai: AIMessage = llm_with_tools.invoke([
         SystemMessage(content=(
-            "你有四个工具:\n"
+            "你有九个工具:\n"
             "1) toggle_layer_visibility(layer_name:str, action:'show'|'hide'|'toggle')\n"
             "- 遇到'打开/隐藏/切换@图层名称'的请求，必须调用该工具。\n"
             "- 使用图层名称而非图层ID进行操作。\n"
@@ -265,12 +348,28 @@ async def tool_chat(req: ToolChatRequest):
             "4) export_query_results_as_json(file_name:str)\n"
             "- 遇到'导出为JSON'、'导出为GeoJSON'、'导出查询结果'的请求时调用。\n"
             "- 需要指定文件名（不包含扩展名）。\n"
+            "5) execute_buffer_analysis(layer_name:str, radius:float, unit:str)\n"
+            "- 遇到'对@图层名称进行缓冲区分析'、'创建@图层名称的缓冲区'、'缓冲区分析'的请求时调用。\n"
+            "- 需要指定图层名称、半径和单位（默认meters）。\n"
+            "6) execute_intersection_analysis(target_layer_name:str, mask_layer_name:str)\n"
+            "- 遇到'对@图层名称进行相交分析'、'计算@图层名称与@图层名称的相交'、'相交分析'的请求时调用。\n"
+            "- 需要指定目标图层名称和掩膜图层名称。\n"
+            "7) execute_erase_analysis(target_layer_name:str, erase_layer_name:str)\n"
+            "- 遇到'对@图层名称进行擦除分析'、'从@图层名称中擦除@图层名称'、'擦除分析'的请求时调用。\n"
+            "- 需要指定目标图层名称和擦除图层名称。\n"
+            "8) execute_shortest_path_analysis(start_layer_name:str, end_layer_name:str, obstacle_layer_name:str)\n"
+            "- 遇到'计算@图层名称到@图层名称的最短路径'、'最短路径分析'的请求时调用。\n"
+            "- 需要指定起点图层名称、终点图层名称，障碍物图层名称可选。\n"
             "\n"
             "重要：当工具执行完成后，必须简洁回复，禁止废话。\n"
             "- 查询操作：直接说'正在执行请稍后'\n"
             "- 图层操作：直接说'图层已显示/隐藏'\n"
             "- 保存操作：直接说'正在执行请稍后'\n"
             "- 导出操作：直接说'正在执行请稍后'\n"
+            "- 缓冲区分析：直接说'正在执行请稍后'\n"
+            "- 相交分析：直接说'正在执行请稍后'\n"
+            "- 擦除分析：直接说'正在执行请稍后'\n"
+            "- 最短路径分析：直接说'正在执行请稍后'\n"
             "严禁说'看起来'、'可能'、'如果'、'请确认'等不确定词汇。\n"
             "严禁解释系统工作原理或引导用户查看界面。\n"
             "严禁回复具体的要素数量或详细结果。\n"

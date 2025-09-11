@@ -85,7 +85,6 @@
           text="清除结果"
           @click="clearResults"
         />
-        />
         <SecondaryButton 
           text="导出为JSON"
           @click="onExportAsJSON"

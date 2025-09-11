@@ -14,8 +14,7 @@ import { ref as vueRef } from 'vue'
 import { uselayermanager } from '@/composables/useLayerManager'
 import { useLayerExport } from '@/composables/useLayerExport'
 
-// API配置
-const API_BASE_URL = getAnalysisServiceConfig().baseUrl
+// API配置 - 动态获取以避免缓存问题
 
 // 后端API接口类型定义
 interface FeatureGeometry {
@@ -197,6 +196,8 @@ export function useBufferAnalysis() {
 
 
 
+    const API_BASE_URL = getAnalysisServiceConfig().baseUrl
+    console.log('[BufferAnalysis] 当前API地址:', API_BASE_URL)
     const response = await fetch(`${API_BASE_URL}/buffer`, {
       method: 'POST',
       headers: {
@@ -393,6 +394,7 @@ export function useBufferAnalysis() {
     currentResult,
     isAnalyzing,
     taskId,
+    lastFeatureCollection,
     
     // 方法
     setSelectedAnalysislayer,

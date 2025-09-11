@@ -198,6 +198,31 @@ const handleExportResult = (event: CustomEvent) => {
   })
 }
 
+// 监听缓冲区分析结果事件
+const handleBufferAnalysisResult = (event: CustomEvent) => {
+  const { success, message, layerName, radius, unit, error } = event.detail
+  
+  // 构造缓冲区分析结果消息
+  let resultMessage = ''
+  if (success) {
+    resultMessage = `缓冲区分析完成：${message}`
+  } else {
+    resultMessage = `缓冲区分析失败：${error || '未知错误'}`
+  }
+  
+  // 将结果添加到聊天记录中
+  messages.value.push({ 
+    id: Date.now(), 
+    text: resultMessage, 
+    sender: 'system' 
+  })
+  
+  // 滚动到底部显示新消息
+  nextTick(() => {
+    messagesPanelRef.value?.scrollToBottom()
+  })
+}
+
 onMounted(() => {
   // 恢复LLM模式状态
   const llmState = modeStateStore.getLLMState()
@@ -239,6 +264,7 @@ onMounted(() => {
     window.addEventListener('agent:queryResult', handleQueryResult as EventListener)
     window.addEventListener('agent:saveResult', handleSaveResult as EventListener)
     window.addEventListener('agent:exportResult', handleExportResult as EventListener)
+    window.addEventListener('agent:bufferAnalysisResult', handleBufferAnalysisResult as EventListener)
   }
 });
 
@@ -261,6 +287,7 @@ onUnmounted(() => {
     window.removeEventListener('agent:queryResult', handleQueryResult as EventListener)
     window.removeEventListener('agent:saveResult', handleSaveResult as EventListener)
     window.removeEventListener('agent:exportResult', handleExportResult as EventListener)
+    window.removeEventListener('agent:bufferAnalysisResult', handleBufferAnalysisResult as EventListener)
     ;(window as any).__queryResultListenerRegistered = false
   }
 });
@@ -396,6 +423,84 @@ const sendMessage = async () => {
             }
           } catch (error) {
             console.error('[Agent] 处理导出查询结果工具调用时出错:', error)
+          }
+        }
+        
+        // 如果是缓冲区分析工具
+        if (name === 'execute_buffer_analysis') {
+          try {
+            const parsed = call?.args || {}
+            const layerName = parsed.layer_name || parsed.layerName
+            const radius = parsed.radius
+            const unit = parsed.unit || 'meters'
+            
+            if (layerName && radius !== undefined) {
+              const ev = new CustomEvent('agent:executeBufferAnalysis', { 
+                detail: { layerName, radius, unit } 
+              })
+              window.dispatchEvent(ev)
+              console.log('[Agent] dispatched event: agent:executeBufferAnalysis', { layerName, radius, unit })
+            }
+          } catch (error) {
+            console.error('[Agent] 处理缓冲区分析工具调用时出错:', error)
+          }
+        }
+        
+        // 如果是相交分析工具
+        if (name === 'execute_intersection_analysis') {
+          try {
+            const parsed = call?.args || {}
+            const targetLayerName = parsed.target_layer_name || parsed.targetLayerName
+            const maskLayerName = parsed.mask_layer_name || parsed.maskLayerName
+            
+            if (targetLayerName && maskLayerName) {
+              const ev = new CustomEvent('agent:executeIntersectionAnalysis', { 
+                detail: { targetLayerName, maskLayerName } 
+              })
+              window.dispatchEvent(ev)
+              console.log('[Agent] dispatched event: agent:executeIntersectionAnalysis', { targetLayerName, maskLayerName })
+            }
+          } catch (error) {
+            console.error('[Agent] 处理相交分析工具调用时出错:', error)
+          }
+        }
+        
+        // 如果是擦除分析工具
+        if (name === 'execute_erase_analysis') {
+          try {
+            const parsed = call?.args || {}
+            const targetLayerName = parsed.target_layer_name || parsed.targetLayerName
+            const eraseLayerName = parsed.erase_layer_name || parsed.eraseLayerName
+            
+            if (targetLayerName && eraseLayerName) {
+              const ev = new CustomEvent('agent:executeEraseAnalysis', { 
+                detail: { targetLayerName, eraseLayerName } 
+              })
+              window.dispatchEvent(ev)
+              console.log('[Agent] dispatched event: agent:executeEraseAnalysis', { targetLayerName, eraseLayerName })
+            }
+          } catch (error) {
+            console.error('[Agent] 处理擦除分析工具调用时出错:', error)
+          }
+        }
+        
+        // 如果是最短路径分析工具
+        if (name === 'execute_shortest_path_analysis') {
+          try {
+            const parsed = call?.args || {}
+            const startLayerName = parsed.start_layer_name || parsed.startLayerName
+            const endLayerName = parsed.end_layer_name || parsed.endLayerName
+            const obstacleLayerName = parsed.obstacle_layer_name || parsed.obstacleLayerName || ''
+            
+            if (startLayerName && endLayerName) {
+              const ev = new CustomEvent('agent:executeShortestPathAnalysis', { 
+                detail: { startLayerName, endLayerName, obstacleLayerName } 
+              })
+              window.dispatchEvent(ev)
+              console.log('[Agent] dispatched event: agent:executeShortestPathAnalysis', { startLayerName, endLayerName, obstacleLayerName })
+            }
+          } catch (error) {
+            console.error('[Agent] 处理最短路径分析工具调用时出错:', error)
           }
         }
       } else {

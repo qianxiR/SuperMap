@@ -435,6 +435,37 @@ export function useIntersectionAnalysis() {
     return exportFeaturesAsGeoJSON(fc.features, fileName || '相交分析结果')
   }
 
+  // Agent事件驱动的相交分析执行方法
+  const executeIntersectionAnalysisByAgent = async (targetLayerName: string, maskLayerName: string): Promise<void> => {
+    // 根据图层名称查找图层ID
+    const targetLayer = mapStore.vectorlayers.find(l => l.name === targetLayerName)
+    const maskLayer = mapStore.vectorlayers.find(l => l.name === maskLayerName)
+    
+    if (!targetLayer) {
+      throw new Error(`未找到目标图层: ${targetLayerName}`)
+    }
+    
+    if (!maskLayer) {
+      throw new Error(`未找到掩膜图层: ${maskLayerName}`)
+    }
+    
+    // 设置选中的图层
+    setTargetlayer(targetLayer.id)
+    setMasklayer(maskLayer.id)
+    
+    // 获取图层要素
+    const targetFeatures = targetLayer.layer?.getSource()?.getFeatures() || []
+    const maskFeatures = maskLayer.layer?.getSource()?.getFeatures() || []
+    
+    // 执行相交分析
+    await executeIntersectionAnalysis({
+      targetlayerId: targetLayer.id,
+      masklayerId: maskLayer.id,
+      targetFeatures,
+      maskFeatures
+    })
+  }
+
   return {
     targetlayerId,
     masklayerId,
@@ -450,6 +481,7 @@ export function useIntersectionAnalysis() {
     setTargetlayer,
     setMasklayer,
     executeIntersectionAnalysis,
+    executeIntersectionAnalysisByAgent,
     displayIntersectionResults,
     removeIntersectionlayers,
     clearState,

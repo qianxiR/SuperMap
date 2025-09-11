@@ -48,7 +48,29 @@ app.use(helmet({
 app.use(compression());
 
 // CORS配置
-app.use(cors(config.cors));
+app.use(cors({
+  ...config.cors,
+  allowedHeaders: [
+    'Origin',
+    'X-Requested-With', 
+    'Content-Type',
+    'Accept',
+    'Authorization'
+  ],
+  exposedHeaders: ['Content-Disposition'],
+  // 确保预检请求正确处理
+  preflightContinue: false,
+  optionsSuccessStatus: 200
+}));
+
+// 手动处理OPTIONS请求
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.sendStatus(200);
+});
 
 // 请求日志
 app.use(morgan('combined'));

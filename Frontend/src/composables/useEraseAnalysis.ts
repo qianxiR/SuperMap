@@ -405,6 +405,37 @@ export function useEraseAnalysis() {
     return exportFeaturesAsGeoJSON(fc.features, fileName || '擦除分析结果')
   }
 
+  // Agent事件驱动的擦除分析执行方法
+  const executeEraseAnalysisByAgent = async (targetLayerName: string, eraseLayerName: string): Promise<void> => {
+    // 根据图层名称查找图层ID
+    const targetLayer = mapStore.vectorlayers.find(l => l.name === targetLayerName)
+    const eraseLayer = mapStore.vectorlayers.find(l => l.name === eraseLayerName)
+    
+    if (!targetLayer) {
+      throw new Error(`未找到目标图层: ${targetLayerName}`)
+    }
+    
+    if (!eraseLayer) {
+      throw new Error(`未找到擦除图层: ${eraseLayerName}`)
+    }
+    
+    // 设置选中的图层
+    setTargetlayer(targetLayer.id)
+    setEraselayer(eraseLayer.id)
+    
+    // 获取图层要素
+    const targetFeatures = targetLayer.layer?.getSource()?.getFeatures() || []
+    const eraseFeatures = eraseLayer.layer?.getSource()?.getFeatures() || []
+    
+    // 执行擦除分析
+    await executeEraseAnalysis({
+      targetlayerId: targetLayer.id,
+      eraselayerId: eraseLayer.id,
+      targetFeatures,
+      eraseFeatures
+    })
+  }
+
   return {
     targetlayerId,
     eraselayerId,
@@ -420,6 +451,7 @@ export function useEraseAnalysis() {
     setTargetlayer,
     setEraselayer,
     executeEraseAnalysis,
+    executeEraseAnalysisByAgent,
     displayeraseResults,
     saveEraseResultsAsLayer,
     exportEraseResultsAsJSON,

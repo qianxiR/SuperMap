@@ -256,6 +256,89 @@ export function uselayermanager() {
       }
     })
     
+    // 监听 Agent 缓冲区分析事件
+    window.addEventListener('agent:executeBufferAnalysis', async (e: any) => {
+      const { layerName, radius, unit } = e.detail || {}
+      if (!layerName || radius === undefined) return
+      
+      try {
+        // 导入缓冲区分析composable
+        const { useBufferAnalysis } = await import('@/composables/useBufferAnalysis')
+        const { setSelectedAnalysislayer, updateBufferSettings, executeBufferAnalysis } = useBufferAnalysis()
+        
+        // 根据图层名称查找图层ID
+        const layer = mapStore.vectorlayers.find(l => l.name === layerName)
+        if (!layer) {
+          console.error(`[Agent] 未找到图层: ${layerName}`)
+          return
+        }
+        
+        // 设置选中的图层和参数
+        setSelectedAnalysislayer(layer.id)
+        updateBufferSettings({ radius: Number(radius), semicircleLineSegment: 16 })
+        
+        // 执行缓冲区分析
+        await executeBufferAnalysis()
+        console.log(`[Agent] 缓冲区分析完成: ${layerName}, 半径: ${radius}${unit}`)
+      } catch (error) {
+        console.error('[Agent] 缓冲区分析执行失败:', error)
+      }
+    })
+    
+    // 监听 Agent 相交分析事件
+    window.addEventListener('agent:executeIntersectionAnalysis', async (e: any) => {
+      const { targetLayerName, maskLayerName } = e.detail || {}
+      if (!targetLayerName || !maskLayerName) return
+      
+      try {
+        // 导入相交分析composable
+        const { useIntersectionAnalysis } = await import('@/composables/useIntersectionAnalysis')
+        const { executeIntersectionAnalysisByAgent } = useIntersectionAnalysis()
+        
+        // 执行相交分析
+        await executeIntersectionAnalysisByAgent(targetLayerName, maskLayerName)
+        console.log(`[Agent] 相交分析完成: ${targetLayerName} ∩ ${maskLayerName}`)
+      } catch (error) {
+        console.error('[Agent] 相交分析执行失败:', error)
+      }
+    })
+    
+    // 监听 Agent 擦除分析事件
+    window.addEventListener('agent:executeEraseAnalysis', async (e: any) => {
+      const { targetLayerName, eraseLayerName } = e.detail || {}
+      if (!targetLayerName || !eraseLayerName) return
+      
+      try {
+        // 导入擦除分析composable
+        const { useEraseAnalysis } = await import('@/composables/useEraseAnalysis')
+        const { executeEraseAnalysisByAgent } = useEraseAnalysis()
+        
+        // 执行擦除分析
+        await executeEraseAnalysisByAgent(targetLayerName, eraseLayerName)
+        console.log(`[Agent] 擦除分析完成: ${targetLayerName} - ${eraseLayerName}`)
+      } catch (error) {
+        console.error('[Agent] 擦除分析执行失败:', error)
+      }
+    })
+    
+    // 监听 Agent 最短路径分析事件
+    window.addEventListener('agent:executeShortestPathAnalysis', async (e: any) => {
+      const { startLayerName, endLayerName, obstacleLayerName } = e.detail || {}
+      if (!startLayerName || !endLayerName) return
+      
+      try {
+        // 导入最短路径分析composable
+        const { useShortestPathAnalysis } = await import('@/composables/useShortestPathAnalysis')
+        const { executeShortestPathAnalysisByAgent } = useShortestPathAnalysis()
+        
+        // 执行最短路径分析
+        await executeShortestPathAnalysisByAgent(startLayerName, endLayerName, obstacleLayerName)
+        console.log(`[Agent] 最短路径分析完成: ${startLayerName} → ${endLayerName}`)
+      } catch (error) {
+        console.error('[Agent] 最短路径分析执行失败:', error)
+      }
+    })
+    
     // 监听 Agent 属性查询事件
     window.addEventListener('agent:queryFeaturesByAttribute', async (e: any) => {
       const { layerName, field, operator, value } = e.detail || {}
@@ -385,6 +468,13 @@ export function uselayermanager() {
           const successMessage = `在图层"${cleanLayerName}"中找到${result.data.length}个匹配要素`
           console.log(`[Agent] 属性查询成功: ${successMessage}`)
           
+          // 确保查询结果正确保存到store中
+          console.log(`[Agent] 查询结果保存状态:`, {
+            resultDataLength: result.data.length,
+            storeResultsLength: featureQuery.queryResults.value.length,
+            storeHasResults: featureQuery.queryResults.value.length > 0
+          })
+          
           // 自动高亮显示查询结果
           if (result.data.length > 0) {
             featureQuery.highlightQueryResults()
@@ -436,17 +526,95 @@ export function uselayermanager() {
       }
       
       try {
-        // 动态导入useFeatureQuery以获取查询结果
-        const { useFeatureQuery } = await import('@/composables/useFeatureQuery')
-        const featureQuery = useFeatureQuery()
+        // 优先从缓冲区分析结果中获取数据
+        const { useBufferAnalysis } = await import('@/composables/useBufferAnalysis')
+        const bufferAnalysis = useBufferAnalysis()
+        const bufferResults = bufferAnalysis.lastFeatureCollection.value
         
-        // 获取当前查询结果
-        const queryResults = featureQuery.queryResults.value
+        let featuresToSave: any[] = []
+        let sourceType = 'query'
         
-        // 保存查询结果为新图层
-        const success = await saveFeaturesAslayer(queryResults, layerName, 'query')
+        // 检查缓冲区分析结果
+        console.log(`[Agent] 缓冲区分析结果调试信息:`, {
+          layerName,
+          bufferResults: bufferResults,
+          bufferResultsType: typeof bufferResults,
+          hasFeatures: bufferResults?.features ? 'yes' : 'no',
+          featuresLength: bufferResults?.features?.length || 0,
+          bufferResultsKeys: bufferResults ? Object.keys(bufferResults) : 'null'
+        })
+        
+        if (bufferResults && bufferResults.features && bufferResults.features.length > 0) {
+          console.log(`[Agent] 从缓冲区分析结果中获取数据:`, {
+            layerName,
+            bufferResultsCount: bufferResults.features.length,
+            sourceType: 'buffer'
+          })
+          
+          // 完全按照手动模式的保存方法
+          const format = new window.ol.format.GeoJSON()
+          const olFeatures: any[] = []
+          
+          bufferResults.features.forEach((feature: any) => {
+            if (feature?.geometry?.type === 'FeatureCollection') {
+              const subOlFeatures = format.readFeatures(feature.geometry)
+              subOlFeatures.forEach((subF: any) => {
+                const props = feature.properties || {}
+                subF.setProperties({ ...subF.getProperties?.(), ...props })
+                olFeatures.push(subF)
+              })
+            } else {
+              const geometry = format.readGeometry(feature.geometry)
+              const olFeature = new window.ol.Feature({ geometry })
+              if (feature.properties) {
+                olFeature.setProperties(feature.properties)
+              }
+              olFeatures.push(olFeature)
+            }
+          })
+          
+          featuresToSave = olFeatures
+          sourceType = 'buffer'
+        } else {
+          // 如果没有缓冲区分析结果，尝试从查询结果中获取
+          const { useFeatureQuery } = await import('@/composables/useFeatureQuery')
+          const featureQuery = useFeatureQuery()
+          const queryResults = featureQuery.queryResults.value
+          
+          console.log(`[Agent] 从查询结果中获取数据:`, {
+            layerName,
+            queryResultsType: Array.isArray(queryResults) ? 'array' : typeof queryResults,
+            queryResultsLength: Array.isArray(queryResults) ? queryResults.length : 'not-array'
+          })
+          
+          if (queryResults && queryResults.length > 0) {
+            featuresToSave = queryResults
+            sourceType = 'query'
+          }
+        }
+        
+        // 检查是否有数据可保存
+        if (!featuresToSave || featuresToSave.length === 0) {
+          const errorMessage = `无法保存图层"${layerName}"：当前没有可保存的数据。请先执行查询或分析操作。`
+          console.warn(`[Agent] ${errorMessage}`)
+          
+          // 发送保存失败事件
+          const errorEvent = new CustomEvent('agent:saveResult', {
+            detail: {
+              success: false,
+              message: errorMessage,
+              layerName,
+              error: '没有可保存的数据'
+            }
+          })
+          window.dispatchEvent(errorEvent)
+          return
+        }
+        
+        // 保存结果为新图层
+        const success = await saveFeaturesAslayer(featuresToSave, layerName, sourceType as 'query' | 'buffer')
         if (success) {
-          const successMessage = `查询结果已保存为新图层"${layerName}"，共${queryResults.length}个要素`
+          const successMessage = `${sourceType === 'buffer' ? '缓冲区分析结果' : '查询结果'}已保存为新图层"${layerName}"，共${featuresToSave.length}个要素`
           console.log(`[Agent] ${successMessage}`)
           
           // 发送保存成功事件
@@ -455,7 +623,7 @@ export function uselayermanager() {
               success: true,
               message: successMessage,
               layerName,
-              count: queryResults.length
+              count: featuresToSave.length
             }
           })
           window.dispatchEvent(successEvent)
@@ -538,6 +706,155 @@ export function uselayermanager() {
             success: false,
             message: `导出失败: ${error instanceof Error ? error.message : '未知错误'}`,
             fileName
+          }
+        })
+        window.dispatchEvent(errorEvent)
+      }
+    })
+    
+    // 监听缓冲区分析事件
+    window.addEventListener('agent:executeBufferAnalysis', async (e: any) => {
+      const { layerName, radius, unit } = e.detail || {}
+      if (!layerName || radius === undefined) {
+        console.warn('[Agent] 缓冲区分析参数不完整:', { layerName, radius, unit })
+        return
+      }
+      
+      try {
+        // 动态导入useBufferAnalysis以获取缓冲区分析功能
+        const { useBufferAnalysis } = await import('@/composables/useBufferAnalysis')
+        const bufferAnalysis = useBufferAnalysis()
+        
+        // 查找图层ID
+        const layer = mapStore.vectorlayers.find(l => l.name === layerName)
+        if (!layer) {
+          const errorMessage = `未找到图层"${layerName}"`
+          console.warn(`[Agent] ${errorMessage}`)
+          
+          // 发送分析失败事件
+          const errorEvent = new CustomEvent('agent:bufferAnalysisResult', {
+            detail: {
+              success: false,
+              message: errorMessage,
+              layerName,
+              radius,
+              unit
+            }
+          })
+          window.dispatchEvent(errorEvent)
+          return
+        }
+        
+        // 确保图层可见性 - 如果图层隐藏则自动打开
+        if (!layer.visible) {
+          console.log(`[Agent] 图层"${layerName}"当前隐藏，自动打开图层`)
+          togglelayerVisibility(layer.id)
+          // 等待图层加载完成
+          await new Promise(resolve => setTimeout(resolve, 1000))
+        }
+        
+        // 设置缓冲区分析参数到store
+        bufferAnalysis.updateBufferSettings({
+          radius: radius,
+          semicircleLineSegment: 20 // 默认圆弧精度
+        })
+        
+        // 设置选中的分析图层
+        bufferAnalysis.setSelectedAnalysislayer(layer.id)
+        
+        // 添加调试信息
+        console.log(`[Agent] 缓冲区分析参数:`, {
+          layerName: layerName,
+          layerId: layer.id,
+          layerVisible: layer.visible,
+          radius: radius,
+          unit: unit
+        })
+        
+        // 检查图层是否有要素
+        const source = layer.layer.getSource()
+        const features = source?.getFeatures() || []
+        console.log(`[Agent] 图层要素数量:`, features.length)
+        
+        if (features.length === 0) {
+          const errorMessage = `图层"${layerName}"中没有要素数据，请确保图层已加载`
+          console.warn(`[Agent] ${errorMessage}`)
+          
+          // 发送分析失败事件
+          const errorEvent = new CustomEvent('agent:bufferAnalysisResult', {
+            detail: {
+              success: false,
+              message: errorMessage,
+              layerName,
+              radius,
+              unit,
+              error: '图层中没有要素数据'
+            }
+          })
+          window.dispatchEvent(errorEvent)
+          return
+        }
+        
+         // 执行缓冲区分析
+         await bufferAnalysis.executeBufferAnalysis()
+         
+         // 检查分析结果 - 使用正确的变量
+         const results = bufferAnalysis.lastFeatureCollection.value
+         console.log(`[Agent] 缓冲区分析执行完成后的结果检查:`, {
+           layerName,
+           results: results,
+           resultsType: typeof results,
+           hasFeatures: results?.features ? 'yes' : 'no',
+           featuresLength: results?.features?.length || 0,
+           resultsKeys: results ? Object.keys(results) : 'null'
+         })
+         
+         if (results && results.features && results.features.length > 0) {
+           const successMessage = `缓冲区分析完成，图层"${layerName}"，半径${radius}${unit}`
+           console.log(`[Agent] ${successMessage}`)
+           
+           // 发送分析成功事件
+           const successEvent = new CustomEvent('agent:bufferAnalysisResult', {
+             detail: {
+               success: true,
+               message: successMessage,
+               layerName,
+               radius,
+               unit,
+               resultCount: results.features.length
+             }
+           })
+           window.dispatchEvent(successEvent)
+         } else {
+           const errorMessage = `缓冲区分析失败：未生成结果`
+           console.error(`[Agent] ${errorMessage}`)
+           
+           // 发送分析失败事件
+           const errorEvent = new CustomEvent('agent:bufferAnalysisResult', {
+             detail: {
+               success: false,
+               message: errorMessage,
+               layerName,
+               radius,
+               unit,
+               error: '未生成结果'
+             }
+           })
+           window.dispatchEvent(errorEvent)
+         }
+        
+      } catch (error) {
+        console.error('[Agent] 执行缓冲区分析时出错:', error)
+        
+        // 发送分析失败事件
+        const errorEvent = new CustomEvent('agent:bufferAnalysisResult', {
+          detail: {
+            success: false,
+            message: `缓冲区分析失败: ${error instanceof Error ? error.message : '未知错误'}`,
+            layerName,
+            radius,
+            unit,
+            error: error instanceof Error ? error.message : '未知错误'
           }
         })
         window.dispatchEvent(errorEvent)
@@ -940,7 +1257,14 @@ export function uselayermanager() {
 
       return true
     } catch (error: any) {
-      
+      console.error(`[saveFeaturesAslayer] 保存${sourceType}要素时发生错误:`, {
+        error: error,
+        message: error?.message,
+        stack: error?.stack,
+        features: features,
+        layerName: layerName,
+        sourceType: sourceType
+      })
       
       // 显示错误通知
       window.dispatchEvent(new CustomEvent('showNotification', {
