@@ -1,0 +1,738 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "SuperMap GIS 空间分析服务",
+    "description": "提供缓冲区分析、相交分析、擦除分析、最短路径分析等GIS空间分析功能",
+    "version": "1.0.0",
+    "contact": {
+      "name": "SuperMap GIS Backend",
+      "url": "http://localhost:3000"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api/v1/spatial-analysis",
+      "description": "空间分析服务API"
+    }
+  ],
+  "paths": {
+    "/buffer": {
+      "post": {
+        "summary": "缓冲区分析",
+        "description": "对指定图层创建缓冲区，支持点、线、面要素的缓冲区分析",
+        "operationId": "bufferAnalysis",
+        "tags": ["空间分析"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BufferAnalysisRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "缓冲区分析执行成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BufferAnalysisResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/intersection": {
+      "post": {
+        "summary": "相交分析",
+        "description": "计算两个图层之间的几何相交关系，返回相交区域",
+        "operationId": "intersectionAnalysis",
+        "tags": ["空间分析"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntersectionAnalysisRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "相交分析执行成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntersectionAnalysisResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/erase": {
+      "post": {
+        "summary": "擦除分析",
+        "description": "计算目标图层与擦除图层之间的几何差集关系，返回擦除后的区域",
+        "operationId": "eraseAnalysis",
+        "tags": ["空间分析"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EraseAnalysisRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "擦除分析执行成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EraseAnalysisResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shortest-path": {
+      "post": {
+        "summary": "最短路径分析",
+        "description": "计算两点间的最短路径，支持障碍物避让",
+        "operationId": "shortestPathAnalysis",
+        "tags": ["空间分析"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShortestPathAnalysisRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "最短路径分析执行成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShortestPathAnalysisResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BufferAnalysisRequest": {
+        "type": "object",
+        "required": ["sourceLayerId", "bufferSettings"],
+        "properties": {
+          "sourceLayerId": {
+            "type": "string",
+            "description": "源图层ID",
+            "example": "wuhan_schools"
+          },
+          "bufferSettings": {
+            "type": "object",
+            "required": ["radius"],
+            "properties": {
+              "radius": {
+                "type": "number",
+                "description": "缓冲区半径",
+                "example": 100
+              },
+              "unit": {
+                "type": "string",
+                "description": "距离单位",
+                "enum": ["meters", "kilometers", "feet", "miles"],
+                "default": "meters"
+              },
+              "semicircleLineSegment": {
+                "type": "integer",
+                "description": "半圆线段数",
+                "default": 10,
+                "minimum": 1,
+                "maximum": 64
+              }
+            }
+          },
+          "options": {
+            "type": "object",
+            "properties": {
+              "resultLayerName": {
+                "type": "string",
+                "description": "结果图层名称",
+                "example": "学校缓冲区分析"
+              }
+            }
+          }
+        }
+      },
+      "BufferAnalysisResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "resultId": {
+                "type": "string",
+                "example": "buffer_result_2024-01-01T00:00:00-000Z"
+              },
+              "resultName": {
+                "type": "string",
+                "example": "学校缓冲区分析"
+              },
+              "sourceLayerName": {
+                "type": "string",
+                "example": "武汉市学校"
+              },
+              "statistics": {
+                "type": "object",
+                "properties": {
+                  "inputFeatureCount": {
+                    "type": "integer",
+                    "example": 2
+                  },
+                  "outputFeatureCount": {
+                    "type": "integer",
+                    "example": 2
+                  },
+                  "totalArea": {
+                    "type": "number",
+                    "example": 6283185.31
+                  },
+                  "areaUnit": {
+                    "type": "string",
+                    "example": "square_meters"
+                  }
+                }
+              },
+              "executionTime": {
+                "type": "string",
+                "example": "0.123s"
+              }
+            }
+          },
+          "message": {
+            "type": "string",
+            "example": "缓冲区分析执行成功，共处理2个要素，生成2个缓冲区，总面积6283185.31平方米"
+          }
+        }
+      },
+      "IntersectionAnalysisRequest": {
+        "type": "object",
+        "required": ["targetData", "maskData"],
+        "properties": {
+          "targetData": {
+            "$ref": "#/components/schemas/FeatureCollection"
+          },
+          "maskData": {
+            "$ref": "#/components/schemas/FeatureCollection"
+          },
+          "analysisOptions": {
+            "type": "object",
+            "properties": {
+              "batchSize": {
+                "type": "integer",
+                "default": 100,
+                "minimum": 10,
+                "maximum": 1000
+              },
+              "enableProgress": {
+                "type": "boolean",
+                "default": true
+              },
+              "returnGeometry": {
+                "type": "boolean",
+                "default": true
+              }
+            }
+          },
+          "options": {
+            "type": "object",
+            "properties": {
+              "resultLayerName": {
+                "type": "string",
+                "example": "相交分析结果"
+              }
+            }
+          }
+        }
+      },
+      "IntersectionAnalysisResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "intersection_123"
+              },
+              "name": {
+                "type": "string",
+                "example": "相交分析结果"
+              },
+              "results": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "intersection_0_0_1234567890"
+                    },
+                    "name": {
+                      "type": "string",
+                      "example": "相交区域 1"
+                    },
+                    "geometry": {
+                      "$ref": "#/components/schemas/Geometry"
+                    }
+                  }
+                }
+              },
+              "statistics": {
+                "type": "object",
+                "properties": {
+                  "totalResults": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "targetFeatureCount": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "maskFeatureCount": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "totalPairs": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "successRate": {
+                    "type": "number",
+                    "example": 100
+                  }
+                }
+              }
+            }
+          },
+          "message": {
+            "type": "string",
+            "example": "相交分析执行成功，找到1个相交区域，成功率100%"
+          }
+        }
+      },
+      "EraseAnalysisRequest": {
+        "type": "object",
+        "required": ["targetData", "eraseData"],
+        "properties": {
+          "targetData": {
+            "$ref": "#/components/schemas/FeatureCollection"
+          },
+          "eraseData": {
+            "$ref": "#/components/schemas/FeatureCollection"
+          },
+          "analysisOptions": {
+            "type": "object",
+            "properties": {
+              "batchSize": {
+                "type": "integer",
+                "default": 100,
+                "minimum": 10,
+                "maximum": 1000
+              },
+              "enableProgress": {
+                "type": "boolean",
+                "default": true
+              },
+              "returnGeometry": {
+                "type": "boolean",
+                "default": true
+              }
+            }
+          },
+          "options": {
+            "type": "object",
+            "properties": {
+              "resultLayerName": {
+                "type": "string",
+                "example": "擦除分析结果"
+              }
+            }
+          }
+        }
+      },
+      "EraseAnalysisResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "erase_123"
+              },
+              "name": {
+                "type": "string",
+                "example": "擦除分析结果"
+              },
+              "results": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "erase_0_0_1234567890"
+                    },
+                    "name": {
+                      "type": "string",
+                      "example": "擦除区域 1"
+                    },
+                    "geometry": {
+                      "$ref": "#/components/schemas/Geometry"
+                    }
+                  }
+                }
+              },
+              "statistics": {
+                "type": "object",
+                "properties": {
+                  "totalResults": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "targetFeatureCount": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "eraseFeatureCount": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "totalPairs": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "successRate": {
+                    "type": "number",
+                    "example": 100
+                  }
+                }
+              }
+            }
+          },
+          "message": {
+            "type": "string",
+            "example": "擦除分析执行成功，找到1个擦除区域，成功率100%"
+          }
+        }
+      },
+      "ShortestPathAnalysisRequest": {
+        "type": "object",
+        "required": ["startPoint", "endPoint"],
+        "properties": {
+          "startPoint": {
+            "$ref": "#/components/schemas/Point"
+          },
+          "endPoint": {
+            "$ref": "#/components/schemas/Point"
+          },
+          "analysisOptions": {
+            "type": "object",
+            "properties": {
+              "units": {
+                "type": "string",
+                "enum": ["kilometers", "miles", "meters"],
+                "default": "kilometers"
+              },
+              "resolution": {
+                "type": "integer",
+                "default": 1000,
+                "minimum": 100,
+                "maximum": 10000
+              }
+            }
+          },
+          "options": {
+            "type": "object",
+            "properties": {
+              "returnGeometry": {
+                "type": "boolean",
+                "default": true
+              },
+              "calculateDistance": {
+                "type": "boolean",
+                "default": true
+              },
+              "calculateDuration": {
+                "type": "boolean",
+                "default": true
+              },
+              "averageSpeed": {
+                "type": "number",
+                "default": 50,
+                "minimum": 1,
+                "maximum": 200
+              }
+            }
+          }
+        }
+      },
+      "ShortestPathAnalysisResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "resultId": {
+                "type": "string",
+                "example": "shortest_path_result_2024-01-01T00:00:00-000Z"
+              },
+              "resultName": {
+                "type": "string",
+                "example": "最短路径分析结果"
+              },
+              "pathGeometry": {
+                "$ref": "#/components/schemas/LineString"
+              },
+              "statistics": {
+                "type": "object",
+                "properties": {
+                  "distance": {
+                    "type": "number",
+                    "example": 12.34
+                  },
+                  "distanceUnit": {
+                    "type": "string",
+                    "example": "kilometers"
+                  },
+                  "duration": {
+                    "type": "number",
+                    "example": 14.81
+                  },
+                  "durationUnit": {
+                    "type": "string",
+                    "example": "minutes"
+                  },
+                  "complexity": {
+                    "type": "integer",
+                    "example": 2
+                  },
+                  "averageSpeed": {
+                    "type": "number",
+                    "example": 50
+                  },
+                  "speedUnit": {
+                    "type": "string",
+                    "example": "km/h"
+                  }
+                }
+              },
+              "executionTime": {
+                "type": "string",
+                "example": "0.123s"
+              }
+            }
+          },
+          "message": {
+            "type": "string",
+            "example": "最短路径分析执行成功，距离12.34公里，预计用时14.81分钟"
+          }
+        }
+      },
+      "FeatureCollection": {
+        "type": "object",
+        "required": ["type", "features"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["FeatureCollection"]
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Feature"
+            }
+          }
+        }
+      },
+      "Feature": {
+        "type": "object",
+        "required": ["type", "geometry"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["Feature"]
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/Geometry"
+          },
+          "properties": {
+            "type": "object",
+            "description": "要素属性"
+          }
+        }
+      },
+      "Geometry": {
+        "type": "object",
+        "required": ["type", "coordinates"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["Point", "LineString", "Polygon", "MultiPoint", "MultiLineString", "MultiPolygon"]
+          },
+          "coordinates": {
+            "type": "array",
+            "description": "坐标数组"
+          }
+        }
+      },
+      "Point": {
+        "type": "object",
+        "required": ["type", "coordinates"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["Point"]
+          },
+          "coordinates": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2,
+            "maxItems": 3,
+            "example": [114.123, 30.456]
+          }
+        }
+      },
+      "LineString": {
+        "type": "object",
+        "required": ["type", "coordinates"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["LineString"]
+          },
+          "coordinates": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "minItems": 2,
+            "example": [[114.123, 30.456], [114.234, 30.567]]
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "example": "INVALID_PARAMETER"
+              },
+              "message": {
+                "type": "string",
+                "example": "请求参数错误"
+              },
+              "details": {
+                "type": "string",
+                "example": "源图层ID不能为空"
+              }
+            }
+          },
+          "message": {
+            "type": "string",
+            "example": "请求处理失败"
+          }
+        }
+      }
+    }
+  }
+}

@@ -11,7 +11,7 @@ __pycache__/
 *.so
 *.pyc
 llm/*
-analysis/
 database/
+analysis/downloads/
 node_modules/
 Backend/analysis/node_modules/
