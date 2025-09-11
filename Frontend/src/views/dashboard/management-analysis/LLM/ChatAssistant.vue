@@ -27,6 +27,21 @@
       </SecondaryButton>
     </div>
     
+    <!-- 工具调用提示区域（当AI调用了工具时显示） -->
+    <div v-if="toolCallInfo" class="tool-call-banner">
+      <div class="tool-call-left">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 20h9"/>
+          <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4Z"/>
+        </svg>
+        <div class="tool-meta">
+          <div class="tool-name">工具调用：{{ toolCallInfo.name }}</div>
+          <div class="tool-args" v-if="toolCallInfo.argsStr">参数：{{ toolCallInfo.argsStr }}</div>
+        </div>
+      </div>
+      <div class="tool-result" v-if="toolCallInfo.resultStr">结果：{{ toolCallInfo.resultStr }}</div>
+    </div>
+
     <!-- 聊天记录显示区域 -->
     <ChatMessagesPanel
       ref="messagesPanelRef"
@@ -72,6 +87,8 @@ const messages = ref<Message[]>([]);
 const newMessage = ref('');
 const hasAnnounced = ref(false);
 const messagesPanelRef = ref<InstanceType<typeof ChatMessagesPanel> | null>(null);
+const toolCallInfo = ref<{ name: string; argsStr: string; resultStr: string } | null>(null);
+const nextAssistantOverride = ref<string | null>(null);
 
 // 智能滚动相关状态现在由ChatMessagesPanel组件内部处理
 
@@ -193,16 +210,13 @@ const sendMessage = async () => {
   try {
     const llm = getLLMApiConfig()
     const payload = {
-      api_key: llm.apiKey || 'dev-key',
-      base_url: (llm.baseUrl || 'https://dashscope.aliyuncs.com/compatible-mode/v1'),
-      model: llm.model || 'qwen-plus',
+      model: 'qwen-max',
       temperature: typeof llm.temperature === 'number' ? llm.temperature : 0.7,
-      max_tokens: typeof llm.maxTokens === 'number' ? llm.maxTokens : 3000,
+      prompt: message,
       stream: false,
-      conversation_id: convId,
-      messages: [userMsg]
+      conversation_id: convId
     }
-    const resp = await fetch(`${apiBase}/agent/chat`, {
+    const resp = await fetch(`${apiBase}/agent/tool-chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -215,8 +229,34 @@ const sendMessage = async () => {
       messages.value.push({ id: Date.now() + 1, text: `LLM请求失败(${resp.status}): ${errText}`, sender: 'system' })
     } else {
       const data = await resp.json()
-      const content = data?.data?.choices?.[0]?.message?.content || '[空响应]'
+      const firstCall = data?.data?.first_call
+      const toolCalls = firstCall?.tool_calls || []
+      if (Array.isArray(toolCalls) && toolCalls.length > 0) {
+        const call = toolCalls[0]
+        const name = call?.name || 'unknown'
+        const argsStr = call?.args ? JSON.stringify(call.args) : ''
+        const resultStr = data?.data?.tool_result != null ? String(data.data.tool_result) : ''
+        toolCallInfo.value = { name, argsStr, resultStr }
+        // 如果是切换图层可见性的工具，则在前端本地执行具体动作
+        if (name === 'toggle_layer_visibility') {
+          try {
+            const parsed = call?.args || {}
+            // 支持 layer_id 或 layer_name 入参
+            const layerId = parsed.layer_id || parsed.layerId
+            const layerName = parsed.layer_name || parsed.layerName
+            const action = parsed.action
+            if ((layerId || layerName) && action) {
+              const ev = new CustomEvent('agent:toggleLayerVisibility', { detail: { layerId, layerName, action } })
+              window.dispatchEvent(ev)
+            }
+          } catch {}
+        }
+      } else {
+        toolCallInfo.value = null
+      }
+      const content = nextAssistantOverride.value || data?.data?.final_answer || '[空响应]'
       messages.value.push({ id: Date.now() + 1, text: content, sender: 'system' })
+      nextAssistantOverride.value = null
     }
   } catch (e: any) {
     messages.value.push({ id: Date.now() + 2, text: `LLM请求异常: ${e?.message || e}`, sender: 'system' })
@@ -304,6 +344,38 @@ const startNewConversation = () => {
   background: var(--panel);
 }
 
+/* 工具调用提示样式 */
+.tool-call-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-bottom: 1px dashed var(--border);
+  background: var(--surface);
+}
+.tool-call-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+}
+.tool-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tool-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+.tool-args,
+.tool-result {
+  font-size: 12px;
+  color: var(--sub);
+  word-break: break-all;
+}
 
 
 .history-button,
@@ -357,12 +429,6 @@ const startNewConversation = () => {
 
 
 
-
-
-
-
-
-
 /* 保留fadeIn动画定义但不使用 */
 @keyframes fadeIn {
   from {
@@ -401,3 +467,4 @@ const startNewConversation = () => {
 
 
 </style>
+

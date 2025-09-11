@@ -195,27 +195,7 @@ export function useBufferAnalysis() {
       }
     }
 
-    // 打印完整的POST请求内容
-    console.log('=== 缓冲区分析 - 前端POST请求完整内容 ===')
-    console.log('请求URL:', `${API_BASE_URL}/buffer`)
-    console.log('请求方法:', 'POST')
-    console.log('请求头:', {
-      'Content-Type': 'application/json'
-    })
-    console.log('请求体 (requestData):', JSON.stringify(requestData, null, 2))
-    console.log('请求体大小:', JSON.stringify(requestData).length, '字符')
-    console.log('sourceData结构:')
-    console.log('  - type:', sourceData?.type)
-    console.log('  - features数量:', sourceData?.features?.length || 0)
-    if (sourceData?.features && sourceData.features.length > 0) {
-      console.log('  - 第一个feature:', JSON.stringify(sourceData.features[0], null, 2))
-      if (sourceData.features.length > 1) {
-        console.log(`  - 还有其他 ${sourceData.features.length - 1} 个features`)
-      }
-    }
-    console.log('bufferSettings:', requestData.bufferSettings)
-    console.log('options:', requestData.options)
-    console.log('=== POST请求内容打印完毕 ===')
+
 
     const response = await fetch(`${API_BASE_URL}/buffer`, {
       method: 'POST',
@@ -232,36 +212,6 @@ export function useBufferAnalysis() {
 
     const apiResponse = await response.json()
 
-    // 打印完整的API响应数据
-    console.log('=== 缓冲区分析 - 后端API完整响应数据 ===')
-    console.log('响应类型:', typeof apiResponse)
-    console.log('响应结构:', JSON.stringify(apiResponse, null, 2))
-    console.log('是否为FeatureCollection:', apiResponse.type === 'FeatureCollection')
-    console.log('features数量:', apiResponse.features?.length || 0)
-    
-    if (apiResponse.features && apiResponse.features.length > 0) {
-      console.log('第一个feature详细结构:')
-      console.log(JSON.stringify(apiResponse.features[0], null, 2))
-      
-      if (apiResponse.features.length > 1) {
-        console.log(`还有其他 ${apiResponse.features.length - 1} 个features...`)
-      }
-    }
-    console.log('=== API响应数据打印完毕 ===')
-
-    // 后端现在直接返回 FeatureCollection 格式
-    if (!apiResponse.features) {
-      throw new Error('API响应格式错误：缺少features数据')
-    }
-
-    console.log('[Buffer] 处理分析结果:', {
-      inputFeatures: sourceData.features.length,
-      outputResults: apiResponse.features.length,
-      firstResult: apiResponse.features[0]
-    })
-
-    const statusMessage = `缓冲区分析完成，成功处理 ${sourceData.features.length} 个要素，生成 ${apiResponse.features.length} 个缓冲区`
-    analysisStore.setAnalysisStatus(statusMessage)
     
     // 保存结果到store（用于导出JSON功能）- 直接保存API返回的完整FeatureCollection
     bufferAnalysisStore.setBufferResults(apiResponse)

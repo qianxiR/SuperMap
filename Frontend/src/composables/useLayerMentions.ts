@@ -17,13 +17,23 @@ export function useLayerMentions() {
   const trigger = '@'
 
   const allLayerNames = computed<string[]>(() => {
+    // 从配置中获取 SuperMap 服务图层名称
     const cfg = mapStore.mapConfig
-    const names = cfg.vectorlayers.map(v => {
+    const serviceNames = cfg.vectorlayers.map(v => {
       const n = v.name
       const idx = n.indexOf('@')
       return idx >= 0 ? n.slice(0, idx) : n
     })
-    return Array.from(new Set(names))
+
+    // 从运行时已加载的所有矢量图层获取名称（覆盖本地/查询/绘制/上传等分组）
+    const runtimeNames = mapStore.vectorlayers.map(v => {
+      const raw = (v as any)?.layer?.get ? (v as any).layer.get('layerName') || v.name : v.name
+      const idx = raw.indexOf('@')
+      return idx >= 0 ? raw.slice(0, idx) : raw
+    })
+
+    // 合并去重，确保“@ 提及”能识别所有图层组
+    return Array.from(new Set([...serviceNames, ...runtimeNames]))
   })
 
   const openedLayers = computed(() => mapStore.vectorlayers)

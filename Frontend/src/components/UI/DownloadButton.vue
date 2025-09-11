@@ -42,7 +42,7 @@ const handleClick = () => {
   height: 24px;
   border: none;
   background: transparent;
-  color: white;
+  color: var(--accent);
   cursor: pointer;
   display: flex;
   align-items: center;

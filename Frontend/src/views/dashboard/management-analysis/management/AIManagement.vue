@@ -419,16 +419,13 @@ const chatWithAgent = async (agent: any) => {
       return v
     })()
     const payload = {
-      api_key: llm.apiKey,
-      base_url: llm.baseUrl,
-      model: llm.model,
+      model: 'qwen-max',
       temperature: llm.temperature,
-      max_tokens: llm.maxTokens,
+      prompt: `你好，我是 ${agent.name}`,
       stream: false,
-      conversation_id: convId,
-      messages: [{ role: 'user', content: `你好，我是 ${agent.name}` }]
+      conversation_id: convId
     }
-    const resp = await fetch(`${getAgentApiBaseUrl()}/agent/chat`, {
+    const resp = await fetch(`${getAgentApiBaseUrl()}/agent/tool-chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -438,7 +435,7 @@ const chatWithAgent = async (agent: any) => {
     window.dispatchEvent(new CustomEvent('showNotification', {
       detail: {
         title: '对话成功',
-        message: data?.data?.choices?.[0]?.message?.content || '已连接LLM',
+        message: data?.data?.final_answer || '已连接LLM',
         type: 'success',
         duration: 3000
       }

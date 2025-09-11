@@ -532,16 +532,19 @@ const toggleKeyStatus = async (id: number) => {
       }))
       return
     }
+    const convId = sessionStorage.getItem('agent_conv_id') || (() => {
+      const v = `conv-${Date.now()}`
+      sessionStorage.setItem('agent_conv_id', v)
+      return v
+    })()
     const payload = {
-      api_key: apiKeyValue,
-      base_url: baseUrlValue,
-      model: (key as any).model || llm.model,
+      model: 'qwen-max',
       temperature: Number((key as any).temperature ?? llm.temperature ?? 0.7),
-      max_tokens: Number((key as any).max_tokens ?? llm.maxTokens ?? 3000),
+      prompt: '测试连接',
       stream: false,
-      messages: [{ role: 'user', content: '测试连接' }]
+      conversation_id: convId
     }
-    const resp = await fetch(`${getAgentApiBaseUrl()}/agent/chat`, {
+    const resp = await fetch(`${getAgentApiBaseUrl()}/agent/tool-chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -551,7 +554,7 @@ const toggleKeyStatus = async (id: number) => {
     window.dispatchEvent(new CustomEvent('showNotification', {
       detail: {
         title: '已连接Agent',
-        message: data?.data?.choices?.[0]?.message?.content || '连接成功',
+        message: data?.data?.final_answer || '连接成功',
         type: 'success',
         duration: 3000
       }
@@ -663,16 +666,13 @@ const handleSave = async (data: any) => {
         return v
       })()
       const payload = {
-        api_key: current.key || llm.apiKey,
-        base_url: current.url || llm.baseUrl,
-        model: current.model || llm.model,
+        model: 'qwen-max',
         temperature: Number((current as any).temperature ?? llm.temperature ?? 0.7),
-        max_tokens: Number((current as any).max_tokens ?? llm.maxTokens ?? 3000),
+        prompt: '测试连接',
         stream: false,
-        conversation_id: convId,
-        messages: [{ role: 'user', content: '测试连接' }]
+        conversation_id: convId
       }
-      const resp = await fetch(`${getAgentApiBaseUrl()}/agent/chat`, {
+      const resp = await fetch(`${getAgentApiBaseUrl()}/agent/tool-chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

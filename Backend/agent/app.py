@@ -4,16 +4,26 @@ Agent Service - FastAPI entry for LLM chat proxy with full LLM management featur
 Usage (dev):
   python -m uvicorn agent.app:app --reload --host 0.0.0.0 --port 8089
 """
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from typing import List, Literal, Optional, Dict, Any
-import httpx
+from typing import List, Optional, Dict, Any
 import uvicorn
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-from typing import Set
+from langchain_community.chat_models.tongyi import ChatTongyi
+from langchain_core.tools import tool
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage, ToolMessage
+import urllib3
+from langchain.chat_models import init_chat_model
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.prebuilt import create_react_agent
+from langchain_tavily import TavilySearch
+
+# 关闭全局SSL验证以规避企业网络或中间代理引起的握手问题
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+os.environ["PYTHONHTTPSVERIFY"] = "0"
 
 
 class LLMSettings(BaseModel):
@@ -38,34 +48,30 @@ if _ENV_PATH.exists():
     load_dotenv(dotenv_path=str(_ENV_PATH))
 
 settings = LLMSettings()
-
-
-class ChatMessage(BaseModel):
-    role: Literal["system", "user", "assistant", "tool"]
-    content: str
-    name: Optional[str] = None
-
-
-class ChatRequest(BaseModel):
-    api_key: str | None = None
-    base_url: str | None = None
-    apiKey: str | None = None
-    baseUrl: str | None = None
-    model: str
-    temperature: float
-    max_tokens: int | None = None
-    maxTokens: int | None = None
-    stream: bool
-    conversation_id: str | None = None
-    conversationId: str | None = None
-    messages: List[ChatMessage]
-
-
+os.environ.setdefault("OPENAI_API_KEY", settings.api_key)
+os.environ.setdefault("OPENAI_BASE_URL", settings.base_url)
 class ChatResponse(BaseModel):
     success: bool
     data: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
 
+
+@tool
+def toggle_layer_visibility(layer_id: str, action: str) -> str:
+    """
+    切换前端图层可见性（前端执行）。
+    输入参数：
+      - layer_id: string 图层唯一标识
+      - action: string 'show'|'hide'|'toggle'
+    业务处理：
+      - 后端不直接操作地图，仅返回动作与图层ID供前端执行
+    输出数据格式：
+      - string: 格式 "action:layer_id"
+    """
+    return f"{action}:{layer_id}"
+
+
+ 
 
 def load_system_prompt() -> str:
     """加载系统提示词，优先从prompt/tools.md读取"""
@@ -96,83 +102,84 @@ def load_tools_prompt() -> str:
 
 router = APIRouter(prefix="/agent", tags=["agent"])
 
-# 记录已注入过系统提示词的会话
-_injected_conversations: Set[str] = set()
+# 会话图层操作历史：conversation_id -> ["action:layer_id", ...]
+_conversation_layer_history: Dict[str, List[str]] = {}
 
 
-@router.post("/chat", response_model=ChatResponse)
-async def chat(req: ChatRequest):
+class ToolChatRequest(BaseModel):
+    model: str
+    temperature: float
+    prompt: str
+    stream: bool = False
+    conversation_id: str = "default"
+
+
+@router.post("/tool-chat", response_model=ChatResponse)
+async def tool_chat(req: ToolChatRequest):
     """
-    聊天接口 - 自动注入main.md中的系统提示词
+    LangChain 工具调用接口（仅保留图层可见性工具）：
+    输入数据格式：
+      - model: LLM 模型名称
+      - temperature: 采样温度
+      - prompt: 用户问题（例如 What's 5 times forty two）
+      - stream: 是否流式
+    数据处理方法：
+      - 创建 OpenAI 兼容模型，并通过 bind_tools 仅绑定 toggle_layer_visibility 工具
+      - 第一步调用：发送 HumanMessage(prompt)，获取包含 tool_calls 的 AIMessage
+      - 执行工具：根据 AIMessage 中的工具与参数，执行 toggle_layer_visibility 并得到结果
+      - 第二步调用：将工具结果以 ToolMessage 形式回传给模型，生成最终回答
+    输出数据格式：
+      - { success: true, data: { first_call: AIMessage(JSON), tool_result: string, final_answer: string } }
     """
-    # 处理会话ID，并按需注入系统提示词
-    conv_id = req.conversation_id or req.conversationId or ""
-    messages = req.messages
-    payload_messages: List[Dict[str, Any]] = []
-    # 为确保系统提示词稳定生效：每次请求都注入
-    should_inject = True
-    if should_inject:
-        sys_prompt = load_system_prompt()
-        tools_prompt = load_tools_prompt()
-        payload_messages.append({"role": "system", "content": sys_prompt})
-        if tools_prompt:
-            payload_messages.append({"role": "system", "content": tools_prompt})
-    for msg in messages:
-        if msg.role != "system":
-            payload_messages.append(msg.model_dump())
-
-    # 支持驼峰/下划线参数名
-    api_key = req.api_key or req.apiKey or settings.api_key
-    base_url = (req.base_url or req.baseUrl or settings.base_url).rstrip("/")
-    max_tokens = req.max_tokens if req.max_tokens is not None else (req.maxTokens if req.maxTokens is not None else settings.max_tokens)
-    
-    # 验证必要参数
-    if not api_key:
-        raise HTTPException(status_code=400, detail="API密钥未配置")
-    if not base_url:
-        raise HTTPException(status_code=400, detail="API地址未配置")
-    if not base_url.startswith(('http://', 'https://')):
-        raise HTTPException(status_code=400, detail=f"API地址格式错误: {base_url}")
-
-
-    body = {
-        "model": req.model,
-        "temperature": req.temperature,
-        "max_tokens": max_tokens,
-        "messages": payload_messages,
-        "stream": req.stream
-    }
-
-    url = base_url + "/chat/completions"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}"
-    }
-
-    print(f"🤖 发送聊天请求到: {url}")
-    print(f"📝 系统提示词已注入，消息数量: {len(payload_messages)}")
-    print(f"🔑 API密钥: {api_key[:10]}..." if len(api_key) > 10 else f"🔑 API密钥: {api_key}")
-    print(f"🌐 API地址: {base_url}")
-
-    try:
-        async with httpx.AsyncClient(timeout=60.0, verify=False) as client:
-            resp = await client.post(url, headers=headers, json=body)
-            if resp.status_code != 200:
-                print(f"❌ API调用失败: {resp.status_code} - {resp.text}")
-                raise HTTPException(status_code=resp.status_code, detail=resp.text)
-            data = resp.json()
-    except httpx.ConnectError as e:
-        print(f"❌ 连接失败: {str(e)}")
-        print(f"❌ 目标URL: {url}")
-        raise HTTPException(status_code=500, detail=f"无法连接到LLM服务: {base_url}")
-    except Exception as e:
-        print(f"❌ 请求异常: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"LLM请求异常: {str(e)}")
-
-
-    print(f"✅ API调用成功")
-    return ChatResponse(success=True, data=data)
-
+    model = init_chat_model(f"openai:{req.model}")
+    llm_with_tools = model.bind_tools([toggle_layer_visibility])
+    history_list = _conversation_layer_history.get(req.conversation_id, [])
+    parsed_lines: List[str] = []
+    last_action_text = ""
+    for entry in history_list:
+        if ":" in entry:
+            action, layer = entry.split(":", 1)
+            parsed_line = f"action={action}; layer={layer}"
+            parsed_lines.append(parsed_line)
+            last_action_text = f"action={action}; layer={layer}"
+        else:
+            parsed_lines.append(entry)
+            last_action_text = entry
+    history_text = "\n".join(parsed_lines)
+    first_ai: AIMessage = llm_with_tools.invoke([
+        SystemMessage(content=(
+            "你有一个工具:\n"
+            "toggle_layer_visibility(layer_id:str, action:'show'|'hide'|'toggle')\n"
+            "- 当用户说‘打开@图层名称’或‘隐藏@图层名称’或‘切换@图层名称’时调用。\n"
+            "- 若用户使用@图层名称，请将@后的文本作为 layer_name 传递；如未知 layer_id，可仅传 layer_name。\n"
+            "严禁自行执行这些操作，必须通过工具完成。\n"
+            f"历史图层操作(顺序, 最新在下):\n{history_text}\n"
+            f"最近一次操作: {last_action_text}。若用户问‘刚才做了什么/刚才关闭了什么图层’，请直接依据最近一次操作回答。"
+        )),
+        HumanMessage(content=req.prompt)
+    ])
+    if not first_ai.tool_calls:
+        return ChatResponse(success=True, data={"first_call": {"tool_calls": []}, "tool_result": None, "final_answer": first_ai.content})
+    tool_call = first_ai.tool_calls[0]
+    tool_args = tool_call.get("args", {})
+    tool_result = toggle_layer_visibility.invoke(tool_args)
+    history_entry = str(tool_result)
+    if req.conversation_id in _conversation_layer_history:
+        _conversation_layer_history[req.conversation_id].append(history_entry)
+    else:
+        _conversation_layer_history[req.conversation_id] = [history_entry]
+    tool_message = ToolMessage(content=str(tool_result), tool_call_id=tool_call["id"])
+    final_ai: AIMessage = llm_with_tools.invoke([
+        SystemMessage(content=(
+            "你有一个工具:\n"
+            "toggle_layer_visibility(layer_id:str, action:'show'|'hide'|'toggle')\n"
+            "遇到‘打开/隐藏/切换@图层名称’的请求，必须调用该工具。"
+        )),
+        HumanMessage(content=req.prompt),
+        first_ai,
+        tool_message,
+    ])
+    return ChatResponse(success=True, data={"first_call": {"tool_calls": first_ai.tool_calls}, "tool_result": tool_result, "final_answer": final_ai.content})
 
 app = FastAPI(
     title="Agent Service", 
@@ -183,7 +190,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_list(),
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -216,7 +223,7 @@ async def root():
         "docs": "/docs",
         "health": "/health",
         "endpoints": {
-            "chat": "/agent/chat",
+            "tool_chat": "/agent/tool-chat",
             "api_keys": "/api/v1/api-keys",
             "prompts": "/api/v1/prompts", 
             "knowledge": "/api/v1/knowledge"

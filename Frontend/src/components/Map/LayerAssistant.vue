@@ -128,7 +128,7 @@ import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
-import { uselayermanager } from '@/composables/uselayermanager'
+import { uselayermanager } from '@/composables/useLayerManager'
 import ConfirmDialog from '@/components/UI/ConfirmDialog.vue'
 import LayerNameModal from '@/components/UI/LayerNameModal.vue'
 import BaseButton from '@/components/UI/BaseButton.vue'
@@ -333,8 +333,6 @@ const updateDrawlayerStyle = () => {
   if (!drawlayer.value) return
   
   try {
-    console.log('更新绘制图层样式...')
-    
     // 使用统一的样式创建工具
     const newStyle = createLayerStyle('draw')
     
@@ -343,8 +341,6 @@ const updateDrawlayerStyle = () => {
     
     // 强制重绘
     drawlayer.value.changed()
-    
-    console.log('绘制图层样式更新完成')
   } catch (error) {
     console.error('更新绘制图层样式失败:', error)
   }
@@ -401,30 +397,20 @@ const initDrawlayer = () => {
 
 // 开始绘制
 const startDraw = (type: 'Point' | 'LineString' | 'Polygon') => {
-  console.log('开始绘制，类型:', type)
-  console.log('地图实例:', mapStore.map)
-  console.log('地图准备状态:', mapStore.isMapReady)
-  console.log('绘制数据源:', drawSource.value)
-  
   if (!mapStore.map || !mapStore.isMapReady) {
-    console.error('地图实例未准备好或未就绪')
     return
   }
   
   // 检查是否处于测量模式，如果是则不允许绘制
   if (mapStore.distanceMeasureMode || mapStore.areaMeasureMode) {
-    console.warn('当前处于测量模式，无法启动绘制工具')
     return
   }
   
   if (!drawSource.value) {
-    console.error('绘制数据源未初始化，重新初始化...')
     initDrawlayer()
     setTimeout(() => {
       if (drawSource.value) {
         startDraw(type)
-      } else {
-        console.error('绘制数据源初始化失败，无法启动绘制')
       }
     }, 500)
     return
@@ -432,7 +418,6 @@ const startDraw = (type: 'Point' | 'LineString' | 'Polygon') => {
   
   // 如果点击的是当前激活的绘制类型，则停止绘制
   if (currentDrawType.value === type) {
-    console.log('停止当前绘制模式')
     stopDraw()
     return
   }
@@ -450,11 +435,9 @@ const startDraw = (type: 'Point' | 'LineString' | 'Polygon') => {
       type: type,
       snapTolerance: 20
     })
-    console.log('绘制交互创建成功:', draw.value)
     
     // 添加到地图
     mapStore.map.addInteraction(draw.value)
-    console.log('绘制交互已添加到地图')
     
     // 更新当前绘制类型
     currentDrawType.value = type
@@ -465,8 +448,6 @@ const startDraw = (type: 'Point' | 'LineString' | 'Polygon') => {
     // 更新鼠标样式
     const targetElement = mapStore.map.getTargetElement()
     targetElement.style.cursor = 'crosshair'
-    
-    console.log('绘制模式已激活:', type)
     
   } catch (error) {
     console.error('创建绘制交互失败:', error)
@@ -509,12 +490,10 @@ const clearDrawFeatures = () => {
         `您已绘制了 ${features.length} 个要素，是否要保存为图层？`,
         () => {
           // 用户确认保存，显示图层名称输入对话框
-          console.log('用户确认保存绘制内容，显示图层名称输入对话框')
           LayerNameModalVisible.value = true
         },
         () => {
           // 用户取消，直接清除
-          console.log('用户取消保存，直接清除绘制内容')
           drawSource.value.clear()
           stopDraw()
         }
@@ -531,25 +510,74 @@ const clearDrawFeatures = () => {
 
 // 处理图层名称确认
 const handlelayerNameConfirm = async (layerName: string) => {
-  console.log('用户输入图层名称:', layerName)
   LayerNameModalVisible.value = false
   
   try {
+    // 检查绘制数据源是否存在
+    if (!drawSource.value) {
+      window.dispatchEvent(new CustomEvent('showNotification', {
+        detail: {
+          title: '保存失败',
+          message: '绘制数据源不存在，请重新绘制',
+          type: 'error',
+          duration: 5000
+        }
+      }))
+      return
+    }
+
+    const features = drawSource.value.getFeatures()
+    if (features.length === 0) {
+      window.dispatchEvent(new CustomEvent('showNotification', {
+        detail: {
+          title: '保存失败',
+          message: '没有绘制要素，无法保存',
+          type: 'error',
+          duration: 5000
+        }
+      }))
+      return
+    }
+
     const success = await layermanager.saveDrawAslayer(layerName)
+    
     if (success) {
-      console.log('绘制内容保存成功，图层名称:', layerName)
+      // 清除绘制内容
+      drawSource.value.clear()
       stopDraw()
+      
+      window.dispatchEvent(new CustomEvent('showNotification', {
+        detail: {
+          title: '保存成功',
+          message: `已保存 ${features.length} 个要素为新图层: ${layerName}`,
+          type: 'success',
+          duration: 3000
+        }
+      }))
     } else {
-      console.error('绘制内容保存失败')
+      window.dispatchEvent(new CustomEvent('showNotification', {
+        detail: {
+          title: '保存失败',
+          message: '绘制内容保存失败',
+          type: 'error',
+          duration: 5000
+        }
+      }))
     }
   } catch (error) {
-    console.error('保存绘制内容时发生错误:', error)
+    window.dispatchEvent(new CustomEvent('showNotification', {
+      detail: {
+        title: '保存失败',
+        message: `保存绘制内容时发生错误: ${error?.message || '未知错误'}`,
+        type: 'error',
+        duration: 5000
+      }
+    }))
   }
 }
 
 // 处理图层名称输入取消
 const handlelayerNameClose = () => {
-  console.log('用户取消图层名称输入')
   LayerNameModalVisible.value = false
 }
 

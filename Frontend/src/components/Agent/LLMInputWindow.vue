@@ -130,6 +130,18 @@ watch(inputValue, (newValue) => {
   emit('update:modelValue', newValue);
 });
 
+// 监听过滤结果变化，确保activeIndex在有效范围内
+watch(filtered, (newFiltered) => {
+  if (mention.isOpen.value && newFiltered.length > 0) {
+    // 确保activeIndex在有效范围内
+    if (activeIndex.value >= newFiltered.length) {
+      activeIndex.value = newFiltered.length - 1
+    } else if (activeIndex.value < 0) {
+      activeIndex.value = 0
+    }
+  }
+}, { immediate: true });
+
 const handleInputChange = (value: string) => {
   inputValue.value = value;
   emit('input-change', value);
@@ -138,7 +150,12 @@ const handleInputChange = (value: string) => {
     mention.close()
     suppressMentions.value = false
   } else {
+    const wasOpen = mention.isOpen.value
     mention.parseForMention(inputValue.value, caret)
+    // 当下拉菜单打开时，重置activeIndex为0
+    if (!wasOpen && mention.isOpen.value) {
+      activeIndex.value = 0
+    }
   }
   pendingDeletion.value = null
 };
@@ -169,14 +186,15 @@ const selectMention = (name: string) => {
 }
 
 const onKeyDown = (e: KeyboardEvent) => {
-  if (!mention.isOpen.value) return
+  if (!mention.isOpen.value || filtered.value.length === 0) return
+  
   if (e.key === 'ArrowDown') {
     e.preventDefault()
-    activeIndex.value = (activeIndex.value + 1) % Math.max(filtered.value.length, 1)
+    activeIndex.value = (activeIndex.value + 1) % filtered.value.length
     scrollToActiveItem()
   } else if (e.key === 'ArrowUp') {
     e.preventDefault()
-    activeIndex.value = (activeIndex.value - 1 + Math.max(filtered.value.length, 1)) % Math.max(filtered.value.length, 1)
+    activeIndex.value = activeIndex.value === 0 ? filtered.value.length - 1 : activeIndex.value - 1
     scrollToActiveItem()
   } else if (e.key === 'Enter') {
     e.preventDefault()
