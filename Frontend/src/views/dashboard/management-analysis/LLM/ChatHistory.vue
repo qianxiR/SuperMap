@@ -679,12 +679,14 @@ onMounted(() => {
   line-height: 1.4;
   color: var(--text);
   word-wrap: break-word;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .message-item.user .message-text {
-  background: var(--accent);
-  color: white;
-  border-color: var(--accent);
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 /* 滚动条样式 */

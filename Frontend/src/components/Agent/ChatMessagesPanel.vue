@@ -365,15 +365,17 @@ onUnmounted(() => {
 }
 
 .message-wrapper.user .message-bubble {
-  background: transparent;
+  background: var(--surface);
   color: var(--text);
-  box-shadow: none;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .message-wrapper.system .message-bubble {
-  background: transparent;
+  background: var(--surface);
   color: var(--text);
-  border: none;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .message-content {

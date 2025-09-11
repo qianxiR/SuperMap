@@ -242,12 +242,16 @@ const sendMessage = async () => {
           try {
             const parsed = call?.args || {}
             // 支持 layer_id 或 layer_name 入参
-            const layerId = parsed.layer_id || parsed.layerId
-            const layerName = parsed.layer_name || parsed.layerName
+            let layerId = parsed.layer_id || parsed.layerId
+            let layerName = parsed.layer_name || parsed.layerName
             const action = parsed.action
+            // 兼容模型仅提供一个字段的情况：互为回填
+            if (!layerName && layerId) layerName = layerId
+            if (!layerId && layerName) layerId = layerName
             if ((layerId || layerName) && action) {
               const ev = new CustomEvent('agent:toggleLayerVisibility', { detail: { layerId, layerName, action } })
               window.dispatchEvent(ev)
+              console.log('[Agent] dispatched event: agent:toggleLayerVisibility', { layerId, layerName, action })
             }
           } catch {}
         }
@@ -450,9 +454,11 @@ const startNewConversation = () => {
 }
 
 .user-message {
-  background: var(--accent);
-  color: white;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
   margin-left: 20%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   /* 禁用动画，防止主题切换闪烁 */
   animation: none !important;
 }
@@ -461,6 +467,7 @@ const startNewConversation = () => {
   background: var(--surface);
   border: 1px solid var(--border);
   margin-right: 20%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   /* 禁用动画，防止主题切换闪烁 */
   animation: none !important;
 }

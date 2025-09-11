@@ -226,19 +226,30 @@ export function uselayermanager() {
 
   // 监听 Agent 工具事件以执行图层显隐
   if (typeof window !== 'undefined') {
+    const getBaseName = (n: string): string => {
+      if (!n) return n
+      const idx = n.indexOf('@')
+      return idx >= 0 ? n.slice(0, idx) : n
+    }
     window.addEventListener('agent:toggleLayerVisibility', (e: any) => {
-      const { layerId, layerName, action } = e.detail || {}
-      if ((!layerId && !layerName) || !action) return
-      const layerInfo = layerId
-        ? mapStore.vectorlayers.find(l => l.id === layerId)
-        : mapStore.vectorlayers.find(l => l.name === layerName)
-      if (!layerInfo) return
-      if (action === 'toggle') {
-        togglelayerVisibility(layerId)
-      } else if (action === 'show') {
-        if (layerInfo.visible === false) togglelayerVisibility(layerId)
-      } else if (action === 'hide') {
-        if (layerInfo.visible === true) togglelayerVisibility(layerId)
+      const { layerName, action } = e.detail || {}
+      if (!layerName || !action) return
+      // 仅按基础名匹配
+      const providedBase = getBaseName(layerName)
+      const primary = mapStore.vectorlayers.find(l => getBaseName(l.name) === providedBase)
+      if (!primary) return
+      const targetBaseName = getBaseName(primary.name)
+      // 在四个分组中同步同名（基础名相同）图层
+      const siblings = mapStore.vectorlayers.filter(l => getBaseName(l.name) === targetBaseName)
+      const targets = siblings
+      for (const info of targets) {
+        if (action === 'toggle') {
+          togglelayerVisibility(info.id)
+        } else if (action === 'show') {
+          if (info.visible === false) togglelayerVisibility(info.id)
+        } else if (action === 'hide') {
+          if (info.visible === true) togglelayerVisibility(info.id)
+        }
       }
     })
   }

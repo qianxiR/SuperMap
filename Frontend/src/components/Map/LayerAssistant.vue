@@ -568,7 +568,7 @@ const handlelayerNameConfirm = async (layerName: string) => {
     window.dispatchEvent(new CustomEvent('showNotification', {
       detail: {
         title: '保存失败',
-        message: `保存绘制内容时发生错误: ${error?.message || '未知错误'}`,
+        message: `保存绘制内容时发生错误: ${(error && typeof error === 'object' && 'message' in error) ? error.message : '未知错误'}`,
         type: 'error',
         duration: 5000
       }
