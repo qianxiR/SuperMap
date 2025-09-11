@@ -1,6 +1,17 @@
 <template>
   <div class="chat-messages-panel">
     <div class="messages-container" ref="messagesContainer" @scroll="handleScroll">
+      <div v-if="messages.length === 0" class="initial-hint">
+        <div class="initial-hint-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="8" width="16" height="12" rx="2" ry="2"></rect>
+            <rect x="6" y="4" width="12" height="6" rx="1" ry="1"></rect>
+            <circle cx="9" cy="7" r="1"></circle>
+            <circle cx="15" cy="7" r="1"></circle>
+          </svg>
+        </div>
+        <div class="initial-hint-content">{{ introText }}</div>
+      </div>
       <!-- 消息列表 -->
       <div v-for="msg in messages" :key="msg.id" class="message-wrapper" :class="msg.sender">
         <div class="avatar" v-if="msg.sender === 'system'">
@@ -47,12 +58,14 @@ interface Props {
   messages: Message[];
   autoScroll?: boolean;
   scrollThreshold?: number;
+  introText?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   messages: () => [],
   autoScroll: true,
-  scrollThreshold: 100
+  scrollThreshold: 100,
+  introText: '我是您的GIS空间分析助手，能够协助您进行地图图层管理、属性查询、空间分析（如缓冲、相交、擦除、最短路径）以及结果导出等操作。请告诉我您需要执行的任务，我将为您提供高效、精准的支持！'
 });
 
 const emit = defineEmits<{
@@ -222,25 +235,48 @@ onUnmounted(() => {
   flex: 1;
   width: 100%;
   overflow-y: auto;
-  padding: 8px 6px;
-  background: var(--panel);
-  border: 1px solid var(--border);
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
   border-radius: var(--radius);
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  animation: none; /* 禁用动画，防止主题切换闪烁 */
+  gap: 16px;
+  animation: none;
   min-height: 120px;
   margin-bottom: 2px;
   user-select: text;
   -webkit-user-select: text;
   -moz-user-select: text;
   -ms-user-select: text;
-  /* 添加平滑滚动 */
   scroll-behavior: smooth;
-  /* 优化滚动性能 */
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+}
+
+.initial-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 0;
+  margin-bottom: 8px;
+  background: transparent;
+  border: none;
+}
+
+.initial-hint-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sub);
+}
+
+.initial-hint-content {
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--sub);
 }
 
 /* 自定义滚动条样式 */
@@ -266,9 +302,9 @@ onUnmounted(() => {
 .message-wrapper {
   display: flex;
   align-items: flex-start;
-  gap: 6px;
+  gap: 8px;
   margin: 0;
-  animation: none; /* 禁用动画，防止主题切换闪烁 */
+  animation: none;
   user-select: text;
   -webkit-user-select: text;
   -moz-user-select: text;
@@ -283,11 +319,13 @@ onUnmounted(() => {
 }
 
 .message-bubble {
-  border-radius: 16px;
-  padding: 6px 10px;
+  border-radius: var(--radius);
+  padding: 8px 12px;
   margin: 0;
   word-wrap: break-word;
-  max-width: 95%;
+  max-width: 100%;
+  background: transparent;
+  border: none;
 }
 
 .avatar {
@@ -327,23 +365,23 @@ onUnmounted(() => {
 }
 
 .message-wrapper.user .message-bubble {
-  background: var(--accent);
-  color: white;
-  box-shadow: 0 3px 12px rgba(var(--accent-rgb), 0.4);
+  background: transparent;
+  color: var(--text);
+  box-shadow: none;
 }
 
 .message-wrapper.system .message-bubble {
-  background: var(--panel);
+  background: transparent;
   color: var(--text);
-  border: 1px solid var(--border);
+  border: none;
 }
 
 .message-content {
-  font-size: 13px;
-  line-height: 1.3;
+  font-size: 14px;
+  line-height: 1.5;
   margin: 0;
   color: inherit;
-  font-family: "Segoe UI", PingFang SC, Microsoft YaHei, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

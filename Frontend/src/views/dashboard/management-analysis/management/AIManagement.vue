@@ -413,6 +413,11 @@ import { getLLMApiConfig, getAgentApiBaseUrl } from '@/utils/config'
 const chatWithAgent = async (agent: any) => {
   try {
     const llm = getLLMApiConfig()
+    const convId = sessionStorage.getItem('agent_conv_id') || (() => {
+      const v = `conv-${Date.now()}`
+      sessionStorage.setItem('agent_conv_id', v)
+      return v
+    })()
     const payload = {
       api_key: llm.apiKey,
       base_url: llm.baseUrl,
@@ -420,6 +425,7 @@ const chatWithAgent = async (agent: any) => {
       temperature: llm.temperature,
       max_tokens: llm.maxTokens,
       stream: false,
+      conversation_id: convId,
       messages: [{ role: 'user', content: `你好，我是 ${agent.name}` }]
     }
     const resp = await fetch(`${getAgentApiBaseUrl()}/agent/chat`, {
@@ -523,6 +529,7 @@ const deleteAgent = (id: number) => {
   overflow-y: auto;
   flex: 1;
   min-height: 0;
+  max-height: calc(70vh - 120px);
 }
 
 .management-header {

@@ -20,3 +20,5 @@ node_modules/
 analysis/node_modules/
 Backend/analysis/node_modules/
 Backend/analysis/downloads/
+Backend/agent/downloads/
+Backend/agent/database/

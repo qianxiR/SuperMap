@@ -273,7 +273,10 @@ const handleSave = () => {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   width: 90%;
   max-width: 500px;
+  max-height: 80vh;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-header {
@@ -308,6 +311,9 @@ const handleSave = () => {
 
 .modal-body {
   padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .form-content {
@@ -357,6 +363,7 @@ const handleSave = () => {
   padding: 20px 24px;
   border-top: 1px solid var(--border);
   justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 .btn-primary,
@@ -392,5 +399,24 @@ const handleSave = () => {
 
 .btn-secondary:hover {
   background: var(--surface-hover);
+}
+
+/* 滚动条样式 */
+.modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: var(--scrollbar-track, rgba(200, 200, 200, 0.1));
+  border-radius: 3px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb, rgba(150, 150, 150, 0.3));
+  border-radius: 3px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover, rgba(150, 150, 150, 0.5));
 }
 </style>

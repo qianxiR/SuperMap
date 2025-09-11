@@ -71,13 +71,13 @@ watch(() => props.modelValue, adjustHeight, { immediate: true });
 /* 输入元素样式 */
 .input-element {
   flex: 1;
-  font-size: 12px;
-  padding: 6px 8px;
+  font-size: 14px;
+  padding: 8px 12px;
   background: transparent;
   border: none;
   color: var(--text);
   outline: none;
-  font-family: "Segoe UI", PingFang SC, Microsoft YaHei, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   resize: none;
   box-sizing: border-box;
   line-height: 1.5;
@@ -94,14 +94,16 @@ watch(() => props.modelValue, adjustHeight, { immediate: true });
 }
 
 .input-element:focus {
-  border-color: var(--accent);
+  border-color: transparent;
   background: transparent;
-  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.1);
+  box-shadow: none;
+  color: var(--text);
 }
 
 .input-element[disabled] {
-  opacity: 0.6;
+  opacity: 0.4;
   cursor: not-allowed;
+  color: var(--sub);
 }
 
 /* 自定义滚动条样式 */

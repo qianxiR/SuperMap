@@ -657,6 +657,11 @@ const handleSave = async (data: any) => {
     try {
       const llm = getLLMApiConfig()
       const current = apiKeys.value[apiKeys.value.length - 1]
+      const convId = sessionStorage.getItem('agent_conv_id') || (() => {
+        const v = `conv-${Date.now()}`
+        sessionStorage.setItem('agent_conv_id', v)
+        return v
+      })()
       const payload = {
         api_key: current.key || llm.apiKey,
         base_url: current.url || llm.baseUrl,
@@ -664,6 +669,7 @@ const handleSave = async (data: any) => {
         temperature: Number((current as any).temperature ?? llm.temperature ?? 0.7),
         max_tokens: Number((current as any).max_tokens ?? llm.maxTokens ?? 3000),
         stream: false,
+        conversation_id: convId,
         messages: [{ role: 'user', content: '测试连接' }]
       }
       const resp = await fetch(`${getAgentApiBaseUrl()}/agent/chat`, {
@@ -800,6 +806,7 @@ onMounted(() => {
   overflow-y: auto;
   flex: 1;
   min-height: 0;
+  max-height: calc(70vh - 120px);
 }
 
 .profile-header {

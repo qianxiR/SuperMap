@@ -305,49 +305,59 @@ defineExpose({
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  padding: 6px 8px;
-  background: var(--panel);
+  padding: 12px 16px;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   position: relative;
   z-index: 1;
-  animation: none; /* 禁用动画，防止主题切换闪烁 */
-  margin-top: 2px;
+  animation: none;
+  margin-top: 0;
 }
 
 .action-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--accent);
-  border: none;
-  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
   cursor: pointer;
   flex-shrink: 0;
   position: absolute;
   bottom: 12px;
-  right: 8px;
+  right: 12px;
   z-index: 10;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.3);
+  box-shadow: none;
+}
+
+.action-button:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
 }
 
 .action-button:hover:not(:disabled) {
   background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
   transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.4);
+  box-shadow: none;
 }
 
 .action-button:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(var(--accent-rgb), 0.3);
+  transform: scale(0.95);
+  box-shadow: none;
 }
 
 .action-button:disabled {
-  background: rgba(var(--accent-rgb), 0.3);
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--sub);
   cursor: not-allowed;
   opacity: 0.6;
   box-shadow: none;

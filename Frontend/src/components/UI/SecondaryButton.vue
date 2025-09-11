@@ -54,7 +54,7 @@ const handleClick = (event: MouseEvent) => {
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text);
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
   display: flex;
   align-items: center;

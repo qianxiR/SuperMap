@@ -1,7 +1,7 @@
 <template>
   <div class="chat-assistant">
-    <!-- 功能按钮固定在聊天容器外部 -->
-    <div class="fixed-buttons">
+    <!-- 顶部头部区域：为按钮预留高度，避免遮挡内容 -->
+    <div class="chat-header">
       <!-- 新对话按钮 -->
       <SecondaryButton
         class="new-chat-button"
@@ -182,6 +182,12 @@ const sendMessage = async () => {
   messages.value.push({ id: Date.now(), text: message, sender: 'user' })
 
   const apiBase = getAgentApiBaseUrl()
+  // 使用路由路径+时间戳派生一个稳定会话ID（同页会话期间不变）
+  const convId = sessionStorage.getItem('agent_conv_id') || (() => {
+    const v = `conv-${Date.now()}`
+    sessionStorage.setItem('agent_conv_id', v)
+    return v
+  })()
   const userMsg = { role: 'user', content: message }
 
   try {
@@ -193,6 +199,7 @@ const sendMessage = async () => {
       temperature: typeof llm.temperature === 'number' ? llm.temperature : 0.7,
       max_tokens: typeof llm.maxTokens === 'number' ? llm.maxTokens : 3000,
       stream: false,
+      conversation_id: convId,
       messages: [userMsg]
     }
     const resp = await fetch(`${apiBase}/agent/chat`, {
@@ -282,20 +289,19 @@ const startNewConversation = () => {
   flex-direction: column;
   min-height: 0;
   flex: 1;
-  /* 设置相对定位，为固定按钮提供定位上下文 */
-  position: relative;
+  background: var(--bg);
 }
 
-.fixed-buttons {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 20;
-  /* 确保按钮完全脱离文档流，不占用空间 */
-  pointer-events: auto;
+.chat-header {
   display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
   gap: 8px;
-  flex-direction: column;
+  padding: 2px 6px;
+  min-height: 26px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
 }
 
 
@@ -305,28 +311,24 @@ const startNewConversation = () => {
   display: flex !important;
   align-items: center !important;
   gap: 6px !important;
-  padding: 6px 12px !important;
+  padding: 4px 10px !important;
   width: auto !important;
   height: auto !important;
-  /* 浮动按钮效果 - 确保完全浮动 */
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
-  backdrop-filter: blur(8px) !important;
-  background: var(--fixed-btn-bg) !important;
-  border: 1px solid var(--fixed-btn-border) !important;
-  border-radius: 8px !important;
-  /* 限制过渡属性，避免主题切换时边界闪烁 */
-  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  transition: all 0.2s ease !important;
   animation: none !important;
-  will-change: transform, box-shadow;
 }
 
 .history-button:hover,
 .new-chat-button:hover {
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
-  /* 避免在主题切换瞬间对背景/边框做动画 */
-  background: var(--fixed-btn-bg-hover) !important;
-  /* 移除黑色边框效果 */
+  transform: none !important;
+  box-shadow: none !important;
+  background: var(--surface-hover) !important;
+  border-color: var(--accent) !important;
 }
 
 .history-button:active,

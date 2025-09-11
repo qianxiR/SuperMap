@@ -13,6 +13,7 @@ import uvicorn
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from typing import Set
 
 
 class LLMSettings(BaseModel):
@@ -55,6 +56,8 @@ class ChatRequest(BaseModel):
     max_tokens: int | None = None
     maxTokens: int | None = None
     stream: bool
+    conversation_id: str | None = None
+    conversationId: str | None = None
     messages: List[ChatMessage]
 
 
@@ -65,11 +68,11 @@ class ChatResponse(BaseModel):
 
 
 def load_system_prompt() -> str:
-    """加载系统提示词，优先从prompt/prompt.md读取"""
+    """加载系统提示词，优先从prompt/tools.md读取"""
     base = Path(__file__).resolve().parent
-    prompt_path = base / "prompt" / "prompt.md"
+    prompt_path = base / "prompt" / "tools.md"
     if not prompt_path.exists():
-        prompt_path = base / "prompt.md"
+        prompt_path = base / "tools.md"
     try:
         content = prompt_path.read_text(encoding="utf-8")
         print(f"✅ 成功加载系统提示词: {prompt_path}")
@@ -78,31 +81,59 @@ def load_system_prompt() -> str:
         print(f"⚠️ 加载系统提示词失败: {e}")
         return "You are a helpful spatial analysis assistant."
 
+def load_tools_prompt() -> str:
+    base = Path(__file__).resolve().parent
+    # 优先使用独立工具提示词文件 agent/tools/tools.md
+    tools_path = base / "tools" / "tools.md"
+    if not tools_path.exists():
+        # 回退到 prompt/tools.md（如果存在）
+        tools_path = base / "prompt" / "tools.md"
+    try:
+        return tools_path.read_text(encoding="utf-8")
+    except Exception:
+        return ""
+
 
 router = APIRouter(prefix="/agent", tags=["agent"])
+
+# 记录已注入过系统提示词的会话
+_injected_conversations: Set[str] = set()
 
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest):
     """
-    聊天接口 - 自动注入prompt.md中的系统提示词
+    聊天接口 - 自动注入main.md中的系统提示词
     """
-    # 加载并注入系统提示词
-    sys_prompt = load_system_prompt()
+    # 处理会话ID，并按需注入系统提示词
+    conv_id = req.conversation_id or req.conversationId or ""
     messages = req.messages
-    
-    # 确保系统提示词在最前面
-    payload_messages = [{"role": "system", "content": sys_prompt}]
-    
-    # 添加用户消息历史（过滤掉已有的system消息，避免重复）
+    payload_messages: List[Dict[str, Any]] = []
+    # 为确保系统提示词稳定生效：每次请求都注入
+    should_inject = True
+    if should_inject:
+        sys_prompt = load_system_prompt()
+        tools_prompt = load_tools_prompt()
+        payload_messages.append({"role": "system", "content": sys_prompt})
+        if tools_prompt:
+            payload_messages.append({"role": "system", "content": tools_prompt})
     for msg in messages:
         if msg.role != "system":
             payload_messages.append(msg.model_dump())
 
     # 支持驼峰/下划线参数名
-    api_key = req.api_key or req.apiKey or ""
-    base_url = (req.base_url or req.baseUrl or "").rstrip("/")
+    api_key = req.api_key or req.apiKey or settings.api_key
+    base_url = (req.base_url or req.baseUrl or settings.base_url).rstrip("/")
     max_tokens = req.max_tokens if req.max_tokens is not None else (req.maxTokens if req.maxTokens is not None else settings.max_tokens)
+    
+    # 验证必要参数
+    if not api_key:
+        raise HTTPException(status_code=400, detail="API密钥未配置")
+    if not base_url:
+        raise HTTPException(status_code=400, detail="API地址未配置")
+    if not base_url.startswith(('http://', 'https://')):
+        raise HTTPException(status_code=400, detail=f"API地址格式错误: {base_url}")
+
 
     body = {
         "model": req.model,
@@ -120,15 +151,27 @@ async def chat(req: ChatRequest):
 
     print(f"🤖 发送聊天请求到: {url}")
     print(f"📝 系统提示词已注入，消息数量: {len(payload_messages)}")
+    print(f"🔑 API密钥: {api_key[:10]}..." if len(api_key) > 10 else f"🔑 API密钥: {api_key}")
+    print(f"🌐 API地址: {base_url}")
 
-    async with httpx.AsyncClient(timeout=60.0, verify=False) as client:
-        resp = await client.post(url, headers=headers, json=body)
-        if resp.status_code != 200:
-            print(f"❌ API调用失败: {resp.status_code} - {resp.text}")
-            raise HTTPException(status_code=resp.status_code, detail=resp.text)
-        data = resp.json()
-        print(f"✅ API调用成功")
-        return ChatResponse(success=True, data=data)
+    try:
+        async with httpx.AsyncClient(timeout=60.0, verify=False) as client:
+            resp = await client.post(url, headers=headers, json=body)
+            if resp.status_code != 200:
+                print(f"❌ API调用失败: {resp.status_code} - {resp.text}")
+                raise HTTPException(status_code=resp.status_code, detail=resp.text)
+            data = resp.json()
+    except httpx.ConnectError as e:
+        print(f"❌ 连接失败: {str(e)}")
+        print(f"❌ 目标URL: {url}")
+        raise HTTPException(status_code=500, detail=f"无法连接到LLM服务: {base_url}")
+    except Exception as e:
+        print(f"❌ 请求异常: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"LLM请求异常: {str(e)}")
+
+
+    print(f"✅ API调用成功")
+    return ChatResponse(success=True, data=data)
 
 
 app = FastAPI(

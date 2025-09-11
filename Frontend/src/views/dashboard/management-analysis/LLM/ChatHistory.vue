@@ -312,7 +312,7 @@ onMounted(() => {
   background: var(--btn-secondary-bg);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -416,7 +416,7 @@ onMounted(() => {
   background: var(--btn-secondary-bg);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -612,7 +612,7 @@ onMounted(() => {
   gap: 24px;
   padding: 16px;
   background: var(--surface);
-  border-radius: 8px;
+  border-radius: 12px;
 }
 
 .info-item {
