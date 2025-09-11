@@ -193,6 +193,7 @@ app.add_middleware(
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_origin_regex=".*",
 )
 
 app.include_router(router)
