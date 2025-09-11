@@ -11,6 +11,9 @@ __pycache__/
 *.so
 *.pyc
 llm/*
+.env
+.env.development
+.env.production
 database/
 analysis/downloads/
 node_modules/

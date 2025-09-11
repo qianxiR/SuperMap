@@ -53,7 +53,7 @@ import { useModeStateStore } from '@/stores/modeStateStore';
 import LLMInputWindow from '@/components/Agent/LLMInputWindow.vue';
 import ChatMessagesPanel from '@/components/Agent/ChatMessagesPanel.vue';
 import SecondaryButton from '@/components/UI/SecondaryButton.vue';
-import { getAgentApiBaseUrl } from '@/utils/config'
+import { getAgentApiBaseUrl, getLLMApiConfig } from '@/utils/config'
 
 interface Message {
   id: number;
@@ -185,14 +185,22 @@ const sendMessage = async () => {
   const userMsg = { role: 'user', content: message }
 
   try {
+    const llm = getLLMApiConfig()
+    const payload = {
+      api_key: llm.apiKey || 'dev-key',
+      base_url: (llm.baseUrl || 'https://dashscope.aliyuncs.com/compatible-mode/v1'),
+      model: llm.model || 'qwen-plus',
+      temperature: typeof llm.temperature === 'number' ? llm.temperature : 0.7,
+      max_tokens: typeof llm.maxTokens === 'number' ? llm.maxTokens : 3000,
+      stream: false,
+      messages: [userMsg]
+    }
     const resp = await fetch(`${apiBase}/agent/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        messages: [userMsg]
-      })
+      body: JSON.stringify(payload)
     })
 
     if (!resp.ok) {

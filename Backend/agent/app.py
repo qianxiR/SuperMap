@@ -2,13 +2,14 @@
 Agent Service - FastAPI entry for LLM chat proxy with full LLM management features
 
 Usage (dev):
-  python -m uvicorn agent.app:app --reload --host 0.0.0.0 --port 8090
+  python -m uvicorn agent.app:app --reload --host 0.0.0.0 --port 8089
 """
 from fastapi import FastAPI, APIRouter, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import List, Literal, Optional, Dict, Any
 import httpx
+import uvicorn
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -45,11 +46,16 @@ class ChatMessage(BaseModel):
 
 
 class ChatRequest(BaseModel):
+    api_key: str | None = None
+    base_url: str | None = None
+    apiKey: str | None = None
+    baseUrl: str | None = None
+    model: str
+    temperature: float
+    max_tokens: int | None = None
+    maxTokens: int | None = None
+    stream: bool
     messages: List[ChatMessage]
-    model: Optional[str] = None
-    temperature: Optional[float] = None
-    max_tokens: Optional[int] = None
-    stream: Optional[bool] = False
 
 
 class ChatResponse(BaseModel):
@@ -81,12 +87,9 @@ async def chat(req: ChatRequest):
     """
     聊天接口 - 自动注入prompt.md中的系统提示词
     """
-    if not settings.api_key:
-        raise HTTPException(status_code=401, detail="DASHSCOPE_API_KEY missing in environment.")
-
     # 加载并注入系统提示词
     sys_prompt = load_system_prompt()
-    messages = req.messages or []
+    messages = req.messages
     
     # 确保系统提示词在最前面
     payload_messages = [{"role": "system", "content": sys_prompt}]
@@ -96,18 +99,23 @@ async def chat(req: ChatRequest):
         if msg.role != "system":
             payload_messages.append(msg.model_dump())
 
+    # 支持驼峰/下划线参数名
+    api_key = req.api_key or req.apiKey or ""
+    base_url = (req.base_url or req.baseUrl or "").rstrip("/")
+    max_tokens = req.max_tokens if req.max_tokens is not None else (req.maxTokens if req.maxTokens is not None else settings.max_tokens)
+
     body = {
-        "model": req.model or settings.model,
-        "temperature": settings.temperature if req.temperature is None else req.temperature,
-        "max_tokens": settings.max_tokens if req.max_tokens is None else req.max_tokens,
+        "model": req.model,
+        "temperature": req.temperature,
+        "max_tokens": max_tokens,
         "messages": payload_messages,
-        "stream": False
+        "stream": req.stream
     }
 
-    url = settings.base_url.rstrip("/") + "/chat/completions"
+    url = base_url + "/chat/completions"
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {settings.api_key}"
+        "Authorization": f"Bearer {api_key}"
     }
 
     print(f"🤖 发送聊天请求到: {url}")
@@ -173,3 +181,6 @@ async def root():
     }
 
 
+
+if __name__ == "__main__":
+    uvicorn.run("agent.app:app", host="0.0.0.0", port=8089, reload=True)

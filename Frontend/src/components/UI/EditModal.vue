@@ -16,19 +16,11 @@
         <div v-if="type === 'api-key'" class="form-content">
           <div class="form-item">
             <label>密钥名称</label>
-            <input v-model="formData.name" type="text" placeholder="请输入密钥名称" />
+            <input v-model="formData.name" type="text" disabled />
           </div>
           <div class="form-item">
             <label>服务提供商</label>
-            <DropdownSelect
-              v-model="formData.provider"
-              :options="[
-                { value: 'openai', label: 'OpenAI' },
-                { value: 'anthropic', label: 'Anthropic' },
-                { value: 'google', label: 'Google' },
-                { value: 'custom', label: '自定义' }
-              ]"
-            />
+            <input value="通义千问 (Qwen)" type="text" disabled />
           </div>
           <div class="form-item">
             <label>API密钥</label>
@@ -36,7 +28,7 @@
           </div>
           <div class="form-item">
             <label>服务地址</label>
-            <input v-model="formData.url" type="url" placeholder="请输入服务地址（可选）" />
+            <input v-model="formData.url" type="url" disabled />
           </div>
         </div>
 
@@ -128,6 +120,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import DropdownSelect from './DropdownSelect.vue'
+import { getLLMApiConfig } from '@/utils/config'
 
 interface Props {
   visible: boolean
@@ -148,10 +141,10 @@ const emit = defineEmits<Emits>()
 // 表单数据
 const formData = ref({
   // API密钥字段
-  name: '',
-  provider: 'openai',
-  key: '',
-  url: '',
+  name: (import.meta.env as any).VITE_LLM_NAME || '通义千问',
+  provider: 'qwen',
+  key: getLLMApiConfig().apiKey || '',
+  url: getLLMApiConfig().baseUrl || '',
   
   // 用户偏好字段
   category: 'language',
@@ -169,11 +162,12 @@ const formData = ref({
 
 // 重置表单
 const resetForm = () => {
+  const llm = getLLMApiConfig()
   formData.value = {
-    name: '',
-    provider: 'openai',
-    key: '',
-    url: '',
+    name: (import.meta.env as any).VITE_LLM_NAME || '通义千问',
+    provider: 'qwen',
+    key: llm.apiKey || '',
+    url: llm.baseUrl || '',
     category: 'language',
     content: '',
     weight: 5,
@@ -199,7 +193,7 @@ const apiKeyOptions = computed(() => {
 const isFormValid = computed(() => {
   switch (props.type) {
     case 'api-key':
-      return formData.value.name.trim() && formData.value.key.trim()
+      return formData.value.key.trim()
     case 'preference':
       return formData.value.category && formData.value.content.trim() && formData.value.weight >= 1 && formData.value.weight <= 10
     case 'prompt':
@@ -215,6 +209,13 @@ const isFormValid = computed(() => {
 watch(() => props.initialData, (newData) => {
   if (newData) {
     formData.value = { ...newData } as any
+    if (props.type === 'api-key') {
+      const llm = getLLMApiConfig()
+      formData.value.provider = 'qwen'
+      formData.value.name = (import.meta.env as any).VITE_LLM_NAME || '通义千问'
+      formData.value.url = llm.baseUrl
+      if (!formData.value.key) formData.value.key = llm.apiKey
+    }
     // 处理标签的特殊情况
     if (props.type === 'prompt' && (newData as any).tags) {
       formData.value.tagsInput = (newData as any).tags.join(', ')

@@ -113,12 +113,7 @@
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                 </svg>
               </button>
-              <button class="action-btn" @click="toggleKeyStatus(key.id)" :title="key.status === 'active' ? '禁用' : '启用'">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path v-if="key.status === 'active'" d="M18 6L6 18M6 6l12 12"></path>
-                  <path v-else d="M9 12l2 2 4-4"></path>
-                </svg>
-              </button>
+              
               <button class="action-btn delete" @click="deleteKey(key.id)" title="删除">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="3,6 5,6 21,6"></polyline>
@@ -259,6 +254,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore, type UserInfo } from '@/stores/userStore'
+import { getLLMApiConfig, getAgentApiBaseUrl } from '@/utils/config'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import EditModal from '@/components/UI/EditModal.vue'
 import { useUserProfile } from '@/composables/useUserProfile'
@@ -288,14 +284,20 @@ const editingItem = ref<any>(null)
 
 // API密钥数据
 const apiKeys = ref([
-  {
-    id: 1,
-    name: 'OpenAI GPT-4',
-    provider: 'openai',
-    key: 'sk-...',
-    url: 'https://api.openai.com/v1',
-    status: 'active'
-  }
+  (() => {
+    const llm = getLLMApiConfig()
+    return {
+      id: Date.now(),
+      name: (import.meta.env as any).VITE_LLM_NAME || '通义千问',
+      provider: 'qwen',
+      key: llm.apiKey,
+      url: llm.baseUrl,
+      model: llm.model,
+      temperature: llm.temperature,
+      max_tokens: llm.maxTokens,
+      status: 'active'
+    }
+  })()
 ])
 
 // 提示词数据
@@ -507,10 +509,62 @@ const openKeyModal = (key?: any) => {
   showEditModal.value = true
 }
 
-const toggleKeyStatus = (id: number) => {
+const toggleKeyStatus = async (id: number) => {
   const key = apiKeys.value.find(k => k.id === id)
-  if (key) {
-    key.status = key.status === 'active' ? 'inactive' : 'active'
+  if (!key) return
+  const toEnable = key.status !== 'active'
+  key.status = toEnable ? 'active' : 'inactive'
+  if (!toEnable) return
+  try {
+    const env = import.meta.env
+    const llm = getLLMApiConfig()
+    const apiKeyValue = String((key as any).key ?? env.VITE_LLM_API_KEY ?? '')
+    const baseUrlValue = String((key as any).url ?? env.VITE_LLM_BASE_URL ?? llm.baseUrl ?? '')
+    if (!apiKeyValue || !baseUrlValue) {
+      key.status = 'inactive'
+      window.dispatchEvent(new CustomEvent('showNotification', {
+        detail: {
+          title: '缺少参数',
+          message: '未读取到 API Key 或 Base URL（请填写或配置 .env）',
+          type: 'error',
+          duration: 4000
+        }
+      }))
+      return
+    }
+    const payload = {
+      api_key: apiKeyValue,
+      base_url: baseUrlValue,
+      model: (key as any).model || llm.model,
+      temperature: Number((key as any).temperature ?? llm.temperature ?? 0.7),
+      max_tokens: Number((key as any).max_tokens ?? llm.maxTokens ?? 3000),
+      stream: false,
+      messages: [{ role: 'user', content: '测试连接' }]
+    }
+    const resp = await fetch(`${getAgentApiBaseUrl()}/agent/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    if (!resp.ok) throw new Error(await resp.text())
+    const data = await resp.json()
+    window.dispatchEvent(new CustomEvent('showNotification', {
+      detail: {
+        title: '已连接Agent',
+        message: data?.data?.choices?.[0]?.message?.content || '连接成功',
+        type: 'success',
+        duration: 3000
+      }
+    }))
+  } catch (e: any) {
+    window.dispatchEvent(new CustomEvent('showNotification', {
+      detail: {
+        title: '连接失败',
+        message: e?.message || 'Agent连接失败',
+        type: 'error',
+        duration: 4000
+      }
+    }))
   }
 }
 
@@ -550,7 +604,7 @@ const closeEditModal = () => {
   editingItem.value = null
 }
 
-const handleSave = (data: any) => {
+const handleSave = async (data: any) => {
   switch (editModalType.value) {
     case 'api-key':
       if (editingItem.value) {
@@ -597,6 +651,47 @@ const handleSave = (data: any) => {
       duration: 2000
     }
   }))
+
+  // 若为API密钥保存，则触发连接测试
+  if (editModalType.value === 'api-key') {
+    try {
+      const llm = getLLMApiConfig()
+      const current = apiKeys.value[apiKeys.value.length - 1]
+      const payload = {
+        api_key: current.key || llm.apiKey,
+        base_url: current.url || llm.baseUrl,
+        model: current.model || llm.model,
+        temperature: Number((current as any).temperature ?? llm.temperature ?? 0.7),
+        max_tokens: Number((current as any).max_tokens ?? llm.maxTokens ?? 3000),
+        stream: false,
+        messages: [{ role: 'user', content: '测试连接' }]
+      }
+      const resp = await fetch(`${getAgentApiBaseUrl()}/agent/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      if (!resp.ok) throw new Error(await resp.text())
+      await resp.json()
+      window.dispatchEvent(new CustomEvent('showNotification', {
+        detail: {
+          title: '连接成功',
+          message: '已连接LLM',
+          type: 'success',
+          duration: 2000
+        }
+      }))
+    } catch (e: any) {
+      window.dispatchEvent(new CustomEvent('showNotification', {
+        detail: {
+          title: '连接失败',
+          message: 'Agent连接失败',
+          type: 'error',
+          duration: 2000
+        }
+      }))
+    }
+  }
 }
 
 onMounted(() => {

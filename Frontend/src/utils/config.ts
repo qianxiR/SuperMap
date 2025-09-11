@@ -311,33 +311,34 @@ export interface LLMApiConfig {
 }
 
 export const getLLMApiConfig = (): LLMApiConfig => {
-  const apiKey = (import.meta.env.VITE_DASHSCOPE_API_KEY as string)
-    || (import.meta.env as any).DASHSCOPE_API_KEY
+  const env = import.meta.env as any
+  const apiKey = (env.VITE_LLM_API_KEY as string)
+    || (env.VITE_DASHSCOPE_API_KEY as string)
+    || (env.DASHSCOPE_API_KEY as string)
     || ''
-  const baseUrl = (
-    (import.meta.env.VITE_DASHSCOPE_BASE_URL as string)
-    || (import.meta.env as any).DASHSCOPE_BASE_URL
+  const baseUrlRaw = (env.VITE_LLM_BASE_URL as string)
+    || (env.VITE_DASHSCOPE_BASE_URL as string)
+    || (env.DASHSCOPE_BASE_URL as string)
     || 'https://dashscope.aliyuncs.com/compatible-mode/v1'
-  ).replace(/\/$/, '')
-  const model = (
-    (import.meta.env.VITE_DASHSCOPE_MODEL as string)
-    || (import.meta.env as any).DASHSCOPE_MODEL
+  const baseUrl = String(baseUrlRaw).replace(/\/$/, '')
+  const model = (env.VITE_LLM_MODEL as string)
+    || (env.VITE_DASHSCOPE_MODEL as string)
+    || (env.DASHSCOPE_MODEL as string)
     || 'qwen-plus'
-  )
   const temperature = Number(
-    (import.meta.env.VITE_DASHSCOPE_TEMPERATURE as any) ?? (import.meta.env as any).DASHSCOPE_TEMPERATURE ?? 0.7
+    env.VITE_LLM_TEMPERATURE ?? env.VITE_DASHSCOPE_TEMPERATURE ?? env.DASHSCOPE_TEMPERATURE ?? 0.7
   )
   const maxTokens = Number(
-    (import.meta.env.VITE_DASHSCOPE_MAX_TOKENS as any) ?? (import.meta.env as any).DASHSCOPE_MAX_TOKENS ?? 3000
+    env.VITE_LLM_MAX_TOKENS ?? env.VITE_DASHSCOPE_MAX_TOKENS ?? env.DASHSCOPE_MAX_TOKENS ?? 3000
   )
   return { apiKey, baseUrl, model, temperature, maxTokens }
 }
 
 // ===== Agent Service Base URL =====
 export const getAgentApiBaseUrl = (): string => {
-  const base = (import.meta.env as any).AGENT_API_BASE_URL
-    || (import.meta.env.VITE_AGENT_API_BASE_URL as string)
-  return base.replace(/\/$/, '')
+  const env = import.meta.env as any
+  const base = env.VITE_AGENT_BASE_URL || env.VITE_AGENT_API_BASE_URL || env.AGENT_API_BASE_URL || 'http://localhost:8089'
+  return String(base).replace(/\/$/, '')
 }
 
 export default createAPIConfig

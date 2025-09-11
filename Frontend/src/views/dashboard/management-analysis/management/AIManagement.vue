@@ -408,16 +408,45 @@ const toggleAgentStatus = (id: number) => {
   }
 }
 
-const chatWithAgent = (agent: any) => {
-  // 这里可以实现与Agent对话的功能
-  window.dispatchEvent(new CustomEvent('showNotification', {
-    detail: {
-      title: '对话功能',
-      message: `开始与 ${agent.name} 对话`,
-      type: 'info',
-      duration: 2000
+import { getLLMApiConfig, getAgentApiBaseUrl } from '@/utils/config'
+
+const chatWithAgent = async (agent: any) => {
+  try {
+    const llm = getLLMApiConfig()
+    const payload = {
+      api_key: llm.apiKey,
+      base_url: llm.baseUrl,
+      model: llm.model,
+      temperature: llm.temperature,
+      max_tokens: llm.maxTokens,
+      stream: false,
+      messages: [{ role: 'user', content: `你好，我是 ${agent.name}` }]
     }
-  }))
+    const resp = await fetch(`${getAgentApiBaseUrl()}/agent/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    if (!resp.ok) throw new Error(await resp.text())
+    const data = await resp.json()
+    window.dispatchEvent(new CustomEvent('showNotification', {
+      detail: {
+        title: '对话成功',
+        message: data?.data?.choices?.[0]?.message?.content || '已连接LLM',
+        type: 'success',
+        duration: 3000
+      }
+    }))
+  } catch (e: any) {
+    window.dispatchEvent(new CustomEvent('showNotification', {
+      detail: {
+        title: '对话失败',
+        message: e?.message || '请求失败',
+        type: 'error',
+        duration: 3000
+      }
+    }))
+  }
 }
 
 const deleteAgent = (id: number) => {
