@@ -122,10 +122,6 @@
       <!-- 结果操作 -->
       <div class="result-actions">
         <div class="button-group">
-          <PrimaryButton 
-            text="保存为图层"
-            @click="showLayerNameModal"
-          />
           <SecondaryButton 
             text="导出为GeoJSON"
             @click="exportGeoJSON"
@@ -135,16 +131,6 @@
     </div>
   </PanelWindow>
   
-  <!-- 图层名称输入弹窗 -->
-  <LayerNameModal
-    :visible="showLayerNameModalRef"
-    title="保存缓冲区分析结果"
-    placeholder="请输入图层名称"
-    hint="图层名称将用于在图层管理器中识别此缓冲区分析结果"
-    :default-name="defaultlayerName"
-    @confirm="handlelayerNameConfirm"
-    @close="handlelayerNameClose"
-  />
 </template>
 
 <script setup lang="ts">
@@ -152,7 +138,6 @@ import { watch, computed, ref, onMounted, onUnmounted } from 'vue'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useMapStore } from '@/stores/mapStore'
 import { useBufferAnalysis } from '@/composables/useBufferAnalysis'
-import { uselayermanager } from '@/composables/uselayermanager'
 import { useLayerExport } from '@/composables/useLayerExport'
 import PrimaryButton from '@/components/UI/PrimaryButton.vue'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
@@ -160,7 +145,6 @@ import TraditionalInputGroup from '@/components/UI/TraditionalInputGroup.vue'
 import DropdownSelect from '@/components/UI/DropdownSelect.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import TipWindow from '@/components/UI/TipWindow.vue'
-import LayerNameModal from '@/components/UI/LayerNameModal.vue'
 
 const analysisStore = useAnalysisStore()
 const mapStore = useMapStore()
@@ -184,14 +168,10 @@ const {
 } = useBufferAnalysis()
 
 // 使用图层管理 hook
-const { saveFeaturesAslayer } = uselayermanager()
 
 // 使用图层导出 hook
 const { exportFeaturesAsGeoJSON } = useLayerExport()
 
-// 图层名称弹窗状态
-const showLayerNameModalRef = ref<boolean>(false)
-const defaultlayerName = ref<string>('')
 
 
 
@@ -322,79 +302,6 @@ const generatelayerNameFromBuffer = () => {
   return `缓冲区_${sourcelayerName}_${distanceText}`
 }
 
-// 显示图层名称输入弹窗
-const showLayerNameModal = () => {
-  if (!bufferResults.value || bufferResults.value.length === 0) {
-    analysisStore.setAnalysisStatus('没有可保存的缓冲区结果')
-    return
-  }
-  
-  defaultlayerName.value = generatelayerNameFromBuffer()
-  showLayerNameModalRef.value = true
-}
-
-// 处理图层名称确认
-const handlelayerNameConfirm = async (layerName: string) => {
-  showLayerNameModalRef.value = false
-  await saveBufferlayer(layerName)
-}
-
-// 处理图层名称弹窗关闭
-const handlelayerNameClose = () => {
-  showLayerNameModalRef.value = false
-}
-
-// 保存缓冲区结果为图层
-const saveBufferlayer = async (customlayerName: string) => {
-  if (!bufferResults.value || bufferResults.value.length === 0) {
-    analysisStore.setAnalysisStatus('没有可保存的缓冲区结果')
-    return
-  }
-
-  try {
-    const name = customlayerName
-    const bufferFeatures: any[] = []
-    
-    // 将缓冲区结果转换为 OpenLayers Feature，直接使用后端返回的完整属性
-    bufferResults.value.forEach((result: any) => {
-      const format = new window.ol.format.GeoJSON()
-      if (result.geometry && result.geometry.type && result.geometry.coordinates) {
-        const geometry = format.readGeometry(result.geometry)
-        const feature = new window.ol.Feature({ 
-          geometry, 
-          properties: result.properties || {} // 直接使用后端返回的完整属性，不再额外处理
-        })
-        bufferFeatures.push(feature)
-      }
-    })
-    
-    console.log(`[Save] 总共保存 ${bufferFeatures.length} 个要素`)
-    
-    // 直接调用通用保存函数
-    const success = await saveFeaturesAslayer(
-      bufferFeatures,
-      name,
-      'buffer' // 作为缓冲区图层保存，使用红色样式
-    )
-    
-    // 保存成功后自动清空所有缓冲区分析结果
-    if (success) {
-      // 移除地图上的临时缓冲区图层
-      removeBufferlayers()
-      
-      // 清空缓冲区分析状态（包括结果、当前结果等）
-      clearState()
-      
-      // 重置分析状态
-      analysisStore.setAnalysisStatus(`缓冲区图层 "${name}" 已保存并已提交入库流程，结果已清空`)
-    } else {
-      analysisStore.setAnalysisStatus('保存失败，请重试')
-    }
-    
-  } catch (error) {
-    analysisStore.setAnalysisStatus(`保存失败: ${error instanceof Error ? error.message : '未知错误'}`)
-  }
-}
 
 // 工具状态管理（已移除持久化）
 
@@ -447,13 +354,6 @@ watch(selectedAnalysislayerId, (newlayerId) => {
 
 
 
-// 监听分析结果变化
-watch(bufferResults, (results) => {
-  // 结果变化时更新默认图层名称
-  if (results && results.length > 0) {
-    defaultlayerName.value = generatelayerNameFromBuffer()
-  }
-}, { deep: true })
 </script>
 
 <style scoped>

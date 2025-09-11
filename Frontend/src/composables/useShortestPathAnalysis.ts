@@ -1,9 +1,8 @@
-import { ref, computed, toRefs } from 'vue'
+import { ref, computed } from 'vue'
 import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useLayerExport } from '@/composables/useLayerExport'
 import { useShortestPathAnalysisStore } from '@/stores/shortestPathAnalysisStore'
-import { uselayermanager } from '@/composables/uselayermanager'
 import { getAnalysisServiceConfig } from '@/api/config'
 import { convertFeatureToTurfGeometry, convertFeaturesToTurfGeometries } from '@/utils/geometryConverter'
 
@@ -51,7 +50,6 @@ export function useShortestPathAnalysis() {
   const mapStore = useMapStore()
   const analysisStore = useAnalysisStore()
   const shortestPathStore = useShortestPathAnalysisStore()
-  const { saveFeaturesAslayer } = uselayermanager()
   const { exportFeaturesAsGeoJSON } = useLayerExport()
   
   // 从 store 获取状态
@@ -176,82 +174,6 @@ export function useShortestPathAnalysis() {
     })
   }
   
-  // ===== 保存为图层方法 =====
-  
-  const saveAnalysislayer = async (customlayerName?: string) => {
-    const name = customlayerName || generatelayerNameFromAnalysis()
-    
-    // 创建Feature对象数组，包含路径和起始点、目标点
-    const allFeatures: any[] = []
-    
-    // 添加路径要素
-    state.analysisResults.forEach(result => {
-      const geometry = new window.ol.format.GeoJSON().readGeometry(result.geometry)
-      const feature = new window.ol.Feature({
-        geometry: geometry,
-        properties: {
-          id: result.id,
-          name: result.name,
-          distance: result.distance,
-          duration: result.duration,
-          pathType: result.pathType,
-          sourcelayer: result.sourcelayerName,
-          createdAt: result.createdAt,
-          featureType: 'path' // 标识为路径要素
-        }
-      })
-      allFeatures.push(feature)
-    })
-    
-    // 添加起始点要素
-    if (state.startPoint) {
-      const startGeometry = state.startPoint.getGeometry()
-      if (startGeometry) {
-        const startFeature = new window.ol.Feature({
-          geometry: startGeometry,
-          properties: {
-            id: `start_point_${Date.now()}`,
-            name: '起始点',
-            featureType: 'start_point',
-            createdAt: new Date().toISOString()
-          }
-        })
-        allFeatures.push(startFeature)
-      }
-    }
-    
-    // 添加目标点要素
-    if (state.endPoint) {
-      const endGeometry = state.endPoint.getGeometry()
-      if (endGeometry) {
-        const endFeature = new window.ol.Feature({
-          geometry: endGeometry,
-          properties: {
-            id: `end_point_${Date.now()}`,
-            name: '目标点',
-            featureType: 'end_point',
-            createdAt: new Date().toISOString()
-          }
-        })
-        allFeatures.push(endFeature)
-      }
-    }
-    
-    // 调用通用保存函数
-    const success = await saveFeaturesAslayer(
-      allFeatures,
-      name,
-      'path'
-    )
-    
-    if (success) {
-      removeAnalysislayers()
-      clearAll()
-      setLayerName(name)
-    }
-    
-    return success
-  }
   
   // 生成图层名称
   const generatelayerNameFromAnalysis = (): string => {
@@ -543,6 +465,7 @@ export function useShortestPathAnalysis() {
       
       const apiResponse = await response.json()
       
+      
       // 后端现在直接返回 FeatureCollection 格式
       if (!apiResponse.features) {
         throw new Error('API响应格式错误：缺少features数据')
@@ -550,20 +473,24 @@ export function useShortestPathAnalysis() {
       
       const features = apiResponse.features
       
-      // 从features数组中提取路径数据
-      const pathFeature = features.length > 0 ? features[0] : null
+      // 从features数组中提取路径数据 - 查找LineString类型的路径线
+      const pathFeature = features.find((feature: any) => 
+        feature.geometry?.type === 'LineString' && 
+        feature.properties?.analysisType === 'shortest-path'
+      )
       
       if (!pathFeature) {
         throw new Error('未获取到路径数据')
       }
+      
       
       const result: ShortestPathResult = {
         id: pathFeature.properties?.id || `path_${Date.now()}`,
         name: pathFeature.properties?.name || '最短路径',
         geometry: pathFeature.geometry,
         properties: pathFeature.properties || {}, // 保留完整属性数据
-        distance: pathFeature.properties?.distance || 0,
-        duration: pathFeature.properties?.duration || 0,
+        distance: apiResponse.statistics?.distance || 0, // 从统计信息中获取距离
+        duration: apiResponse.statistics?.duration || 0, // 从统计信息中获取时间
         pathType: '最短路径',
         sourcelayerName: '分析及绘制图层',
         createdAt: pathFeature.properties?.createdAt || new Date().toISOString()
@@ -767,7 +694,6 @@ export function useShortestPathAnalysis() {
     selectEndPoint,
     executePathAnalysis,
     clearResults,
-    saveAnalysislayer,
     exportGeoJSON,
     setObstaclelayer,
     updateAnalysisOptions: updateAnalysisOptionsLocal

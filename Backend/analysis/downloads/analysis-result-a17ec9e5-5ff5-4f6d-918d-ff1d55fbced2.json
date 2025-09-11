@@ -1,0 +1,46 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              113.87744763742182,
+              30.98668885491851
+            ],
+            [
+              113.94030500764352,
+              30.961561645542194
+            ],
+            [
+              113.91097153623582,
+              31.022285688273254
+            ],
+            [
+              113.87744763742182,
+              30.98668885491851
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "elementId": 1,
+        "area": 678.664,
+        "areaUnit": "平方千米",
+        "sourceType": "draw",
+        "saveTime": "2025-09-11T03:19:58.032Z",
+        "layerName": "绘制面_09111119",
+        "saveFormat": "polygon",
+        "_analysis": {
+          "type": "intersection",
+          "sourceLayer": "target",
+          "maskLayer": "mask",
+          "processedAt": "2025-09-11T03:20:06.431Z"
+        }
+      }
+    }
+  ]
+}

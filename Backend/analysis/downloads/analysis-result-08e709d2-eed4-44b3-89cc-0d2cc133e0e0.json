@@ -1,0 +1,69 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          115.21786987252301,
+          31.25544139951771
+        ]
+      },
+      "properties": {
+        "id": "shortest_path_result_2025-09-11T03-01-43-798Z_start",
+        "name": "起始点",
+        "analysisType": "shortest-path-start",
+        "createdAt": "2025-09-11T03:01:43.798Z"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          115.35410044185585,
+          30.991934742536614
+        ]
+      },
+      "properties": {
+        "id": "shortest_path_result_2025-09-11T03-01-43-798Z_end",
+        "name": "终点",
+        "analysisType": "shortest-path-end",
+        "createdAt": "2025-09-11T03:01:43.798Z"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            115.21786987252301,
+            31.25544139951771
+          ],
+          [
+            115.35410044185585,
+            30.991934742536614
+          ]
+        ]
+      },
+      "properties": {
+        "id": "shortest_path_result_2025-09-11T03-01-43-798Z",
+        "name": "最短路径分析结果",
+        "analysisType": "shortest-path",
+        "createdAt": "2025-09-11T03:01:43.798Z"
+      }
+    }
+  ],
+  "statistics": {
+    "distance": 32.04,
+    "distanceUnit": "kilometers",
+    "duration": 38.45,
+    "durationUnit": "minutes",
+    "complexity": 2,
+    "averageSpeed": 50,
+    "speedUnit": "km/h"
+  },
+  "resultId": "shortest_path_result_2025-09-11T03-01-43-798Z"
+}

@@ -16,7 +16,6 @@
 
       <div class="analysis-actions">
         <SecondaryButton text="开始执行擦除" @click="handleExecute" />
-        <SecondaryButton v-if="results.length > 0" text="保存为图层" @click="showLayerNameModal" />
         <SecondaryButton v-if="results.length > 0" text="导出为GeoJSON" @click="handleExportJSON" />
         <SecondaryButton v-if="results.length > 0" text="清除擦除结果" @click="handleClear" />
       </div>
@@ -70,20 +69,10 @@
     </div>
   </PanelWindow>
   
-  <!-- 图层名称输入弹窗 -->
-  <LayerNameModal
-    :visible="showLayerNameModalRef"
-    title="保存擦除分析结果"
-    placeholder="请输入图层名称"
-    hint="图层名称将用于在图层管理器中识别此擦除分析结果"
-    :default-name="defaultlayerName"
-    @confirm="handlelayerNameConfirm"
-    @close="handlelayerNameClose"
-  />
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { useEraseAnalysis } from '@/composables/useEraseAnalysis'
 import { uselayermanager } from '@/composables/uselayermanager'
 import { useLayerExport } from '@/composables/useLayerExport'
@@ -93,7 +82,6 @@ import DropdownSelect from '@/components/UI/DropdownSelect.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import TipWindow from '@/components/UI/TipWindow.vue'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
-import LayerNameModal from '@/components/UI/LayerNameModal.vue'
 import GeoJSON from 'ol/format/GeoJSON'
 import { Feature } from 'ol'
 
@@ -115,12 +103,8 @@ const {
 
 const mapStore = useMapStore()
 const analysisStore = useAnalysisStore()
-const { saveFeaturesAslayer } = uselayermanager()
 const { exportFeaturesAsGeoJSON } = useLayerExport()
 
-// 图层名称弹窗状态
-const showLayerNameModalRef = ref<boolean>(false)
-const defaultlayerName = ref<string>('')
 
 // 错误消息状态
 const errorMessage = ref<string>('')
@@ -193,92 +177,49 @@ const handleClear = () => {
   clearState()
 }
 
-// 显示图层名称输入弹窗
-const showLayerNameModal = () => {
-  if (results.value.length === 0) {
-    window.dispatchEvent(new CustomEvent('showNotification', {
-      detail: {
-        title: '提示',
-        message: '没有擦除结果可保存',
-        type: 'warning',
-        duration: 3000
-      }
-    }))
-    return
-  }
-  
-  defaultlayerName.value = `擦除分析结果`
-  showLayerNameModalRef.value = true
+// 清理擦除分析状态（工具切换时调用）
+const clearEraseAnalysisState = () => {
+  clearState()
+  analysisStore.setAnalysisStatus('擦除分析状态已清理')
 }
 
-// 处理图层名称确认
-const handlelayerNameConfirm = async (layerName: string) => {
-  showLayerNameModalRef.value = false
-  await handleSavelayer(layerName)
-}
+// 组件生命周期管理
+onMounted(() => {
+  analysisStore.setAnalysisStatus('请选择目标图层和擦除图层')
+})
 
-// 处理图层名称弹窗关闭
-const handlelayerNameClose = () => {
-  showLayerNameModalRef.value = false
-}
+onUnmounted(() => {
+  clearEraseAnalysisState()
+})
 
-const handleSavelayer = async (customlayerName: string) => {
-  if (results.value.length === 0) {
-    return
-  }
-  
-  try {
-    // 将擦除结果转换为 Openlayers Feature，保留完整属性
-    const format = new GeoJSON()
-    const features = results.value.map((item: any) => {
-      if (item.geometry && item.geometry.type && item.geometry.coordinates) {
-        const geometry = format.readGeometry(item.geometry)
-        const feature = new Feature({ 
-          geometry, 
-          properties: { 
-            // 保留完整的原始属性数据
-            ...item.properties,
-            // 添加或覆盖分析元数据
-            id: item.properties?.id || item.id, 
-            name: item.properties?.name || item.name, 
-            sourceTarget: item.sourceTargetlayerName, 
-            sourceErase: item.sourceEraselayerName, 
-            createdAt: item.createdAt,
-            analysisType: 'erase'
-          } 
-        })
-        return feature
-      }
-      return null
-    }).filter(Boolean)
-
-    if (features.length > 0) {
-      await saveFeaturesAslayer(features as any[], customlayerName, 'erase')
-      
-      // 保存成功后清除临时渲染结果
-      clearState()
-      
-      window.dispatchEvent(new CustomEvent('showNotification', {
-        detail: {
-          title: '保存成功',
-          message: `已保存 ${features.length} 个擦除结果为图层：${customlayerName}`,
-          type: 'success',
-          duration: 3000
-        }
-      }))
+// 监听工具面板变化
+watch(() => analysisStore.toolPanel?.activeTool, (tool, prevTool) => {
+  if (tool === 'erase' && prevTool !== 'erase') {
+    // 当进入擦除分析时，只更新状态提示，不重复恢复状态
+    if (results.value && results.value.length > 0) {
+      analysisStore.setAnalysisStatus(`擦除分析结果已加载（${results.value.length}个结果），点击"执行分析"重新显示`)
+    } else {
+      analysisStore.setAnalysisStatus('请选择目标图层和擦除图层')
     }
-  } catch (error: any) {
-    console.error('保存擦除结果为图层失败:', error)
-    window.dispatchEvent(new CustomEvent('showNotification', {
-      detail: {
-        title: '保存失败',
-        message: `保存失败：${error?.message || '未知错误'}`,
-        type: 'error',
-        duration: 5000
-      }
-    }))
+  } else if (prevTool === 'erase' && tool !== 'erase') {
+    // 当从擦除分析切换到其他工具时，清理分析结果和地图显示
+    clearEraseAnalysisState()
   }
-}
+}, { immediate: true })
+
+// 监听面板关闭时，清除地图图层与状态
+watch(() => analysisStore.toolPanel.visible.valueOf?.() ?? analysisStore.toolPanel.visible, (newVisible: any, oldVisible: any) => {
+  try {
+    const wasVisible = Boolean(oldVisible)
+    const nowVisible = Boolean(newVisible)
+    if (wasVisible && !nowVisible && (analysisStore.toolPanel.activeTool.valueOf?.() === 'erase' || analysisStore.toolPanel.activeTool === 'erase')) {
+      clearEraseAnalysisState()
+      analysisStore.setAnalysisStatus('擦除分析面板已关闭，已清除图层与状态')
+    }
+  } catch (_) {
+    clearEraseAnalysisState()
+  }
+})
 
 const handleExportJSON = async () => {
   const features = results.value.map((r: any) => ({ 

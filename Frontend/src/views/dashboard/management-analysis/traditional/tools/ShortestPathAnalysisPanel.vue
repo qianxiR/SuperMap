@@ -102,11 +102,6 @@
           @click="exportGeoJSON"
         />
 
-        <SecondaryButton 
-          v-if="currentResult"
-          text="保存为图层"
-          @click="showLayerNameModal"
-        />
 
         <SecondaryButton 
           v-if="hasResults || startPointInfo || endPointInfo"
@@ -134,16 +129,6 @@
     </div>
   </PanelWindow>
   
-  <!-- 图层名称输入弹窗 -->
-  <LayerNameModal
-    :visible="showLayerNameModalRef"
-    title="保存最短路径分析结果"
-    placeholder="请输入图层名称"
-    hint="图层名称将用于在图层管理器中识别此最短路径分析结果"
-    :default-name="defaultlayerName"
-    @confirm="handlelayerNameConfirm"
-    @close="handlelayerNameClose"
-  />
 </template>
 
 <script setup lang="ts">
@@ -153,7 +138,6 @@ import { useMapStore } from '@/stores/mapStore'
 import { useShortestPathAnalysis } from '@/composables/useShortestPathAnalysis'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
 import DropdownSelect from '@/components/UI/DropdownSelect.vue'
-import LayerNameModal from '@/components/UI/LayerNameModal.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 
 const analysisStore = useAnalysisStore()
@@ -171,15 +155,11 @@ const {
   selectEndPoint,
   clearResults,
   executePathAnalysis,
-  saveAnalysislayer,
   exportGeoJSON,
   setObstaclelayer,
   updateAnalysisOptions
 } = useShortestPathAnalysis()
 
-// 图层名称弹窗状态
-const showLayerNameModalRef = ref<boolean>(false)
-const defaultlayerName = ref<string>('')
 
 // 计算属性
 const hasResults = computed(() => analysisResults.value.length > 0)
@@ -295,37 +275,6 @@ watch(() => analysisStore.toolPanel.visible.valueOf?.() ?? analysisStore.toolPan
   }
 })
 
-// 显示图层名称输入弹窗
-const showLayerNameModal = () => {
-  if (!currentResult.value) {
-    analysisStore.setAnalysisStatus('没有可保存的路径分析结果')
-    return
-  }
-  
-  defaultlayerName.value = `最短路径分析`
-  showLayerNameModalRef.value = true
-}
-
-// 处理图层名称确认
-const handlelayerNameConfirm = async (layerName: string) => {
-  showLayerNameModalRef.value = false
-  await handleSavelayer(layerName)
-}
-
-// 处理图层名称弹窗关闭
-const handlelayerNameClose = () => {
-  showLayerNameModalRef.value = false
-}
-
-// 保存为图层
-const handleSavelayer = async (customlayerName?: string) => {
-  const success = await saveAnalysislayer(customlayerName)
-  if (success) {
-    analysisStore.setAnalysisStatus('图层保存成功')
-  } else {
-    analysisStore.setAnalysisStatus('图层保存失败')
-  }
-}
 
 // 清除状态
 const handleClearState = () => {
