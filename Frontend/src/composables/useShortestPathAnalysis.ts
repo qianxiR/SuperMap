@@ -1,10 +1,11 @@
-import { ref, computed } from 'vue'
+import { ref, computed, ref as vueRef } from 'vue'
 import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useLayerExport } from '@/composables/useLayerExport'
 import { useShortestPathAnalysisStore } from '@/stores/shortestPathAnalysisStore'
 import { getAnalysisServiceConfig } from '@/api/config'
 import { convertFeatureToTurfGeometry, convertFeaturesToTurfGeometries } from '@/utils/geometryConverter'
+import { uselayermanager } from '@/composables/useLayerManager'
 
 declare global {
   interface Window {
@@ -51,6 +52,8 @@ export function useShortestPathAnalysis() {
   const analysisStore = useAnalysisStore()
   const shortestPathStore = useShortestPathAnalysisStore()
   const { exportFeaturesAsGeoJSON } = useLayerExport()
+  const { saveFeaturesAslayer } = uselayermanager()
+  const lastFeatureCollection = vueRef<any | null>(null)
   
   // 从 store 获取状态
   const {
@@ -110,7 +113,6 @@ export function useShortestPathAnalysis() {
   // ===== 图层显示方法 =====
   
   const displayAnalysisResults = (featureCollection: any): void => {
-    ;(state as any).lastFeatureCollection = featureCollection
     // 只移除之前的路径图层，保留起始点和目标点
     removePathlayersOnly()
     
@@ -196,20 +198,37 @@ export function useShortestPathAnalysis() {
 
   // ===== 保存为图层 / 导出为JSON =====
   const savePathResultsAsLayer = async (layerName?: string): Promise<boolean> => {
-    const fc = (state as any).lastFeatureCollection
+    const fc = lastFeatureCollection.value
     if (!fc || !fc.features || fc.features.length === 0) return false
-    const olFeatures = new window.ol.format.GeoJSON().readFeatures(fc)
-    // 复用layerManager
-    const { uselayermanager } = await import('@/composables/useLayerManager')
-    const { saveFeaturesAslayer } = uselayermanager()
+    
+    // 将FeatureCollection.features展开并转换为OL Feature后再保存
+    const format = new window.ol.format.GeoJSON()
+    const olFeatures: any[] = []
+    
+    fc.features.forEach((feature: any) => {
+      if (feature?.geometry?.type === 'FeatureCollection') {
+        const subOlFeatures = format.readFeatures(feature.geometry)
+        subOlFeatures.forEach((subF: any) => {
+          const props = feature.properties || {}
+          subF.setProperties({ ...subF.getProperties?.(), ...props })
+          olFeatures.push(subF)
+        })
+      } else {
+        const geometry = format.readGeometry(feature.geometry)
+        const olFeature = new window.ol.Feature({ geometry })
+        if (feature.properties) {
+          olFeature.setProperties(feature.properties)
+        }
+        olFeatures.push(olFeature)
+      }
+    })
+    
     return saveFeaturesAslayer(olFeatures as any[], layerName || '最短路径分析结果', 'path')
   }
 
   const exportPathResultsAsJSON = async (fileName?: string): Promise<any> => {
-    const fc = (state as any).lastFeatureCollection
+    const fc = lastFeatureCollection.value
     if (!fc || !fc.features || fc.features.length === 0) return false
-    const { useLayerExport } = await import('@/composables/useLayerExport')
-    const { exportFeaturesAsGeoJSON } = useLayerExport()
     return exportFeaturesAsGeoJSON(fc.features, fileName || '最短路径分析结果')
   }
   
@@ -546,8 +565,11 @@ export function useShortestPathAnalysis() {
       }
       
       
-      // 保存结果到store（用于内部状态管理）- 直接保存API返回的完整FeatureCollection
+      // 保存结果到store（用于面板状态判断）- 直接保存API返回的完整FeatureCollection
       setAnalysisResults(apiResponse)
+      
+      // 保存结果到lastFeatureCollection（用于导出和保存图层功能）
+      lastFeatureCollection.value = apiResponse
       
       // 直接显示API返回的FeatureCollection
       displayAnalysisResults(apiResponse)
@@ -743,6 +765,7 @@ export function useShortestPathAnalysis() {
     isSelectingStartPoint: computed(() => state.isSelectingStartPoint),
     isSelectingEndPoint: computed(() => state.isSelectingEndPoint),
     analysisOptions: computed(() => state.analysisOptions),
+    lastFeatureCollection,
     
     // 方法
     selectStartPoint,

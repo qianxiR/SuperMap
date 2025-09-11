@@ -17,6 +17,8 @@
       <div class="analysis-actions">
         <SecondaryButton text="开始执行擦除" @click="handleExecute" />
         <SecondaryButton v-if="results.length > 0" text="清除擦除结果" @click="handleClear" />
+        <SecondaryButton text="保存为图层" @click="onSaveAsLayer" />
+        <SecondaryButton text="导出为JSON" @click="onExportAsJSON" />
       </div>
 
       <!-- 运行时提示 -->
@@ -68,21 +70,29 @@
     </div>
   </PanelWindow>
   
+  <!-- 图层名称输入弹窗 -->
+  <LayerNameModal
+    :visible="showLayerNameModalRef"
+    title="保存擦除分析结果"
+    placeholder="请输入图层名称"
+    hint="图层名称用于在图层管理器中识别该擦除分析结果"
+    :default-name="defaultlayerName"
+    @confirm="handlelayerNameConfirm"
+    @close="handlelayerNameClose"
+  />
+  
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { useEraseAnalysis } from '@/composables/useEraseAnalysis'
-import { uselayermanager } from '@/composables/useLayerManager'
-import { useLayerExport } from '@/composables/useLayerExport'
 import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import DropdownSelect from '@/components/UI/DropdownSelect.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import TipWindow from '@/components/UI/TipWindow.vue'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
-import GeoJSON from 'ol/format/GeoJSON'
-import { Feature } from 'ol'
+import LayerNameModal from '@/components/UI/LayerNameModal.vue'
 
 const {
   targetlayerId,
@@ -97,7 +107,10 @@ const {
   setTargetlayer,
   setEraselayer,
   targetFeaturesCache,
-  eraseFeaturesCache
+  eraseFeaturesCache,
+  lastFeatureCollection,
+  saveEraseResultsAsLayer,
+  exportEraseResultsAsJSON
 } = useEraseAnalysis()
 
 const mapStore = useMapStore()
@@ -175,6 +188,27 @@ const handleClear = () => {
   clearState()
 }
 
+// 保存/导出与命名弹窗
+const showLayerNameModalRef = ref<boolean>(false)
+const defaultlayerName = ref<string>('')
+const generatelayerNameFromErase = () => '擦除分析结果'
+const showLayerNameModal = () => {
+  if (!lastFeatureCollection.value || !lastFeatureCollection.value.features || lastFeatureCollection.value.features.length === 0) {
+    return
+  }
+  defaultlayerName.value = generatelayerNameFromErase()
+  showLayerNameModalRef.value = true
+}
+const handlelayerNameConfirm = async (layerName: string) => {
+  showLayerNameModalRef.value = false
+  await saveEraseResultsAsLayer(layerName)
+}
+const handlelayerNameClose = () => { showLayerNameModalRef.value = false }
+const onSaveAsLayer = async () => { showLayerNameModal() }
+const onExportAsJSON = async () => {
+  await exportEraseResultsAsJSON(generatelayerNameFromErase())
+}
+
 // 清理擦除分析状态（工具切换时调用）
 const clearEraseAnalysisState = () => {
   clearState()
@@ -239,5 +273,10 @@ watch(() => analysisStore.toolPanel.visible.valueOf?.() ?? analysisStore.toolPan
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.analysis-actions :deep(.btn) {
+  width: 100%;
+  justify-content: center;
 }
 </style>

@@ -202,11 +202,13 @@ export function useEraseAnalysis() {
         featuresCount: features.length
       })
 
-      // 保存结果到store（用于内部状态管理）- 直接保存API返回的完整FeatureCollection
+      // 保存结果到store（用于面板状态判断）- 直接保存API返回的完整FeatureCollection
       store.setResults(apiResponse)
       
-      // 直接显示API返回的FeatureCollection
+      // 保存结果到lastFeatureCollection（用于导出和保存图层功能）
       lastFeatureCollection.value = apiResponse
+      
+      // 直接显示API返回的FeatureCollection
       displayeraseResults(apiResponse)
       analysisStore.setAnalysisStatus(`擦除分析完成：共生成 ${features.length} 个结果，已渲染到地图。`)
 
@@ -220,7 +222,6 @@ export function useEraseAnalysis() {
 
 
   const displayeraseResults = (featureCollection: any): void => {
-    lastFeatureCollection.value = featureCollection
     if (!mapStore.map) return
 
     removeEraselayers()
@@ -372,7 +373,29 @@ export function useEraseAnalysis() {
   const saveEraseResultsAsLayer = async (layerName?: string): Promise<boolean> => {
     const fc = lastFeatureCollection.value
     if (!fc || !fc.features || fc.features.length === 0) return false
-    const olFeatures = new GeoJSON().readFeatures(fc)
+    
+    // 将FeatureCollection.features展开并转换为OL Feature后再保存
+    const format = new GeoJSON()
+    const olFeatures: any[] = []
+    
+    fc.features.forEach((feature: any) => {
+      if (feature?.geometry?.type === 'FeatureCollection') {
+        const subOlFeatures = format.readFeatures(feature.geometry)
+        subOlFeatures.forEach((subF: any) => {
+          const props = feature.properties || {}
+          subF.setProperties({ ...subF.getProperties?.(), ...props })
+          olFeatures.push(subF)
+        })
+      } else {
+        const geometry = format.readGeometry(feature.geometry)
+        const olFeature = new Feature({ geometry })
+        if (feature.properties) {
+          olFeature.setProperties(feature.properties)
+        }
+        olFeatures.push(olFeature)
+      }
+    })
+    
     return saveFeaturesAslayer(olFeatures as any[], layerName || '擦除分析结果', 'erase')
   }
 
@@ -393,6 +416,7 @@ export function useEraseAnalysis() {
     eraseFeatureCount,
     targetFeaturesCache,
     eraseFeaturesCache,
+    lastFeatureCollection,
     setTargetlayer,
     setEraselayer,
     executeEraseAnalysis,

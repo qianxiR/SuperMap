@@ -280,19 +280,13 @@ export function useBufferAnalysis() {
   
   // 在地图上显示缓冲区结果
   const displayBufferResults = (featureCollection: any): void => {
-    lastFeatureCollection.value = featureCollection
     removeBufferlayers()
     
-    console.log('=== displayBufferResults - 开始处理缓冲区结果 ===')
-    console.log('结果数量:', featureCollection.features.length)
-    console.log('完整结果数据:', JSON.stringify(featureCollection, null, 2))
-    
+
     const bufferFeatures: any[] = []
     
     featureCollection.features.forEach((feature: any, index: number) => {
-      console.log(`=== 处理第 ${index + 1} 个要素 ===`)
-      console.log('feature.geometry.type:', feature.geometry.type)
-      console.log('feature完整结构:', JSON.stringify(feature, null, 2))
+
       
       // 处理后端返回的Feature数据
       try {
@@ -327,13 +321,10 @@ export function useBufferAnalysis() {
       }
     })
     
-    console.log('=== displayBufferResults - 处理完成 ===')
-    console.log('最终生成的要素数量:', bufferFeatures.length)
-    console.log('所有生成要素的属性信息:')
+
     bufferFeatures.forEach((feature, index) => {
       console.log(`要素${index + 1}:`, feature.getProperties?.())
     })
-    console.log('=== 开始添加到地图 ===')
     
     const bufferSource = new VectorSource({
       features: bufferFeatures
@@ -409,8 +400,26 @@ export function useBufferAnalysis() {
   const saveBufferResultsAsLayer = async (layerName?: string): Promise<boolean> => {
     const fc = lastFeatureCollection.value
     if (!fc || !fc.features || fc.features.length === 0) return false
-    // 将FeatureCollection.features转换为OL Feature后再保存
-    const olFeatures = new GeoJSON().readFeatures(fc)
+    // 将FeatureCollection.features展开并转换为OL Feature后再保存
+    const format = new GeoJSON()
+    const olFeatures: any[] = []
+    fc.features.forEach((feature: any) => {
+      if (feature?.geometry?.type === 'FeatureCollection') {
+        const subOlFeatures = format.readFeatures(feature.geometry)
+        subOlFeatures.forEach((subF: any) => {
+          const props = feature.properties || {}
+          subF.setProperties({ ...subF.getProperties?.(), ...props })
+          olFeatures.push(subF)
+        })
+      } else {
+        const geometry = format.readGeometry(feature.geometry)
+        const olFeature = new Feature({ geometry })
+        if (feature.properties) {
+          olFeature.setProperties(feature.properties)
+        }
+        olFeatures.push(olFeature)
+      }
+    })
     return saveFeaturesAslayer(olFeatures as any[], layerName || (bufferAnalysisStore.state.layerName || '缓冲区分析结果'), 'buffer')
   }
   

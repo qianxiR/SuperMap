@@ -84,7 +84,7 @@ import { ref, watch, onMounted, onBeforeUnmount, computed } from 'vue';
 import LLMInputGroup from '@/components/UI/LLMInputGroup.vue';
 import { useLayerMentions } from '@/composables/useLayerMentions'
 import type { MentionItem } from '@/composables/useLayerMentions'
-import { uselayermanager } from '@/composables/uselayermanager'
+import { uselayermanager } from '@/composables/useLayerManager'
 import { useMapStore } from '@/stores/mapStore'
 
 interface Props {

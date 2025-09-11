@@ -2,7 +2,7 @@ import { computed } from 'vue'
 import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useIntersectionAnalysisStore } from '@/stores/intersectionAnalysisStore'
-import { uselayermanager } from '@/composables/uselayermanager'
+import { uselayermanager } from '@/composables/useLayerManager'
 import { getAnalysisServiceConfig } from '@/api/config'
 import { extractGeoJSONFromlayer } from '@/utils/featureUtils'
 import { checkLayerGeometryType } from '@/utils/layerValidation'
@@ -12,7 +12,6 @@ import { Vector as Vectorlayer } from 'ol/layer'
 import { Style, Stroke, Fill } from 'ol/style'
 import GeoJSON from 'ol/format/GeoJSON'
 import { ref as vueRef } from 'vue'
-import { uselayermanager } from '@/composables/useLayerManager'
 import { useLayerExport } from '@/composables/useLayerExport'
 
 declare global {
@@ -212,11 +211,13 @@ export function useIntersectionAnalysis() {
         featuresCount: features.length
       })
 
-      // 保存结果到store（用于内部状态管理）- 直接保存API返回的完整FeatureCollection
+      // 保存结果到store（用于面板状态判断）- 直接保存API返回的完整FeatureCollection
       store.setResults(apiResponse)
       
-      // 直接显示API返回的FeatureCollection
+      // 保存结果到lastFeatureCollection（用于导出和保存图层功能）
       lastFeatureCollection.value = apiResponse
+      
+      // 直接显示API返回的FeatureCollection
       displayIntersectionResults(apiResponse)
       analysisStore.setAnalysisStatus(`相交分析完成：共生成 ${features.length} 个结果，已渲染到地图。`)
 
@@ -230,7 +231,6 @@ export function useIntersectionAnalysis() {
 
 
   const displayIntersectionResults = (featureCollection: any): void => {
-    lastFeatureCollection.value = featureCollection
     if (!mapStore.map) return
 
     removeIntersectionlayers()
@@ -403,7 +403,29 @@ export function useIntersectionAnalysis() {
   const saveIntersectionResultsAsLayer = async (layerName?: string): Promise<boolean> => {
     const fc = lastFeatureCollection.value
     if (!fc || !fc.features || fc.features.length === 0) return false
-    const olFeatures = new GeoJSON().readFeatures(fc)
+    
+    // 将FeatureCollection.features展开并转换为OL Feature后再保存
+    const format = new GeoJSON()
+    const olFeatures: any[] = []
+    
+    fc.features.forEach((feature: any) => {
+      if (feature?.geometry?.type === 'FeatureCollection') {
+        const subOlFeatures = format.readFeatures(feature.geometry)
+        subOlFeatures.forEach((subF: any) => {
+          const props = feature.properties || {}
+          subF.setProperties({ ...subF.getProperties?.(), ...props })
+          olFeatures.push(subF)
+        })
+      } else {
+        const geometry = format.readGeometry(feature.geometry)
+        const olFeature = new Feature({ geometry })
+        if (feature.properties) {
+          olFeature.setProperties(feature.properties)
+        }
+        olFeatures.push(olFeature)
+      }
+    })
+    
     return saveFeaturesAslayer(olFeatures as any[], layerName || '相交分析结果', 'intersect')
   }
 
@@ -424,6 +446,7 @@ export function useIntersectionAnalysis() {
     maskFeatureCount,
     targetFeaturesCache,
     maskFeaturesCache,
+    lastFeatureCollection,
     setTargetlayer,
     setMasklayer,
     executeIntersectionAnalysis,

@@ -95,13 +95,18 @@
           :text="isAnalyzing ? '计算中...' : '计算最短路径'"
           @click="handleExecuteAnalysis"
         />
-        
-
-
         <SecondaryButton 
           v-if="hasResults || startPointInfo || endPointInfo"
           text="清除状态"
           @click="handleClearState"
+        />
+        <SecondaryButton 
+          text="保存为图层"
+          @click="onSaveAsLayer"
+        />
+        <SecondaryButton 
+          text="导出为JSON"
+          @click="onExportAsJSON"
         />
       </div>
       
@@ -124,6 +129,17 @@
     </div>
   </PanelWindow>
   
+  <!-- 图层名称输入弹窗 -->
+  <LayerNameModal
+    :visible="showLayerNameModalRef"
+    title="保存最短路径结果"
+    placeholder="请输入图层名称"
+    hint="图层名称用于在图层管理器中识别该最短路径分析结果"
+    :default-name="defaultlayerName"
+    @confirm="handlelayerNameConfirm"
+    @close="handlelayerNameClose"
+  />
+  
 </template>
 
 <script setup lang="ts">
@@ -134,6 +150,7 @@ import { useShortestPathAnalysis } from '@/composables/useShortestPathAnalysis'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
 import DropdownSelect from '@/components/UI/DropdownSelect.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
+import LayerNameModal from '@/components/UI/LayerNameModal.vue'
 
 const analysisStore = useAnalysisStore()
 const mapStore = useMapStore()
@@ -151,13 +168,59 @@ const {
   clearResults,
   executePathAnalysis,
   setObstaclelayer,
-  updateAnalysisOptions
+  updateAnalysisOptions,
+  savePathResultsAsLayer,
+  exportPathResultsAsJSON,
+  lastFeatureCollection
 } = useShortestPathAnalysis()
 
 
-// 计算属性
-const hasResults = computed(() => analysisResults.value.length > 0)
-const currentResult = computed(() => analysisResults.value[0] || null)
+// 计算属性 - 使用lastFeatureCollection进行判断，与缓冲区分析保持一致
+const hasResults = computed(() => lastFeatureCollection.value && lastFeatureCollection.value.features && lastFeatureCollection.value.features.length > 0)
+const currentResult = computed(() => {
+  if (lastFeatureCollection.value && lastFeatureCollection.value.features && lastFeatureCollection.value.features.length > 0) {
+    const firstFeature = lastFeatureCollection.value.features[0]
+    return {
+      distance: lastFeatureCollection.value.statistics?.distance || 0,
+      duration: lastFeatureCollection.value.statistics?.duration || 0,
+      pathType: firstFeature.properties?.analysisType || '最短路径'
+    }
+  }
+  return null
+})
+// 图层名称弹窗与保存/导出
+const showLayerNameModalRef = ref<boolean>(false)
+const defaultlayerName = ref<string>('')
+
+const generatelayerNameFromPath = () => {
+  return '最短路径分析结果'
+}
+
+const showLayerNameModal = () => {
+  if (!lastFeatureCollection.value || !lastFeatureCollection.value.features || lastFeatureCollection.value.features.length === 0) {
+    return
+  }
+  defaultlayerName.value = generatelayerNameFromPath()
+  showLayerNameModalRef.value = true
+}
+
+const handlelayerNameConfirm = async (layerName: string) => {
+  showLayerNameModalRef.value = false
+  await savePathResultsAsLayer(layerName)
+}
+
+const handlelayerNameClose = () => {
+  showLayerNameModalRef.value = false
+}
+
+const onSaveAsLayer = async () => {
+  showLayerNameModal()
+}
+
+const onExportAsJSON = async () => {
+  const name = generatelayerNameFromPath()
+  await exportPathResultsAsJSON(name)
+}
 
 // 分析状态
 const isAnalyzing = ref(false)
@@ -382,6 +445,11 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.analysis-actions :deep(.btn) {
+  width: 100%;
+  justify-content: center;
 }
 
 /* 加载状态样式 */

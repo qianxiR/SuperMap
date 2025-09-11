@@ -79,8 +79,15 @@
         />
         <SecondaryButton 
           text="清除结果"
-          :disabled="!bufferResults || bufferResults.length === 0"
           @click="clearResults"
+        />
+        <PrimaryButton 
+          text="保存为图层"
+          @click="onSaveAsLayer"
+        />
+        <SecondaryButton 
+          text="导出为JSON"
+          @click="onExportAsJSON"
         />
       </div>
       
@@ -118,10 +125,21 @@
           <span class="info-value">{{ bufferSettings.semicircleLineSegment }} 步</span>
         </div>
       </div>
-      
-      <!-- 结果操作 -->
+        
+        <!-- 结果操作 -->
     </div>
   </PanelWindow>
+  
+  <!-- 图层名称输入弹窗 -->
+  <LayerNameModal
+    :visible="showLayerNameModalRef"
+    title="保存缓冲区分析结果"
+    placeholder="请输入图层名称"
+    hint="图层名称将用于在图层管理器中识别此缓冲区分析结果"
+    :default-name="defaultlayerName"
+    @confirm="handlelayerNameConfirm"
+    @close="handlelayerNameClose"
+  />
   
 </template>
 
@@ -130,13 +148,13 @@ import { watch, computed, ref, onMounted, onUnmounted } from 'vue'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useMapStore } from '@/stores/mapStore'
 import { useBufferAnalysis } from '@/composables/useBufferAnalysis'
-import { useLayerExport } from '@/composables/useLayerExport'
 import PrimaryButton from '@/components/UI/PrimaryButton.vue'
 import SecondaryButton from '@/components/UI/SecondaryButton.vue'
 import TraditionalInputGroup from '@/components/UI/TraditionalInputGroup.vue'
 import DropdownSelect from '@/components/UI/DropdownSelect.vue'
 import PanelWindow from '@/components/UI/PanelWindow.vue'
 import TipWindow from '@/components/UI/TipWindow.vue'
+import LayerNameModal from '@/components/UI/LayerNameModal.vue'
 
 const analysisStore = useAnalysisStore()
 const mapStore = useMapStore()
@@ -151,17 +169,13 @@ const {
   isAnalyzing,
   setSelectedAnalysislayer,
   updateBufferSettings,
-  clearAllSelections,
   executeBufferAnalysis,
-  removeBufferlayers,
-  displayBufferResults,
+  saveBufferResultsAsLayer,
+  exportBufferResultsAsJSON,
   clearState,
-  
 } = useBufferAnalysis()
 
 // 使用图层管理 hook
-
-
 
 // 包含"无"选项的图层选项
 const layerOptionsWithNone = computed(() => {
@@ -176,6 +190,41 @@ const onlayerSelectionChange = (layerId: string) => {
   if (layerId) {
     setSelectedAnalysislayer(layerId)
   }
+}
+
+// 图层名称弹窗状态
+const showLayerNameModalRef = ref<boolean>(false)
+const defaultlayerName = ref<string>('')
+
+// 显示图层名称输入弹窗
+const showLayerNameModal = () => {
+  if (!bufferResults.value || bufferResults.value.length === 0) {
+    return
+  }
+  defaultlayerName.value = generatelayerNameFromBuffer()
+  showLayerNameModalRef.value = true
+}
+
+// 处理图层名称确认
+const handlelayerNameConfirm = async (layerName: string) => {
+  showLayerNameModalRef.value = false
+  await saveBufferResultsAsLayer(layerName)
+}
+
+// 处理图层名称弹窗关闭
+const handlelayerNameClose = () => {
+  showLayerNameModalRef.value = false
+}
+
+// 保存为图层
+const onSaveAsLayer = async () => {
+  showLayerNameModal()
+}
+
+// 导出为JSON
+const onExportAsJSON = async () => {
+  const name = generatelayerNameFromBuffer()
+  await exportBufferResultsAsJSON(name)
 }
 
 // 距离变化时的处理
@@ -363,10 +412,14 @@ watch(selectedAnalysislayerId, (newlayerId) => {
   flex-wrap: wrap;
 }
 
-.button-group .primary-button,
-.button-group .secondary-button {
-  flex: 1;
+.button-group > * {
+  flex: 1 1 0;
   min-width: 120px;
+}
+
+.button-group :deep(.btn) {
+  width: 100%;
+  justify-content: center;
 }
 
 .result-info {
