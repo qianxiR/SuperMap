@@ -170,6 +170,8 @@ export const useFeatureQueryStore = defineStore('featureQuery', () => {
     switch (condition.operator) {
       case 'eq':
         return String(fieldValue).toLowerCase() === String(condition.value).toLowerCase()
+      case 'ne':
+        return String(fieldValue).toLowerCase() !== String(condition.value).toLowerCase()
       case 'gt':
         return field.type === '整数' || field.type === '小数'
           ? Number(fieldValue) > Number(condition.value)

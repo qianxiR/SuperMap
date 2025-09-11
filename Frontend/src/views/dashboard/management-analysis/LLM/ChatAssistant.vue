@@ -255,6 +255,44 @@ const sendMessage = async () => {
             }
           } catch {}
         }
+        
+        // 如果是按属性查询要素的工具，则在前端本地执行具体动作
+        if (name === 'query_features_by_attribute') {
+          try {
+            console.log('[Agent] ChatAssistant - 开始处理属性查询工具调用')
+            console.log('1. 工具调用参数 call:', call)
+            console.log('2. 工具调用参数 args:', call?.args)
+            
+            const parsed = call?.args || {}
+            console.log('3. 解析后的参数 parsed:', parsed)
+            
+            const layerName = parsed.layer_name || parsed.layerName
+            const field = parsed.field
+            const operator = parsed.operator
+            const value = parsed.value
+            
+            console.log('4. 提取的各个参数:')
+            console.log('   layerName:', layerName, '(类型:', typeof layerName, ')')
+            console.log('   field:', field, '(类型:', typeof field, ')')
+            console.log('   operator:', operator, '(类型:', typeof operator, ')')
+            console.log('   value:', value, '(类型:', typeof value, ')')
+            
+            if (layerName && field && operator && value !== undefined) {
+              const eventDetail = { layerName, field, operator, value }
+              console.log('5. 构造的事件详情:', eventDetail)
+              
+              const ev = new CustomEvent('agent:queryFeaturesByAttribute', { 
+                detail: eventDetail 
+              })
+              window.dispatchEvent(ev)
+              console.log('[Agent] dispatched event: agent:queryFeaturesByAttribute', eventDetail)
+            } else {
+              console.warn('[Agent] 参数不完整，无法派发事件:', { layerName, field, operator, value })
+            }
+          } catch (error) {
+            console.error('[Agent] 处理属性查询工具调用时出错:', error)
+          }
+        }
       } else {
         toolCallInfo.value = null
       }

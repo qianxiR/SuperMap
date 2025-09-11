@@ -71,7 +71,50 @@ def toggle_layer_visibility(layer_id: str, action: str) -> str:
     return f"{action}:{layer_id}"
 
 
- 
+@tool
+def query_features_by_attribute(layer_name: str, field: str, operator: str, value: str) -> str:
+    """
+    按属性选择要素（前端执行）。
+    输入参数：
+      - layer_name: string 图层名称
+      - field: string 属性字段名
+      - operator: string 比较操作符 '='|'!='|'>'|'>='|'<'|'<='|'like'
+      - value: string 查询值
+    业务处理：
+      - 后端不直接操作地图，仅返回查询参数供前端执行
+    输出数据格式：
+      - string: 格式 "query:layer_name:field:operator:value"
+    """
+    return f"query:{layer_name}:{field}:{operator}:{value}"
+
+
+@tool
+def save_query_results_as_layer(layer_name: str) -> str:
+    """
+    保存查询结果为新图层（前端执行）。
+    输入参数：
+      - layer_name: string 新图层名称
+    业务处理：
+      - 后端不直接操作地图，仅返回保存参数供前端执行
+    输出数据格式：
+      - string: 格式 "save_layer:layer_name"
+    """
+    return f"save_layer:{layer_name}"
+
+
+@tool
+def export_query_results_as_json() -> str:
+    """
+    导出查询结果为GeoJSON文件（前端执行）。
+    输入参数：
+      - 无参数
+    业务处理：
+      - 后端不直接操作地图，仅返回导出指令供前端执行
+    输出数据格式：
+      - string: 格式 "export_json"
+    """
+    return "export_json"
+
 
 def load_system_prompt() -> str:
     """加载系统提示词，优先从prompt/tools.md读取"""
@@ -132,7 +175,7 @@ async def tool_chat(req: ToolChatRequest):
       - { success: true, data: { first_call: AIMessage(JSON), tool_result: string, final_answer: string } }
     """
     model = init_chat_model(f"openai:{req.model}")
-    llm_with_tools = model.bind_tools([toggle_layer_visibility])
+    llm_with_tools = model.bind_tools([toggle_layer_visibility, query_features_by_attribute, save_query_results_as_layer, export_query_results_as_json])
     history_list = _conversation_layer_history.get(req.conversation_id, [])
     parsed_lines: List[str] = []
     last_action_text = ""
@@ -148,13 +191,21 @@ async def tool_chat(req: ToolChatRequest):
     history_text = "\n".join(parsed_lines)
     first_ai: AIMessage = llm_with_tools.invoke([
         SystemMessage(content=(
-            "你有一个工具:\n"
-            "toggle_layer_visibility(layer_id:str, action:'show'|'hide'|'toggle')\n"
-            "- 当用户说‘打开@图层名称’或‘隐藏@图层名称’或‘切换@图层名称’时调用。\n"
-            "- 若用户使用@图层名称，请将@后的文本作为 layer_name 传递；如未知 layer_id，可仅传 layer_name。\n"
+            "你有四个工具:\n"
+            "1) toggle_layer_visibility(layer_id:str, action:'show'|'hide'|'toggle')\n"
+            "- 当用户说'打开@图层名称'或'隐藏@图层名称'或'切换@图层名称'时调用。\n"
+            "2) query_features_by_attribute(layer_name:str, field:str, operator:str, value:str)\n"
+            "- 当用户说'在@图层名称中查找字段=值'、'查询@图层名称的属性'、'筛选@图层名称'时调用。\n"
+            "- 支持操作符: '='|'!='|'>'|'>='|'<'|'<='|'like'\n"
+            "3) save_query_results_as_layer(layer_name:str)\n"
+            "- 当用户说'保存查询结果为图层'、'另存为图层'、'保存为新图层'时调用。\n"
+            "- 需要指定新图层名称。\n"
+            "4) export_query_results_as_json()\n"
+            "- 当用户说'导出为JSON'、'导出为GeoJSON'、'导出查询结果'时调用。\n"
+            "- 若用户使用@图层名称，请将@后的文本作为图层名称传递。\n"
             "严禁自行执行这些操作，必须通过工具完成。\n"
-            f"历史图层操作(顺序, 最新在下):\n{history_text}\n"
-            f"最近一次操作: {last_action_text}。若用户问‘刚才做了什么/刚才关闭了什么图层’，请直接依据最近一次操作回答。"
+            f"历史操作(顺序, 最新在下):\n{history_text}\n"
+            f"最近一次操作: {last_action_text}。若用户问'刚才做了什么'，请直接依据最近一次操作回答。"
         )),
         HumanMessage(content=req.prompt)
     ])
@@ -162,7 +213,15 @@ async def tool_chat(req: ToolChatRequest):
         return ChatResponse(success=True, data={"first_call": {"tool_calls": []}, "tool_result": None, "final_answer": first_ai.content})
     tool_call = first_ai.tool_calls[0]
     tool_args = tool_call.get("args", {})
-    tool_result = toggle_layer_visibility.invoke(tool_args)
+    
+    # 根据工具名称执行相应的工具
+    tool_name = tool_call.get("name", "")
+    if tool_name == "toggle_layer_visibility":
+        tool_result = toggle_layer_visibility.invoke(tool_args)
+    elif tool_name == "query_features_by_attribute":
+        tool_result = query_features_by_attribute.invoke(tool_args)
+    else:
+        tool_result = f"未知工具: {tool_name}"
     history_entry = str(tool_result)
     if req.conversation_id in _conversation_layer_history:
         _conversation_layer_history[req.conversation_id].append(history_entry)
@@ -171,9 +230,11 @@ async def tool_chat(req: ToolChatRequest):
     tool_message = ToolMessage(content=str(tool_result), tool_call_id=tool_call["id"])
     final_ai: AIMessage = llm_with_tools.invoke([
         SystemMessage(content=(
-            "你有一个工具:\n"
-            "toggle_layer_visibility(layer_id:str, action:'show'|'hide'|'toggle')\n"
-            "遇到‘打开/隐藏/切换@图层名称’的请求，必须调用该工具。"
+            "你有两个工具:\n"
+            "1) toggle_layer_visibility(layer_id:str, action:'show'|'hide'|'toggle')\n"
+            "- 遇到'打开/隐藏/切换@图层名称'的请求，必须调用该工具。\n"
+            "2) query_features_by_attribute(layer_name:str, field:str, operator:str, value:str)\n"
+            "- 遇到'在@图层名称中查找/查询/筛选'的请求，必须调用该工具。"
         )),
         HumanMessage(content=req.prompt),
         first_ai,

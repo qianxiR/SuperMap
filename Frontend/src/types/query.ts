@@ -1,7 +1,7 @@
 // 查询条件相关的类型定义
 
 // 比较操作符类型
-export type ComparisonOperator = 'gt' | 'lt' | 'eq' | 'gte' | 'lte' | 'like'
+export type ComparisonOperator = 'gt' | 'lt' | 'eq' | 'ne' | 'gte' | 'lte' | 'like'
 
 // 单个查询条件接口
 export interface QueryCondition {

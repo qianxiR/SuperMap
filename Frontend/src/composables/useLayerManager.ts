@@ -252,6 +252,147 @@ export function uselayermanager() {
         }
       }
     })
+    
+    // 监听 Agent 属性查询事件
+    window.addEventListener('agent:queryFeaturesByAttribute', async (e: any) => {
+      const { layerName, field, operator, value } = e.detail || {}
+      if (!layerName || !field || !operator || value === undefined) {
+        console.warn('[Agent] 属性查询参数不完整:', { layerName, field, operator, value })
+        return
+      }
+      
+        // 以字典格式提取纯文字，避免字符串引号问题
+        const params = {
+          layerName: layerName,
+          field: field, 
+          operator: operator,
+          value: value
+        }
+        
+        // 直接从字典中提取纯文字内容
+        const cleanLayerName = params.layerName
+        const cleanField = params.field
+        const cleanOperator = params.operator
+        const cleanValue = params.value
+        
+        console.log('[Agent] 字典格式参数提取:')
+        console.log('原始参数字典:', params)
+        console.log('提取的纯文字:', {
+          layerName: cleanLayerName,
+          field: cleanField,
+          operator: cleanOperator,
+          value: cleanValue
+        })
+        
+        // 详细追踪参数构造过程
+        console.log('[Agent] 参数构造详细追踪:')
+        console.log('1. 原始event.detail:', e.detail)
+        console.log('2. 解构后的参数:', { layerName, field, operator, value })
+        console.log('3. 参数字典构造:', params)
+        console.log('4. 各参数类型检查:', {
+          layerName: typeof layerName,
+          field: typeof field,
+          operator: typeof operator,
+          value: typeof value
+        })
+        console.log('5. 各参数内容检查:', {
+          layerName: `"${layerName}"`,
+          field: `"${field}"`,
+          operator: `"${operator}"`,
+          value: `"${value}"`
+        })
+      
+      try {
+        // 动态导入useFeatureQuery以获取查询功能
+        const { useFeatureQuery } = await import('@/composables/useFeatureQuery')
+        const featureQuery = useFeatureQuery()
+        
+        // 查找目标图层
+        const getBaseName = (n: string): string => {
+          if (!n) return n
+          const idx = n.indexOf('@')
+          return idx >= 0 ? n.slice(0, idx) : n
+        }
+        
+        const providedBase = getBaseName(cleanLayerName)
+        const targetLayer = mapStore.vectorlayers.find(l => getBaseName(l.name) === providedBase)
+        
+        if (!targetLayer) {
+          console.warn(`[Agent] 图层不存在: ${cleanLayerName}`)
+          return
+        }
+        
+        // 确保图层可见性 - 如果图层隐藏则自动打开
+        if (!targetLayer.visible) {
+          console.log(`[Agent] 图层"${cleanLayerName}"当前隐藏，自动打开图层`)
+          togglelayerVisibility(targetLayer.id)
+        }
+        
+        // 设置查询图层
+        featureQuery.selectedlayerId.value = targetLayer.id
+        
+        // 等待图层字段加载
+        await featureQuery.getlayerFields(targetLayer.id)
+        
+        // 操作符映射：将LLM的操作符转换为前端支持的操作符
+        const operatorMap: Record<string, string> = {
+          '=': 'eq',
+          '!=': 'ne', 
+          '>': 'gt',
+          '>=': 'gte',
+          '<': 'lt',
+          '<=': 'lte',
+          'like': 'like'
+        }
+        
+        const mappedOperator = operatorMap[params.operator] || params.operator
+        
+        console.log(`[Agent] 操作符映射: "${params.operator}" -> "${mappedOperator}"`)
+        
+        // 设置查询条件 - 使用字典格式确保纯文字
+        const condition = {
+          fieldName: params.field,      // 直接从字典读取
+          operator: mappedOperator,     // 使用映射后的操作符
+          value: params.value          // 直接从字典读取
+        }
+        
+        console.log('[Agent] 查询条件构造详细追踪:')
+        console.log('1. 原始参数字典:', params)
+        console.log('2. 操作符映射结果:', {
+          原始操作符: params.operator,
+          映射后操作符: mappedOperator
+        })
+        console.log('3. 最终查询条件构造:', condition)
+        console.log('4. 查询条件各字段详情:', {
+          fieldName: `"${condition.fieldName}" (类型: ${typeof condition.fieldName})`,
+          operator: `"${condition.operator}" (类型: ${typeof condition.operator})`,
+          value: `"${condition.value}" (类型: ${typeof condition.value})`
+        })
+        console.log('5. 查询条件JSON序列化:', JSON.stringify(condition))
+        
+
+
+        
+        // 更新查询配置
+        featureQuery.queryConfig.value.condition = condition
+
+        // 执行查询
+        const result = await featureQuery.executeQuery()
+        if (result.success) {
+          console.log(`[Agent] 属性查询成功: 在图层"${cleanLayerName}"中找到${result.data.length}个匹配要素`)
+          
+          // 自动高亮显示查询结果
+          if (result.data.length > 0) {
+            featureQuery.highlightQueryResults()
+          }
+        } else {
+          console.error(`[Agent] 属性查询失败:`, result.error)
+        }
+        
+      } catch (error) {
+        console.error('[Agent] 执行属性查询时出错:', error)
+      }
+    })
   }
 
   const removeLayer = (layerId: string) => {
