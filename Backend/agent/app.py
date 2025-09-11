@@ -13,9 +13,6 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# 导入新的路由模块
-from agent.routers import api_keys, prompts, knowledge
-
 
 class LLMSettings(BaseModel):
     api_key: str = Field(default_factory=lambda: os.getenv("DASHSCOPE_API_KEY", ""))
@@ -140,13 +137,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 包含原有聊天路由
 app.include_router(router)
-
-# 包含新的管理功能路由
-app.include_router(api_keys.router, prefix="/api/v1")
-app.include_router(prompts.router, prefix="/api/v1") 
-app.include_router(knowledge.router, prefix="/api/v1")
 
 
 @app.get("/health")
