@@ -175,14 +175,13 @@
         ]
       },
       "properties": {
-        "name": "Wuhan University",
-        "type": "School",
+        "name": "User Point",
         "_analysis": {
           "type": "buffer",
           "radius": 1000,
           "unit": "meters",
           "sourceLayer": "original",
-          "processedAt": "2025-09-10T08:59:53.921Z"
+          "processedAt": "2025-09-11T01:40:37.408Z"
         }
       }
     }

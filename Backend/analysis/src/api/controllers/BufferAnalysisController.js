@@ -61,11 +61,10 @@ class BufferAnalysisController {
       const resultFeatures = apiResponse?.data?.features || [];
       const inputFeatures = Array.isArray(req.body?.sourceData?.features) ? req.body.sourceData.features : [];
       
-      // 改进的属性处理函数 - 深度克隆并保留原始数据结构
+      // 属性处理函数 - 深度克隆并保留原始数据结构
       const preserveProperties = (props) => {
         if (!props || typeof props !== 'object') return {};
         try {
-          // 使用深度克隆保留原始数据结构
           return JSON.parse(JSON.stringify(props));
         } catch (error) {
           console.warn('属性序列化失败，使用空对象:', error);
@@ -73,16 +72,37 @@ class BufferAnalysisController {
         }
       };
       
-      const mergedFeatures = resultFeatures.map((f, idx) => {
+      // 计算面积辅助函数
+      const calculateArea = (geometry) => {
+        try {
+          const turf = require('@turf/turf');
+          return turf.area(turf.feature(geometry));
+        } catch (error) {
+          return 0;
+        }
+      };
+      
+      // 在控制器层处理属性合并和元数据添加
+      const finalFeatures = resultFeatures.map((feature, idx) => {
         const originalProps = inputFeatures[idx]?.properties || {};
         const preservedProps = preserveProperties(originalProps);
         
         return {
           type: 'Feature',
-          geometry: f.geometry,
+          geometry: feature.geometry,
           properties: {
-            // 保留原始属性
+            // 保留所有原始属性
             ...preservedProps,
+            // 添加缓冲区分析元数据
+            _buffer: {
+              id: `buffer_${originalProps.id || 'unknown'}_${Date.now()}`,
+              name: `${originalProps.name || '几何要素'}_缓冲区`,
+              sourceFeatureId: originalProps.id || 'unknown',
+              distance: req.body?.bufferSettings?.radius || 0,
+              unit: 'meters',
+              area: calculateArea(feature.geometry),
+              createdAt: new Date().toISOString()
+            },
             // 添加分析元数据
             _analysis: {
               type: 'buffer',
@@ -95,7 +115,7 @@ class BufferAnalysisController {
         };
       });
       
-      const resultGeoJSON = { type: 'FeatureCollection', features: mergedFeatures };
+      const resultGeoJSON = { type: 'FeatureCollection', features: finalFeatures };
 
       const filename = `analysis-result-${uuidv4()}.json`;
       const downloadsDir = path.join(__dirname, '..', '..', '..', 'downloads');

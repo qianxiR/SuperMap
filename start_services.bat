@@ -33,11 +33,11 @@ set /p ngrok_choice="请输入选择 (y/n): "
 
 if /i "%ngrok_choice%"=="y" (
     echo [INFO] 正在启动 ngrok 隧道...
-    start "ngrok tunnel" cmd /k "cd /d %~dp0ngrok && echo 启动 ngrok 隧道... && ngrok http 8087"
+    start "ngrok tunnel" cmd /k "cd /d %~dp0Backend\ngrok && echo 启动 ngrok 隧道... && ngrok http 8087"
     echo 等待 ngrok 启动...
     timeout /t 3 /nobreak >nul
     echo [INFO] 正在更新配置文件...
-    cd /d %~dp0ngrok
+    cd /d %~dp0Backend\ngrok
     python update_config.py
     cd /d %~dp0
     echo ngrok 隧道启动完成！

@@ -189,6 +189,28 @@ export function useBufferAnalysis() {
       }
     }
 
+    // 打印完整的POST请求内容
+    console.log('=== 缓冲区分析 - 前端POST请求完整内容 ===')
+    console.log('请求URL:', `${API_BASE_URL}/buffer`)
+    console.log('请求方法:', 'POST')
+    console.log('请求头:', {
+      'Content-Type': 'application/json'
+    })
+    console.log('请求体 (requestData):', JSON.stringify(requestData, null, 2))
+    console.log('请求体大小:', JSON.stringify(requestData).length, '字符')
+    console.log('sourceData结构:')
+    console.log('  - type:', sourceData?.type)
+    console.log('  - features数量:', sourceData?.features?.length || 0)
+    if (sourceData?.features && sourceData.features.length > 0) {
+      console.log('  - 第一个feature:', JSON.stringify(sourceData.features[0], null, 2))
+      if (sourceData.features.length > 1) {
+        console.log(`  - 还有其他 ${sourceData.features.length - 1} 个features`)
+      }
+    }
+    console.log('bufferSettings:', requestData.bufferSettings)
+    console.log('options:', requestData.options)
+    console.log('=== POST请求内容打印完毕 ===')
+
     const response = await fetch(`${API_BASE_URL}/buffer`, {
       method: 'POST',
       headers: {
@@ -226,12 +248,12 @@ export function useBufferAnalysis() {
       throw new Error('API响应格式错误：缺少features数据')
     }
 
-    // 将后端返回的features转换为BufferResult格式，保留完整属性
+    // 将后端返回的features转换为BufferResult格式，直接使用后端返回的完整属性
     const bufferResults = apiResponse.features.map((feature: any, index: number) => ({
       id: feature.properties?.id || `buffer_${Date.now()}_${index}`,
       name: feature.properties?.name || `缓冲区_${index + 1}`,
       geometry: feature.geometry,
-      properties: feature.properties || {}, // 保留完整属性数据
+      properties: feature.properties || {}, // 直接使用后端返回的完整属性，包含所有原始属性和分析元数据
       distance: radiusMeters,
       unit: 'meters',
       sourcelayerName: target.name,
@@ -284,18 +306,7 @@ export function useBufferAnalysis() {
           if (geometry) {
             const feature = new Feature({
               geometry: geometry,
-              properties: {
-                // 保留后端传来的完整属性数据
-                ...result.properties,
-                // 添加前端显示需要的元数据
-                id: `${result.id}_${index}`,
-                name: `${result.name}_${index + 1}`,
-                distance: result.distance,
-                unit: result.unit,
-                sourcelayer: result.sourcelayerName,
-                createdAt: result.createdAt,
-                featureIndex: index
-              }
+              properties: result.properties || {} // 直接使用后端返回的完整属性，不再额外处理
             })
             bufferFeatures.push(feature)
           }

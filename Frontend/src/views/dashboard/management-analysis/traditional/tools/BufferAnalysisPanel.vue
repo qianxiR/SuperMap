@@ -355,71 +355,22 @@ const saveBufferlayer = async (customlayerName: string) => {
     const name = customlayerName
     const bufferFeatures: any[] = []
     
-    bufferResults.value.forEach(result => {
-      // 处理不同的GeoJSON格式
-      if (result.geometry.type === 'Feature') {
-        // 如果是Feature类型，提取geometry部分
-        const geometry = new window.ol.format.GeoJSON().readGeometry(result.geometry.geometry)
-        if (geometry) {
-          const feature = new window.ol.Feature({
-            geometry: geometry,
-            properties: {
-              id: result.id,
-              name: result.name,
-              distance: result.distance,
-              unit: result.unit,
-              sourcelayer: result.sourcelayerName,
-              createdAt: result.createdAt
-            }
-          })
-          bufferFeatures.push(feature)
-        }
-      } else if (result.geometry.type === 'FeatureCollection') {
-        // 如果是FeatureCollection类型，处理所有features
-        const features = new window.ol.format.GeoJSON().readFeatures(result.geometry)
-        console.log(`[Save] FeatureCollection包含 ${features.length} 个要素`)
-        
-        features.forEach((olFeature: any, index: number) => {
-          const geometry = olFeature.getGeometry()
-          if (geometry) {
-            const feature = new window.ol.Feature({
-              geometry: geometry,
-              properties: {
-                id: `${result.id}_${index}`,
-                name: `${result.name}_${index + 1}`,
-                distance: result.distance,
-                unit: result.unit,
-                sourcelayer: result.sourcelayerName,
-                createdAt: result.createdAt,
-                featureIndex: index
-              }
-            })
-            bufferFeatures.push(feature)
-          }
+    // 将缓冲区结果转换为 OpenLayers Feature，直接使用后端返回的完整属性
+    bufferResults.value.forEach((result: any) => {
+      const format = new window.ol.format.GeoJSON()
+      if (result.geometry && result.geometry.type && result.geometry.coordinates) {
+        const geometry = format.readGeometry(result.geometry)
+        const feature = new window.ol.Feature({ 
+          geometry, 
+          properties: result.properties || {} // 直接使用后端返回的完整属性，不再额外处理
         })
-      } else {
-        // 直接是Geometry类型
-        const geometry = new window.ol.format.GeoJSON().readGeometry(result.geometry)
-        if (geometry) {
-          const feature = new window.ol.Feature({
-            geometry: geometry,
-            properties: {
-              id: result.id,
-              name: result.name,
-              distance: result.distance,
-              unit: result.unit,
-              sourcelayer: result.sourcelayerName,
-              createdAt: result.createdAt
-            }
-          })
-          bufferFeatures.push(feature)
-        }
+        bufferFeatures.push(feature)
       }
     })
     
     console.log(`[Save] 总共保存 ${bufferFeatures.length} 个要素`)
     
-    // 调用图层管理中的通用保存函数
+    // 直接调用通用保存函数
     const success = await saveFeaturesAslayer(
       bufferFeatures,
       name,

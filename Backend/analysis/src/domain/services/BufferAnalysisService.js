@@ -93,10 +93,10 @@ class BufferAnalysisService {
    * 数据处理方法：
    * 1. 直接使用turf要素执行缓冲区计算
    * 2. 验证结果
-   * 3. 添加缓冲区元数据
+   * 3. 保留原始属性（不添加额外元数据）
    * 
    * 输出数据格式：
-   * 缓冲区turf要素
+   * 缓冲区turf要素（保持原始属性）
    */
   async _createBuffer(turfFeature, settings) {
     const turfOptions = settings.toTurfOptions();
@@ -109,17 +109,9 @@ class BufferAnalysisService {
       return null;
     }
 
-    // 添加缓冲区元数据
-    buffered.properties = {
-      ...buffered.properties,
-      id: `buffer_${turfFeature.properties?.id || 'unknown'}_${Date.now()}`,
-      name: `${turfFeature.properties?.name || '几何要素'}_缓冲区`,
-      sourceFeatureId: turfFeature.properties?.id || 'unknown',
-      bufferDistance: settings.radius,
-      bufferUnit: settings.unit,
-      area: this._calculateArea(buffered.geometry),
-      createdAt: new Date().toISOString()
-    };
+    // 保持原始属性不变，不添加任何额外元数据
+    // 属性处理逻辑将在控制器层进行
+    buffered.properties = turfFeature.properties || {};
 
     return buffered;
   }

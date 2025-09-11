@@ -122,19 +122,7 @@ export function useShortestPathAnalysis() {
       const geometry = new window.ol.format.GeoJSON().readGeometry(result.geometry)
       const feature = new window.ol.Feature({
         geometry: geometry,
-        properties: {
-          // 保留后端传来的完整属性数据
-          ...result.properties,
-          // 添加分析元数据（如果不存在）
-          id: result.properties?.id || result.id,
-          name: result.properties?.name || result.name,
-          distance: result.distance,
-          duration: result.duration,
-          pathType: result.pathType,
-          sourcelayer: result.sourcelayerName,
-          createdAt: result.createdAt,
-          analysisType: 'shortestPath'
-        }
+        properties: result.properties || {} // 直接使用后端返回的完整属性，不再额外处理
       })
       return feature
     })

@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "https://c29704d3e16b.ngrok-free.app "
+      "url": "https://4ccf891f6a10.ngrok-free.app"
     }
   ],
   "paths": {
@@ -28,7 +28,9 @@
                     "properties": {
                       "type": {
                         "type": "string",
-                        "enum": ["FeatureCollection"]
+                        "enum": [
+                          "FeatureCollection"
+                        ]
                       },
                       "features": {
                         "type": "array",
@@ -37,7 +39,10 @@
                         }
                       }
                     },
-                    "required": ["type", "features"]
+                    "required": [
+                      "type",
+                      "features"
+                    ]
                   },
                   "bufferSettings": {
                     "type": "object",
@@ -102,7 +107,9 @@
                     "properties": {
                       "type": {
                         "type": "string",
-                        "enum": ["FeatureCollection"]
+                        "enum": [
+                          "FeatureCollection"
+                        ]
                       },
                       "features": {
                         "type": "array",
@@ -111,7 +118,10 @@
                         }
                       }
                     },
-                    "required": ["type", "features"]
+                    "required": [
+                      "type",
+                      "features"
+                    ]
                   },
                   "eraseData": {
                     "type": "object",
@@ -119,7 +129,9 @@
                     "properties": {
                       "type": {
                         "type": "string",
-                        "enum": ["FeatureCollection"]
+                        "enum": [
+                          "FeatureCollection"
+                        ]
                       },
                       "features": {
                         "type": "array",
@@ -128,7 +140,10 @@
                         }
                       }
                     },
-                    "required": ["type", "features"]
+                    "required": [
+                      "type",
+                      "features"
+                    ]
                   }
                 },
                 "required": [
@@ -180,7 +195,9 @@
                     "properties": {
                       "type": {
                         "type": "string",
-                        "enum": ["FeatureCollection"]
+                        "enum": [
+                          "FeatureCollection"
+                        ]
                       },
                       "features": {
                         "type": "array",
@@ -189,7 +206,10 @@
                         }
                       }
                     },
-                    "required": ["type", "features"]
+                    "required": [
+                      "type",
+                      "features"
+                    ]
                   },
                   "maskData": {
                     "type": "object",
@@ -197,7 +217,9 @@
                     "properties": {
                       "type": {
                         "type": "string",
-                        "enum": ["FeatureCollection"]
+                        "enum": [
+                          "FeatureCollection"
+                        ]
                       },
                       "features": {
                         "type": "array",
@@ -206,7 +228,10 @@
                         }
                       }
                     },
-                    "required": ["type", "features"]
+                    "required": [
+                      "type",
+                      "features"
+                    ]
                   }
                 },
                 "required": [
@@ -258,7 +283,9 @@
                     "properties": {
                       "type": {
                         "type": "string",
-                        "enum": ["Point"]
+                        "enum": [
+                          "Point"
+                        ]
                       },
                       "coordinates": {
                         "type": "array",
@@ -269,7 +296,10 @@
                         "maxItems": 3
                       }
                     },
-                    "required": ["type", "coordinates"]
+                    "required": [
+                      "type",
+                      "coordinates"
+                    ]
                   },
                   "endPoint": {
                     "type": "object",
@@ -277,7 +307,9 @@
                     "properties": {
                       "type": {
                         "type": "string",
-                        "enum": ["Point"]
+                        "enum": [
+                          "Point"
+                        ]
                       },
                       "coordinates": {
                         "type": "array",
@@ -288,7 +320,10 @@
                         "maxItems": 3
                       }
                     },
-                    "required": ["type", "coordinates"]
+                    "required": [
+                      "type",
+                      "coordinates"
+                    ]
                   },
                   "obstacleData": {
                     "type": "object",
@@ -297,7 +332,9 @@
                     "properties": {
                       "type": {
                         "type": "string",
-                        "enum": ["FeatureCollection"]
+                        "enum": [
+                          "FeatureCollection"
+                        ]
                       },
                       "features": {
                         "type": "array",

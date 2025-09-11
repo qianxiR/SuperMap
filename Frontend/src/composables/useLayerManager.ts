@@ -475,12 +475,17 @@ export function uselayermanager() {
               coordinates: coordinates
             },
             properties: {
+              // 直接使用原始属性，后端已经处理了所有必要的元数据
               ...properties,
-              ...geometricProperties,
-              sourceType: sourceType,
-              saveTime: new Date().toISOString(),
-              layerName: layerName,
-              saveFormat: saveFormat // 添加保存格式标识
+              // 只添加必要的几何属性（如果不存在）
+              ...Object.fromEntries(
+                Object.entries(geometricProperties).filter(([key]) => !(key in properties))
+              ),
+              // 只添加基本的保存元数据（如果不存在）
+              ...(properties.sourceType ? {} : { sourceType: sourceType }),
+              ...(properties.saveTime ? {} : { saveTime: new Date().toISOString() }),
+              ...(properties.layerName ? {} : { layerName: layerName }),
+              ...(properties.saveFormat ? {} : { saveFormat: saveFormat })
             }
           }
         })

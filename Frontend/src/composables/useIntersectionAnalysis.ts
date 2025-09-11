@@ -273,17 +273,7 @@ export function useIntersectionAnalysis() {
       if (geometry) {
         const f = new Feature({ 
           geometry, 
-          properties: { 
-            // 保留后端传来的完整属性数据
-            ...item.properties,
-            // 添加分析元数据（如果不存在）
-            id: item.properties?.id || item.id, 
-            name: item.properties?.name || item.name, 
-            sourceTarget: item.sourceTargetlayerName, 
-            sourceMask: item.sourceMasklayerName, 
-            createdAt: item.createdAt,
-            analysisType: 'intersection'
-          } 
+          properties: item.properties || {} // 直接使用后端返回的完整属性，不再额外处理
         })
         validFeatures.push(f)
       } else {
@@ -348,24 +338,14 @@ export function useIntersectionAnalysis() {
     if (!mapStore.map || items.length === 0) return
 
     try {
-      // 将相交结果转换为 Openlayers Feature，保留完整属性
+      // 将相交结果转换为 Openlayers Feature，直接使用后端返回的完整属性
       const features = items.map(item => {
         const format = new GeoJSON()
         if (item.geometry && item.geometry.type && item.geometry.coordinates) {
           const geometry = format.readGeometry(item.geometry)
           const feature = new Feature({ 
             geometry, 
-            properties: { 
-              // 保留完整的原始属性数据
-              ...item.properties,
-              // 添加或覆盖分析元数据
-              id: item.properties?.id || item.id, 
-              name: item.properties?.name || item.name, 
-              sourceTarget: item.sourceTargetlayerName, 
-              sourceMask: item.sourceMasklayerName, 
-              createdAt: item.createdAt,
-              analysisType: 'intersection'
-            } 
+            properties: item.properties || {} // 直接使用后端返回的完整属性，不再额外处理
           })
           return feature
         }
