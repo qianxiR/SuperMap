@@ -127,6 +127,11 @@ class EraseAnalysisService {
       batchSize: batchSize
     });
 
+    // 获取第一个目标要素的属性作为模板
+    const firstTargetProps = targetFeatures.length > 0 && targetFeatures[0].properties 
+      ? JSON.parse(JSON.stringify(targetFeatures[0].properties)) 
+      : {};
+
     try {
       // 第一步：合并所有擦除要素为单个MultiPolygon
       const mergedEraseFeature = this._mergeEraseFeatures(eraseFeatures);
@@ -155,6 +160,15 @@ class EraseAnalysisService {
                 id: `erase_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 name: `擦除区域 ${results.length + 1}`,
                 geometry: mergedResult.geometry,
+                properties: {
+                  // 保留第一个目标要素的原始属性
+                  ...firstTargetProps,
+                  // 添加分析元数据
+                  analysisType: 'erase',
+                  sourceLayer: 'target',
+                  eraseLayer: 'erase',
+                  processedAt: new Date().toISOString()
+                },
                 sourceTargetLayerName: '目标图层',
                 sourceEraseLayerName: '擦除图层',
                 createdAt: new Date().toISOString()
@@ -328,6 +342,11 @@ class EraseAnalysisService {
       batchSize: batchSize
     });
 
+    // 获取第一个目标要素的属性作为模板
+    const firstTargetProps = targetFeatures.length > 0 && targetFeatures[0].properties
+      ? JSON.parse(JSON.stringify(targetFeatures[0].properties))
+      : {};
+
     // 分批处理避免内存溢出
     for (let i = 0; i < targetFeatures.length; i += batchSize) {
       const targetBatch = targetFeatures.slice(i, i + batchSize);
@@ -345,6 +364,15 @@ class EraseAnalysisService {
                   id: `erase_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                   name: `擦除区域 ${results.length + 1}`,
                   geometry: difference.geometry,
+                  properties: {
+                    // 保留第一个目标要素的原始属性
+                    ...firstTargetProps,
+                    // 添加分析元数据
+                    analysisType: 'erase',
+                    sourceLayer: 'target',
+                    eraseLayer: 'erase',
+                    processedAt: new Date().toISOString()
+                  },
                   sourceTargetLayerName: '目标图层',
                   sourceEraseLayerName: '擦除图层',
                   createdAt: new Date().toISOString()

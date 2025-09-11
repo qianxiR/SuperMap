@@ -109,25 +109,67 @@ export function useShortestPathAnalysis() {
   
   // ===== 图层显示方法 =====
   
-  const displayAnalysisResults = (results: ShortestPathResult[]): void => {
+  const displayAnalysisResults = (featureCollection: any): void => {
     // 只移除之前的路径图层，保留起始点和目标点
     removePathlayersOnly()
     
-    if (results.length === 0) return
+    if (!featureCollection.features || featureCollection.features.length === 0) return
     
-    // 创建新的分析及绘制图层
-    const analysisFeatures = results.map(result => {
-      const geometry = new window.ol.format.GeoJSON().readGeometry(result.geometry)
-      const feature = new window.ol.Feature({
-        geometry: geometry,
-        properties: result.properties || {} // 直接使用后端返回的完整属性，不再额外处理
-      })
-      return feature
+    console.log('=== displayAnalysisResults - 开始处理最短路径分析结果 ===')
+    console.log('结果数量:', featureCollection.features.length)
+    console.log('完整结果数据:', JSON.stringify(featureCollection, null, 2))
+
+    const pathFeatures: any[] = []
+    
+    featureCollection.features.forEach((feature: any, index: number) => {
+      console.log(`=== 处理第 ${index + 1} 个要素 ===`)
+      console.log('feature.geometry.type:', feature.geometry.type)
+      console.log('feature完整结构:', JSON.stringify(feature, null, 2))
+      
+      // 处理后端返回的Feature数据
+      try {
+        let geometry;
+        
+        // 检查geometry类型并相应处理
+        if (feature.geometry.type === 'FeatureCollection') {
+          // 如果geometry本身是FeatureCollection，处理其中的features
+          const geoJSONFormat = new window.ol.format.GeoJSON()
+          const features = geoJSONFormat.readFeatures(feature.geometry)
+          features.forEach((olFeature: any) => {
+            const featureGeometry = olFeature.getGeometry()
+            if (featureGeometry) {
+              const newFeature = new window.ol.Feature({
+                geometry: featureGeometry,
+                ...feature.properties // 直接展开属性到Feature根级别
+              })
+              pathFeatures.push(newFeature)
+            }
+          })
+        } else {
+          // 正常的Geometry类型
+          geometry = new window.ol.format.GeoJSON().readGeometry(feature.geometry)
+          const olFeature = new window.ol.Feature({
+            geometry: geometry,
+            ...feature.properties // 直接展开属性到Feature根级别
+          })
+          pathFeatures.push(olFeature)
+        }
+      } catch (error) {
+        console.error(`处理第${index + 1}个要素时出错:`, error, feature)
+      }
     })
+    
+    console.log('=== displayAnalysisResults - 处理完成 ===')
+    console.log('最终生成的要素数量:', pathFeatures.length)
+    console.log('所有生成要素的属性信息:')
+    pathFeatures.forEach((feature, index) => {
+      console.log(`要素${index + 1}:`, feature.getProperties?.())
+    })
+    console.log('=== 开始添加到地图 ===')
     
     // 设置分析及绘制图层样式
     const analysislayer = new window.ol.layer.Vector({
-      source: new window.ol.source.Vector({ features: analysisFeatures }),
+      source: new window.ol.source.Vector({ features: pathFeatures }),
       style: getAnalysislayerStyle(),
       zIndex: 999
     })
@@ -136,7 +178,7 @@ export function useShortestPathAnalysis() {
     analysislayer.set('isAnalysislayer', true)
     analysislayer.set('id', `path-layer-${Date.now()}`)
     analysislayer.set('analysisType', 'path')
-    analysislayer.set('analysisResults', results)
+    analysislayer.set('analysisResults', featureCollection.features)
     
     setAnalysisLayers({ pathlayer: analysislayer })
     mapStore.map.addLayer(analysislayer)
@@ -484,22 +526,15 @@ export function useShortestPathAnalysis() {
       }
       
       
-      const result: ShortestPathResult = {
-        id: pathFeature.properties?.id || `path_${Date.now()}`,
-        name: pathFeature.properties?.name || '最短路径',
-        geometry: pathFeature.geometry,
-        properties: pathFeature.properties || {}, // 保留完整属性数据
-        distance: apiResponse.statistics?.distance || 0, // 从统计信息中获取距离
-        duration: apiResponse.statistics?.duration || 0, // 从统计信息中获取时间
-        pathType: '最短路径',
-        sourcelayerName: '分析及绘制图层',
-        createdAt: pathFeature.properties?.createdAt || new Date().toISOString()
-      }
+      // 保存结果到store（用于内部状态管理）- 直接保存API返回的完整FeatureCollection
+      setAnalysisResults(apiResponse)
       
-      setAnalysisResults([result])
-      displayAnalysisResults([result])
+      // 直接显示API返回的FeatureCollection
+      displayAnalysisResults(apiResponse)
       
-      const statusMessage = `最短路径分析完成，距离: ${result.distance} 米，预计时间: ${result.duration} 分钟`
+      const distance = apiResponse.statistics?.distance || 0
+      const duration = apiResponse.statistics?.duration || 0
+      const statusMessage = `最短路径分析完成，距离: ${distance} 米，预计时间: ${duration} 分钟`
       analysisStore.setAnalysisStatus(statusMessage)
       
     } catch (error) {

@@ -120,14 +120,6 @@
       </div>
       
       <!-- 结果操作 -->
-      <div class="result-actions">
-        <div class="button-group">
-          <SecondaryButton 
-            text="导出为GeoJSON"
-            @click="exportGeoJSON"
-          />
-        </div>
-      </div>
     </div>
   </PanelWindow>
   
@@ -169,10 +161,6 @@ const {
 
 // 使用图层管理 hook
 
-// 使用图层导出 hook
-const { exportFeaturesAsGeoJSON } = useLayerExport()
-
-
 
 
 // 包含"无"选项的图层选项
@@ -207,87 +195,6 @@ const clearResults = () => {
   analysisStore.setAnalysisStatus('已清除缓冲区分析结果')
 }
 
-// 导出为GeoJSON
-const exportGeoJSON = async () => {
-  if (!bufferResults.value || bufferResults.value.length === 0) {
-    analysisStore.setAnalysisStatus('没有可导出的结果')
-    return
-  }
-  
-  try {
-    const allFeatures: any[] = []
-    
-    bufferResults.value.forEach(result => {
-      if (result.geometry.type === 'FeatureCollection') {
-        // 如果是FeatureCollection类型，处理所有features
-        const features = result.geometry.features || []
-        console.log(`[Export] FeatureCollection包含 ${features.length} 个要素`)
-        
-        features.forEach((feature: any, index: number) => {
-          allFeatures.push({
-            type: 'Feature',
-            geometry: feature.geometry,
-            properties: {
-              id: `${result.id}_${index}`,
-              name: `${result.name}_${index + 1}`,
-              distance: result.distance,
-              unit: result.unit,
-              sourcelayer: result.sourcelayerName,
-              createdAt: result.createdAt,
-              featureIndex: index
-            }
-          })
-        })
-      } else if (result.geometry.type === 'Feature') {
-        // 如果是Feature类型，直接添加
-        allFeatures.push({
-          type: 'Feature',
-          geometry: result.geometry.geometry,
-          properties: {
-            id: result.id,
-            name: result.name,
-            distance: result.distance,
-            unit: result.unit,
-            sourcelayer: result.sourcelayerName,
-            createdAt: result.createdAt
-          }
-        })
-      } else {
-        // 直接是Geometry类型
-        allFeatures.push({
-          type: 'Feature',
-          geometry: result.geometry,
-          properties: {
-            id: result.id,
-            name: result.name,
-            distance: result.distance,
-            unit: result.unit,
-            sourcelayer: result.sourcelayerName,
-            createdAt: result.createdAt
-          }
-        })
-      }
-    })
-    
-    console.log(`[Export] 总共导出 ${allFeatures.length} 个要素`)
-    
-    await exportFeaturesAsGeoJSON(allFeatures, '缓冲区分析结果', {
-      analysisType: 'buffer_analysis',
-      sourceLayer: selectedAnalysislayerInfo.value?.name,
-      description: '缓冲区分析生成的要素结果',
-      parameters: {
-        radius: bufferSettings.value.radius,
-        semicircleLineSegment: bufferSettings.value.semicircleLineSegment,
-        resultCount: bufferResults.value.length
-      }
-    })
-    
-    analysisStore.setAnalysisStatus('GeoJSON 文件已导出')
-    
-  } catch (error) {
-    analysisStore.setAnalysisStatus(`导出失败: ${error instanceof Error ? error.message : '未知错误'}`)
-  }
-}
 
 // 生成基于分析参数的图层名称
 const generatelayerNameFromBuffer = () => {

@@ -248,30 +248,20 @@ export function useBufferAnalysis() {
       throw new Error('API响应格式错误：缺少features数据')
     }
 
-    // 将后端返回的features转换为BufferResult格式，直接使用后端返回的完整属性
-    const bufferResults = apiResponse.features.map((feature: any, index: number) => ({
-      id: feature.properties?.id || `buffer_${Date.now()}_${index}`,
-      name: feature.properties?.name || `缓冲区_${index + 1}`,
-      geometry: feature.geometry,
-      properties: feature.properties || {}, // 直接使用后端返回的完整属性，包含所有原始属性和分析元数据
-      distance: radiusMeters,
-      unit: 'meters',
-      sourcelayerName: target.name,
-      createdAt: new Date().toISOString()
-    }))
-
     console.log('[Buffer] 处理分析结果:', {
       inputFeatures: sourceData.features.length,
-      outputResults: bufferResults.length,
-      firstResult: bufferResults[0]
+      outputResults: apiResponse.features.length,
+      firstResult: apiResponse.features[0]
     })
 
-    const statusMessage = `缓冲区分析完成，成功处理 ${sourceData.features.length} 个要素，生成 ${bufferResults.length} 个缓冲区`
+    const statusMessage = `缓冲区分析完成，成功处理 ${sourceData.features.length} 个要素，生成 ${apiResponse.features.length} 个缓冲区`
     analysisStore.setAnalysisStatus(statusMessage)
     
-    // 更新状态和显示结果
-    bufferAnalysisStore.setBufferResults(bufferResults as any)
-    displayBufferResults(bufferResults)
+    // 保存结果到store（用于导出JSON功能）- 直接保存API返回的完整FeatureCollection
+    bufferAnalysisStore.setBufferResults(apiResponse)
+    
+    // 直接显示API返回的FeatureCollection
+    displayBufferResults(apiResponse)
     bufferAnalysisStore.setIsAnalyzing(false)
     
     } catch (error) {
@@ -282,71 +272,50 @@ export function useBufferAnalysis() {
   }
   
   // 在地图上显示缓冲区结果
-  const displayBufferResults = (results: BufferResult[]): void => {
+  const displayBufferResults = (featureCollection: any): void => {
     removeBufferlayers()
     
     console.log('=== displayBufferResults - 开始处理缓冲区结果 ===')
-    console.log('结果数量:', results.length)
-    console.log('完整结果数据:', JSON.stringify(results, null, 2))
+    console.log('结果数量:', featureCollection.features.length)
+    console.log('完整结果数据:', JSON.stringify(featureCollection, null, 2))
     
     const bufferFeatures: any[] = []
     
-    results.forEach((result, resultIndex) => {
-      console.log(`=== 处理第 ${resultIndex + 1} 个结果 ===`)
-      console.log('result.geometry.type:', result.geometry.type)
-      console.log('result完整结构:', JSON.stringify(result, null, 2))
-      // 处理不同的GeoJSON格式
-      if (result.geometry.type === 'FeatureCollection') {
-        // 如果是FeatureCollection类型，处理所有features
-        const features = new GeoJSON().readFeatures(result.geometry)
-        console.log(`[Display] FeatureCollection包含 ${features.length} 个要素`)
+    featureCollection.features.forEach((feature: any, index: number) => {
+      console.log(`=== 处理第 ${index + 1} 个要素 ===`)
+      console.log('feature.geometry.type:', feature.geometry.type)
+      console.log('feature完整结构:', JSON.stringify(feature, null, 2))
+      
+      // 处理后端返回的Feature数据
+      try {
+        let geometry;
         
-        features.forEach((olFeature: any, index: number) => {
-          const geometry = olFeature.getGeometry()
-          if (geometry) {
-            const feature = new Feature({
-              geometry: geometry,
-              properties: result.properties || {} // 直接使用后端返回的完整属性，不再额外处理
-            })
-            bufferFeatures.push(feature)
-          }
-        })
-      } else if (result.geometry.type === 'Feature') {
-        // 如果是Feature类型，提取geometry部分
-        const geometry = new GeoJSON().readGeometry(result.geometry.geometry)
-        const feature = new Feature({
-          geometry: geometry,
-          properties: {
-            // 保留后端传来的完整属性数据
-            ...result.properties,
-            // 添加前端显示需要的元数据
-            id: result.properties?.id || result.id,
-            name: result.properties?.name || result.name,
-            distance: result.distance,
-            unit: result.unit,
-            sourcelayer: result.sourcelayerName,
-            createdAt: result.createdAt
-          }
-        })
-        bufferFeatures.push(feature)
-      } else {
-        // 直接是Geometry类型
-        const geometry = new GeoJSON().readGeometry(result.geometry)
-        const feature = new Feature({
-          geometry: geometry,
-          properties: {
-            // 保留后端传来的完整属性数据
-            ...result.properties,
-            // 添加前端显示需要的元数据
-            id: result.properties?.id || result.id,
-            name: result.properties?.name || result.name,
-            distance: result.distance,
-            unit: result.unit,
-            sourcelayer: result.sourcelayerName,
-            createdAt: result.createdAt
-          }
-        })
-        bufferFeatures.push(feature)
+        // 检查geometry类型并相应处理
+        if (feature.geometry.type === 'FeatureCollection') {
+          // 如果geometry本身是FeatureCollection，处理其中的features
+          const geoJSONFormat = new GeoJSON()
+          const features = geoJSONFormat.readFeatures(feature.geometry)
+          features.forEach((olFeature: any) => {
+            const featureGeometry = olFeature.getGeometry()
+            if (featureGeometry) {
+              const newFeature = new Feature({
+                geometry: featureGeometry,
+                ...feature.properties // 直接展开属性到Feature根级别
+              })
+              bufferFeatures.push(newFeature)
+            }
+          })
+        } else {
+          // 正常的Geometry类型
+          geometry = new GeoJSON().readGeometry(feature.geometry)
+          const olFeature = new Feature({
+            geometry: geometry,
+            ...feature.properties // 直接展开属性到Feature根级别
+          })
+          bufferFeatures.push(olFeature)
+        }
+      } catch (error) {
+        console.error(`处理第${index + 1}个要素时出错:`, error, feature)
       }
     })
     
@@ -380,7 +349,7 @@ export function useBufferAnalysis() {
     })
     
     bufferlayer.set('isBufferlayer', true)
-    bufferlayer.set('bufferResults', results)
+    bufferlayer.set('bufferResults', featureCollection.features)
     
     mapStore.map.addLayer(bufferlayer)
     

@@ -96,11 +96,6 @@
           @click="handleExecuteAnalysis"
         />
         
-        <SecondaryButton 
-          v-if="currentResult"
-          text="导出为GeoJSON"
-          @click="exportGeoJSON"
-        />
 
 
         <SecondaryButton 
@@ -155,7 +150,6 @@ const {
   selectEndPoint,
   clearResults,
   executePathAnalysis,
-  exportGeoJSON,
   setObstaclelayer,
   updateAnalysisOptions
 } = useShortestPathAnalysis()

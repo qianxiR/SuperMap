@@ -198,21 +198,12 @@ export function useEraseAnalysis() {
         featuresCount: features.length
       })
 
-      // 将后端返回的features转换为EraseResultItem格式，保留完整属性
-      const eraseResults = features.map((feature: any, index: number) => ({
-        id: feature.properties?.id || `erase_${Date.now()}_${index}`,
-        name: feature.properties?.name || `擦除结果_${index + 1}`,
-        geometry: feature.geometry,
-        properties: feature.properties || {}, // 保留完整属性数据
-        sourceTargetlayerName: target!.name,
-        sourceEraselayerName: erase!.name,
-        createdAt: feature.properties?.createdAt || new Date().toISOString()
-      }));
-
-      // 更新状态和显示结果
-      store.setResults(eraseResults)
-      displayeraseResults(eraseResults)
-      analysisStore.setAnalysisStatus(`擦除分析完成：共生成 ${eraseResults.length} 个结果，已渲染到地图。`)
+      // 保存结果到store（用于内部状态管理）- 直接保存API返回的完整FeatureCollection
+      store.setResults(apiResponse)
+      
+      // 直接显示API返回的FeatureCollection
+      displayeraseResults(apiResponse)
+      analysisStore.setAnalysisStatus(`擦除分析完成：共生成 ${features.length} 个结果，已渲染到地图。`)
 
     } catch (error: any) {
       store.setIsAnalyzing(false)
@@ -223,90 +214,92 @@ export function useEraseAnalysis() {
   }
 
 
-  const displayeraseResults = (items: EraseResultItem[]): void => {
+  const displayeraseResults = (featureCollection: any): void => {
     if (!mapStore.map) return
 
     removeEraselayers()
+    
+    console.log('=== displayeraseResults - 开始处理擦除分析结果 ===')
+    console.log('结果数量:', featureCollection.features.length)
+    console.log('完整结果数据:', JSON.stringify(featureCollection, null, 2))
 
-    // 创建空的矢量图层容器
-    const source = new VectorSource({})
+    const eraseFeatures: any[] = []
+    
+    featureCollection.features.forEach((feature: any, index: number) => {
+      console.log(`=== 处理第 ${index + 1} 个要素 ===`)
+      console.log('feature.geometry.type:', feature.geometry.type)
+      console.log('feature完整结构:', JSON.stringify(feature, null, 2))
+      
+      // 处理后端返回的Feature数据
+      try {
+        let geometry;
+        
+        // 检查geometry类型并相应处理
+        if (feature.geometry.type === 'FeatureCollection') {
+          // 如果geometry本身是FeatureCollection，处理其中的features
+          const geoJSONFormat = new GeoJSON()
+          const features = geoJSONFormat.readFeatures(feature.geometry)
+          features.forEach((olFeature: any) => {
+            const featureGeometry = olFeature.getGeometry()
+            if (featureGeometry) {
+              const newFeature = new Feature({
+                geometry: featureGeometry,
+                ...feature.properties // 直接展开属性到Feature根级别
+              })
+              eraseFeatures.push(newFeature)
+            }
+          })
+        } else {
+          // 正常的Geometry类型
+          geometry = new GeoJSON().readGeometry(feature.geometry)
+          const olFeature = new Feature({
+            geometry: geometry,
+            ...feature.properties // 直接展开属性到Feature根级别
+          })
+          eraseFeatures.push(olFeature)
+        }
+      } catch (error) {
+        console.error(`处理第${index + 1}个要素时出错:`, error, feature)
+      }
+    })
+    
+    console.log('=== displayeraseResults - 处理完成 ===')
+    console.log('最终生成的要素数量:', eraseFeatures.length)
+    console.log('所有生成要素的属性信息:')
+    eraseFeatures.forEach((feature, index) => {
+      console.log(`要素${index + 1}:`, feature.getProperties?.())
+    })
+    console.log('=== 开始添加到地图 ===')
+    
+    const eraseSource = new VectorSource({
+      features: eraseFeatures
+    })
+    
+    // 获取分析专用颜色
     const rootStyle = getComputedStyle(document.documentElement)
     const strokeColor = rootStyle.getPropertyValue('--map-highlight-color')?.trim() || '#000000'
-    // 使用分析专用颜色，确保挖洞效果正确显示
     const fillColor = rootStyle.getPropertyValue('--analysis-color')?.trim() || '#0078D4'
-    // 使用蓝色，70%透明度
-    const fillVar = fillColor + '4D'
+    const fillVar = fillColor + '4D' // 蓝色，70%透明度
 
     const layer = new Vectorlayer({
-      source,
+      source: eraseSource,
       style: new Style({
         stroke: new Stroke({ color: strokeColor, width: 2 }),
         fill: new Fill({ color: fillVar })
       })
     })
+    
     layer.set('isEraselayer', true)
-    layer.set('eraseResults', items)
+    layer.set('eraseResults', featureCollection.features)
     mapStore.map.addLayer(layer)
-
-    // 处理所有要素，直接使用原始几何体
-    const validFeatures: any[] = []
-
-    items.forEach((item, index) => {
-      if (!item.geometry || !item.geometry.type || !item.geometry.coordinates) {
-        return
-      }
-
-      // 直接使用原始几何体，不进行复杂验证
-      const format = new GeoJSON()
-      const geometry = format.readGeometry(item.geometry)
-      
-      const f = new Feature({ 
-          geometry,
-          properties: {
-            // 保留后端传来的完整属性数据
-            ...item.properties,
-            // 添加分析元数据（如果不存在）
-            id: item.properties?.id || item.id,
-            name: item.properties?.name || item.name,
-            sourceTarget: item.sourceTargetlayerName, 
-            sourceErase: item.sourceEraselayerName, 
-            createdAt: item.createdAt,
-            analysisType: 'erase'
-          }
-        })
-      validFeatures.push(f)
-    })
-
-    // 记录处理结果
-    console.log('[Erase] 要素处理完成:', {
-      total: items.length,
-      valid: validFeatures.length
-    })
-
-    // 显示分析状态
-    analysisStore.setAnalysisStatus(`擦除分析完成：共生成 ${validFeatures.length} 个结果，已渲染到地图。`)
-
-    // 添加所有有效要素到图层
-    if (validFeatures.length > 0) {
-      source.addFeatures(validFeatures as any[])
-      
-      // 缩放到结果图层范围
-      try {
-      const extent = source.getExtent()
-        if (extent && 
-            !extent.every((coord: number) => coord === Infinity) &&
-            !extent.every((coord: number) => coord === -Infinity) &&
-            extent[0] !== extent[2] && 
-            extent[1] !== extent[3]) {
-        mapStore.map.getView().fit(extent, {
-          padding: [50, 50, 50, 50],
-          duration: 1000
-        })
-          console.log('[Erase] 已缩放到擦除结果范围')
-        }
-      } catch (error) {
-        console.warn('[Erase] 缩放到结果范围失败:', error)
-      }
+    
+    // 缩放到擦除结果范围
+    const extent = eraseSource.getExtent()
+    if (extent && !extent.every((coord: number) => coord === Infinity)) {
+      mapStore.map.getView().fit(extent, {
+        padding: [50, 50, 50, 50],
+        duration: 1000
+      })
     }
   }
 

@@ -16,7 +16,6 @@
 
       <div class="analysis-actions">
         <SecondaryButton text="开始执行擦除" @click="handleExecute" />
-        <SecondaryButton v-if="results.length > 0" text="导出为GeoJSON" @click="handleExportJSON" />
         <SecondaryButton v-if="results.length > 0" text="清除擦除结果" @click="handleClear" />
       </div>
 
@@ -103,7 +102,6 @@ const {
 
 const mapStore = useMapStore()
 const analysisStore = useAnalysisStore()
-const { exportFeaturesAsGeoJSON } = useLayerExport()
 
 
 // 错误消息状态
@@ -221,32 +219,6 @@ watch(() => analysisStore.toolPanel.visible.valueOf?.() ?? analysisStore.toolPan
   }
 })
 
-const handleExportJSON = async () => {
-  const features = results.value.map((r: any) => ({ 
-    type: 'Feature', 
-    geometry: r.geometry, 
-    properties: { 
-      // 保留完整的原始属性数据
-      ...r.properties,
-      // 添加或覆盖导出元数据
-      name: r.properties?.name || r.name,
-      id: r.properties?.id || r.id,
-      createdAt: new Date().toISOString(),
-      analysisType: 'erase'
-    } 
-  }))
-  
-  await exportFeaturesAsGeoJSON(features, '擦除分析结果', {
-    analysisType: 'erase_analysis',
-    sourceLayer: targetlayerId.value,
-    description: '擦除分析生成的要素结果',
-    parameters: {
-      targetLayer: targetlayerId.value,
-      eraseLayer: eraselayerId.value,
-      resultCount: results.value.length
-    }
-  })
-}
 </script>
 
 <style scoped>
