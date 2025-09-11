@@ -267,7 +267,12 @@ class ShortestPathAnalysisResponseDTO {
           id: this.resultId,
           name: this.resultName,
           analysisType: 'shortest-path',
-          createdAt: this.timestamp
+          distance: this.statistics?.distance || 0,
+          duration: this.statistics?.duration || 0,
+          pathType: 'optimal',
+          createdAt: this.timestamp,
+          processedAt: this.timestamp,
+          executionTime: this.executionTime
         }
       });
     }

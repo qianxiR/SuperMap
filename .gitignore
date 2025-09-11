@@ -14,4 +14,6 @@ llm/*
 database/
 analysis/downloads/
 node_modules/
+analysis/node_modules/
 Backend/analysis/node_modules/
+Backend/analysis/downloads/

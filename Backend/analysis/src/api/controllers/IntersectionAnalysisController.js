@@ -106,13 +106,11 @@ class IntersectionAnalysisController {
           properties: {
             // 保留第一个目标要素的原始属性
             ...preservedProps,
-            // 添加分析元数据
-            _analysis: {
-              type: 'intersection',
-              sourceLayer: 'target',
-              maskLayer: 'mask',
-              processedAt: new Date().toISOString()
-            }
+            // 直接添加分析元数据到properties根级别
+            analysisType: 'intersection',
+            sourceLayer: 'target',
+            maskLayer: 'mask',
+            processedAt: new Date().toISOString()
           }
         };
       });

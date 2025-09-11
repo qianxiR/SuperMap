@@ -93,24 +93,12 @@ class BufferAnalysisController {
           properties: {
             // 保留所有原始属性
             ...preservedProps,
-            // 添加缓冲区分析元数据
-            _buffer: {
-              id: `buffer_${originalProps.id || 'unknown'}_${Date.now()}`,
-              name: `${originalProps.name || '几何要素'}_缓冲区`,
-              sourceFeatureId: originalProps.id || 'unknown',
-              distance: req.body?.bufferSettings?.radius || 0,
-              unit: 'meters',
-              area: calculateArea(feature.geometry),
-              createdAt: new Date().toISOString()
-            },
-            // 添加分析元数据
-            _analysis: {
-              type: 'buffer',
-              radius: req.body?.bufferSettings?.radius || 0,
-              unit: 'meters',
-              sourceLayer: 'original',
-              processedAt: new Date().toISOString()
-            }
+            // 直接添加分析元数据到properties根级别
+            analysisType: 'buffer',
+            radius: req.body?.bufferSettings?.radius || 0,
+            analysisUnit: 'meters',
+            sourceLayer: 'original',
+            processedAt: new Date().toISOString()
           }
         };
       });
