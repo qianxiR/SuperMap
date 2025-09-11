@@ -426,6 +426,123 @@ export function uselayermanager() {
         console.error('[Agent] 执行属性查询时出错:', error)
       }
     })
+    
+    // 监听保存查询结果为图层事件
+    window.addEventListener('agent:saveQueryResultsAsLayer', async (e: any) => {
+      const { layerName } = e.detail || {}
+      if (!layerName) {
+        console.warn('[Agent] 保存查询结果参数不完整:', { layerName })
+        return
+      }
+      
+      try {
+        // 动态导入useFeatureQuery以获取查询结果
+        const { useFeatureQuery } = await import('@/composables/useFeatureQuery')
+        const featureQuery = useFeatureQuery()
+        
+        // 获取当前查询结果
+        const queryResults = featureQuery.queryResults.value
+        
+        // 保存查询结果为新图层
+        const success = await saveFeaturesAslayer(queryResults, layerName, 'query')
+        if (success) {
+          const successMessage = `查询结果已保存为新图层"${layerName}"，共${queryResults.length}个要素`
+          console.log(`[Agent] ${successMessage}`)
+          
+          // 发送保存成功事件
+          const successEvent = new CustomEvent('agent:saveResult', {
+            detail: {
+              success: true,
+              message: successMessage,
+              layerName,
+              count: queryResults.length
+            }
+          })
+          window.dispatchEvent(successEvent)
+        } else {
+          const errorMessage = `保存图层"${layerName}"失败`
+          console.error(`[Agent] ${errorMessage}`)
+          
+          // 发送保存失败事件
+          const errorEvent = new CustomEvent('agent:saveResult', {
+            detail: {
+              success: false,
+              message: errorMessage,
+              layerName
+            }
+          })
+          window.dispatchEvent(errorEvent)
+        }
+        
+      } catch (error) {
+        console.error('[Agent] 执行保存查询结果时出错:', error)
+        
+        // 发送保存失败事件
+        const errorEvent = new CustomEvent('agent:saveResult', {
+          detail: {
+            success: false,
+            message: `保存失败: ${error instanceof Error ? error.message : '未知错误'}`,
+            layerName
+          }
+        })
+        window.dispatchEvent(errorEvent)
+      }
+    })
+    
+    // 监听导出查询结果为JSON事件
+    window.addEventListener('agent:exportQueryResultsAsJson', async (e: any) => {
+      const { fileName } = e.detail || {}
+      if (!fileName) {
+        console.warn('[Agent] 导出查询结果参数不完整:', { fileName })
+        return
+      }
+      
+      try {
+        // 动态导入useFeatureQuery以获取查询结果
+        const { useFeatureQuery } = await import('@/composables/useFeatureQuery')
+        const featureQuery = useFeatureQuery()
+        
+        // 获取当前查询结果
+        const queryResults = featureQuery.queryResults.value
+        
+        // 动态导入useLayerExport以获取导出功能
+        const { useLayerExport } = await import('@/composables/useLayerExport')
+        const { exportFeaturesAsGeoJSON } = useLayerExport()
+        
+        // 导出查询结果为GeoJSON
+        await exportFeaturesAsGeoJSON(queryResults, fileName, {
+          analysisType: 'query',
+          description: `查询结果导出 - ${fileName}`
+        })
+        
+        const successMessage = `查询结果已导出为"${fileName}.json"，共${queryResults.length}个要素`
+        console.log(`[Agent] ${successMessage}`)
+        
+        // 发送导出成功事件
+        const successEvent = new CustomEvent('agent:exportResult', {
+          detail: {
+            success: true,
+            message: successMessage,
+            fileName,
+            count: queryResults.length
+          }
+        })
+        window.dispatchEvent(successEvent)
+        
+      } catch (error) {
+        console.error('[Agent] 执行导出查询结果时出错:', error)
+        
+        // 发送导出失败事件
+        const errorEvent = new CustomEvent('agent:exportResult', {
+          detail: {
+            success: false,
+            message: `导出失败: ${error instanceof Error ? error.message : '未知错误'}`,
+            fileName
+          }
+        })
+        window.dispatchEvent(errorEvent)
+      }
+    })
   } // 结束只注册一次的if语句
 
   const removeLayer = (layerId: string) => {

@@ -148,6 +148,56 @@ const handleQueryResult = (event: CustomEvent) => {
   })
 }
 
+// 监听保存结果事件
+const handleSaveResult = (event: CustomEvent) => {
+  const { success, message, layerName, count, error } = event.detail
+  
+  // 构造保存结果消息
+  let resultMessage = ''
+  if (success) {
+    resultMessage = `保存完成：${message}`
+  } else {
+    resultMessage = `保存失败：${error || '未知错误'}`
+  }
+  
+  // 将结果添加到聊天记录中
+  messages.value.push({ 
+    id: Date.now(), 
+    text: resultMessage, 
+    sender: 'system' 
+  })
+  
+  // 滚动到底部显示新消息
+  nextTick(() => {
+    messagesPanelRef.value?.scrollToBottom()
+  })
+}
+
+// 监听导出结果事件
+const handleExportResult = (event: CustomEvent) => {
+  const { success, message, fileName, count, error } = event.detail
+  
+  // 构造导出结果消息
+  let resultMessage = ''
+  if (success) {
+    resultMessage = `导出完成：${message}`
+  } else {
+    resultMessage = `导出失败：${error || '未知错误'}`
+  }
+  
+  // 将结果添加到聊天记录中
+  messages.value.push({ 
+    id: Date.now(), 
+    text: resultMessage, 
+    sender: 'system' 
+  })
+  
+  // 滚动到底部显示新消息
+  nextTick(() => {
+    messagesPanelRef.value?.scrollToBottom()
+  })
+}
+
 onMounted(() => {
   // 恢复LLM模式状态
   const llmState = modeStateStore.getLLMState()
@@ -187,6 +237,8 @@ onMounted(() => {
   if (!(window as any).__queryResultListenerRegistered) {
     (window as any).__queryResultListenerRegistered = true
     window.addEventListener('agent:queryResult', handleQueryResult as EventListener)
+    window.addEventListener('agent:saveResult', handleSaveResult as EventListener)
+    window.addEventListener('agent:exportResult', handleExportResult as EventListener)
   }
 });
 
@@ -207,6 +259,8 @@ onUnmounted(() => {
   window.removeEventListener('chatHistoryRestored', handleChatHistoryRestored as EventListener)
   if ((window as any).__queryResultListenerRegistered) {
     window.removeEventListener('agent:queryResult', handleQueryResult as EventListener)
+    window.removeEventListener('agent:saveResult', handleSaveResult as EventListener)
+    window.removeEventListener('agent:exportResult', handleExportResult as EventListener)
     ;(window as any).__queryResultListenerRegistered = false
   }
 });
@@ -306,6 +360,42 @@ const sendMessage = async () => {
             }
           } catch (error) {
             console.error('[Agent] 处理属性查询工具调用时出错:', error)
+          }
+        }
+        
+        // 如果是保存查询结果为图层的工具
+        if (name === 'save_query_results_as_layer') {
+          try {
+            const parsed = call?.args || {}
+            const layerName = parsed.layer_name || parsed.layerName
+            
+            if (layerName) {
+              const ev = new CustomEvent('agent:saveQueryResultsAsLayer', { 
+                detail: { layerName } 
+              })
+              window.dispatchEvent(ev)
+              console.log('[Agent] dispatched event: agent:saveQueryResultsAsLayer', { layerName })
+            }
+          } catch (error) {
+            console.error('[Agent] 处理保存查询结果工具调用时出错:', error)
+          }
+        }
+        
+        // 如果是导出查询结果为JSON的工具
+        if (name === 'export_query_results_as_json') {
+          try {
+            const parsed = call?.args || {}
+            const fileName = parsed.file_name || parsed.fileName
+            
+            if (fileName) {
+              const ev = new CustomEvent('agent:exportQueryResultsAsJson', { 
+                detail: { fileName } 
+              })
+              window.dispatchEvent(ev)
+              console.log('[Agent] dispatched event: agent:exportQueryResultsAsJson', { fileName })
+            }
+          } catch (error) {
+            console.error('[Agent] 处理导出查询结果工具调用时出错:', error)
           }
         }
       } else {

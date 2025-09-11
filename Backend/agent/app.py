@@ -99,21 +99,21 @@ def save_query_results_as_layer(layer_name: str) -> str:
     输出数据格式：
       - string: 格式 "save_layer:layer_name"
     """
-    return f"save_layer:{layer_name}"
+    return f"保存操作已发送到前端，图层名称：{layer_name}"
 
 
 @tool
-def export_query_results_as_json() -> str:
+def export_query_results_as_json(file_name: str) -> str:
     """
     导出查询结果为GeoJSON文件（前端执行）。
     输入参数：
-      - 无参数
+      - file_name: string 文件名（不包含扩展名）
     业务处理：
       - 后端不直接操作地图，仅返回导出指令供前端执行
     输出数据格式：
-      - string: 格式 "export_json"
+      - string: 格式 "export_json:file_name"
     """
-    return "export_json"
+    return f"导出操作已发送到前端，文件名：{file_name}"
 
 
 def load_system_prompt() -> str:
@@ -209,12 +209,13 @@ async def tool_chat(req: ToolChatRequest):
             "3) save_query_results_as_layer(layer_name:str)\n"
             "- 当用户说'保存查询结果为图层'、'另存为图层'、'保存为新图层'时调用。\n"
             "- 需要指定新图层名称。\n"
-            "4) export_query_results_as_json()\n"
+            "4) export_query_results_as_json(file_name:str)\n"
             "- 当用户说'导出为JSON'、'导出为GeoJSON'、'导出查询结果'时调用。\n"
+            "- 需要指定文件名（不包含扩展名）。\n"
             "- 若用户使用@图层名称，请将@后的文本作为图层名称传递。\n"
             "严禁自行执行这些操作，必须通过工具完成。\n"
             f"历史操作(顺序, 最新在下):\n{history_text}\n"
-            f"最近一次操作: {last_action_text}。若用户问'刚才做了什么'，请直接依据最近一次操作回答。"
+            f"最近一次操作: {last_action_text}。若用户问'刚才做了什么'，请直接依据最近几次操作回答。"
         )),
         HumanMessage(content=req.prompt)
     ])
@@ -229,6 +230,10 @@ async def tool_chat(req: ToolChatRequest):
         tool_result = toggle_layer_visibility.invoke(tool_args)
     elif tool_name == "query_features_by_attribute":
         tool_result = query_features_by_attribute.invoke(tool_args)
+    elif tool_name == "save_query_results_as_layer":
+        tool_result = save_query_results_as_layer.invoke(tool_args)
+    elif tool_name == "export_query_results_as_json":
+        tool_result = export_query_results_as_json.invoke(tool_args)
     else:
         tool_result = f"未知工具: {tool_name}"
     history_entry = str(tool_result)
@@ -239,7 +244,7 @@ async def tool_chat(req: ToolChatRequest):
     tool_message = ToolMessage(content=str(tool_result), tool_call_id=tool_call["id"])
     final_ai: AIMessage = llm_with_tools.invoke([
         SystemMessage(content=(
-            "你有两个工具:\n"
+            "你有四个工具:\n"
             "1) toggle_layer_visibility(layer_name:str, action:'show'|'hide'|'toggle')\n"
             "- 遇到'打开/隐藏/切换@图层名称'的请求，必须调用该工具。\n"
             "- 使用图层名称而非图层ID进行操作。\n"
@@ -254,12 +259,23 @@ async def tool_chat(req: ToolChatRequest):
             "  * '<=' 映射为 'lte'\n"
             "  * 'like' 保持不变\n"
             "- 例如: 用户说'查找NAME=学校'时，operator参数必须传递'eq'而不是'='\n"
+            "3) save_query_results_as_layer(layer_name:str)\n"
+            "- 遇到'保存查询结果为图层'、'另存为图层'、'保存为新图层'的请求时调用。\n"
+            "- 需要指定新图层名称。\n"
+            "4) export_query_results_as_json(file_name:str)\n"
+            "- 遇到'导出为JSON'、'导出为GeoJSON'、'导出查询结果'的请求时调用。\n"
+            "- 需要指定文件名（不包含扩展名）。\n"
             "\n"
-            "重要：当工具执行完成后，你必须根据工具执行结果向用户提供明确的反馈。\n"
-            "- 如果工具执行成功，告诉用户操作已完成\n"
-            "- 如果工具执行失败，告诉用户具体错误信息\n"
-            "- 对于查询操作，告知用户查询结果（找到多少个要素等）\n"
-            "- 对于图层操作，告知用户图层状态变化"
+            "重要：当工具执行完成后，必须简洁回复，禁止废话。\n"
+            "- 查询操作：直接说'正在执行请稍后'\n"
+            "- 图层操作：直接说'图层已显示/隐藏'\n"
+            "- 保存操作：直接说'正在执行请稍后'\n"
+            "- 导出操作：直接说'正在执行请稍后'\n"
+            "严禁说'看起来'、'可能'、'如果'、'请确认'等不确定词汇。\n"
+            "严禁解释系统工作原理或引导用户查看界面。\n"
+            "严禁回复具体的要素数量或详细结果。\n"
+            "严禁编造或猜测操作结果。\n"
+            "只回复'正在执行请稍后'或简单的操作状态，一句话结束。"
         )),
         HumanMessage(content=req.prompt),
         first_ai,

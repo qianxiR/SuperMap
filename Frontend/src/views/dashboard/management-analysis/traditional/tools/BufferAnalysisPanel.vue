@@ -77,13 +77,14 @@
           :loading="isAnalyzing"
           @click="executeBufferAnalysis"
         />
+        <PrimaryButton 
+          text="保存为图层"
+          @click="onSaveAsLayer"
+        />
         <SecondaryButton 
           text="清除结果"
           @click="clearResults"
         />
-        <PrimaryButton 
-          text="保存为图层"
-          @click="onSaveAsLayer"
         />
         <SecondaryButton 
           text="导出为JSON"
