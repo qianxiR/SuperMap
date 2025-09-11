@@ -65,7 +65,7 @@ const props = withDefaults(defineProps<Props>(), {
   messages: () => [],
   autoScroll: true,
   scrollThreshold: 100,
-  introText: '我是您的GIS空间分析助手，能够协助您进行地图图层管理、属性查询、空间分析（如缓冲、相交、擦除、最短路径）以及结果导出等操作。请告诉我您需要执行的任务，我将为您提供高效、精准的支持！'
+  introText: '我是您的GIS空间分析伙伴，能够协助您进行地图图层管理、属性查询、空间分析（如缓冲、相交、擦除、最短路径）以及结果导出等操作。请告诉我您需要执行的任务，我将为您提供高效、精准的支持！'
 });
 
 const emit = defineEmits<{

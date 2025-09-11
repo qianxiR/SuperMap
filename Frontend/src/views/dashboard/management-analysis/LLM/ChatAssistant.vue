@@ -123,6 +123,31 @@ const handleChatHistoryRestored = (event: CustomEvent) => {
   restoreHistoryMessages(historyMessages)
 }
 
+// 监听查询结果事件
+const handleQueryResult = (event: CustomEvent) => {
+  const { success, message, layerName, field, operator, value, count, error } = event.detail
+  
+  // 构造查询结果消息
+  let resultMessage = ''
+  if (success) {
+    resultMessage = `查询完成：${message}`
+  } else {
+    resultMessage = `查询失败：${error || '未知错误'}`
+  }
+  
+  // 将结果添加到聊天记录中
+  messages.value.push({ 
+    id: Date.now(), 
+    text: resultMessage, 
+    sender: 'system' 
+  })
+  
+  // 滚动到底部显示新消息
+  nextTick(() => {
+    messagesPanelRef.value?.scrollToBottom()
+  })
+}
+
 onMounted(() => {
   // 恢复LLM模式状态
   const llmState = modeStateStore.getLLMState()
@@ -157,6 +182,12 @@ onMounted(() => {
   
   // 监听历史记录恢复事件
   window.addEventListener('chatHistoryRestored', handleChatHistoryRestored as EventListener)
+  
+  // 监听查询结果事件 - 只注册一次
+  if (!(window as any).__queryResultListenerRegistered) {
+    (window as any).__queryResultListenerRegistered = true
+    window.addEventListener('agent:queryResult', handleQueryResult as EventListener)
+  }
 });
 
 // 保存LLM模式状态
@@ -174,6 +205,10 @@ onUnmounted(() => {
   saveLLMState();
   // 清理事件监听器
   window.removeEventListener('chatHistoryRestored', handleChatHistoryRestored as EventListener)
+  if ((window as any).__queryResultListenerRegistered) {
+    window.removeEventListener('agent:queryResult', handleQueryResult as EventListener)
+    ;(window as any).__queryResultListenerRegistered = false
+  }
 });
 
 // 监听状态变化，自动保存

@@ -224,13 +224,16 @@ export function uselayermanager() {
     }
   }
 
-  // 监听 Agent 工具事件以执行图层显隐
-  if (typeof window !== 'undefined') {
+  // 监听 Agent 工具事件以执行图层显隐 - 只注册一次
+  if (typeof window !== 'undefined' && !(window as any).__agentEventListenersRegistered) {
+    (window as any).__agentEventListenersRegistered = true
+    
     const getBaseName = (n: string): string => {
       if (!n) return n
       const idx = n.indexOf('@')
       return idx >= 0 ? n.slice(0, idx) : n
     }
+    
     window.addEventListener('agent:toggleLayerVisibility', (e: any) => {
       const { layerName, action } = e.detail || {}
       if (!layerName || !action) return
@@ -379,21 +382,51 @@ export function uselayermanager() {
         // 执行查询
         const result = await featureQuery.executeQuery()
         if (result.success) {
-          console.log(`[Agent] 属性查询成功: 在图层"${cleanLayerName}"中找到${result.data.length}个匹配要素`)
+          const successMessage = `在图层"${cleanLayerName}"中找到${result.data.length}个匹配要素`
+          console.log(`[Agent] 属性查询成功: ${successMessage}`)
           
           // 自动高亮显示查询结果
           if (result.data.length > 0) {
             featureQuery.highlightQueryResults()
           }
+          
+          // 发送查询结果事件，供LLM使用
+          const resultEvent = new CustomEvent('agent:queryResult', {
+            detail: {
+              success: true,
+              message: successMessage,
+              layerName: cleanLayerName,
+              field: cleanField,
+              operator: cleanOperator,
+              value: cleanValue,
+              count: result.data.length
+            }
+          })
+          window.dispatchEvent(resultEvent)
         } else {
+          const errorMessage = `查询失败: ${result.error}`
           console.error(`[Agent] 属性查询失败:`, result.error)
+          
+          // 发送查询失败事件
+          const errorEvent = new CustomEvent('agent:queryResult', {
+            detail: {
+              success: false,
+              message: errorMessage,
+              layerName: cleanLayerName,
+              field: cleanField,
+              operator: cleanOperator,
+              value: cleanValue,
+              error: result.error
+            }
+          })
+          window.dispatchEvent(errorEvent)
         }
         
       } catch (error) {
         console.error('[Agent] 执行属性查询时出错:', error)
       }
     })
-  }
+  } // 结束只注册一次的if语句
 
   const removeLayer = (layerId: string) => {
     const index = mapStore.vectorlayers.findIndex(l => l.id === layerId)
