@@ -11,6 +11,9 @@ import { Vector as VectorSource } from 'ol/source'
 import { Vector as Vectorlayer } from 'ol/layer'
 import { Style, Stroke, Fill } from 'ol/style'
 import GeoJSON from 'ol/format/GeoJSON'
+import { ref as vueRef } from 'vue'
+import { uselayermanager } from '@/composables/useLayerManager'
+import { useLayerExport } from '@/composables/useLayerExport'
 
 declare global {
   interface Window {
@@ -33,7 +36,9 @@ export function useIntersectionAnalysis() {
   const mapStore = useMapStore()
   const analysisStore = useAnalysisStore()
   const store = useIntersectionAnalysisStore()
+  const lastFeatureCollection = vueRef<any | null>(null)
   const { saveFeaturesAslayer } = uselayermanager()
+  const { exportFeaturesAsGeoJSON } = useLayerExport()
 
   const targetlayerId = computed(() => store.state.targetlayerId)
   const masklayerId = computed(() => store.state.masklayerId)
@@ -211,6 +216,7 @@ export function useIntersectionAnalysis() {
       store.setResults(apiResponse)
       
       // 直接显示API返回的FeatureCollection
+      lastFeatureCollection.value = apiResponse
       displayIntersectionResults(apiResponse)
       analysisStore.setAnalysisStatus(`相交分析完成：共生成 ${features.length} 个结果，已渲染到地图。`)
 
@@ -224,6 +230,7 @@ export function useIntersectionAnalysis() {
 
 
   const displayIntersectionResults = (featureCollection: any): void => {
+    lastFeatureCollection.value = featureCollection
     if (!mapStore.map) return
 
     removeIntersectionlayers()
@@ -392,6 +399,20 @@ export function useIntersectionAnalysis() {
     mapStore.map.addLayer(lyr)
   }
 
+  // ===== 保存为图层 / 导出为JSON =====
+  const saveIntersectionResultsAsLayer = async (layerName?: string): Promise<boolean> => {
+    const fc = lastFeatureCollection.value
+    if (!fc || !fc.features || fc.features.length === 0) return false
+    const olFeatures = new GeoJSON().readFeatures(fc)
+    return saveFeaturesAslayer(olFeatures as any[], layerName || '相交分析结果', 'intersect')
+  }
+
+  const exportIntersectionResultsAsJSON = async (fileName?: string): Promise<any> => {
+    const fc = lastFeatureCollection.value
+    if (!fc || !fc.features || fc.features.length === 0) return false
+    return exportFeaturesAsGeoJSON(fc.features, fileName || '相交分析结果')
+  }
+
   return {
     targetlayerId,
     masklayerId,
@@ -409,7 +430,9 @@ export function useIntersectionAnalysis() {
     displayIntersectionResults,
     removeIntersectionlayers,
     clearState,
-    saveIntersectionResultsAslayer
+    saveIntersectionResultsAslayer,
+    saveIntersectionResultsAsLayer,
+    exportIntersectionResultsAsJSON
   }
 }
 

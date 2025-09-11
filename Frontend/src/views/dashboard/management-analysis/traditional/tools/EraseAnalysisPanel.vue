@@ -73,7 +73,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { useEraseAnalysis } from '@/composables/useEraseAnalysis'
-import { uselayermanager } from '@/composables/uselayermanager'
+import { uselayermanager } from '@/composables/useLayerManager'
 import { useLayerExport } from '@/composables/useLayerExport'
 import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'

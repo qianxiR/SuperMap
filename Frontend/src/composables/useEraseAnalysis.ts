@@ -2,7 +2,7 @@ import { computed } from 'vue'
 import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useEraseAnalysisStore } from '@/stores/eraseAnalysisStore'
-import { uselayermanager } from '@/composables/uselayermanager'
+import { uselayermanager } from '@/composables/useLayerManager'
 import { getAnalysisServiceConfig } from '@/api/config'
 import { extractGeoJSONFromlayer } from '@/utils/featureUtils'
 import { checkLayerGeometryType } from '@/utils/layerValidation'
@@ -11,6 +11,8 @@ import { Vector as VectorSource } from 'ol/source'
 import { Vector as Vectorlayer } from 'ol/layer'
 import { Style, Stroke, Fill } from 'ol/style'
 import GeoJSON from 'ol/format/GeoJSON'
+import { ref as vueRef } from 'vue'
+import { useLayerExport } from '@/composables/useLayerExport'
 
 interface EraseResultItem {
   id: string
@@ -26,7 +28,9 @@ export function useEraseAnalysis() {
   const mapStore = useMapStore()
   const analysisStore = useAnalysisStore()
   const store = useEraseAnalysisStore()
+  const lastFeatureCollection = vueRef<any | null>(null)
   const { saveFeaturesAslayer } = uselayermanager()
+  const { exportFeaturesAsGeoJSON } = useLayerExport()
 
   const targetlayerId = computed(() => store.state.targetlayerId)
   const eraselayerId = computed(() => store.state.eraselayerId)
@@ -202,6 +206,7 @@ export function useEraseAnalysis() {
       store.setResults(apiResponse)
       
       // 直接显示API返回的FeatureCollection
+      lastFeatureCollection.value = apiResponse
       displayeraseResults(apiResponse)
       analysisStore.setAnalysisStatus(`擦除分析完成：共生成 ${features.length} 个结果，已渲染到地图。`)
 
@@ -215,6 +220,7 @@ export function useEraseAnalysis() {
 
 
   const displayeraseResults = (featureCollection: any): void => {
+    lastFeatureCollection.value = featureCollection
     if (!mapStore.map) return
 
     removeEraselayers()
@@ -362,6 +368,20 @@ export function useEraseAnalysis() {
     }
   }
 
+  // ===== 保存为图层 / 导出为JSON =====
+  const saveEraseResultsAsLayer = async (layerName?: string): Promise<boolean> => {
+    const fc = lastFeatureCollection.value
+    if (!fc || !fc.features || fc.features.length === 0) return false
+    const olFeatures = new GeoJSON().readFeatures(fc)
+    return saveFeaturesAslayer(olFeatures as any[], layerName || '擦除分析结果', 'erase')
+  }
+
+  const exportEraseResultsAsJSON = async (fileName?: string): Promise<any> => {
+    const fc = lastFeatureCollection.value
+    if (!fc || !fc.features || fc.features.length === 0) return false
+    return exportFeaturesAsGeoJSON(fc.features, fileName || '擦除分析结果')
+  }
+
   return {
     targetlayerId,
     eraselayerId,
@@ -377,6 +397,8 @@ export function useEraseAnalysis() {
     setEraselayer,
     executeEraseAnalysis,
     displayeraseResults,
+    saveEraseResultsAsLayer,
+    exportEraseResultsAsJSON,
     removeEraselayers,
     clearState,
     saveEraseResultsAslayer

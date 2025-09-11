@@ -110,6 +110,7 @@ export function useShortestPathAnalysis() {
   // ===== 图层显示方法 =====
   
   const displayAnalysisResults = (featureCollection: any): void => {
+    ;(state as any).lastFeatureCollection = featureCollection
     // 只移除之前的路径图层，保留起始点和目标点
     removePathlayersOnly()
     
@@ -191,6 +192,25 @@ export function useShortestPathAnalysis() {
         maxZoom: 16
       })
     }
+  }
+
+  // ===== 保存为图层 / 导出为JSON =====
+  const savePathResultsAsLayer = async (layerName?: string): Promise<boolean> => {
+    const fc = (state as any).lastFeatureCollection
+    if (!fc || !fc.features || fc.features.length === 0) return false
+    const olFeatures = new window.ol.format.GeoJSON().readFeatures(fc)
+    // 复用layerManager
+    const { uselayermanager } = await import('@/composables/useLayerManager')
+    const { saveFeaturesAslayer } = uselayermanager()
+    return saveFeaturesAslayer(olFeatures as any[], layerName || '最短路径分析结果', 'path')
+  }
+
+  const exportPathResultsAsJSON = async (fileName?: string): Promise<any> => {
+    const fc = (state as any).lastFeatureCollection
+    if (!fc || !fc.features || fc.features.length === 0) return false
+    const { useLayerExport } = await import('@/composables/useLayerExport')
+    const { exportFeaturesAsGeoJSON } = useLayerExport()
+    return exportFeaturesAsGeoJSON(fc.features, fileName || '最短路径分析结果')
   }
   
   // 获取CSS变量值的工具函数
@@ -731,6 +751,9 @@ export function useShortestPathAnalysis() {
     clearResults,
     exportGeoJSON,
     setObstaclelayer,
-    updateAnalysisOptions: updateAnalysisOptionsLocal
+    updateAnalysisOptions: updateAnalysisOptionsLocal,
+    displayAnalysisResults,
+    savePathResultsAsLayer,
+    exportPathResultsAsJSON
   }
 }

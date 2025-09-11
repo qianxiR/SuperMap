@@ -10,6 +10,9 @@ import { Vector as Vectorlayer } from 'ol/layer'
 import { Style, Stroke, Fill } from 'ol/style'
 import GeoJSON from 'ol/format/GeoJSON'
 import type OlFeature from 'ol/Feature'
+import { ref as vueRef } from 'vue'
+import { uselayermanager } from '@/composables/useLayerManager'
+import { useLayerExport } from '@/composables/useLayerExport'
 
 // API配置
 const API_BASE_URL = getAnalysisServiceConfig().baseUrl
@@ -48,6 +51,9 @@ export function useBufferAnalysis() {
   const analysisStore = useAnalysisStore()
   const mapStore = useMapStore()
   const bufferAnalysisStore = useBufferAnalysisStore()
+  const lastFeatureCollection = vueRef<any | null>(null)
+  const { saveFeaturesAslayer } = uselayermanager()
+  const { exportFeaturesAsGeoJSON } = useLayerExport()
   
   // 从store获取状态
   const selectedAnalysislayerId = computed(() => bufferAnalysisStore.state.selectedAnalysislayerId)
@@ -261,6 +267,7 @@ export function useBufferAnalysis() {
     bufferAnalysisStore.setBufferResults(apiResponse)
     
     // 直接显示API返回的FeatureCollection
+    lastFeatureCollection.value = apiResponse
     displayBufferResults(apiResponse)
     bufferAnalysisStore.setIsAnalyzing(false)
     
@@ -273,6 +280,7 @@ export function useBufferAnalysis() {
   
   // 在地图上显示缓冲区结果
   const displayBufferResults = (featureCollection: any): void => {
+    lastFeatureCollection.value = featureCollection
     removeBufferlayers()
     
     console.log('=== displayBufferResults - 开始处理缓冲区结果 ===')
@@ -397,6 +405,21 @@ export function useBufferAnalysis() {
     analysisStore.setAnalysisStatus('缓冲区分析与入库功能已禁用')
   }
 
+  // ===== 保存为图层 / 导出为JSON =====
+  const saveBufferResultsAsLayer = async (layerName?: string): Promise<boolean> => {
+    const fc = lastFeatureCollection.value
+    if (!fc || !fc.features || fc.features.length === 0) return false
+    // 将FeatureCollection.features转换为OL Feature后再保存
+    const olFeatures = new GeoJSON().readFeatures(fc)
+    return saveFeaturesAslayer(olFeatures as any[], layerName || (bufferAnalysisStore.state.layerName || '缓冲区分析结果'), 'buffer')
+  }
+  
+  const exportBufferResultsAsJSON = async (fileName?: string): Promise<any> => {
+    const fc = lastFeatureCollection.value
+    if (!fc || !fc.features || fc.features.length === 0) return false
+    return exportFeaturesAsGeoJSON(fc.features, fileName || '缓冲区分析结果')
+  }
+
   return {
     // 分析参数
     selectedAnalysislayerId,
@@ -421,6 +444,8 @@ export function useBufferAnalysis() {
     updateBufferSettings,
     removeBufferlayers,
     displayBufferResults,
+    saveBufferResultsAsLayer,
+    exportBufferResultsAsJSON,
     
     // 状态管理
     clearState

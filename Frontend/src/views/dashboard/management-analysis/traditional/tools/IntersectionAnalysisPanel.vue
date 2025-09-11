@@ -75,7 +75,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { useIntersectionAnalysis } from '@/composables/useIntersectionAnalysis'
-import { uselayermanager } from '@/composables/uselayermanager'
+import { uselayermanager } from '@/composables/useLayerManager'
 import { useMapStore } from '@/stores/mapStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useLayerExport } from '@/composables/useLayerExport'
