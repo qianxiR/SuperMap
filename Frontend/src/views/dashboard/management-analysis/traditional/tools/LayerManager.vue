@@ -269,12 +269,10 @@ const alllayers = computed(() => {
 
 
 const handleToggleVisibility = (item: MaplayerItem) => {
-  const action = 'toggle'
-  const ev = new CustomEvent('agent:toggleLayerVisibility', {
-    detail: { layerId: item.key, layerName: item.displayName || item.name, action }
-  })
-  window.dispatchEvent(ev)
-  console.log('[LayerManager] dispatched event: agent:toggleLayerVisibility', { layerId: item.key, layerName: item.displayName || item.name, action })
+  // 手动操作直接调用图层管理器，不通过agent事件
+  const { togglelayerVisibility } = uselayermanager()
+  togglelayerVisibility(item.key)
+  console.log('[LayerManager] 手动切换图层可见性:', { layerId: item.key, layerName: item.displayName || item.name })
 }
 
 // 处理图层删除

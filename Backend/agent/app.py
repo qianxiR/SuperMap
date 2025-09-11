@@ -57,18 +57,18 @@ class ChatResponse(BaseModel):
 
 
 @tool
-def toggle_layer_visibility(layer_id: str, action: str) -> str:
+def toggle_layer_visibility(layer_name: str, action: str) -> str:
     """
     切换前端图层可见性（前端执行）。
     输入参数：
-      - layer_id: string 图层唯一标识
+      - layer_name: string 图层名称
       - action: string 'show'|'hide'|'toggle'
     业务处理：
-      - 后端不直接操作地图，仅返回动作与图层ID供前端执行
+      - 后端不直接操作地图，仅返回动作与图层名称供前端执行
     输出数据格式：
-      - string: 格式 "action:layer_id"
+      - string: 格式 "action:layer_name"
     """
-    return f"{action}:{layer_id}"
+    return f"{action}:{layer_name}"
 
 
 @tool
@@ -192,11 +192,20 @@ async def tool_chat(req: ToolChatRequest):
     first_ai: AIMessage = llm_with_tools.invoke([
         SystemMessage(content=(
             "你有四个工具:\n"
-            "1) toggle_layer_visibility(layer_id:str, action:'show'|'hide'|'toggle')\n"
+            "1) toggle_layer_visibility(layer_name:str, action:'show'|'hide'|'toggle')\n"
             "- 当用户说'打开@图层名称'或'隐藏@图层名称'或'切换@图层名称'时调用。\n"
+            "- 使用图层名称而非图层ID进行操作。\n"
             "2) query_features_by_attribute(layer_name:str, field:str, operator:str, value:str)\n"
             "- 当用户说'在@图层名称中查找字段=值'、'查询@图层名称的属性'、'筛选@图层名称'时调用。\n"
-            "- 支持操作符: '='|'!='|'>'|'>='|'<'|'<='|'like'\n"
+            "- 操作符映射要求: 必须使用前端支持的格式\n"
+            "  * '=' 映射为 'eq'\n"
+            "  * '!=' 映射为 'ne'\n"
+            "  * '>' 映射为 'gt'\n"
+            "  * '>=' 映射为 'gte'\n"
+            "  * '<' 映射为 'lt'\n"
+            "  * '<=' 映射为 'lte'\n"
+            "  * 'like' 保持不变\n"
+            "- 例如: 用户说'查找NAME=学校'时，operator参数必须传递'eq'而不是'='\n"
             "3) save_query_results_as_layer(layer_name:str)\n"
             "- 当用户说'保存查询结果为图层'、'另存为图层'、'保存为新图层'时调用。\n"
             "- 需要指定新图层名称。\n"
@@ -231,10 +240,20 @@ async def tool_chat(req: ToolChatRequest):
     final_ai: AIMessage = llm_with_tools.invoke([
         SystemMessage(content=(
             "你有两个工具:\n"
-            "1) toggle_layer_visibility(layer_id:str, action:'show'|'hide'|'toggle')\n"
+            "1) toggle_layer_visibility(layer_name:str, action:'show'|'hide'|'toggle')\n"
             "- 遇到'打开/隐藏/切换@图层名称'的请求，必须调用该工具。\n"
+            "- 使用图层名称而非图层ID进行操作。\n"
             "2) query_features_by_attribute(layer_name:str, field:str, operator:str, value:str)\n"
-            "- 遇到'在@图层名称中查找/查询/筛选'的请求，必须调用该工具。"
+            "- 遇到'在@图层名称中查找/查询/筛选'的请求，必须调用该工具。\n"
+            "- 操作符映射要求: 必须使用前端支持的格式\n"
+            "  * '=' 映射为 'eq'\n"
+            "  * '!=' 映射为 'ne'\n"
+            "  * '>' 映射为 'gt'\n"
+            "  * '>=' 映射为 'gte'\n"
+            "  * '<' 映射为 'lt'\n"
+            "  * '<=' 映射为 'lte'\n"
+            "  * 'like' 保持不变\n"
+            "- 例如: 用户说'查找NAME=学校'时，operator参数必须传递'eq'而不是'='"
         )),
         HumanMessage(content=req.prompt),
         first_ai,

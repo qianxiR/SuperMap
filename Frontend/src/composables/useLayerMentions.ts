@@ -52,8 +52,25 @@ export function useLayerMentions() {
 
   const filtered = computed<MentionItem[]>(() => {
     const q = query.value.trim().toLowerCase()
-    if (!q) return catalog.value
-    return catalog.value.filter(it => it.name.toLowerCase().includes(q))
+    let result = catalog.value
+    
+    if (q) {
+      result = catalog.value.filter(it => it.name.toLowerCase().includes(q))
+    }
+    
+    // 按状态排序：已显示 > 已隐藏 > 未打开
+    return result.sort((a, b) => {
+      // 已显示的图层置顶
+      if (a.opened && a.visible && !(b.opened && b.visible)) return -1
+      if (b.opened && b.visible && !(a.opened && a.visible)) return 1
+      
+      // 已隐藏的图层次之
+      if (a.opened && !a.visible && !b.opened) return -1
+      if (b.opened && !b.visible && !a.opened) return 1
+      
+      // 其他情况按名称排序
+      return a.name.localeCompare(b.name)
+    })
   })
 
   const openWith = (q: string, caret: number) => {
