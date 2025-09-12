@@ -178,6 +178,7 @@ export const createAPIConfig = (): APIConfig => {
       //   datasetName: `DEM_${workspace}`,
       //   dataService: `${mapService}/maps/${mapName}`
       // }
+
     ],
     timeout: Number(import.meta.env.VITE_API_TIMEOUT),
     retryCount: Number(import.meta.env.VITE_API_RETRY_COUNT),
