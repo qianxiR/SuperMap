@@ -625,8 +625,28 @@ export function uselayermanager() {
           return
         }
         
+        // 将查询结果转换为OpenLayers Feature格式
+        const format = new window.ol.format.GeoJSON()
+        const olFeatures: any[] = []
+        
+        queryResults.forEach((feature: any) => {
+          if (feature?.geometry) {
+            const geometry = format.readGeometry(feature.geometry)
+            const olFeature = new window.ol.Feature({ geometry })
+            if (feature.properties) {
+              olFeature.setProperties(feature.properties)
+            }
+            olFeatures.push(olFeature)
+          }
+        })
+        
+        console.log(`[Agent] 转换后的查询结果OL Features:`, {
+          count: olFeatures.length,
+          features: olFeatures
+        })
+        
         // 保存查询结果为新图层
-        const success = await saveFeaturesAslayer(queryResults, layerName, 'query')
+        const success = await saveFeaturesAslayer(olFeatures, layerName, 'query')
         if (success) {
           const successMessage = `查询结果已保存为新图层"${layerName}"，共${queryResults.length}个要素`
           console.log(`[Agent] ${successMessage}`)
