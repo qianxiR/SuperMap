@@ -27,6 +27,7 @@ interface BufferAnalysisState {
   isAnalyzing: boolean
   layerName: string
   taskId: string
+  lastFeatureCollection: any | null  // 添加临时保存的分析结果
 }
 
 export const useBufferAnalysisStore = defineStore('bufferAnalysis', () => {
@@ -41,7 +42,8 @@ export const useBufferAnalysisStore = defineStore('bufferAnalysis', () => {
     currentResult: null,
     isAnalyzing: false,
     layerName: '',
-    taskId: ''
+    taskId: '',
+    lastFeatureCollection: null
   })
 
   // 计算属性
@@ -78,6 +80,10 @@ export const useBufferAnalysisStore = defineStore('bufferAnalysis', () => {
     state.taskId = taskId
   }
 
+  const setLastFeatureCollection = (featureCollection: any) => {
+    state.lastFeatureCollection = featureCollection
+  }
+
   const clearResults = () => {
     state.bufferResults = []
     state.currentResult = null
@@ -89,6 +95,7 @@ export const useBufferAnalysisStore = defineStore('bufferAnalysis', () => {
     state.currentResult = null
     state.isAnalyzing = false
     state.layerName = ''
+    state.lastFeatureCollection = null
     // 重置为默认设置
     state.bufferSettings = {
       radius: 1000,
@@ -112,6 +119,7 @@ export const useBufferAnalysisStore = defineStore('bufferAnalysis', () => {
     setIsAnalyzing,
     setlayerName,
     setTaskId,
+    setLastFeatureCollection,
     clearResults,
     clearAll
   }

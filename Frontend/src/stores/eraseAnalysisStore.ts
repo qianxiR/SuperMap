@@ -18,6 +18,7 @@ interface EraseAnalysisState {
   isAnalyzing: boolean
   targetFeaturesCache: any[]
   eraseFeaturesCache: any[]
+  lastFeatureCollection: any | null  // 添加临时保存的分析结果
 }
 
 export const useEraseAnalysisStore = defineStore('eraseAnalysis', () => {
@@ -28,7 +29,8 @@ export const useEraseAnalysisStore = defineStore('eraseAnalysis', () => {
     currentResult: null,
     isAnalyzing: false,
     targetFeaturesCache: [],
-    eraseFeaturesCache: []
+    eraseFeaturesCache: [],
+    lastFeatureCollection: null
   })
 
   const hasResults = computed(() => state.results.length > 0)
@@ -62,6 +64,10 @@ export const useEraseAnalysisStore = defineStore('eraseAnalysis', () => {
     state.isAnalyzing = value
   }
 
+  const setLastFeatureCollection = (featureCollection: any) => {
+    state.lastFeatureCollection = featureCollection
+  }
+
   const clearResults = () => {
     state.results = []
     state.currentResult = null
@@ -75,6 +81,7 @@ export const useEraseAnalysisStore = defineStore('eraseAnalysis', () => {
     state.isAnalyzing = false
     state.targetFeaturesCache = []
     state.eraseFeaturesCache = []
+    state.lastFeatureCollection = null
   }
 
   return {
@@ -87,6 +94,7 @@ export const useEraseAnalysisStore = defineStore('eraseAnalysis', () => {
     setResults,
     setCurrentResult,
     setIsAnalyzing,
+    setLastFeatureCollection,
     clearResults,
     clearAll
   }

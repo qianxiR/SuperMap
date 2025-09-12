@@ -43,6 +43,7 @@ interface ShortestPathAnalysisState {
   // 核心状态
   analysisResults: ShortestPathResult[]
   layerName: string
+  lastFeatureCollection: any | null  // 添加临时保存的分析结果
   
   // 地图交互状态
   isSelectingStartPoint: boolean
@@ -66,6 +67,7 @@ export const useShortestPathAnalysisStore = defineStore('shortestPathAnalysis', 
     // 核心状态
     analysisResults: [],
     layerName: '',
+    lastFeatureCollection: null,
     
     // 地图交互状态
     isSelectingStartPoint: false,
@@ -158,6 +160,10 @@ export const useShortestPathAnalysisStore = defineStore('shortestPathAnalysis', 
     state.layerName = name
   }
 
+  const setLastFeatureCollection = (featureCollection: any) => {
+    state.lastFeatureCollection = featureCollection
+  }
+
   const setAnalysisLayers = (layers: Partial<AnalysisLayers>) => {
     Object.assign(state.analysislayers, layers)
   }
@@ -179,6 +185,7 @@ export const useShortestPathAnalysisStore = defineStore('shortestPathAnalysis', 
     state.isSelectingStartPoint = false
     state.isSelectingEndPoint = false
     state.layerName = ''
+    state.lastFeatureCollection = null
     // 重置为默认设置
     state.analysisOptions = {
       obstacles: null,
@@ -216,6 +223,7 @@ export const useShortestPathAnalysisStore = defineStore('shortestPathAnalysis', 
     setIsSelectingStartPoint,
     setIsSelectingEndPoint,
     setLayerName,
+    setLastFeatureCollection,
     setAnalysisLayers,
     clearResults,
     clearPoints,

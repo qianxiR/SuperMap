@@ -196,7 +196,6 @@ export function useBufferAnalysis() {
 
 
     const API_BASE_URL = getAnalysisServiceConfig().baseUrl
-    console.log('[BufferAnalysis] 当前API地址:', API_BASE_URL)
     const response = await fetch(`${API_BASE_URL}/buffer`, {
       method: 'POST',
       headers: {
@@ -255,13 +254,11 @@ export function useBufferAnalysis() {
       features: flattenedFeatures
     }
 
-    // 保存并展示规范化结果
-    lastFeatureCollection.value = normalized
-    console.log('[BufferAnalysis] 缓冲区分析完成，保存结果到lastFeatureCollection:', {
-      hasData: !!normalized,
-      featuresCount: normalized?.features?.length || 0,
-      normalized: normalized
-    })
+    // 保存原始API返回的FeatureCollection
+    lastFeatureCollection.value = apiResponse
+    // 同步到状态管理
+    bufferAnalysisStore.setLastFeatureCollection(apiResponse)
+    // 使用规范化结果进行地图渲染，确保几何标准化显示
     displayBufferResults(normalized)
     bufferAnalysisStore.setIsAnalyzing(false)
     
@@ -380,13 +377,24 @@ export function useBufferAnalysis() {
   
 
 
+
+
+
   // ===== 保存为图层 / 导出为JSON =====
   const saveBufferResultsAsLayer = async (layerName?: string): Promise<boolean> => {
-    const fc = lastFeatureCollection.value
+    let fc = lastFeatureCollection.value
+    
+    // 如果composable中的数据为空，尝试从状态管理中读取
+    if (!fc && bufferAnalysisStore.state.lastFeatureCollection) {
+      fc = bufferAnalysisStore.state.lastFeatureCollection
+      console.log('[BufferAnalysis] 从状态管理读取缓冲区分析结果数据')
+    }
+    
     console.log('[BufferAnalysis] 开始保存缓冲区分析结果:', {
       hasFeatureCollection: !!fc,
       featuresCount: fc?.features?.length || 0,
-      featureCollection: fc
+      featureCollection: fc,
+      dataSource: lastFeatureCollection.value ? 'composable' : (bufferAnalysisStore.state.lastFeatureCollection ? 'store' : 'none')
     })
     
     if (!fc || !fc.features || fc.features.length === 0) {
@@ -433,7 +441,14 @@ export function useBufferAnalysis() {
   }
   
   const exportBufferResultsAsJSON = async (fileName?: string): Promise<any> => {
-    const fc = lastFeatureCollection.value
+    let fc = lastFeatureCollection.value
+    
+    // 如果composable中的数据为空，尝试从状态管理中读取
+    if (!fc && bufferAnalysisStore.state.lastFeatureCollection) {
+      fc = bufferAnalysisStore.state.lastFeatureCollection
+      console.log('[BufferAnalysis] 从状态管理读取缓冲区分析结果数据用于导出')
+    }
+    
     if (!fc || !fc.features || fc.features.length === 0) return false
     return exportFeaturesAsGeoJSON(fc.features, fileName || '缓冲区分析结果')
   }

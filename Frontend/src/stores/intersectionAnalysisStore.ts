@@ -18,6 +18,7 @@ interface IntersectionAnalysisState {
   isAnalyzing: boolean
   targetFeaturesCache: any[]
   maskFeaturesCache: any[]
+  lastFeatureCollection: any | null  // 添加临时保存的分析结果
 }
 
 export const useIntersectionAnalysisStore = defineStore('intersectionAnalysis', () => {
@@ -28,7 +29,8 @@ export const useIntersectionAnalysisStore = defineStore('intersectionAnalysis', 
     currentResult: null,
     isAnalyzing: false,
     targetFeaturesCache: [],
-    maskFeaturesCache: []
+    maskFeaturesCache: [],
+    lastFeatureCollection: null
   })
 
   const hasResults = computed(() => state.results.length > 0)
@@ -62,6 +64,10 @@ export const useIntersectionAnalysisStore = defineStore('intersectionAnalysis', 
     state.isAnalyzing = value
   }
 
+  const setLastFeatureCollection = (featureCollection: any) => {
+    state.lastFeatureCollection = featureCollection
+  }
+
   const clearResults = () => {
     state.results = []
     state.currentResult = null
@@ -75,6 +81,7 @@ export const useIntersectionAnalysisStore = defineStore('intersectionAnalysis', 
     state.isAnalyzing = false
     state.targetFeaturesCache = []
     state.maskFeaturesCache = []
+    state.lastFeatureCollection = null
   }
 
   return {
@@ -87,6 +94,7 @@ export const useIntersectionAnalysisStore = defineStore('intersectionAnalysis', 
     setResults,
     setCurrentResult,
     setIsAnalyzing,
+    setLastFeatureCollection,
     clearResults,
     clearAll
   }
