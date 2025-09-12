@@ -254,6 +254,15 @@ const useMapStore = defineStore('map', () => {
                 image: {
                   type: 'circle',
                   radius: pointRadius
+                },
+                text: {
+                  text: `{NAME}`, // 显示NAME字段
+                  font: '12px sans-serif',
+                  fill: { color: strokeVar }, // 使用描边颜色作为文字颜色
+                  stroke: { color: '#ffffff', width: 2 }, // 白色描边
+                  offsetY: -pointRadius - 5, // 在点上方显示
+                  textAlign: 'center',
+                  textBaseline: 'bottom'
                 }
               }
             }
@@ -275,7 +284,16 @@ const useMapStore = defineStore('map', () => {
               style: {
                 ...baseStyle,
                 stroke: { width: lineWidth, color: strokeVar },
-                fill: { color: 'rgba(0, 0, 0, 0)' }
+                fill: { color: 'rgba(0, 0, 0, 0)' },
+                text: {
+                  text: `{NAME}`, // 显示NAME字段
+                  font: '12px sans-serif',
+                  fill: { color: strokeVar }, // 使用描边颜色作为文字颜色
+                  stroke: { color: '#ffffff', width: 2 }, // 白色描边
+                  offsetY: 0, // 在线要素上显示
+                  textAlign: 'center',
+                  textBaseline: 'middle'
+                }
               }
             }
           case 'polygon':
@@ -296,7 +314,16 @@ const useMapStore = defineStore('map', () => {
               style: {
                 ...baseStyle,
                 stroke: { width: polygonStrokeWidth, color: strokeVar },
-                fill: { color: fillVar }
+                fill: { color: fillVar },
+                text: {
+                  text: `{NAME}`, // 显示NAME字段
+                  font: '12px sans-serif',
+                  fill: { color: strokeVar }, // 使用描边颜色作为文字颜色
+                  stroke: { color: '#ffffff', width: 2 }, // 白色描边
+                  offsetY: 0, // 在面要素中心显示
+                  textAlign: 'center',
+                  textBaseline: 'middle'
+                }
               }
             }
           default:
@@ -304,7 +331,16 @@ const useMapStore = defineStore('map', () => {
               name: layer.name,
               style: {
                 stroke: { width: 1.5, color: strokeVar },
-                fill: { color: fillVar }
+                fill: { color: fillVar },
+                text: {
+                  text: `{NAME}`, // 显示NAME字段
+                  font: '12px sans-serif',
+                  fill: { color: strokeVar }, // 使用描边颜色作为文字颜色
+                  stroke: { color: '#ffffff', width: 2 }, // 白色描边
+                  offsetY: 0, // 在要素中心显示
+                  textAlign: 'center',
+                  textBaseline: 'middle'
+                }
               }
             }
         }

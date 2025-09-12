@@ -138,9 +138,9 @@ const barOption = {
     }
   },
   grid: {
-    left: '15%',
-    right: '5%',
-    bottom: '10%',
+    left: '10%',
+    right: '3%',
+    bottom: '8%',
     top: '5%',
     containLabel: true
   },
@@ -203,7 +203,7 @@ const barOption = {
         shadowColor: 'rgba(24, 144, 255, 0.5)'
       }
     },
-    barWidth: '60%'
+    barWidth: '80%'
   }
 }
 

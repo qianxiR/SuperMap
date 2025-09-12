@@ -318,9 +318,8 @@ export function useMapStyles() {
       (vl: any) => vl.name === layerConfig.name
     );
     
-    // 如果有预配置的样式，且不是点要素，使用它
-    // 点要素直接使用OpenLayers原生样式
-    if (configuredStyle && configuredStyle.style && layerConfig.type !== 'point') {
+    // 如果有预配置的样式，使用它（包括点要素的特殊样式）
+    if (configuredStyle && configuredStyle.style) {
       return createOLStyleFromConfig(configuredStyle.style, layerName);
     }
     
