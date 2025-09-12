@@ -195,7 +195,6 @@ export function useBufferAnalysis() {
     }
 
 
-
     const API_BASE_URL = getAnalysisServiceConfig().baseUrl
     console.log('[BufferAnalysis] 当前API地址:', API_BASE_URL)
     const response = await fetch(`${API_BASE_URL}/buffer`, {
@@ -215,7 +214,8 @@ export function useBufferAnalysis() {
 
     
     // 保存结果到store（用于导出JSON功能）- 直接保存API返回的完整FeatureCollection
-    bufferAnalysisStore.setBufferResults(apiResponse)
+    // 注意：setBufferResults期望BufferResult[]类型，但这里我们保存完整的FeatureCollection
+    // 所以这里不调用setBufferResults，只保存到lastFeatureCollection
     
     // 直接显示API返回的FeatureCollection
     lastFeatureCollection.value = apiResponse
@@ -350,11 +350,28 @@ export function useBufferAnalysis() {
   // ===== 保存为图层 / 导出为JSON =====
   const saveBufferResultsAsLayer = async (layerName?: string): Promise<boolean> => {
     const fc = lastFeatureCollection.value
-    if (!fc || !fc.features || fc.features.length === 0) return false
+    console.log('[BufferAnalysis] 开始保存缓冲区分析结果:', {
+      hasFeatureCollection: !!fc,
+      featuresCount: fc?.features?.length || 0,
+      featureCollection: fc
+    })
+    
+    if (!fc || !fc.features || fc.features.length === 0) {
+      console.warn('[BufferAnalysis] 没有可保存的数据:', { fc })
+      return false
+    }
+    
     // 将FeatureCollection.features展开并转换为OL Feature后再保存
     const format = new GeoJSON()
     const olFeatures: any[] = []
-    fc.features.forEach((feature: any) => {
+    
+    fc.features.forEach((feature: any, index: number) => {
+      console.log(`[BufferAnalysis] 处理第${index + 1}个要素:`, {
+        feature,
+        geometryType: feature?.geometry?.type,
+        hasProperties: !!feature?.properties
+      })
+      
       if (feature?.geometry?.type === 'FeatureCollection') {
         const subOlFeatures = format.readFeatures(feature.geometry)
         subOlFeatures.forEach((subF: any) => {
@@ -371,7 +388,15 @@ export function useBufferAnalysis() {
         olFeatures.push(olFeature)
       }
     })
-    return saveFeaturesAslayer(olFeatures as any[], layerName || (bufferAnalysisStore.state.layerName || '缓冲区分析结果'), 'buffer')
+    
+    console.log('[BufferAnalysis] 转换后的OL Features:', {
+      count: olFeatures.length,
+      features: olFeatures
+    })
+    
+    const result = await saveFeaturesAslayer(olFeatures as any[], layerName || (bufferAnalysisStore.state.layerName || '缓冲区分析结果'), 'buffer')
+    console.log('[BufferAnalysis] 保存结果:', result)
+    return result
   }
   
   const exportBufferResultsAsJSON = async (fileName?: string): Promise<any> => {

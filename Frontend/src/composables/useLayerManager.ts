@@ -1041,12 +1041,22 @@ export function uselayermanager() {
       const geometryTypes = new Set<string>()
       const validFeatures = features.filter((feature: any) => {
         const geometry = feature.getGeometry()
-        if (!geometry) return false
+        if (!geometry) {
+          console.warn('[saveFeaturesAslayer] Feature没有geometry:', feature)
+          return false
+        }
         geometryTypes.add(geometry.getType())
         return true
       })
 
+      console.log('[saveFeaturesAslayer] 要素验证结果:', {
+        totalFeatures: features.length,
+        validFeatures: validFeatures.length,
+        geometryTypes: Array.from(geometryTypes)
+      })
+
       if (validFeatures.length === 0) {
+        console.error('[saveFeaturesAslayer] 没有有效的要素可保存')
         return false
       }
 
