@@ -27,6 +27,8 @@
         <DistanceMeasurePanel />
         <!-- 面积量算面板 -->
         <AreaMeasurePanel />
+        <!-- 区域人口数量图表 -->
+        <RegionPopulationChart />
       </div>
     </div>
 
@@ -56,6 +58,7 @@ import LayerAssistant from '@/components/Map/LayerAssistant.vue'
 import OverviewMap from '@/components/Map/OverviewMap.vue'
 import DistanceMeasurePanel from '@/components/Map/DistanceMeasurePanel.vue'
 import AreaMeasurePanel from '@/components/Map/AreaMeasurePanel.vue'
+import RegionPopulationChart from '@/components/Charts/RegionPopulationChart.vue'
 import ButtonGroup from '@/components/UI/ButtonGroup.vue'
 
 // 组合式函数
