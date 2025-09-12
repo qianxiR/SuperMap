@@ -365,10 +365,10 @@ const emit = defineEmits<{
 
 
 .layer-panel {
-  background: var(--panel);
+  background: transparent;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--glow);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   width: 280px;
   max-height: calc(100vh - 200px);
   display: flex;
@@ -391,6 +391,7 @@ const emit = defineEmits<{
 .panel-header {
   padding: 12px 14px;
   border-bottom: 1px solid var(--border);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -446,9 +447,9 @@ const emit = defineEmits<{
 
 .group-header {
   padding: 8px 12px;
-  background: var(--panel);
+  background: transparent;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: 8px;
   cursor: pointer;
   user-select: none;
   transition: none !important;
@@ -458,7 +459,7 @@ const emit = defineEmits<{
   justify-content: space-between;
   min-height: 40px;
   margin-bottom: 4px;
-  box-shadow: var(--glow);
+  box-shadow: none;
 }
 
 .group-header:hover {

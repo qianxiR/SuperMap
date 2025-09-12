@@ -683,10 +683,10 @@ defineExpose({
   display: flex !important;
   flex-direction: column !important;
   gap: 4px;
-  background: var(--panel);
+  background: transparent;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--glow);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   padding: 4px;
   min-height: fit-content;
 }

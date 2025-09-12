@@ -424,10 +424,10 @@ onUnmounted(() => {
   top: 16px;
   left: 80px;
   z-index: 1000;
-  background: var(--panel);
+  background: transparent;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--glow);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   animation: slideIn 0.2s ease-out;
 }

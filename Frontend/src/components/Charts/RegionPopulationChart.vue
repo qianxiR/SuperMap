@@ -138,11 +138,11 @@ const barOption = {
     }
   },
   grid: {
-    left: '10%',
-    right: '3%',
-    bottom: '8%',
-    top: '5%',
-    containLabel: true
+    left: '2%',
+    right: '1%',
+    bottom: '4%',
+    top: '2%',
+    containLabel: false
   },
   xAxis: {
     type: 'value',
@@ -203,7 +203,7 @@ const barOption = {
         shadowColor: 'rgba(24, 144, 255, 0.5)'
       }
     },
-    barWidth: '80%'
+    barWidth: '95%'
   }
 }
 
