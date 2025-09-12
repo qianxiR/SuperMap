@@ -1,14 +1,260 @@
 import { useMapStore } from '@/stores/mapStore'
 import { useThemeStore } from '@/stores/themeStore'
+import { useLayerDataStore } from '@/stores/layerDataStore'
 import { createAPIConfig, getCurrentBaseMapUrl } from '@/utils/config'
 import { 
   createLayerStyle, 
   createHoverStyle, 
-  createSelectStyle
+  createSelectStyle,
+  createOLStyle
 } from '@/utils/styleUtils'
 import { getCurrentTheme, dispatchThemeChangeEvent } from '@/utils/themeUtils'
 
 const ol = window.ol;
+
+/**
+ * 从配置对象创建OpenLayers样式
+ */
+const createOLStyleFromConfig = (styleConfig: any, layerName?: string): any => {
+  const css = getComputedStyle(document.documentElement);
+  
+  // 解析颜色值
+  const parseColor = (color: string): string => {
+    if (color.startsWith('var(')) {
+      return css.getPropertyValue(color.replace('var(', '').replace(')', '')).trim() || color;
+    }
+    return color;
+  };
+  
+  // 如果包含文本样式，返回样式函数以支持动态文本
+  if (styleConfig.text && styleConfig.text.text.includes('{')) {
+    return (feature: any) => {
+      const styleObj: any = {};
+      
+      // 处理描边样式
+      if (styleConfig.stroke) {
+        styleObj.stroke = new ol.style.Stroke({
+          color: parseColor(styleConfig.stroke.color),
+          width: styleConfig.stroke.width
+        });
+      }
+      
+      // 处理填充样式
+      if (styleConfig.fill) {
+        styleObj.fill = new ol.style.Fill({
+          color: parseColor(styleConfig.fill.color)
+        });
+      }
+      
+      // 处理点要素的image样式
+      if (styleConfig.image) {
+        const radius = styleConfig.image.radius || 6;
+        const strokeColor = styleConfig.stroke ? parseColor(styleConfig.stroke.color) : '#000000';
+        const strokeWidth = styleConfig.stroke ? styleConfig.stroke.width : 2;
+        const fillColor = styleConfig.fill ? parseColor(styleConfig.fill.color) : '#ffffff';
+        
+        if (styleConfig.image.type === 'circle') {
+          styleObj.image = new ol.style.Circle({
+            radius: radius,
+            stroke: new ol.style.Stroke({
+              color: strokeColor,
+              width: strokeWidth
+            }),
+            fill: new ol.style.Fill({
+              color: fillColor
+            })
+          });
+        } else if (styleConfig.image.type === 'square') {
+          // 创建方形点
+          styleObj.image = new ol.style.RegularShape({
+            points: 4,
+            radius: radius,
+            angle: Math.PI / 4, // 45度旋转，使方形看起来像菱形
+            stroke: new ol.style.Stroke({
+              color: strokeColor,
+              width: strokeWidth
+            }),
+            fill: new ol.style.Fill({
+              color: fillColor
+            })
+          });
+        } else if (styleConfig.image.type === 'triangle') {
+          // 创建三角形点
+          styleObj.image = new ol.style.RegularShape({
+            points: 3,
+            radius: radius,
+            angle: 0,
+            stroke: new ol.style.Stroke({
+              color: strokeColor,
+              width: strokeWidth
+            }),
+            fill: new ol.style.Fill({
+              color: fillColor
+            })
+          });
+        } else if (styleConfig.image.type === 'diamond') {
+          // 创建菱形点
+          styleObj.image = new ol.style.RegularShape({
+            points: 4,
+            radius: radius,
+            angle: 0,
+            stroke: new ol.style.Stroke({
+              color: strokeColor,
+              width: strokeWidth
+            }),
+            fill: new ol.style.Fill({
+              color: fillColor
+            })
+          });
+        }
+      }
+      
+      // 处理动态文本样式
+      if (styleConfig.text) {
+        const properties = feature.getProperties();
+        let textContent = styleConfig.text.text;
+        
+        // 替换文本模板中的字段占位符
+        if (textContent.includes('{NAME_1}')) {
+          textContent = textContent.replace('{NAME_1}', properties.NAME_1 || '');
+        }
+        if (textContent.includes('{NAME}')) {
+          textContent = textContent.replace('{NAME}', properties.NAME || '');
+        }
+        
+        const textConfig: any = {
+          text: textContent,
+          font: styleConfig.text.font || '12px sans-serif',
+          fill: new ol.style.Fill({
+            color: parseColor(styleConfig.text.fill.color)
+          }),
+          offsetY: styleConfig.text.offsetY || 0,
+          textAlign: styleConfig.text.textAlign || 'center',
+          textBaseline: styleConfig.text.textBaseline || 'middle'
+        };
+        
+        // 处理文本描边
+        if (styleConfig.text.stroke) {
+          textConfig.stroke = new ol.style.Stroke({
+            color: parseColor(styleConfig.text.stroke.color),
+            width: styleConfig.text.stroke.width
+          });
+        }
+        
+        styleObj.text = new ol.style.Text(textConfig);
+      }
+      
+      return new ol.style.Style(styleObj);
+    };
+  }
+  
+  // 静态样式处理
+  const styleObj: any = {};
+  
+  // 处理描边样式
+  if (styleConfig.stroke) {
+    styleObj.stroke = new ol.style.Stroke({
+      color: parseColor(styleConfig.stroke.color),
+      width: styleConfig.stroke.width
+    });
+  }
+  
+  // 处理填充样式
+  if (styleConfig.fill) {
+    styleObj.fill = new ol.style.Fill({
+      color: parseColor(styleConfig.fill.color)
+    });
+  }
+  
+  // 处理点要素的image样式
+  if (styleConfig.image) {
+    const radius = styleConfig.image.radius || 6;
+    const strokeColor = styleConfig.stroke ? parseColor(styleConfig.stroke.color) : '#000000';
+    const strokeWidth = styleConfig.stroke ? styleConfig.stroke.width : 2;
+    const fillColor = styleConfig.fill ? parseColor(styleConfig.fill.color) : '#ffffff';
+    
+    if (styleConfig.image.type === 'circle') {
+      styleObj.image = new ol.style.Circle({
+        radius: radius,
+        stroke: new ol.style.Stroke({
+          color: strokeColor,
+          width: strokeWidth
+        }),
+        fill: new ol.style.Fill({
+          color: fillColor
+        })
+      });
+    } else if (styleConfig.image.type === 'square') {
+      // 创建方形点
+      styleObj.image = new ol.style.RegularShape({
+        points: 4,
+        radius: radius,
+        angle: Math.PI / 4, // 45度旋转，使方形看起来像菱形
+        stroke: new ol.style.Stroke({
+          color: strokeColor,
+          width: strokeWidth
+        }),
+        fill: new ol.style.Fill({
+          color: fillColor
+        })
+      });
+    } else if (styleConfig.image.type === 'triangle') {
+      // 创建三角形点
+      styleObj.image = new ol.style.RegularShape({
+        points: 3,
+        radius: radius,
+        angle: 0,
+        stroke: new ol.style.Stroke({
+          color: strokeColor,
+          width: strokeWidth
+        }),
+        fill: new ol.style.Fill({
+          color: fillColor
+        })
+      });
+    } else if (styleConfig.image.type === 'diamond') {
+      // 创建菱形点
+      styleObj.image = new ol.style.RegularShape({
+        points: 4,
+        radius: radius,
+        angle: 0,
+        stroke: new ol.style.Stroke({
+          color: strokeColor,
+          width: strokeWidth
+        }),
+        fill: new ol.style.Fill({
+          color: fillColor
+        })
+      });
+    }
+  }
+  
+  // 处理文本样式
+  if (styleConfig.text) {
+    const textConfig: any = {
+      text: styleConfig.text.text,
+      font: styleConfig.text.font || '12px sans-serif',
+      fill: new ol.style.Fill({
+        color: parseColor(styleConfig.text.fill.color)
+      }),
+      offsetY: styleConfig.text.offsetY || 0,
+      textAlign: styleConfig.text.textAlign || 'center',
+      textBaseline: styleConfig.text.textBaseline || 'middle'
+    };
+    
+    // 处理文本描边
+    if (styleConfig.text.stroke) {
+      textConfig.stroke = new ol.style.Stroke({
+        color: parseColor(styleConfig.text.stroke.color),
+        width: styleConfig.text.stroke.width
+      });
+    }
+    
+    styleObj.text = new ol.style.Text(textConfig);
+  }
+  
+  return new ol.style.Style(styleObj);
+};
 
 // 样式配置常量
 const STYLE_CONFIG = {
@@ -66,6 +312,18 @@ export function useMapStyles() {
    * @returns {ol.style.Style} OpenLayers 样式对象
    */
   const createSuperMapLayerStyle = (layerConfig: any, layerName: string): any => {
+    // 检查mapStore中是否有预配置的样式
+    const mapStore = useMapStore();
+    const configuredStyle = mapStore.mapConfig.vectorlayers.find(
+      (vl: any) => vl.name === layerConfig.name
+    );
+    
+    // 如果有预配置的样式，且不是点要素，使用它
+    // 点要素直接使用OpenLayers原生样式
+    if (configuredStyle && configuredStyle.style && layerConfig.type !== 'point') {
+      return createOLStyleFromConfig(configuredStyle.style, layerName);
+    }
+    
     // 获取当前主题的CSS变量值
     const css = getComputedStyle(document.documentElement);
     const currentTheme = getCurrentTheme();
@@ -73,11 +331,11 @@ export function useMapStyles() {
     // 获取图层特定的样式变量
     const strokeVar = css.getPropertyValue(`--layer-stroke-${layerName}`).trim();
     const fillVar = css.getPropertyValue(`--layer-fill-${layerName}`).trim();
-    const accentFallback = css.getPropertyValue('--accent').trim() || (currentTheme === 'dark' ? '#666666' : '#212529');
+    const accentFallback = css.getPropertyValue('--accent').trim() || (currentTheme === 'dark' ? '#666666' : '#4a5568');
 
     // 解析样式颜色，优先使用图层特定变量，回退到主题色
     const resolvedStroke = strokeVar || accentFallback;
-    const resolvedFill = fillVar || (currentTheme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(33,37,41,0.1)');
+    const resolvedFill = fillVar || (currentTheme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(74,85,104,0.1)');
     
     /**
      * 根据图层类型和重要性获取样式参数

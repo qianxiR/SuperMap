@@ -12,6 +12,15 @@ export interface StyleConfig {
   pointStrokeWidth?: number
   lineCap?: string
   lineJoin?: string
+  text?: {
+    text: string
+    font?: string
+    fill?: { color: string }
+    stroke?: { color: string; width: number }
+    offsetY?: number
+    textAlign?: string
+    textBaseline?: string
+  }
 }
 
 // 颜色解析结果接口
@@ -88,13 +97,14 @@ export const createOLStyle = (config: StyleConfig): any => {
     pointRadius = 6,
     pointStrokeWidth = 2,
     lineCap = 'round',
-    lineJoin = 'round'
+    lineJoin = 'round',
+    text
   } = config
   
   const colorResult = parseColorToRgba(strokeColor, fillOpacity)
   const panelColor = getCSSVariable('--panel', '#ffffff')
   
-  return new ol.style.Style({
+  const styleConfig: any = {
     stroke: new ol.style.Stroke({
       color: colorResult.strokeColor,
       width: strokeWidth,
@@ -114,7 +124,33 @@ export const createOLStyle = (config: StyleConfig): any => {
         width: pointStrokeWidth
       })
     })
-  })
+  }
+  
+  // 如果配置了文本样式，添加文本样式
+  if (text) {
+    const textConfig: any = {
+      text: text.text,
+      font: text.font || '12px sans-serif',
+      fill: new ol.style.Fill({
+        color: text.fill?.color || colorResult.strokeColor
+      }),
+      offsetY: text.offsetY || 0,
+      textAlign: text.textAlign || 'center',
+      textBaseline: text.textBaseline || 'middle'
+    }
+    
+    // 如果配置了文本描边，添加描边样式
+    if (text.stroke) {
+      textConfig.stroke = new ol.style.Stroke({
+        color: text.stroke.color,
+        width: text.stroke.width
+      })
+    }
+    
+    styleConfig.text = new ol.style.Text(textConfig)
+  }
+  
+  return new ol.style.Style(styleConfig)
 }
 
 /**
@@ -127,7 +163,7 @@ export const createLayerStyle = (sourceType: string, layerName?: string): any =>
   const getStyleConfig = (prefix: string): StyleConfig => {
     const strokeColor = getCSSVariable(`--${prefix}-stroke-color`) || 
                        getCSSVariable('--accent') || 
-                       getThemeColor('#000000', '#ffffff')
+                       getThemeColor('#4a5568', '#ffffff')
     
     return {
       strokeColor,
@@ -168,7 +204,7 @@ export const createLayerStyle = (sourceType: string, layerName?: string): any =>
  */
 export const createHoverStyle = (): any => {
   const highlightColor = getCSSVariable('--map-highlight-color') || 
-                        getThemeColor('#000000', '#ffffff')
+                        getThemeColor('#4a5568', '#ffffff')
   const hoverFillColor = getCSSVariable('--map-hover-fill') || 'rgba(0, 123, 255, 0.3)'
   
   return createOLStyle({
@@ -185,7 +221,7 @@ export const createHoverStyle = (): any => {
  */
 export const createSelectStyle = (): any => {
   const highlightColor = getCSSVariable('--map-highlight-color') || 
-                        getThemeColor('#000000', '#ffffff')
+                        getThemeColor('#4a5568', '#ffffff')
   const selectFillColor = getCSSVariable('--map-select-fill') || 
                          getThemeColor('rgba(33, 37, 41, 0.15)', 'rgba(255, 255, 255, 0.15)')
   

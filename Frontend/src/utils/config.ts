@@ -80,13 +80,27 @@ export const createAPIConfig = (): APIConfig => {
         dataService: `${mapService}/maps/${mapName}`,
         lazyLoad: false // 默认显示，不懒加载
       },
+      
+      // ===== 市级行政区图层 =====
+      // 调用者: useMap.ts -> loadVectorlayer()
+      // 服务器地址: ${baseUrl}/${dataService}/datasources/${workspace}/datasets/wuhan_map_市级
+      // 作用: 提供市级行政区边界数据，用于市级区域划分和空间分析
+      { 
+        name: `武汉_市级@${workspace}@@${mapName}`, 
+        type: 'polygon', 
+        visible: true, 
+        group: '市级行政区',
+        datasetName: 'wuhan_map_市级',
+        dataService: `${mapService}/maps/${mapName}`,
+        lazyLoad: false // 默认显示，不懒加载
+      },
     
       // ===== 交通设施图层组 =====
       // 调用者: useMap.ts -> loadVectorlayer()
       // 服务器地址: ${baseUrl}/${dataService}/datasources/${workspace}/datasets/公路
       // 作用: 提供公路网络数据，用于交通分析和路径规划
       { 
-        name: `公路@${workspace}@@武汉`, 
+        name: `公路@${workspace}@@${mapName}`, 
         type: 'line', 
         visible: false, 
         group: '城市基本信息',
@@ -98,7 +112,7 @@ export const createAPIConfig = (): APIConfig => {
       // 服务器地址: ${baseUrl}/${dataService}/datasources/${workspace}/datasets/铁路
       // 作用: 提供铁路网络数据，用于交通分析和运输规划
       { 
-        name: `铁路@${workspace}@@武汉`, 
+        name: `铁路@${workspace}@@${mapName}`, 
         type: 'line', 
         visible: false, 
         group: '城市基本信息',
@@ -109,7 +123,7 @@ export const createAPIConfig = (): APIConfig => {
     
       // 城市基本信息图层组 - 水系信息
       { 
-        name: `水系线@${workspace}@@武汉`, 
+        name: `水系线@${workspace}@@${mapName}`, 
         type: 'line', 
         visible: false, 
         group: '城市基本信息',
@@ -169,15 +183,6 @@ export const createAPIConfig = (): APIConfig => {
         lazyLoad: true // 懒加载，点击显示时才加载
       },
       
-      // DEM图层 - 已禁用加载，避免使用瓦片服务
-      // { 
-      //   name: `DEM_${workspace}@${workspace}@@${mapName}`, 
-      //   type: 'raster', 
-      //   visible: true, 
-      //   group: '地形数据',
-      //   datasetName: `DEM_${workspace}`,
-      //   dataService: `${mapService}/maps/${mapName}`
-      // }
 
     ],
     timeout: Number(import.meta.env.VITE_API_TIMEOUT),

@@ -1,5 +1,6 @@
 import { useMapStore } from '@/stores/mapStore'
 import { useLoadingStore } from '@/stores/loadingStore'
+import { useLayerDataStore } from '@/stores/layerDataStore'
 import { createAPIConfig } from '@/utils/config'
 import { notificationManager } from '@/utils/notification'
 import { useMapStyles } from './useMapStyles'
@@ -15,6 +16,7 @@ const DATA_CONFIG = {
   DEFAULT_START_INDEX: 0,
   Z_INDEX: {
     COUNTY_BOUNDARY: -500,
+    CITY_BOUNDARY: -1000, // 武汉_市级图层使用更低的Z-index
     DEFAULT_OFFSET: 10
   }
 } as const;
@@ -30,6 +32,7 @@ const DATA_CONFIG = {
 export function useMapData() {
   const mapStore = useMapStore()
   const loadingStore = useLoadingStore()
+  const layerDataStore = useLayerDataStore()
   const { createLayerStyle } = useMapStyles()
 
   /**
@@ -179,6 +182,11 @@ export function useMapData() {
           })();
         }, DATA_CONFIG.PAGINATION_DELAY);
         
+        // ===== 保存图层数据到全局状态管理 =====
+        // 调用者: loadVectorLayer()
+        // 作用: 将加载的要素数据保存到layerDataStore中，供文本注记等功能使用
+        layerDataStore.setLayerAttributes(layerName, features)
+        
         // ===== 加载完成通知（使用自定义API获取的统计信息） =====
         // 调用者: loadVectorLayer()
         // 作用: 显示图层加载完成的统计信息，包括要素数量、数据来源和服务器地址
@@ -191,7 +199,14 @@ export function useMapData() {
     
     const resolvedVisible = typeof visibleOverride === 'boolean' ? visibleOverride : !!layerConfig.visible
     vectorlayer.setVisible(resolvedVisible);
-    const zIndex = layerName === '武汉_县级' ? DATA_CONFIG.Z_INDEX.COUNTY_BOUNDARY : DATA_CONFIG.Z_INDEX.DEFAULT_OFFSET + mapStore.vectorlayers.length;
+    let zIndex;
+    if (layerName === '武汉_市级') {
+      zIndex = DATA_CONFIG.Z_INDEX.CITY_BOUNDARY; // 武汉_市级图层使用最低Z-index
+    } else if (layerName === '武汉_县级') {
+      zIndex = DATA_CONFIG.Z_INDEX.COUNTY_BOUNDARY; // 武汉_县级图层使用中等Z-index
+    } else {
+      zIndex = DATA_CONFIG.Z_INDEX.DEFAULT_OFFSET + mapStore.vectorlayers.length; // 其他图层使用默认Z-index
+    }
     vectorlayer.setZIndex(zIndex);
     
     // 只有非懒加载图层才需要添加到地图和mapStore
@@ -383,8 +398,10 @@ export function useMapData() {
   /**
    * 加载所有矢量图层
    * 在加载前彻底清空所有图层，避免重复添加
+   * @param map 地图实例
+   * @param visibleLayers 指定要显示的图层名称数组，如果不提供则使用默认配置
    */
-  const loadVectorLayers = async (map: any): Promise<void> => {
+  const loadVectorLayers = async (map: any, visibleLayers?: string[]): Promise<void> => {
     // ===== 首先清空所有现有图层 =====
     clearAllLayersBeforeInit()
     
@@ -392,6 +409,7 @@ export function useMapData() {
     
     
     const loadTasks: Promise<void>[] = []
+    
     for (const layerConfig of apiConfig.wuhanlayers) {
       const layerName = layerConfig.name.split('@')[0] || layerConfig.name
       
@@ -399,10 +417,16 @@ export function useMapData() {
         continue;
       }
       
-      // 懒加载逻辑：只有非懒加载且可见的图层才立即加载
-      const shouldLoadImmediately = !layerConfig.lazyLoad && layerConfig.visible
+      // 如果指定了可见图层列表，则只加载指定的图层
+      let shouldLoad = false
+      if (visibleLayers && visibleLayers.length > 0) {
+        shouldLoad = visibleLayers.includes(layerName)
+      } else {
+        // 懒加载逻辑：只有非懒加载且可见的图层才立即加载
+        shouldLoad = !layerConfig.lazyLoad && layerConfig.visible
+      }
       
-      if (shouldLoadImmediately) {
+      if (shouldLoad) {
         loadingStore.updateLoading('map-init', `正在加载图层: ${layerName}`)
         loadTasks.push(loadVectorLayer(map, layerConfig, true))
       } else {

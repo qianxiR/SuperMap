@@ -260,7 +260,7 @@ export function useShortestPathAnalysis() {
   }
   
   // 获取CSS变量值的工具函数
-  const getCSSVariable = (variableName: string, fallback: string = '#000000'): string => {
+  const getCSSVariable = (variableName: string, fallback: string = '#4a5568'): string => {
     try {
       const value = getComputedStyle(document.documentElement).getPropertyValue(variableName).trim()
       return value || fallback
@@ -422,7 +422,7 @@ export function useShortestPathAnalysis() {
     })
     
     // 设置分析点样式 - 使用主题色
-    const accentColor = getCSSVariable('--accent', '#000000')
+    const accentColor = getCSSVariable('--accent', '#4a5568')
     const pointStyle = new window.ol.style.Style({
       image: new window.ol.style.Circle({
         radius: 8,

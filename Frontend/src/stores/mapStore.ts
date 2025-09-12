@@ -33,7 +33,7 @@ const useMapStore = defineStore('map', () => {
   const areaMeasureInteraction = ref<any>(null) // 面积量算交互
   
   // 鹰眼相关状态
-  const overviewMapVisible = ref<boolean>(false)
+  const overviewMapVisible = ref<boolean>(true)
   
   // 预加载的底图源
   const preloadedBaseMapSources = ref<{ light?: any; dark?: any } | null>(null)
@@ -52,8 +52,8 @@ const useMapStore = defineStore('map', () => {
       const css = getComputedStyle(document.documentElement)
       const currentTheme = document.documentElement.getAttribute('data-theme') || 'light'
       
-      const measureColor = css.getPropertyValue('--measure-line-color').trim() || (currentTheme === 'dark' ? '#ffffff' : '#212529')
-      const measureRgb = css.getPropertyValue('--measure-line-rgb').trim() || (currentTheme === 'dark' ? '255, 255, 255' : '33, 37, 41')
+      const measureColor = css.getPropertyValue('--measure-line-color').trim() || (currentTheme === 'dark' ? '#ffffff' : '#4a5568')
+      const measureRgb = css.getPropertyValue('--measure-line-rgb').trim() || (currentTheme === 'dark' ? '255, 255, 255' : '74, 85, 104')
       
       console.log(`更新测量图层样式，主题: ${currentTheme}, 颜色: ${measureColor}, RGB: ${measureRgb}`)
       
@@ -157,14 +157,34 @@ const useMapStore = defineStore('map', () => {
           fill: { color: 'var(--selection-bg)' }
         }
         
-        // 特殊处理县级图层，使用主题色
+        // 特殊处理县级图层，使用主题色并添加文本注记
         const layerName = layer.name.split('@')[0] || layer.name
         if (layerName === '武汉_县级') {
           return {
             name: layer.name,
             style: {
-              stroke: { width: 1.5, color: 'var(--layer-stroke-武汉_县级)' },
-              fill: { color: 'var(--layer-fill-武汉_县级)' }
+              stroke: { width: 2, color: 'var(--layer-stroke-武汉_县级)' }, // 加粗到2
+              fill: { color: 'var(--layer-fill-武汉_县级)' },
+              text: {
+                text: '{NAME_1}', // 显示NAME_1字段
+                font: '14px sans-serif',
+                fill: { color: 'var(--accent)' }, // 使用主题颜色
+                stroke: { color: '#ffffff', width: 2 }, // 白色描边
+                offsetY: 0,
+                textAlign: 'center',
+                textBaseline: 'middle'
+              }
+            }
+          }
+        }
+        
+        // 特殊处理市级图层，使用主题配色变量
+        if (layerName === '武汉_市级') {
+          return {
+            name: layer.name,
+            style: {
+              stroke: { width: 10, color: 'var(--layer-stroke-武汉_市级)' }, // 使用主题配色变量
+              fill: { color: 'var(--layer-fill-武汉_市级)' } // 使用主题配色变量
             }
           }
         }
@@ -175,29 +195,107 @@ const useMapStore = defineStore('map', () => {
         
         switch (layer.type) {
           case 'point':
+            // 根据图层名称设置不同的点要素样式
+            let pointRadius = 6
+            let pointStrokeWidth = 2
+            
+            // 民生设施使用更大的点，便于识别
+            if (['学校', '医院', '居民地地名点'].includes(layerName)) {
+              pointRadius = 8
+              pointStrokeWidth = 2.5
+            }
+            
+            // 为民生设施点要素添加特殊样式配置
+            if (['学校', '医院', '居民地地名点'].includes(layerName)) {
+              let imageType = 'circle'
+              
+              // 为不同民生设施设置不同的点样式
+              if (layerName === '学校') {
+                imageType = 'square' // 学校使用方形
+              } else if (layerName === '医院') {
+                imageType = 'triangle' // 医院使用三角形
+              } else if (layerName === '居民地地名点') {
+                imageType = 'diamond' // 居民地使用菱形
+              }
+              
+              return {
+                name: layer.name,
+                style: {
+                  image: {
+                    type: imageType,
+                    radius: pointRadius,
+                    stroke: {
+                      color: strokeVar,
+                      width: pointStrokeWidth
+                    },
+                    fill: {
+                      color: fillVar
+                    }
+                  },
+                  text: {
+                    text: `{NAME}`, // 显示NAME字段
+                    font: '12px sans-serif',
+                    fill: { color: strokeVar }, // 使用描边颜色作为文字颜色
+                    stroke: { color: '#ffffff', width: 2 }, // 白色描边
+                    offsetY: -pointRadius - 5, // 在点上方显示
+                    textAlign: 'center',
+                    textBaseline: 'bottom'
+                  }
+                }
+              }
+            }
+            
             return {
               name: layer.name,
               style: {
                 ...baseStyle,
-                stroke: { width: 2, color: strokeVar },
-                fill: { color: fillVar }
+                stroke: { width: pointStrokeWidth, color: strokeVar },
+                fill: { color: fillVar },
+                image: {
+                  type: 'circle',
+                  radius: pointRadius
+                }
               }
             }
           case 'line':
+            // 根据图层名称设置不同的线要素样式
+            let lineWidth = 2
+            
+            // 交通设施使用更粗的线条
+            if (['公路', '铁路'].includes(layerName)) {
+              lineWidth = 3
+            }
+            // 水系线使用中等粗细
+            else if (['水系线'].includes(layerName)) {
+              lineWidth = 2.5
+            }
+            
             return {
               name: layer.name,
               style: {
                 ...baseStyle,
-                stroke: { width: 2, color: strokeVar },
+                stroke: { width: lineWidth, color: strokeVar },
                 fill: { color: 'rgba(0, 0, 0, 0)' }
               }
             }
           case 'polygon':
+            // 根据图层名称设置不同的面要素样式
+            let polygonStrokeWidth = 1.5
+            
+            // 行政区划使用更粗的边界
+            if (['武汉_市级', '武汉_县级'].includes(layerName)) {
+              polygonStrokeWidth = 2
+            }
+            // 水系面使用中等粗细
+            else if (['水系面'].includes(layerName)) {
+              polygonStrokeWidth = 2
+            }
+            
             return {
               name: layer.name,
               style: {
                 ...baseStyle,
-                stroke: { width: 1.5, color: strokeVar },
+                stroke: { width: polygonStrokeWidth, color: strokeVar },
                 fill: { color: fillVar }
               }
             }
@@ -338,7 +436,7 @@ const useMapStore = defineStore('map', () => {
     const ol = window.ol
     
     // 获取测量线条颜色
-    const measureColor = getComputedStyle(document.documentElement).getPropertyValue('--measure-line-color').trim() || '#212529'
+    const measureColor = getComputedStyle(document.documentElement).getPropertyValue('--measure-line-color').trim() || '#4a5568'
     const measureRgb = getComputedStyle(document.documentElement).getPropertyValue('--measure-line-rgb').trim() || '33, 37, 41'
     
     console.log('初始化距离测量，颜色:', measureColor, 'RGB:', measureRgb)
@@ -480,7 +578,7 @@ const useMapStore = defineStore('map', () => {
      const ol = window.ol
      
      // 获取测量线条颜色
-     const measureColor = getComputedStyle(document.documentElement).getPropertyValue('--measure-line-color').trim() || '#212529'
+     const measureColor = getComputedStyle(document.documentElement).getPropertyValue('--measure-line-color').trim() || '#4a5568'
      const measureRgb = getComputedStyle(document.documentElement).getPropertyValue('--measure-line-rgb').trim() || '33, 37, 41'
      
      console.log('初始化面积测量，颜色:', measureColor, 'RGB:', measureRgb)
@@ -600,8 +698,8 @@ const useMapStore = defineStore('map', () => {
    function updateAreaMeasureStyle() {
      if (areaMeasurelayer.value) {
        const ol = window.ol
-       const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--measure-line-color').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000')
-       const measureRgb = getComputedStyle(document.documentElement).getPropertyValue('--measure-line-rgb').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '255, 255, 255' : '0, 0, 0')
+       const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--measure-line-color').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#4a5568')
+       const measureRgb = getComputedStyle(document.documentElement).getPropertyValue('--measure-line-rgb').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '255, 255, 255' : '74, 85, 104')
        
        const newStyle = new ol.style.Style({
          stroke: new ol.style.Stroke({

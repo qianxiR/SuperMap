@@ -64,7 +64,7 @@ export function useThemeOptimization() {
       '--bg': '#f8f9fa',
       '--panel': '#f9f9f9',
       '--border': '#dee2e6',
-      '--text': '#212529',
+      '--text': '#4a5568',
       '--text-secondary': '#495057',
       '--sub': '#6c757d',
       '--accent': '#0078D4',
@@ -74,7 +74,7 @@ export function useThemeOptimization() {
       '--btn-primary-bg': '#0078D4',
       '--btn-primary-color': '#ffffff',
       '--btn-secondary-bg': '#e0e0e0',
-      '--btn-secondary-color': '#212529',
+      '--btn-secondary-color': '#4a5568',
       '--surface': 'rgba(0, 0, 0, 0.03)',
       '--surface-hover': 'rgba(0, 0, 0, 0.06)',
       '--splitter-bg': 'rgba(0, 0, 0, 0.1)',
@@ -85,8 +85,8 @@ export function useThemeOptimization() {
       '--draw-rgb': '0, 120, 212',
       '--analysis-color': '#0078D4',
       '--analysis-rgb': '0, 120, 212',
-      '--upload-color': '#212529',
-      '--upload-rgb': '33, 37, 41'
+      '--upload-color': '#4a5568',
+      '--upload-rgb': '74, 85, 104'
     }
 
     const darkVars = {

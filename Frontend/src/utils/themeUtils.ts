@@ -108,7 +108,7 @@ export const getThemeColors = (): ThemeColors => {
       accent: getCSSVariable('--accent', '#0078D4'),
       background: getCSSVariable('--bg', '#ffffff'),
       surface: getCSSVariable('--panel', '#f8f9fa'),
-      text: getCSSVariable('--text', '#212529'),
+      text: getCSSVariable('--text', '#4a5568'),
       textSecondary: getCSSVariable('--text-secondary', '#6c757d'),
       border: getCSSVariable('--border', '#dee2e6'),
       shadow: getCSSVariable('--shadow', 'rgba(0, 0, 0, 0.1)'),
@@ -139,7 +139,7 @@ export const getMapThemeColors = (): MapThemeColors => {
   } else {
     return {
       baseMap: getCSSVariable('--base-map-light', ''),
-      highlight: getCSSVariable('--map-highlight-color', '#000000'),
+      highlight: getCSSVariable('--map-highlight-color', '#4a5568'),
       hover: getCSSVariable('--map-hover-fill', 'rgba(0, 123, 255, 0.3)'),
       select: getCSSVariable('--map-select-fill', 'rgba(33, 37, 41, 0.15)'),
       draw: getCSSVariable('--draw-color', '#0078D4'),

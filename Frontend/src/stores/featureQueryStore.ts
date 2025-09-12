@@ -278,7 +278,7 @@ export const useFeatureQueryStore = defineStore('featureQuery', () => {
     const source = mapStore.selectlayer.getSource()
     if (!source) return
     const grayFillColor = getComputedStyle(document.documentElement).getPropertyValue('--map-select-fill').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(33, 37, 41, 0.15)')
-    const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--map-highlight-color').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000')
+    const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--map-highlight-color').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#4a5568')
     const createStyle = () => (feature: any) => {
       const isHighlight = isSameFeature(feature, highlightedFeature.value)
       const geom = feature.getGeometry(); if (!geom) return null
@@ -320,7 +320,7 @@ export const useFeatureQueryStore = defineStore('featureQuery', () => {
 
   const removeHighlightFeature = () => {
     if (!mapStore.selectlayer) return
-    const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--map-highlight-color').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000')
+    const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--map-highlight-color').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#4a5568')
     const grayFillColor = getComputedStyle(document.documentElement).getPropertyValue('--map-select-fill').trim() || (document.documentElement.getAttribute('data-theme') === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(33, 37, 41, 0.15)')
     const restore = (feature: any) => {
       const geom = feature.getGeometry(); if (!geom) return null

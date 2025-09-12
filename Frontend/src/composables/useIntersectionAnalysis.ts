@@ -298,7 +298,7 @@ export function useIntersectionAnalysis() {
     
     // 获取分析专用颜色
     const rootStyle = getComputedStyle(document.documentElement)
-    const strokeColor = rootStyle.getPropertyValue('--map-highlight-color')?.trim() || '#000000'
+    const strokeColor = rootStyle.getPropertyValue('--map-highlight-color')?.trim() || '#4a5568'
     const fillColor = rootStyle.getPropertyValue('--analysis-color')?.trim() || '#0078D4'
     const fillVar = fillColor + '4D' // 蓝色，70%透明度
 

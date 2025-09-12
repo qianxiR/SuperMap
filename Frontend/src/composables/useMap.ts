@@ -96,8 +96,10 @@ export function useMap() {
   /**
    * 地图初始化主函数
    * 整合各模块功能，完成地图的完整初始化流程
+   * @param customZoom 自定义缩放等级，如果不提供则使用默认配置
+   * @param visibleLayers 指定要显示的图层名称数组，如果不提供则使用默认配置
    */
-  const initMap = async (): Promise<void> => {
+  const initMap = async (customZoom?: number, visibleLayers?: string[]): Promise<void> => {
     try {
       if (!window.ol || !mapLifecycle.mapContainer.value) {
         throw new Error('地图容器或SuperMap SDK未准备就绪')
@@ -137,7 +139,7 @@ export function useMap() {
           projection: mapStore.mapConfig.projection,
           resolutions: resolutions,
           center: mapStore.mapConfig.center,
-          zoom: mapStore.mapConfig.zoom
+          zoom: customZoom !== undefined ? customZoom : mapStore.mapConfig.zoom
         })
       })
       
@@ -178,7 +180,7 @@ export function useMap() {
       
       // ===== 5. 加载矢量图层 =====
       loadingStore.updateLoading('map-init', '正在加载图层...')
-      await mapData.loadVectorLayers(map)
+      await mapData.loadVectorLayers(map, visibleLayers)
       
       // ===== 6. 创建交互图层 =====
       // 悬停图层

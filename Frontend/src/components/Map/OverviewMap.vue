@@ -1,5 +1,5 @@
 <template>
-  <div class="overview-map-container no-theme-flicker" v-if="mapStore.overviewMapVisible">
+  <div class="overview-map-container no-theme-flicker" v-if="shouldShowOverview">
     <div class="overview-map-header">
       <span class="overview-title">鹰眼</span>
     </div>
@@ -12,19 +12,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useMapStore } from '@/stores/mapStore'
 import { useThemeStore } from '@/stores/themeStore'
 import {getCurrentBaseMapUrl } from '@/utils/config'
 
 const mapStore = useMapStore()
 const themeStore = useThemeStore()
+const route = useRoute()
 
 // 响应式数据
 const overviewMapElement = ref<HTMLElement | null>(null)
 const overviewMap = ref<any>(null)
 const extentlayer = ref<any>(null) // 视口框图层
 let themeObserver: MutationObserver | null = null // 主题变化观察器
+
+// 计算是否应该显示鹰眼
+const shouldShowOverview = computed(() => {
+  // 检查mapStore中的显示状态
+  if (!mapStore.overviewMapVisible) {
+    return false
+  }
+  
+  // 仅在图层管理页面显示鹰眼
+  const currentPath = route.path
+  return currentPath === '/dashboard/view/home/layermanage'
+})
+
 
 // 更新视口框函数
 const updateExtentBox = () => {
@@ -126,8 +141,8 @@ const initOverviewMap = async () => {
     })
     
     // 获取视口框颜色
-    const extentColor = getComputedStyle(document.documentElement).getPropertyValue('--overview-extent-color').trim() || '#000000'
-    const extentRgb = getComputedStyle(document.documentElement).getPropertyValue('--overview-extent-rgb').trim() || '0, 0, 0'
+    const extentColor = getComputedStyle(document.documentElement).getPropertyValue('--overview-extent-color').trim() || '#4a5568'
+    const extentRgb = getComputedStyle(document.documentElement).getPropertyValue('--overview-extent-rgb').trim() || '74, 85, 104'
     
     // 添加主地图视口框图层到鹰眼
     extentlayer.value = new ol.layer.Vector({
@@ -153,8 +168,8 @@ const initOverviewMap = async () => {
     const handleThemeChange = () => {
       if (overviewMap.value) {
         // 重新获取视口框颜色
-        const newExtentColor = getComputedStyle(document.documentElement).getPropertyValue('--overview-extent-color').trim() || '#000000'
-        const newExtentRgb = getComputedStyle(document.documentElement).getPropertyValue('--overview-extent-rgb').trim() || '0, 0, 0'
+        const newExtentColor = getComputedStyle(document.documentElement).getPropertyValue('--overview-extent-color').trim() || '#4a5568'
+        const newExtentRgb = getComputedStyle(document.documentElement).getPropertyValue('--overview-extent-rgb').trim() || '74, 85, 104'
         
         extentlayer.value.setStyle(new ol.style.Style({
           stroke: new ol.style.Stroke({
@@ -274,7 +289,7 @@ const destroyOverviewMap = () => {
 }
 
 // 监听鹰眼显示状态变化
-watch(() => mapStore.overviewMapVisible, (visible) => {
+watch(() => shouldShowOverview.value, (visible) => {
   console.log('鹰眼显示状态变化:', visible)
   
   if (visible) {
@@ -305,6 +320,7 @@ watch(() => mapStore.overviewMapVisible, (visible) => {
     destroyOverviewMap()
   }
 })
+
 
 // 重建鹰眼图层的函数
 const rebuildOverviewlayer = () => {
@@ -381,7 +397,7 @@ watch(() => themeStore.theme, () => {
 
 // 监听地图就绪状态
 watch(() => mapStore.isMapReady, (ready) => {
-  if (ready && !overviewMap.value && mapStore.overviewMapVisible) {
+  if (ready && !overviewMap.value && shouldShowOverview.value) {
     nextTick(() => {
       initOverviewMap()
     })
@@ -390,7 +406,7 @@ watch(() => mapStore.isMapReady, (ready) => {
 
 // 生命周期
 onMounted(() => {
-  if (mapStore.isMapReady && mapStore.overviewMapVisible) {
+  if (mapStore.isMapReady && shouldShowOverview.value) {
     nextTick(() => {
       initOverviewMap()
     })
@@ -406,7 +422,7 @@ onUnmounted(() => {
 .overview-map-container {
   position: absolute;
   top: 16px;
-  right: 16px;
+  left: 80px;
   z-index: 1000;
   background: var(--panel);
   border: 1px solid var(--border);
@@ -419,7 +435,7 @@ onUnmounted(() => {
 @keyframes slideIn {
   from {
     opacity: 0;
-    transform: translateX(20px);
+    transform: translateX(-100px);
   }
   to {
     opacity: 1;
@@ -491,7 +507,7 @@ onUnmounted(() => {
 @media (max-width: 768px) {
   .overview-map-container {
     top: 8px;
-    right: 8px;
+    left: 70px;
   }
   
   .overview-map {

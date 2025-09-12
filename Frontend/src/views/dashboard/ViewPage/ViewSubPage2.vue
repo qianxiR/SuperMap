@@ -46,9 +46,9 @@ let resizeObserver: ResizeObserver | null = null
 // 子页面按钮配置
 const subPageButtons = [
   { id: 'home', text: '首页' },
-  { id: 'subpage1', text: '城市总览' },
+  { id: 'subpage1', text: '交通总览' },
   { id: 'subpage2', text: '民生设施' },
-  { id: 'subpage3', text: '生态资源' }
+  { id: 'subpage3', text: '水资源' }
 ]
 
 // 当前激活的子页面
@@ -82,10 +82,10 @@ watch(() => route.path, (newPath) => {
 onMounted(() => {
   // 确保外部库已加载
   if (window.ol && window.ol.supermap) {
-    initMap()
+    initMap(8, ['武汉_市级', '武汉_县级', '学校', '医院', '居民地地名点']) // 民生设施显示武汉_市级、武汉_县级、学校、医院、居民点
   } else {
     // 如果库还未加载，等待一下再初始化
-    setTimeout(initMap, 500)
+    setTimeout(() => initMap(8, ['武汉_市级', '武汉_县级', '学校', '医院', '居民地地名点']), 500)
   }
 
   // 设置当前页面为视图页面
