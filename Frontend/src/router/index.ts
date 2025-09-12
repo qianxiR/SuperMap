@@ -92,6 +92,36 @@ const router = createRouter({
                 requiresAuth: true,
                 title: '图层管理'
               }
+            },
+            // 子页面1
+            {
+              path: 'subpage1',
+              name: 'view-subpage1',
+              component: () => import('@/views/dashboard/ViewPage/ViewSubPage1.vue'),
+              meta: {
+                requiresAuth: true,
+                title: '子页面1'
+              }
+            },
+            // 子页面2
+            {
+              path: 'subpage2',
+              name: 'view-subpage2',
+              component: () => import('@/views/dashboard/ViewPage/ViewSubPage2.vue'),
+              meta: {
+                requiresAuth: true,
+                title: '子页面2'
+              }
+            },
+            // 子页面3
+            {
+              path: 'subpage3',
+              name: 'view-subpage3',
+              component: () => import('@/views/dashboard/ViewPage/ViewSubPage3.vue'),
+              meta: {
+                requiresAuth: true,
+                title: '子页面3'
+              }
             }
           ]
         },

@@ -204,7 +204,8 @@ export function useBufferAnalysis() {
       body: JSON.stringify(requestData)
     })
 
-    if (!response.ok) {
+    // 检查HTTP状态码：200时直接返回成功，非200时返回错误
+    if (response.status !== 200) {
       const errorData = await response.json()
       throw new Error(errorData.error?.message || `API请求失败: ${response.status} ${response.statusText}`)
     }
@@ -453,6 +454,13 @@ export function useBufferAnalysis() {
       'buffer'
     )
     console.log('[BufferAnalysis] 保存结果:', result)
+    
+    // 保存成功后清除composable变量
+    if (result) {
+      lastFeatureCollection.value = null
+      console.log('[BufferAnalysis] 保存图层成功，已清除composable变量')
+    }
+    
     return result
   }
   

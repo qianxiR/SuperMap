@@ -193,7 +193,8 @@ export function useIntersectionAnalysis() {
         body: JSON.stringify(requestData)
       })
 
-      if (!response.ok) {
+      // 检查HTTP状态码：200时直接返回成功，非200时返回错误
+      if (response.status !== 200) {
         const errorData = await response.json()
         throw new Error(`API请求失败: ${errorData.error?.message || '未知错误'}`)
       }
@@ -452,7 +453,15 @@ export function useIntersectionAnalysis() {
       const mn = m ? m.name : '掩膜'
       return `相交分析结果_${tn}_AND_${mn}`
     })()
-    return saveFeaturesAslayer(olFeatures as any[], layerName || defaultName, 'intersect')
+    const result = await saveFeaturesAslayer(olFeatures as any[], layerName || defaultName, 'intersect')
+    
+    // 保存成功后清除composable变量
+    if (result) {
+      lastFeatureCollection.value = null
+      console.log('[IntersectionAnalysis] 保存图层成功，已清除composable变量')
+    }
+    
+    return result
   }
 
   const exportIntersectionResultsAsJSON = async (fileName?: string): Promise<any> => {

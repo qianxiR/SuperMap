@@ -78,8 +78,22 @@ class Settings(BaseSettings):
     vite_dashscope_temperature: float = Field(alias="VITE_DASHSCOPE_TEMPERATURE")
     vite_dashscope_max_tokens: int = Field(alias="VITE_DASHSCOPE_MAX_TOKENS")
     
+    # RAG PostgreSQL 配置
+    rag_postgres_host: str = Field(alias="RAG_POSTGRES_HOST")
+    rag_postgres_port: int = Field(alias="RAG_POSTGRES_PORT")
+    rag_postgres_user: str = Field(alias="RAG_POSTGRES_USER")
+    rag_postgres_password: str = Field(alias="RAG_POSTGRES_PASSWORD")
+    rag_postgres_db: str = Field(alias="RAG_POSTGRES_DB")
+    rag_postgres_schema: str = Field(alias="RAG_POSTGRES_SCHEMA")
+    rag_postgres_table: str = Field(alias="RAG_POSTGRES_TABLE")
+    rag_postgres_text_columns: str = Field(alias="RAG_POSTGRES_TEXT_COLUMNS")
+    
+    @property
+    def rag_database_url(self) -> str:
+        return f"postgresql+asyncpg://{self.rag_postgres_user}:{self.rag_postgres_password}@{self.rag_postgres_host}:{self.rag_postgres_port}/{self.rag_postgres_db}"
+    
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file="../.env",
         case_sensitive=False,
     )
 

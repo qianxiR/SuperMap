@@ -382,16 +382,12 @@ onMounted(() => {
   // 如果没有恢复的状态，则显示初始消息
   if (messages.value.length === 0) {
     maybeAnnounceInitiallayers();
-    // 注入行业与领域背景，便于后续 LLM 推理
+    // 注入行业与领域背景，便于后续 LLM 推理（隐藏消息，不显示在聊天界面）
     const bg = getEnvironmentalBackground()
     const uc = getUseCases()
     const intro = `${bg}\n\n参考用例：\n${uc}`
-    messages.value.push({ id: Date.now(), text: intro, sender: 'system' })
-    nextTick(() => {
-      messagesPanelRef.value?.scrollToBottom()
-    })
-    // 同步注入给 LLM
-    sendImplicitMessageToLLM('领域背景已注入。' )
+    // 不添加到messages.value中，直接发送给LLM作为隐藏的系统背景
+    sendImplicitMessageToLLM(intro, false)
   }
   
   // 使用nextTick处理DOM更新
@@ -485,7 +481,7 @@ watch(messages, async () => {
 }, { deep: true });
 
 // 隐式发送消息到LLM（用于分析结果反馈）
-const sendImplicitMessageToLLM = async (resultMessage: string) => {
+const sendImplicitMessageToLLM = async (resultMessage: string, showResponse: boolean = true) => {
   try {
     const apiBase = getAgentApiBaseUrl()
     // 使用相同的会话ID
@@ -530,17 +526,19 @@ const sendImplicitMessageToLLM = async (resultMessage: string) => {
       const data = await resp.json()
       const content = data?.data?.final_answer || '[空响应]'
       
-      // 将LLM的回应添加到聊天记录中
-      messages.value.push({ 
-        id: Date.now() + 1, 
-        text: content, 
-        sender: 'system' 
-      })
-      
-      // 滚动到底部显示新消息
-      nextTick(() => {
-        messagesPanelRef.value?.scrollToBottom()
-      })
+      // 根据showResponse参数决定是否将LLM的回应添加到聊天记录中
+      if (showResponse) {
+        messages.value.push({ 
+          id: Date.now() + 1, 
+          text: content, 
+          sender: 'system' 
+        })
+        
+        // 滚动到底部显示新消息
+        nextTick(() => {
+          messagesPanelRef.value?.scrollToBottom()
+        })
+      }
     } else {
       console.error('隐式LLM请求失败:', resp.status, await resp.text())
     }

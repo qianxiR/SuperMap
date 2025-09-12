@@ -184,7 +184,8 @@ export function useEraseAnalysis() {
         body: JSON.stringify(requestData)
       })
 
-      if (!response.ok) {
+      // 检查HTTP状态码：200时直接返回成功，非200时返回错误
+      if (response.status !== 200) {
         const errorData = await response.json()
         throw new Error(`API请求失败: ${errorData.error?.message || '未知错误'}`)
       }
@@ -420,7 +421,15 @@ export function useEraseAnalysis() {
       const en = e ? e.name : '擦除'
       return `擦除分析结果_${tn}_MINUS_${en}`
     })()
-    return saveFeaturesAslayer(olFeatures as any[], layerName || defaultName, 'erase')
+    const result = await saveFeaturesAslayer(olFeatures as any[], layerName || defaultName, 'erase')
+    
+    // 保存成功后清除composable变量
+    if (result) {
+      lastFeatureCollection.value = null
+      console.log('[EraseAnalysis] 保存图层成功，已清除composable变量')
+    }
+    
+    return result
   }
 
   const exportEraseResultsAsJSON = async (fileName?: string): Promise<any> => {

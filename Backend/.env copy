@@ -1,0 +1,57 @@
+# SuperMap Backend Environment Variables
+
+# Application Settings
+APP_NAME=SuperMap GIS + AI Backend
+APP_VERSION=1.0.0
+DEBUG=true
+ENVIRONMENT=development
+
+# API Configuration
+API_V1_PREFIX=/api/v1
+CORS_ORIGINS=http://localhost:3000,http://localhost:8080,http://localhost:5173,http://localhost:5173
+
+# Security Settings  
+SECRET_KEY=your-super-secret-key-change-this-in-production
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# Database Configuration - 基于您的Navicat配置
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=001117
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=supermap
+
+
+RAG_POSTGRES_HOST=localhost
+RAG_POSTGRES_PORT=5432
+RAG_POSTGRES_USER=postgres
+RAG_POSTGRES_PASSWORD=001117
+RAG_POSTGRES_DB=postgres
+RAG_POSTGRES_SCHEMA=public
+RAG_POSTGRES_TABLE=rag_demo_abc
+RAG_POSTGRES_TEXT_COLUMNS=a,b,c
+
+
+# Redis Configuration
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DB=0
+
+# SuperMap Configuration
+SUPERMAP_BASE_URL=http://localhost:8090
+SUPERMAP_SERVER_URL=http://localhost:8090
+SUPERMAP_USERNAME=admin
+SUPERMAP_PASSWORD=admin
+
+# Logging
+LOG_LEVEL=INFO
+
+
+
+VITE_DASHSCOPE_API_KEY=sk-b494400841214e9aa17baa1d24efec62
+VITE_DASHSCOPE_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+VITE_DASHSCOPE_MODEL=qwen-plus
+VITE_DASHSCOPE_TEMPERATURE=0.6
+VITE_DASHSCOPE_MAX_TOKENS=10000

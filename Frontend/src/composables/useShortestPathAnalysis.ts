@@ -235,7 +235,15 @@ export function useShortestPathAnalysis() {
       const resolution = state.analysisOptions.resolution || 1000
       return `最短路径分析结果_units-${units}_res-${resolution}`
     })()
-    return saveFeaturesAslayer(olFeatures as any[], layerName || defaultName, 'path')
+    const result = await saveFeaturesAslayer(olFeatures as any[], layerName || defaultName, 'path')
+    
+    // 保存成功后清除composable变量
+    if (result) {
+      lastFeatureCollection.value = null
+      console.log('[ShortestPathAnalysis] 保存图层成功，已清除composable变量')
+    }
+    
+    return result
   }
 
   const exportPathResultsAsJSON = async (fileName?: string): Promise<any> => {
@@ -558,7 +566,8 @@ export function useShortestPathAnalysis() {
         body: JSON.stringify(requestData)
       })
       
-      if (!response.ok) {
+      // 检查HTTP状态码：200时直接返回成功，非200时返回错误
+      if (response.status !== 200) {
         const errorData = await response.json()
         throw new Error(`API请求失败: ${errorData.error?.message || '未知错误'}`)
       }
