@@ -224,6 +224,8 @@ export function uselayermanager() {
     }
   }
 
+
+  
   // 监听 Agent 工具事件以执行图层显隐 - 只注册一次
   if (typeof window !== 'undefined' && !(window as any).__agentEventListenersRegistered) {
     (window as any).__agentEventListenersRegistered = true
@@ -256,39 +258,14 @@ export function uselayermanager() {
       }
     })
     
-    // 监听 Agent 缓冲区分析事件
-    window.addEventListener('agent:executeBufferAnalysis', async (e: any) => {
-      const { layerName, radius, unit } = e.detail || {}
-      if (!layerName || radius === undefined) return
-      
-      try {
-        // 导入缓冲区分析composable
-        const { useBufferAnalysis } = await import('@/composables/useBufferAnalysis')
-        const { setSelectedAnalysislayer, updateBufferSettings, executeBufferAnalysis } = useBufferAnalysis()
-        
-        // 根据图层名称查找图层ID
-        const layer = mapStore.vectorlayers.find(l => l.name === layerName)
-        if (!layer) {
-          console.error(`[Agent] 未找到图层: ${layerName}`)
-          return
-        }
-        
-        // 设置选中的图层和参数
-        setSelectedAnalysislayer(layer.id)
-        updateBufferSettings({ radius: Number(radius), semicircleLineSegment: 16 })
-        
-        // 执行缓冲区分析
-        await executeBufferAnalysis()
-        console.log(`[Agent] 缓冲区分析完成: ${layerName}, 半径: ${radius}${unit}`)
-      } catch (error) {
-        console.error('[Agent] 缓冲区分析执行失败:', error)
-      }
-    })
     
     // 监听 Agent 相交分析事件
     window.addEventListener('agent:executeIntersectionAnalysis', async (e: any) => {
       const { targetLayerName, maskLayerName } = e.detail || {}
-      if (!targetLayerName || !maskLayerName) return
+      if (!targetLayerName || !maskLayerName) {
+        console.warn('[Agent] 相交分析参数不完整:', { targetLayerName, maskLayerName })
+        return
+      }
       
       try {
         // 导入相交分析composable
@@ -297,16 +274,47 @@ export function uselayermanager() {
         
         // 执行相交分析
         await executeIntersectionAnalysisByAgent(targetLayerName, maskLayerName)
-        console.log(`[Agent] 相交分析完成: ${targetLayerName} ∩ ${maskLayerName}`)
+        
+        const successMessage = `相交分析完成: ${targetLayerName} ∩ ${maskLayerName}`
+        console.log(`[Agent] ${successMessage}`)
+        
+        // 发送分析成功事件
+        const successEvent = new CustomEvent('agent:intersectionAnalysisResult', {
+          detail: {
+            success: true,
+            message: successMessage,
+            targetLayerName,
+            maskLayerName,
+            analysisType: 'intersection'
+          }
+        })
+        window.dispatchEvent(successEvent)
+        
       } catch (error) {
         console.error('[Agent] 相交分析执行失败:', error)
+        
+        // 发送分析失败事件
+        const errorEvent = new CustomEvent('agent:intersectionAnalysisResult', {
+          detail: {
+            success: false,
+            message: `相交分析失败: ${error instanceof Error ? error.message : '未知错误'}`,
+            targetLayerName,
+            maskLayerName,
+            analysisType: 'intersection',
+            error: error instanceof Error ? error.message : '未知错误'
+          }
+        })
+        window.dispatchEvent(errorEvent)
       }
     })
     
     // 监听 Agent 擦除分析事件
     window.addEventListener('agent:executeEraseAnalysis', async (e: any) => {
       const { targetLayerName, eraseLayerName } = e.detail || {}
-      if (!targetLayerName || !eraseLayerName) return
+      if (!targetLayerName || !eraseLayerName) {
+        console.warn('[Agent] 擦除分析参数不完整:', { targetLayerName, eraseLayerName })
+        return
+      }
       
       try {
         // 导入擦除分析composable
@@ -315,16 +323,47 @@ export function uselayermanager() {
         
         // 执行擦除分析
         await executeEraseAnalysisByAgent(targetLayerName, eraseLayerName)
-        console.log(`[Agent] 擦除分析完成: ${targetLayerName} - ${eraseLayerName}`)
+        
+        const successMessage = `擦除分析完成: ${targetLayerName} - ${eraseLayerName}`
+        console.log(`[Agent] ${successMessage}`)
+        
+        // 发送分析成功事件
+        const successEvent = new CustomEvent('agent:eraseAnalysisResult', {
+          detail: {
+            success: true,
+            message: successMessage,
+            targetLayerName,
+            eraseLayerName,
+            analysisType: 'erase'
+          }
+        })
+        window.dispatchEvent(successEvent)
+        
       } catch (error) {
         console.error('[Agent] 擦除分析执行失败:', error)
+        
+        // 发送分析失败事件
+        const errorEvent = new CustomEvent('agent:eraseAnalysisResult', {
+          detail: {
+            success: false,
+            message: `擦除分析失败: ${error instanceof Error ? error.message : '未知错误'}`,
+            targetLayerName,
+            eraseLayerName,
+            analysisType: 'erase',
+            error: error instanceof Error ? error.message : '未知错误'
+          }
+        })
+        window.dispatchEvent(errorEvent)
       }
     })
     
     // 监听 Agent 最短路径分析事件
     window.addEventListener('agent:executeShortestPathAnalysis', async (e: any) => {
       const { startLayerName, endLayerName, obstacleLayerName } = e.detail || {}
-      if (!startLayerName || !endLayerName) return
+      if (!startLayerName || !endLayerName) {
+        console.warn('[Agent] 最短路径分析参数不完整:', { startLayerName, endLayerName, obstacleLayerName })
+        return
+      }
       
       try {
         // 导入最短路径分析composable
@@ -333,9 +372,40 @@ export function uselayermanager() {
         
         // 执行最短路径分析
         await executeShortestPathAnalysisByAgent(startLayerName, endLayerName, obstacleLayerName)
-        console.log(`[Agent] 最短路径分析完成: ${startLayerName} → ${endLayerName}`)
+        
+        const obstacleInfo = obstacleLayerName ? `，障碍物图层: ${obstacleLayerName}` : ''
+        const successMessage = `最短路径分析完成: ${startLayerName} → ${endLayerName}${obstacleInfo}`
+        console.log(`[Agent] ${successMessage}`)
+        
+        // 发送分析成功事件
+        const successEvent = new CustomEvent('agent:pathAnalysisResult', {
+          detail: {
+            success: true,
+            message: successMessage,
+            startLayerName,
+            endLayerName,
+            obstacleLayerName,
+            analysisType: 'path'
+          }
+        })
+        window.dispatchEvent(successEvent)
+        
       } catch (error) {
         console.error('[Agent] 最短路径分析执行失败:', error)
+        
+        // 发送分析失败事件
+        const errorEvent = new CustomEvent('agent:pathAnalysisResult', {
+          detail: {
+            success: false,
+            message: `最短路径分析失败: ${error instanceof Error ? error.message : '未知错误'}`,
+            startLayerName,
+            endLayerName,
+            obstacleLayerName,
+            analysisType: 'path',
+            error: error instanceof Error ? error.message : '未知错误'
+          }
+        })
+        window.dispatchEvent(errorEvent)
       }
     })
     
@@ -526,76 +596,20 @@ export function uselayermanager() {
       }
       
       try {
-        // 优先从缓冲区分析结果中获取数据
-        const { useBufferAnalysis } = await import('@/composables/useBufferAnalysis')
-        const bufferAnalysis = useBufferAnalysis()
-        const bufferResults = bufferAnalysis.lastFeatureCollection.value
+        // 从查询结果中获取数据
+        const { useFeatureQuery } = await import('@/composables/useFeatureQuery')
+        const featureQuery = useFeatureQuery()
+        const queryResults = featureQuery.queryResults.value
         
-        let featuresToSave: any[] = []
-        let sourceType = 'query'
-        
-        // 检查缓冲区分析结果
-        console.log(`[Agent] 缓冲区分析结果调试信息:`, {
+        console.log(`[Agent] 从查询结果中获取数据:`, {
           layerName,
-          bufferResults: bufferResults,
-          bufferResultsType: typeof bufferResults,
-          hasFeatures: bufferResults?.features ? 'yes' : 'no',
-          featuresLength: bufferResults?.features?.length || 0,
-          bufferResultsKeys: bufferResults ? Object.keys(bufferResults) : 'null'
+          queryResultsType: Array.isArray(queryResults) ? 'array' : typeof queryResults,
+          queryResultsLength: Array.isArray(queryResults) ? queryResults.length : 'not-array'
         })
         
-        if (bufferResults && bufferResults.features && bufferResults.features.length > 0) {
-          console.log(`[Agent] 从缓冲区分析结果中获取数据:`, {
-            layerName,
-            bufferResultsCount: bufferResults.features.length,
-            sourceType: 'buffer'
-          })
-          
-          // 完全按照手动模式的保存方法
-          const format = new window.ol.format.GeoJSON()
-          const olFeatures: any[] = []
-          
-          bufferResults.features.forEach((feature: any) => {
-            if (feature?.geometry?.type === 'FeatureCollection') {
-              const subOlFeatures = format.readFeatures(feature.geometry)
-              subOlFeatures.forEach((subF: any) => {
-                const props = feature.properties || {}
-                subF.setProperties({ ...subF.getProperties?.(), ...props })
-                olFeatures.push(subF)
-              })
-            } else {
-              const geometry = format.readGeometry(feature.geometry)
-              const olFeature = new window.ol.Feature({ geometry })
-              if (feature.properties) {
-                olFeature.setProperties(feature.properties)
-              }
-              olFeatures.push(olFeature)
-            }
-          })
-          
-          featuresToSave = olFeatures
-          sourceType = 'buffer'
-        } else {
-          // 如果没有缓冲区分析结果，尝试从查询结果中获取
-          const { useFeatureQuery } = await import('@/composables/useFeatureQuery')
-          const featureQuery = useFeatureQuery()
-          const queryResults = featureQuery.queryResults.value
-          
-          console.log(`[Agent] 从查询结果中获取数据:`, {
-            layerName,
-            queryResultsType: Array.isArray(queryResults) ? 'array' : typeof queryResults,
-            queryResultsLength: Array.isArray(queryResults) ? queryResults.length : 'not-array'
-          })
-          
-          if (queryResults && queryResults.length > 0) {
-            featuresToSave = queryResults
-            sourceType = 'query'
-          }
-        }
-        
-        // 检查是否有数据可保存
-        if (!featuresToSave || featuresToSave.length === 0) {
-          const errorMessage = `无法保存图层"${layerName}"：当前没有可保存的数据。请先执行查询或分析操作。`
+        // 检查是否有查询结果可保存
+        if (!queryResults || queryResults.length === 0) {
+          const errorMessage = `无法保存图层"${layerName}"：当前没有查询结果数据。请先执行属性查询操作。`
           console.warn(`[Agent] ${errorMessage}`)
           
           // 发送保存失败事件
@@ -604,17 +618,17 @@ export function uselayermanager() {
               success: false,
               message: errorMessage,
               layerName,
-              error: '没有可保存的数据'
+              error: '没有查询结果数据'
             }
           })
           window.dispatchEvent(errorEvent)
           return
         }
         
-        // 保存结果为新图层
-        const success = await saveFeaturesAslayer(featuresToSave, layerName, sourceType as 'query' | 'buffer')
+        // 保存查询结果为新图层
+        const success = await saveFeaturesAslayer(queryResults, layerName, 'query')
         if (success) {
-          const successMessage = `${sourceType === 'buffer' ? '缓冲区分析结果' : '查询结果'}已保存为新图层"${layerName}"，共${featuresToSave.length}个要素`
+          const successMessage = `查询结果已保存为新图层"${layerName}"，共${queryResults.length}个要素`
           console.log(`[Agent] ${successMessage}`)
           
           // 发送保存成功事件
@@ -623,7 +637,7 @@ export function uselayermanager() {
               success: true,
               message: successMessage,
               layerName,
-              count: featuresToSave.length
+              count: queryResults.length
             }
           })
           window.dispatchEvent(successEvent)
@@ -712,7 +726,704 @@ export function uselayermanager() {
       }
     })
     
-    // 监听缓冲区分析事件
+    // ===== 4个分析功能的Agent导出和保存事件监听器 =====
+    
+    // 监听保存缓冲区分析结果为图层事件
+    window.addEventListener('agent:saveBufferResultsAsLayer', async (e: any) => {
+      const { layerName } = e.detail || {}
+      if (!layerName) {
+        console.warn('[Agent] 保存缓冲区分析结果参数不完整:', { layerName })
+        return
+      }
+      
+      try {
+        // 从缓冲区分析store中获取数据，而不是创建新实例
+        const { useBufferAnalysisStore } = await import('@/stores/bufferAnalysisStore')
+        const bufferStore = useBufferAnalysisStore()
+        const bufferResults = bufferStore.state.bufferResults
+        
+        if (!bufferResults || bufferResults.length === 0) {
+          const errorMessage = `没有可保存的缓冲区分析结果数据`
+          console.warn(`[Agent] ${errorMessage}`)
+          
+          // 发送保存失败事件
+          const errorEvent = new CustomEvent('agent:saveResult', {
+            detail: {
+              success: false,
+              message: errorMessage,
+              layerName,
+              analysisType: 'buffer'
+            }
+          })
+          window.dispatchEvent(errorEvent)
+          return
+        }
+        
+        console.log(`[Agent] 从缓冲区分析结果中获取数据:`, {
+          layerName,
+          bufferResultsCount: bufferResults.length,
+          sourceType: 'buffer'
+        })
+        
+        // 将store中的结果数组转换为FeatureCollection格式
+        const featureCollection = {
+          type: 'FeatureCollection',
+          features: bufferResults.map((item: any) => ({
+            type: 'Feature',
+            id: item.id,
+            geometry: item.geometry,
+            properties: {
+              ...item,
+              sourceType: 'buffer',
+              saveTime: new Date().toISOString()
+            }
+          }))
+        }
+        
+        // 完全按照查询功能的保存方法
+        const format = new window.ol.format.GeoJSON()
+        const olFeatures: any[] = []
+        
+        featureCollection.features.forEach((feature: any) => {
+          if (feature?.geometry?.type === 'FeatureCollection') {
+            const subOlFeatures = format.readFeatures(feature.geometry)
+            subOlFeatures.forEach((subF: any) => {
+              const props = feature.properties || {}
+              subF.setProperties({ ...subF.getProperties?.(), ...props })
+              olFeatures.push(subF)
+            })
+          } else {
+            const geometry = format.readGeometry(feature.geometry)
+            const olFeature = new window.ol.Feature({ geometry })
+            if (feature.properties) {
+              olFeature.setProperties(feature.properties)
+            }
+            olFeatures.push(olFeature)
+          }
+        })
+        
+        console.log(`[Agent] 转换后的OL Features:`, {
+          count: olFeatures.length,
+          features: olFeatures
+        })
+        
+        // 直接调用图层管理器的保存函数
+        const success = await saveFeaturesAslayer(olFeatures, layerName, 'buffer')
+        
+        if (success) {
+          const successMessage = `缓冲区分析结果已保存为新图层"${layerName}"`
+          console.log(`[Agent] ${successMessage}`)
+          
+          // 发送保存成功事件
+          const successEvent = new CustomEvent('agent:saveResult', {
+            detail: {
+              success: true,
+              message: successMessage,
+              layerName,
+              analysisType: 'buffer'
+            }
+          })
+          window.dispatchEvent(successEvent)
+        } else {
+          const errorMessage = `保存缓冲区分析结果图层"${layerName}"失败`
+          console.error(`[Agent] ${errorMessage}`)
+          
+          // 发送保存失败事件
+          const errorEvent = new CustomEvent('agent:saveResult', {
+            detail: {
+              success: false,
+              message: errorMessage,
+              layerName,
+              analysisType: 'buffer'
+            }
+          })
+          window.dispatchEvent(errorEvent)
+        }
+        
+      } catch (error) {
+        console.error('[Agent] 执行保存缓冲区分析结果时出错:', error)
+        
+        // 发送保存失败事件
+        const errorEvent = new CustomEvent('agent:saveResult', {
+          detail: {
+            success: false,
+            message: `保存缓冲区分析结果失败: ${error instanceof Error ? error.message : '未知错误'}`,
+            layerName,
+            analysisType: 'buffer'
+          }
+        })
+        window.dispatchEvent(errorEvent)
+      }
+    })
+    
+    // 监听导出缓冲区分析结果为JSON事件
+    window.addEventListener('agent:exportBufferResultsAsJson', async (e: any) => {
+      const { fileName } = e.detail || {}
+      if (!fileName) {
+        console.warn('[Agent] 导出缓冲区分析结果参数不完整:', { fileName })
+        return
+      }
+      
+      try {
+        // 动态导入useBufferAnalysis以获取缓冲区分析功能
+        const { useBufferAnalysis } = await import('@/composables/useBufferAnalysis')
+        const bufferAnalysis = useBufferAnalysis()
+        
+        // 调用现有的导出函数
+        await bufferAnalysis.exportBufferResultsAsJSON(fileName)
+        
+        const successMessage = `缓冲区分析结果已导出为"${fileName}.json"`
+        console.log(`[Agent] ${successMessage}`)
+        
+        // 发送导出成功事件
+        const successEvent = new CustomEvent('agent:exportResult', {
+          detail: {
+            success: true,
+            message: successMessage,
+            fileName,
+            analysisType: 'buffer'
+          }
+        })
+        window.dispatchEvent(successEvent)
+        
+      } catch (error) {
+        console.error('[Agent] 执行导出缓冲区分析结果时出错:', error)
+        
+        // 发送导出失败事件
+        const errorEvent = new CustomEvent('agent:exportResult', {
+          detail: {
+            success: false,
+            message: `导出缓冲区分析结果失败: ${error instanceof Error ? error.message : '未知错误'}`,
+            fileName,
+            analysisType: 'buffer'
+          }
+        })
+        window.dispatchEvent(errorEvent)
+      }
+    })
+    
+    // 监听保存相交分析结果为图层事件
+    window.addEventListener('agent:saveIntersectionResultsAsLayer', async (e: any) => {
+      const { layerName } = e.detail || {}
+      if (!layerName) {
+        console.warn('[Agent] 保存相交分析结果参数不完整:', { layerName })
+        return
+      }
+      
+      try {
+        // 从相交分析store中获取数据，而不是创建新实例
+        const { useIntersectionAnalysisStore } = await import('@/stores/intersectionAnalysisStore')
+        const intersectionStore = useIntersectionAnalysisStore()
+        const intersectionResults = intersectionStore.state.results
+        
+        if (!intersectionResults || intersectionResults.length === 0) {
+          const errorMessage = `没有可保存的相交分析结果数据`
+          console.warn(`[Agent] ${errorMessage}`)
+          
+          // 发送保存失败事件
+          const errorEvent = new CustomEvent('agent:saveResult', {
+            detail: {
+              success: false,
+              message: errorMessage,
+              layerName,
+              analysisType: 'intersection'
+            }
+          })
+          window.dispatchEvent(errorEvent)
+          return
+        }
+        
+        console.log(`[Agent] 从相交分析结果中获取数据:`, {
+          layerName,
+          intersectionResultsCount: intersectionResults.length,
+          sourceType: 'intersection'
+        })
+        
+        // 将store中的结果数组转换为FeatureCollection格式
+        const featureCollection = {
+          type: 'FeatureCollection',
+          features: intersectionResults.map((item: any) => ({
+            type: 'Feature',
+            id: item.id,
+            geometry: item.geometry,
+            properties: {
+              ...item,
+              sourceType: 'intersection',
+              saveTime: new Date().toISOString()
+            }
+          }))
+        }
+        
+        // 完全按照缓冲区分析的保存方法
+        const format = new window.ol.format.GeoJSON()
+        const olFeatures: any[] = []
+        
+        featureCollection.features.forEach((feature: any) => {
+          if (feature?.geometry?.type === 'FeatureCollection') {
+            const subOlFeatures = format.readFeatures(feature.geometry)
+            subOlFeatures.forEach((subF: any) => {
+              const props = feature.properties || {}
+              subF.setProperties({ ...subF.getProperties?.(), ...props })
+              olFeatures.push(subF)
+            })
+          } else {
+            const geometry = format.readGeometry(feature.geometry)
+            const olFeature = new window.ol.Feature({ geometry })
+            if (feature.properties) {
+              olFeature.setProperties(feature.properties)
+            }
+            olFeatures.push(olFeature)
+          }
+        })
+        
+        console.log(`[Agent] 转换后的OL Features:`, {
+          count: olFeatures.length,
+          features: olFeatures
+        })
+        
+        // 直接调用图层管理器的保存函数
+        const success = await saveFeaturesAslayer(olFeatures, layerName, 'intersect')
+        
+        if (success) {
+          const successMessage = `相交分析结果已保存为新图层"${layerName}"`
+          console.log(`[Agent] ${successMessage}`)
+          
+          // 发送保存成功事件
+          const successEvent = new CustomEvent('agent:saveResult', {
+            detail: {
+              success: true,
+              message: successMessage,
+              layerName,
+              analysisType: 'intersection'
+            }
+          })
+          window.dispatchEvent(successEvent)
+        } else {
+          const errorMessage = `保存相交分析结果图层"${layerName}"失败`
+          console.error(`[Agent] ${errorMessage}`)
+          
+          // 发送保存失败事件
+          const errorEvent = new CustomEvent('agent:saveResult', {
+            detail: {
+              success: false,
+              message: errorMessage,
+              layerName,
+              analysisType: 'intersection'
+            }
+          })
+          window.dispatchEvent(errorEvent)
+        }
+        
+      } catch (error) {
+        console.error('[Agent] 执行保存相交分析结果时出错:', error)
+        
+        // 发送保存失败事件
+        const errorEvent = new CustomEvent('agent:saveResult', {
+          detail: {
+            success: false,
+            message: `保存相交分析结果失败: ${error instanceof Error ? error.message : '未知错误'}`,
+            layerName,
+            analysisType: 'intersection'
+          }
+        })
+        window.dispatchEvent(errorEvent)
+      }
+    })
+    
+    // 监听导出相交分析结果为JSON事件
+    window.addEventListener('agent:exportIntersectionResultsAsJson', async (e: any) => {
+      const { fileName } = e.detail || {}
+      if (!fileName) {
+        console.warn('[Agent] 导出相交分析结果参数不完整:', { fileName })
+        return
+      }
+      
+      try {
+        // 动态导入useIntersectionAnalysis以获取相交分析功能
+        const { useIntersectionAnalysis } = await import('@/composables/useIntersectionAnalysis')
+        const intersectionAnalysis = useIntersectionAnalysis()
+        
+        // 调用现有的导出函数
+        await intersectionAnalysis.exportIntersectionResultsAsJSON(fileName)
+        
+        const successMessage = `相交分析结果已导出为"${fileName}.json"`
+        console.log(`[Agent] ${successMessage}`)
+        
+        // 发送导出成功事件
+        const successEvent = new CustomEvent('agent:exportResult', {
+          detail: {
+            success: true,
+            message: successMessage,
+            fileName,
+            analysisType: 'intersection'
+          }
+        })
+        window.dispatchEvent(successEvent)
+        
+      } catch (error) {
+        console.error('[Agent] 执行导出相交分析结果时出错:', error)
+        
+        // 发送导出失败事件
+        const errorEvent = new CustomEvent('agent:exportResult', {
+          detail: {
+            success: false,
+            message: `导出相交分析结果失败: ${error instanceof Error ? error.message : '未知错误'}`,
+            fileName,
+            analysisType: 'intersection'
+          }
+        })
+        window.dispatchEvent(errorEvent)
+      }
+    })
+    
+    // 监听保存擦除分析结果为图层事件
+    window.addEventListener('agent:saveEraseResultsAsLayer', async (e: any) => {
+      const { layerName } = e.detail || {}
+      if (!layerName) {
+        console.warn('[Agent] 保存擦除分析结果参数不完整:', { layerName })
+        return
+      }
+      
+      try {
+        // 从擦除分析store中获取数据，而不是创建新实例
+        const { useEraseAnalysisStore } = await import('@/stores/eraseAnalysisStore')
+        const eraseStore = useEraseAnalysisStore()
+        const eraseResults = eraseStore.state.results
+        
+        if (!eraseResults || eraseResults.length === 0) {
+          const errorMessage = `没有可保存的擦除分析结果数据`
+          console.warn(`[Agent] ${errorMessage}`)
+          
+          // 发送保存失败事件
+          const errorEvent = new CustomEvent('agent:saveResult', {
+            detail: {
+              success: false,
+              message: errorMessage,
+              layerName,
+              analysisType: 'erase'
+            }
+          })
+          window.dispatchEvent(errorEvent)
+          return
+        }
+        
+        console.log(`[Agent] 从擦除分析结果中获取数据:`, {
+          layerName,
+          eraseResultsCount: eraseResults.length,
+          sourceType: 'erase'
+        })
+        
+        // 将store中的结果数组转换为FeatureCollection格式
+        const featureCollection = {
+          type: 'FeatureCollection',
+          features: eraseResults.map((item: any) => ({
+            type: 'Feature',
+            id: item.id,
+            geometry: item.geometry,
+            properties: {
+              ...item,
+              sourceType: 'erase',
+              saveTime: new Date().toISOString()
+            }
+          }))
+        }
+        
+        // 完全按照缓冲区分析的保存方法
+        const format = new window.ol.format.GeoJSON()
+        const olFeatures: any[] = []
+        
+        featureCollection.features.forEach((feature: any) => {
+          if (feature?.geometry?.type === 'FeatureCollection') {
+            const subOlFeatures = format.readFeatures(feature.geometry)
+            subOlFeatures.forEach((subF: any) => {
+              const props = feature.properties || {}
+              subF.setProperties({ ...subF.getProperties?.(), ...props })
+              olFeatures.push(subF)
+            })
+          } else {
+            const geometry = format.readGeometry(feature.geometry)
+            const olFeature = new window.ol.Feature({ geometry })
+            if (feature.properties) {
+              olFeature.setProperties(feature.properties)
+            }
+            olFeatures.push(olFeature)
+          }
+        })
+        
+        console.log(`[Agent] 转换后的OL Features:`, {
+          count: olFeatures.length,
+          features: olFeatures
+        })
+        
+        // 直接调用图层管理器的保存函数
+        const success = await saveFeaturesAslayer(olFeatures, layerName, 'erase')
+        
+        if (success) {
+          const successMessage = `擦除分析结果已保存为新图层"${layerName}"`
+          console.log(`[Agent] ${successMessage}`)
+          
+          // 发送保存成功事件
+          const successEvent = new CustomEvent('agent:saveResult', {
+            detail: {
+              success: true,
+              message: successMessage,
+              layerName,
+              analysisType: 'erase'
+            }
+          })
+          window.dispatchEvent(successEvent)
+        } else {
+          const errorMessage = `保存擦除分析结果图层"${layerName}"失败`
+          console.error(`[Agent] ${errorMessage}`)
+          
+          // 发送保存失败事件
+          const errorEvent = new CustomEvent('agent:saveResult', {
+            detail: {
+              success: false,
+              message: errorMessage,
+              layerName,
+              analysisType: 'erase'
+            }
+          })
+          window.dispatchEvent(errorEvent)
+        }
+        
+      } catch (error) {
+        console.error('[Agent] 执行保存擦除分析结果时出错:', error)
+        
+        // 发送保存失败事件
+        const errorEvent = new CustomEvent('agent:saveResult', {
+          detail: {
+            success: false,
+            message: `保存擦除分析结果失败: ${error instanceof Error ? error.message : '未知错误'}`,
+            layerName,
+            analysisType: 'erase'
+          }
+        })
+        window.dispatchEvent(errorEvent)
+      }
+    })
+    
+    // 监听导出擦除分析结果为JSON事件
+    window.addEventListener('agent:exportEraseResultsAsJson', async (e: any) => {
+      const { fileName } = e.detail || {}
+      if (!fileName) {
+        console.warn('[Agent] 导出擦除分析结果参数不完整:', { fileName })
+        return
+      }
+      
+      try {
+        // 动态导入useEraseAnalysis以获取擦除分析功能
+        const { useEraseAnalysis } = await import('@/composables/useEraseAnalysis')
+        const eraseAnalysis = useEraseAnalysis()
+        
+        // 调用现有的导出函数
+        await eraseAnalysis.exportEraseResultsAsJSON(fileName)
+        
+        const successMessage = `擦除分析结果已导出为"${fileName}.json"`
+        console.log(`[Agent] ${successMessage}`)
+        
+        // 发送导出成功事件
+        const successEvent = new CustomEvent('agent:exportResult', {
+          detail: {
+            success: true,
+            message: successMessage,
+            fileName,
+            analysisType: 'erase'
+          }
+        })
+        window.dispatchEvent(successEvent)
+        
+      } catch (error) {
+        console.error('[Agent] 执行导出擦除分析结果时出错:', error)
+        
+        // 发送导出失败事件
+        const errorEvent = new CustomEvent('agent:exportResult', {
+          detail: {
+            success: false,
+            message: `导出擦除分析结果失败: ${error instanceof Error ? error.message : '未知错误'}`,
+            fileName,
+            analysisType: 'erase'
+          }
+        })
+        window.dispatchEvent(errorEvent)
+      }
+    })
+    
+    // 监听保存最短路径分析结果为图层事件
+    window.addEventListener('agent:savePathResultsAsLayer', async (e: any) => {
+      const { layerName } = e.detail || {}
+      if (!layerName) {
+        console.warn('[Agent] 保存最短路径分析结果参数不完整:', { layerName })
+        return
+      }
+      
+      try {
+        // 从最短路径分析store中获取数据，而不是创建新实例
+        const { useShortestPathAnalysisStore } = await import('@/stores/shortestPathAnalysisStore')
+        const pathStore = useShortestPathAnalysisStore()
+        const pathResults = pathStore.state.analysisResults
+        
+        if (!pathResults || pathResults.length === 0) {
+          const errorMessage = `没有可保存的最短路径分析结果数据`
+          console.warn(`[Agent] ${errorMessage}`)
+          
+          // 发送保存失败事件
+          const errorEvent = new CustomEvent('agent:saveResult', {
+            detail: {
+              success: false,
+              message: errorMessage,
+              layerName,
+              analysisType: 'path'
+            }
+          })
+          window.dispatchEvent(errorEvent)
+          return
+        }
+        
+        console.log(`[Agent] 从最短路径分析结果中获取数据:`, {
+          layerName,
+          pathResultsCount: pathResults.length,
+          sourceType: 'path'
+        })
+        
+        // 将store中的结果数组转换为FeatureCollection格式
+        const featureCollection = {
+          type: 'FeatureCollection',
+          features: pathResults.map((item: any) => ({
+            type: 'Feature',
+            id: item.id,
+            geometry: item.geometry,
+            properties: {
+              ...item,
+              sourceType: 'path',
+              saveTime: new Date().toISOString()
+            }
+          }))
+        }
+        
+        // 完全按照缓冲区分析的保存方法
+        const format = new window.ol.format.GeoJSON()
+        const olFeatures: any[] = []
+        
+        featureCollection.features.forEach((feature: any) => {
+          if (feature?.geometry?.type === 'FeatureCollection') {
+            const subOlFeatures = format.readFeatures(feature.geometry)
+            subOlFeatures.forEach((subF: any) => {
+              const props = feature.properties || {}
+              subF.setProperties({ ...subF.getProperties?.(), ...props })
+              olFeatures.push(subF)
+            })
+          } else {
+            const geometry = format.readGeometry(feature.geometry)
+            const olFeature = new window.ol.Feature({ geometry })
+            if (feature.properties) {
+              olFeature.setProperties(feature.properties)
+            }
+            olFeatures.push(olFeature)
+          }
+        })
+        
+        console.log(`[Agent] 转换后的OL Features:`, {
+          count: olFeatures.length,
+          features: olFeatures
+        })
+        
+        // 直接调用图层管理器的保存函数
+        const success = await saveFeaturesAslayer(olFeatures, layerName, 'path')
+        
+        if (success) {
+          const successMessage = `最短路径分析结果已保存为新图层"${layerName}"`
+          console.log(`[Agent] ${successMessage}`)
+          
+          // 发送保存成功事件
+          const successEvent = new CustomEvent('agent:saveResult', {
+            detail: {
+              success: true,
+              message: successMessage,
+              layerName,
+              analysisType: 'path'
+            }
+          })
+          window.dispatchEvent(successEvent)
+        } else {
+          const errorMessage = `保存最短路径分析结果图层"${layerName}"失败`
+          console.error(`[Agent] ${errorMessage}`)
+          
+          // 发送保存失败事件
+          const errorEvent = new CustomEvent('agent:saveResult', {
+            detail: {
+              success: false,
+              message: errorMessage,
+              layerName,
+              analysisType: 'path'
+            }
+          })
+          window.dispatchEvent(errorEvent)
+        }
+        
+      } catch (error) {
+        console.error('[Agent] 执行保存最短路径分析结果时出错:', error)
+        
+        // 发送保存失败事件
+        const errorEvent = new CustomEvent('agent:saveResult', {
+          detail: {
+            success: false,
+            message: `保存最短路径分析结果失败: ${error instanceof Error ? error.message : '未知错误'}`,
+            layerName,
+            analysisType: 'path'
+          }
+        })
+        window.dispatchEvent(errorEvent)
+      }
+    })
+    
+    // 监听导出最短路径分析结果为JSON事件
+    window.addEventListener('agent:exportPathResultsAsJson', async (e: any) => {
+      const { fileName } = e.detail || {}
+      if (!fileName) {
+        console.warn('[Agent] 导出最短路径分析结果参数不完整:', { fileName })
+        return
+      }
+      
+      try {
+        // 动态导入useShortestPathAnalysis以获取最短路径分析功能
+        const { useShortestPathAnalysis } = await import('@/composables/useShortestPathAnalysis')
+        const pathAnalysis = useShortestPathAnalysis()
+        
+        // 调用现有的导出函数
+        await pathAnalysis.exportPathResultsAsJSON(fileName)
+        
+        const successMessage = `最短路径分析结果已导出为"${fileName}.json"`
+        console.log(`[Agent] ${successMessage}`)
+        
+        // 发送导出成功事件
+        const successEvent = new CustomEvent('agent:exportResult', {
+          detail: {
+            success: true,
+            message: successMessage,
+            fileName,
+            analysisType: 'path'
+          }
+        })
+        window.dispatchEvent(successEvent)
+        
+      } catch (error) {
+        console.error('[Agent] 执行导出最短路径分析结果时出错:', error)
+        
+        // 发送导出失败事件
+        const errorEvent = new CustomEvent('agent:exportResult', {
+          detail: {
+            success: false,
+            message: `导出最短路径分析结果失败: ${error instanceof Error ? error.message : '未知错误'}`,
+            fileName,
+            analysisType: 'path'
+          }
+        })
+        window.dispatchEvent(errorEvent)
+      }
+    })
+    
     window.addEventListener('agent:executeBufferAnalysis', async (e: any) => {
       const { layerName, radius, unit } = e.detail || {}
       if (!layerName || radius === undefined) {

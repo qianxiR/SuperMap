@@ -13,6 +13,7 @@ import { Style, Stroke, Fill } from 'ol/style'
 import GeoJSON from 'ol/format/GeoJSON'
 import { ref as vueRef } from 'vue'
 import { useLayerExport } from '@/composables/useLayerExport'
+import { sendIntersectionResultToLLM } from '@/utils/llmNotification'
 
 declare global {
   interface Window {
@@ -220,6 +221,15 @@ export function useIntersectionAnalysis() {
       // 直接显示API返回的FeatureCollection
       displayIntersectionResults(apiResponse)
       analysisStore.setAnalysisStatus(`相交分析完成：共生成 ${features.length} 个结果，已渲染到地图。`)
+      
+      // 发送分析结果到LLM
+      const resultMessage = `相交分析完成：共生成 ${features.length} 个结果，已渲染到地图。`
+      await sendIntersectionResultToLLM(resultMessage, features.length, {
+        targetLayerId: tId,
+        maskLayerId: mId,
+        resultFeatures: features.length,
+        timestamp: new Date().toISOString()
+      })
 
     } catch (error: any) {
       store.setIsAnalyzing(false)

@@ -179,6 +179,120 @@ def execute_shortest_path_analysis(start_layer_name: str, end_layer_name: str, o
     return f"最短路径分析操作已发送到前端，起点图层：{start_layer_name}，终点图层：{end_layer_name}{obstacle_info}"
 
 
+# ===== 4个分析功能的导出和保存工具函数 =====
+
+@tool
+def save_buffer_results_as_layer(layer_name: str) -> str:
+    """
+    保存缓冲区分析结果为图层（前端执行）。
+    输入参数：
+      - layer_name: string 新图层名称
+    业务处理：
+      - 后端不直接操作地图，仅返回保存参数供前端执行
+    输出数据格式：
+      - string: 格式 "save_buffer_layer:layer_name"
+    """
+    return f"保存缓冲区分析结果操作已发送到前端，图层名称：{layer_name}"
+
+
+@tool
+def export_buffer_results_as_json(file_name: str) -> str:
+    """
+    导出缓冲区分析结果为GeoJSON文件（前端执行）。
+    输入参数：
+      - file_name: string 文件名（不包含扩展名）
+    业务处理：
+      - 后端不直接操作地图，仅返回导出指令供前端执行
+    输出数据格式：
+      - string: 格式 "export_buffer_json:file_name"
+    """
+    return f"导出缓冲区分析结果操作已发送到前端，文件名：{file_name}"
+
+
+@tool
+def save_intersection_results_as_layer(layer_name: str) -> str:
+    """
+    保存相交分析结果为图层（前端执行）。
+    输入参数：
+      - layer_name: string 新图层名称
+    业务处理：
+      - 后端不直接操作地图，仅返回保存参数供前端执行
+    输出数据格式：
+      - string: 格式 "save_intersection_layer:layer_name"
+    """
+    return f"保存相交分析结果操作已发送到前端，图层名称：{layer_name}"
+
+
+@tool
+def export_intersection_results_as_json(file_name: str) -> str:
+    """
+    导出相交分析结果为GeoJSON文件（前端执行）。
+    输入参数：
+      - file_name: string 文件名（不包含扩展名）
+    业务处理：
+      - 后端不直接操作地图，仅返回导出指令供前端执行
+    输出数据格式：
+      - string: 格式 "export_intersection_json:file_name"
+    """
+    return f"导出相交分析结果操作已发送到前端，文件名：{file_name}"
+
+
+@tool
+def save_erase_results_as_layer(layer_name: str) -> str:
+    """
+    保存擦除分析结果为图层（前端执行）。
+    输入参数：
+      - layer_name: string 新图层名称
+    业务处理：
+      - 后端不直接操作地图，仅返回保存参数供前端执行
+    输出数据格式：
+      - string: 格式 "save_erase_layer:layer_name"
+    """
+    return f"保存擦除分析结果操作已发送到前端，图层名称：{layer_name}"
+
+
+@tool
+def export_erase_results_as_json(file_name: str) -> str:
+    """
+    导出擦除分析结果为GeoJSON文件（前端执行）。
+    输入参数：
+      - file_name: string 文件名（不包含扩展名）
+    业务处理：
+      - 后端不直接操作地图，仅返回导出指令供前端执行
+    输出数据格式：
+      - string: 格式 "export_erase_json:file_name"
+    """
+    return f"导出擦除分析结果操作已发送到前端，文件名：{file_name}"
+
+
+@tool
+def save_path_results_as_layer(layer_name: str) -> str:
+    """
+    保存最短路径分析结果为图层（前端执行）。
+    输入参数：
+      - layer_name: string 新图层名称
+    业务处理：
+      - 后端不直接操作地图，仅返回保存参数供前端执行
+    输出数据格式：
+      - string: 格式 "save_path_layer:layer_name"
+    """
+    return f"保存最短路径分析结果操作已发送到前端，图层名称：{layer_name}"
+
+
+@tool
+def export_path_results_as_json(file_name: str) -> str:
+    """
+    导出最短路径分析结果为GeoJSON文件（前端执行）。
+    输入参数：
+      - file_name: string 文件名（不包含扩展名）
+    业务处理：
+      - 后端不直接操作地图，仅返回导出指令供前端执行
+    输出数据格式：
+      - string: 格式 "export_path_json:file_name"
+    """
+    return f"导出最短路径分析结果操作已发送到前端，文件名：{file_name}"
+
+
 def load_system_prompt() -> str:
     """加载系统提示词，优先从prompt/tools.md读取"""
     base = Path(__file__).resolve().parent
@@ -238,7 +352,24 @@ async def tool_chat(req: ToolChatRequest):
       - { success: true, data: { first_call: AIMessage(JSON), tool_result: string, final_answer: string } }
     """
     model = init_chat_model(f"openai:{req.model}")
-    llm_with_tools = model.bind_tools([toggle_layer_visibility, query_features_by_attribute, save_query_results_as_layer, export_query_results_as_json, execute_buffer_analysis, execute_intersection_analysis, execute_erase_analysis, execute_shortest_path_analysis])
+    llm_with_tools = model.bind_tools([
+        toggle_layer_visibility, 
+        query_features_by_attribute, 
+        save_query_results_as_layer, 
+        export_query_results_as_json, 
+        execute_buffer_analysis, 
+        execute_intersection_analysis, 
+        execute_erase_analysis, 
+        execute_shortest_path_analysis,
+        save_buffer_results_as_layer,
+        export_buffer_results_as_json,
+        save_intersection_results_as_layer,
+        export_intersection_results_as_json,
+        save_erase_results_as_layer,
+        export_erase_results_as_json,
+        save_path_results_as_layer,
+        export_path_results_as_json
+    ])
     history_list = _conversation_layer_history.get(req.conversation_id, [])
     parsed_lines: List[str] = []
     last_action_text = ""
@@ -254,7 +385,7 @@ async def tool_chat(req: ToolChatRequest):
     history_text = "\n".join(parsed_lines)
     first_ai: AIMessage = llm_with_tools.invoke([
         SystemMessage(content=(
-            "你有九个工具:\n"
+            "你有十七个工具:\n"
             "1) toggle_layer_visibility(layer_name:str, action:'show'|'hide'|'toggle')\n"
             "- 当用户说'打开@图层名称'或'隐藏@图层名称'或'切换@图层名称'时调用。\n"
             "- 使用图层名称而非图层ID进行操作。\n"
@@ -287,6 +418,30 @@ async def tool_chat(req: ToolChatRequest):
             "8) execute_shortest_path_analysis(start_layer_name:str, end_layer_name:str, obstacle_layer_name:str)\n"
             "- 当用户说'计算@图层名称到@图层名称的最短路径'、'最短路径分析'时调用。\n"
             "- 需要指定起点图层名称、终点图层名称，障碍物图层名称可选。\n"
+            "9) save_buffer_results_as_layer(layer_name:str)\n"
+            "- 当用户说'保存缓冲区分析结果为图层'、'另存缓冲区结果为图层'时调用。\n"
+            "- 需要指定新图层名称。\n"
+            "10) export_buffer_results_as_json(file_name:str)\n"
+            "- 当用户说'导出缓冲区分析结果为JSON'、'导出缓冲区结果为GeoJSON'时调用。\n"
+            "- 需要指定文件名（不包含扩展名）。\n"
+            "11) save_intersection_results_as_layer(layer_name:str)\n"
+            "- 当用户说'保存相交分析结果为图层'、'另存相交结果为图层'时调用。\n"
+            "- 需要指定新图层名称。\n"
+            "12) export_intersection_results_as_json(file_name:str)\n"
+            "- 当用户说'导出相交分析结果为JSON'、'导出相交结果为GeoJSON'时调用。\n"
+            "- 需要指定文件名（不包含扩展名）。\n"
+            "13) save_erase_results_as_layer(layer_name:str)\n"
+            "- 当用户说'保存擦除分析结果为图层'、'另存擦除结果为图层'时调用。\n"
+            "- 需要指定新图层名称。\n"
+            "14) export_erase_results_as_json(file_name:str)\n"
+            "- 当用户说'导出擦除分析结果为JSON'、'导出擦除结果为GeoJSON'时调用。\n"
+            "- 需要指定文件名（不包含扩展名）。\n"
+            "15) save_path_results_as_layer(layer_name:str)\n"
+            "- 当用户说'保存最短路径分析结果为图层'、'另存路径结果为图层'时调用。\n"
+            "- 需要指定新图层名称。\n"
+            "16) export_path_results_as_json(file_name:str)\n"
+            "- 当用户说'导出最短路径分析结果为JSON'、'导出路径结果为GeoJSON'时调用。\n"
+            "- 需要指定文件名（不包含扩展名）。\n"
             "- 若用户使用@图层名称，请将@后的文本作为图层名称传递。\n"
             "严禁自行执行这些操作，必须通过工具完成。\n"
             f"历史操作(顺序, 最新在下):\n{history_text}\n"
@@ -317,6 +472,22 @@ async def tool_chat(req: ToolChatRequest):
         tool_result = execute_erase_analysis.invoke(tool_args)
     elif tool_name == "execute_shortest_path_analysis":
         tool_result = execute_shortest_path_analysis.invoke(tool_args)
+    elif tool_name == "save_buffer_results_as_layer":
+        tool_result = save_buffer_results_as_layer.invoke(tool_args)
+    elif tool_name == "export_buffer_results_as_json":
+        tool_result = export_buffer_results_as_json.invoke(tool_args)
+    elif tool_name == "save_intersection_results_as_layer":
+        tool_result = save_intersection_results_as_layer.invoke(tool_args)
+    elif tool_name == "export_intersection_results_as_json":
+        tool_result = export_intersection_results_as_json.invoke(tool_args)
+    elif tool_name == "save_erase_results_as_layer":
+        tool_result = save_erase_results_as_layer.invoke(tool_args)
+    elif tool_name == "export_erase_results_as_json":
+        tool_result = export_erase_results_as_json.invoke(tool_args)
+    elif tool_name == "save_path_results_as_layer":
+        tool_result = save_path_results_as_layer.invoke(tool_args)
+    elif tool_name == "export_path_results_as_json":
+        tool_result = export_path_results_as_json.invoke(tool_args)
     else:
         tool_result = f"未知工具: {tool_name}"
     history_entry = str(tool_result)
@@ -327,7 +498,7 @@ async def tool_chat(req: ToolChatRequest):
     tool_message = ToolMessage(content=str(tool_result), tool_call_id=tool_call["id"])
     final_ai: AIMessage = llm_with_tools.invoke([
         SystemMessage(content=(
-            "你有九个工具:\n"
+            "你有十七个工具:\n"
             "1) toggle_layer_visibility(layer_name:str, action:'show'|'hide'|'toggle')\n"
             "- 遇到'打开/隐藏/切换@图层名称'的请求，必须调用该工具。\n"
             "- 使用图层名称而非图层ID进行操作。\n"
@@ -360,6 +531,30 @@ async def tool_chat(req: ToolChatRequest):
             "8) execute_shortest_path_analysis(start_layer_name:str, end_layer_name:str, obstacle_layer_name:str)\n"
             "- 遇到'计算@图层名称到@图层名称的最短路径'、'最短路径分析'的请求时调用。\n"
             "- 需要指定起点图层名称、终点图层名称，障碍物图层名称可选。\n"
+            "9) save_buffer_results_as_layer(layer_name:str)\n"
+            "- 遇到'保存缓冲区分析结果为图层'、'另存缓冲区结果为图层'的请求时调用。\n"
+            "- 需要指定新图层名称。\n"
+            "10) export_buffer_results_as_json(file_name:str)\n"
+            "- 遇到'导出缓冲区分析结果为JSON'、'导出缓冲区结果为GeoJSON'的请求时调用。\n"
+            "- 需要指定文件名（不包含扩展名）。\n"
+            "11) save_intersection_results_as_layer(layer_name:str)\n"
+            "- 遇到'保存相交分析结果为图层'、'另存相交结果为图层'的请求时调用。\n"
+            "- 需要指定新图层名称。\n"
+            "12) export_intersection_results_as_json(file_name:str)\n"
+            "- 遇到'导出相交分析结果为JSON'、'导出相交结果为GeoJSON'的请求时调用。\n"
+            "- 需要指定文件名（不包含扩展名）。\n"
+            "13) save_erase_results_as_layer(layer_name:str)\n"
+            "- 遇到'保存擦除分析结果为图层'、'另存擦除结果为图层'的请求时调用。\n"
+            "- 需要指定新图层名称。\n"
+            "14) export_erase_results_as_json(file_name:str)\n"
+            "- 遇到'导出擦除分析结果为JSON'、'导出擦除结果为GeoJSON'的请求时调用。\n"
+            "- 需要指定文件名（不包含扩展名）。\n"
+            "15) save_path_results_as_layer(layer_name:str)\n"
+            "- 遇到'保存最短路径分析结果为图层'、'另存路径结果为图层'的请求时调用。\n"
+            "- 需要指定新图层名称。\n"
+            "16) export_path_results_as_json(file_name:str)\n"
+            "- 遇到'导出最短路径分析结果为JSON'、'导出路径结果为GeoJSON'的请求时调用。\n"
+            "- 需要指定文件名（不包含扩展名）。\n"
             "\n"
             "重要：当工具执行完成后，必须简洁回复，禁止废话。\n"
             "- 查询操作：直接说'正在执行请稍后'\n"

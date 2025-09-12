@@ -221,6 +221,148 @@ const handleBufferAnalysisResult = (event: CustomEvent) => {
   nextTick(() => {
     messagesPanelRef.value?.scrollToBottom()
   })
+  
+  // 隐式发送消息到LLM
+  if (success) {
+    sendImplicitMessageToLLM(resultMessage)
+  }
+}
+
+// 监听相交分析结果事件
+const handleIntersectionAnalysisResult = (event: CustomEvent) => {
+  const { success, message, targetLayerName, maskLayerName, error } = event.detail
+  
+  // 构造相交分析结果消息
+  let resultMessage = ''
+  if (success) {
+    resultMessage = `相交分析完成：${message}`
+  } else {
+    resultMessage = `相交分析失败：${error || '未知错误'}`
+  }
+  
+  // 将结果添加到聊天记录中
+  messages.value.push({ 
+    id: Date.now(), 
+    text: resultMessage, 
+    sender: 'system' 
+  })
+  
+  // 滚动到底部显示新消息
+  nextTick(() => {
+    messagesPanelRef.value?.scrollToBottom()
+  })
+  
+  // 注意：相交分析的LLM通知现在由useIntersectionAnalysis.ts中的sendIntersectionResultToLLM处理
+  // 这里不再调用sendImplicitMessageToLLM，避免重复发送
+}
+
+// 监听擦除分析结果事件
+const handleEraseAnalysisResult = (event: CustomEvent) => {
+  const { success, message, targetLayerName, eraseLayerName, error } = event.detail
+  
+  // 构造擦除分析结果消息
+  let resultMessage = ''
+  if (success) {
+    resultMessage = `擦除分析完成：${message}`
+  } else {
+    resultMessage = `擦除分析失败：${error || '未知错误'}`
+  }
+  
+  // 将结果添加到聊天记录中
+  messages.value.push({ 
+    id: Date.now(), 
+    text: resultMessage, 
+    sender: 'system' 
+  })
+  
+  // 滚动到底部显示新消息
+  nextTick(() => {
+    messagesPanelRef.value?.scrollToBottom()
+  })
+  
+  // 隐式发送消息到LLM
+  if (success) {
+    sendImplicitMessageToLLM(resultMessage)
+  }
+}
+
+// 监听最短路径分析结果事件
+const handlePathAnalysisResult = (event: CustomEvent) => {
+  const { success, message, startLayerName, endLayerName, error } = event.detail
+  
+  // 构造最短路径分析结果消息
+  let resultMessage = ''
+  if (success) {
+    resultMessage = `最短路径分析完成：${message}`
+  } else {
+    resultMessage = `最短路径分析失败：${error || '未知错误'}`
+  }
+  
+  // 将结果添加到聊天记录中
+  messages.value.push({ 
+    id: Date.now(), 
+    text: resultMessage, 
+    sender: 'system' 
+  })
+  
+  // 滚动到底部显示新消息
+  nextTick(() => {
+    messagesPanelRef.value?.scrollToBottom()
+  })
+  
+  // 隐式发送消息到LLM
+  if (success) {
+    sendImplicitMessageToLLM(resultMessage)
+  }
+}
+
+// 监听LLM分析结果接收事件
+const handleLLMAnalysisResultReceived = (event: CustomEvent) => {
+  const { analysisType, resultMessage, llmResponse, additionalData } = event.detail
+  
+  console.log('[ChatAssistant] 收到LLM分析结果:', {
+    analysisType,
+    resultMessage,
+    llmResponse: llmResponse?.substring(0, 100) + '...',
+    additionalData
+  })
+  
+  // 将LLM响应添加到聊天记录中
+  if (llmResponse) {
+    messages.value.push({ 
+      id: Date.now(), 
+      text: llmResponse, 
+      sender: 'system' 
+    })
+    
+    // 滚动到底部显示新消息
+    nextTick(() => {
+      messagesPanelRef.value?.scrollToBottom()
+    })
+  }
+}
+
+// 监听LLM分析结果错误事件
+const handleLLMAnalysisResultError = (event: CustomEvent) => {
+  const { analysisType, error } = event.detail
+  
+  console.error('[ChatAssistant] LLM分析结果处理错误:', {
+    analysisType,
+    error
+  })
+  
+  // 将错误消息添加到聊天记录中
+  const errorMessage = `[${analysisType}] LLM处理失败：${error}`
+  messages.value.push({ 
+    id: Date.now(), 
+    text: errorMessage, 
+    sender: 'system' 
+  })
+  
+  // 滚动到底部显示新消息
+  nextTick(() => {
+    messagesPanelRef.value?.scrollToBottom()
+  })
 }
 
 onMounted(() => {
@@ -265,6 +407,11 @@ onMounted(() => {
     window.addEventListener('agent:saveResult', handleSaveResult as EventListener)
     window.addEventListener('agent:exportResult', handleExportResult as EventListener)
     window.addEventListener('agent:bufferAnalysisResult', handleBufferAnalysisResult as EventListener)
+    window.addEventListener('agent:intersectionAnalysisResult', handleIntersectionAnalysisResult as EventListener)
+    window.addEventListener('llm:analysisResultReceived', handleLLMAnalysisResultReceived as EventListener)
+    window.addEventListener('llm:analysisResultError', handleLLMAnalysisResultError as EventListener)
+    window.addEventListener('agent:eraseAnalysisResult', handleEraseAnalysisResult as EventListener)
+    window.addEventListener('agent:pathAnalysisResult', handlePathAnalysisResult as EventListener)
   }
 });
 
@@ -288,6 +435,11 @@ onUnmounted(() => {
     window.removeEventListener('agent:saveResult', handleSaveResult as EventListener)
     window.removeEventListener('agent:exportResult', handleExportResult as EventListener)
     window.removeEventListener('agent:bufferAnalysisResult', handleBufferAnalysisResult as EventListener)
+    window.removeEventListener('agent:intersectionAnalysisResult', handleIntersectionAnalysisResult as EventListener)
+    window.removeEventListener('agent:eraseAnalysisResult', handleEraseAnalysisResult as EventListener)
+    window.removeEventListener('agent:pathAnalysisResult', handlePathAnalysisResult as EventListener)
+    window.removeEventListener('llm:analysisResultReceived', handleLLMAnalysisResultReceived as EventListener)
+    window.removeEventListener('llm:analysisResultError', handleLLMAnalysisResultError as EventListener)
     ;(window as any).__queryResultListenerRegistered = false
   }
 });
@@ -306,6 +458,71 @@ watch(messages, async () => {
   await nextTick();
   // 智能滚动逻辑现在由ChatMessagesPanel组件内部处理
 }, { deep: true });
+
+// 隐式发送消息到LLM（用于分析结果反馈）
+const sendImplicitMessageToLLM = async (resultMessage: string) => {
+  try {
+    const apiBase = getAgentApiBaseUrl()
+    // 使用相同的会话ID
+    const convId = sessionStorage.getItem('agent_conv_id') || (() => {
+      const v = `conv-${Date.now()}`
+      sessionStorage.setItem('agent_conv_id', v)
+      return v
+    })()
+    
+    // 构造包含历史记录的完整prompt
+    let conversationContext = ''
+    if (messages.value.length > 0) {
+      conversationContext = '对话历史：\n'
+      messages.value.forEach(msg => {
+        const role = msg.sender === 'user' ? '用户' : '助手'
+        conversationContext += `${role}: ${msg.text}\n`
+      })
+      conversationContext += '\n'
+    }
+    
+    // 构造完整的prompt
+    const fullPrompt = `${conversationContext}分析结果反馈：${resultMessage}。请根据这个结果给出适当的回应或建议。`
+    
+    const llm = getLLMApiConfig()
+    const payload = {
+      model: 'qwen-max',
+      temperature: typeof llm.temperature === 'number' ? llm.temperature : 0.7,
+      prompt: fullPrompt,
+      stream: false,
+      conversation_id: convId
+    }
+    
+    const resp = await fetch(`${apiBase}/agent/tool-chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    })
+
+    if (resp.ok) {
+      const data = await resp.json()
+      const content = data?.data?.final_answer || '[空响应]'
+      
+      // 将LLM的回应添加到聊天记录中
+      messages.value.push({ 
+        id: Date.now() + 1, 
+        text: content, 
+        sender: 'system' 
+      })
+      
+      // 滚动到底部显示新消息
+      nextTick(() => {
+        messagesPanelRef.value?.scrollToBottom()
+      })
+    } else {
+      console.error('隐式LLM请求失败:', resp.status, await resp.text())
+    }
+  } catch (e: any) {
+    console.error('隐式LLM请求异常:', e?.message || e)
+  }
+}
 
 // 发送消息
 const sendMessage = async () => {
@@ -465,6 +682,42 @@ const sendMessage = async () => {
           }
         }
         
+        // 如果是保存相交分析结果为图层的工具
+        if (name === 'save_intersection_results_as_layer') {
+          try {
+            const parsed = call?.args || {}
+            const layerName = parsed.layer_name || parsed.layerName
+            
+            if (layerName) {
+              const ev = new CustomEvent('agent:saveIntersectionResultsAsLayer', { 
+                detail: { layerName } 
+              })
+              window.dispatchEvent(ev)
+              console.log('[Agent] dispatched event: agent:saveIntersectionResultsAsLayer', { layerName })
+            }
+          } catch (error) {
+            console.error('[Agent] 处理保存相交分析结果工具调用时出错:', error)
+          }
+        }
+        
+        // 如果是导出相交分析结果为JSON的工具
+        if (name === 'export_intersection_results_as_json') {
+          try {
+            const parsed = call?.args || {}
+            const fileName = parsed.file_name || parsed.fileName
+            
+            if (fileName) {
+              const ev = new CustomEvent('agent:exportIntersectionResultsAsJson', { 
+                detail: { fileName } 
+              })
+              window.dispatchEvent(ev)
+              console.log('[Agent] dispatched event: agent:exportIntersectionResultsAsJson', { fileName })
+            }
+          } catch (error) {
+            console.error('[Agent] 处理导出相交分析结果工具调用时出错:', error)
+          }
+        }
+        
         // 如果是擦除分析工具
         if (name === 'execute_erase_analysis') {
           try {
@@ -501,6 +754,114 @@ const sendMessage = async () => {
             }
           } catch (error) {
             console.error('[Agent] 处理最短路径分析工具调用时出错:', error)
+          }
+        }
+        
+        // 如果是保存缓冲区分析结果为图层的工具
+        if (name === 'save_buffer_results_as_layer') {
+          try {
+            const parsed = call?.args || {}
+            const layerName = parsed.layer_name || parsed.layerName
+            
+            if (layerName) {
+              const ev = new CustomEvent('agent:saveBufferResultsAsLayer', { 
+                detail: { layerName } 
+              })
+              window.dispatchEvent(ev)
+              console.log('[Agent] dispatched event: agent:saveBufferResultsAsLayer', { layerName })
+            }
+          } catch (error) {
+            console.error('[Agent] 处理保存缓冲区分析结果工具调用时出错:', error)
+          }
+        }
+        
+        // 如果是导出缓冲区分析结果为JSON的工具
+        if (name === 'export_buffer_results_as_json') {
+          try {
+            const parsed = call?.args || {}
+            const fileName = parsed.file_name || parsed.fileName
+            
+            if (fileName) {
+              const ev = new CustomEvent('agent:exportBufferResultsAsJson', { 
+                detail: { fileName } 
+              })
+              window.dispatchEvent(ev)
+              console.log('[Agent] dispatched event: agent:exportBufferResultsAsJson', { fileName })
+            }
+          } catch (error) {
+            console.error('[Agent] 处理导出缓冲区分析结果工具调用时出错:', error)
+          }
+        }
+        
+        // 如果是保存擦除分析结果为图层的工具
+        if (name === 'save_erase_results_as_layer') {
+          try {
+            const parsed = call?.args || {}
+            const layerName = parsed.layer_name || parsed.layerName
+            
+            if (layerName) {
+              const ev = new CustomEvent('agent:saveEraseResultsAsLayer', { 
+                detail: { layerName } 
+              })
+              window.dispatchEvent(ev)
+              console.log('[Agent] dispatched event: agent:saveEraseResultsAsLayer', { layerName })
+            }
+          } catch (error) {
+            console.error('[Agent] 处理保存擦除分析结果工具调用时出错:', error)
+          }
+        }
+        
+        // 如果是导出擦除分析结果为JSON的工具
+        if (name === 'export_erase_results_as_json') {
+          try {
+            const parsed = call?.args || {}
+            const fileName = parsed.file_name || parsed.fileName
+            
+            if (fileName) {
+              const ev = new CustomEvent('agent:exportEraseResultsAsJson', { 
+                detail: { fileName } 
+              })
+              window.dispatchEvent(ev)
+              console.log('[Agent] dispatched event: agent:exportEraseResultsAsJson', { fileName })
+            }
+          } catch (error) {
+            console.error('[Agent] 处理导出擦除分析结果工具调用时出错:', error)
+          }
+        }
+        
+        // 如果是保存最短路径分析结果为图层的工具
+        if (name === 'save_path_results_as_layer') {
+          try {
+            const parsed = call?.args || {}
+            const layerName = parsed.layer_name || parsed.layerName
+            
+            if (layerName) {
+              const ev = new CustomEvent('agent:savePathResultsAsLayer', { 
+                detail: { layerName } 
+              })
+              window.dispatchEvent(ev)
+              console.log('[Agent] dispatched event: agent:savePathResultsAsLayer', { layerName })
+            }
+          } catch (error) {
+            console.error('[Agent] 处理保存最短路径分析结果工具调用时出错:', error)
+          }
+        }
+        
+        // 如果是导出最短路径分析结果为JSON的工具
+        if (name === 'export_path_results_as_json') {
+          try {
+            const parsed = call?.args || {}
+            const fileName = parsed.file_name || parsed.fileName
+            
+            if (fileName) {
+              const ev = new CustomEvent('agent:exportPathResultsAsJson', { 
+                detail: { fileName } 
+              })
+              window.dispatchEvent(ev)
+              console.log('[Agent] dispatched event: agent:exportPathResultsAsJson', { fileName })
+            }
+          } catch (error) {
+            console.error('[Agent] 处理导出最短路径分析结果工具调用时出错:', error)
           }
         }
       } else {
