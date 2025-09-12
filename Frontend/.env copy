@@ -1,0 +1,49 @@
+﻿# ========================================
+# SuperMap GIS Server Configuration
+# ========================================
+VITE_SUPERMAP_BASE_URL=http://localhost:8090
+VITE_SUPERMAP_MAP_SERVICE=iserver/services/map-guanlifenxipingtai/rest
+VITE_SUPERMAP_DATA_SERVICE=iserver/services/data-guanlifenxipingtai/rest/data
+VITE_SUPERMAP_NETWORK_SERVICE=iserver/services/transportationanalyst-wuhan/rest/networkanalyst
+VITE_SUPERMAP_NETWORK_DATASET=RoadNet@wuhan
+
+# SuperMap Workspace and Map Configuration
+VITE_SUPERMAP_WORKSPACE=wuhan
+VITE_SUPERMAP_MAP_NAME=wuhan_map
+VITE_SUPERMAP_DATASET_NAME=
+
+
+# SuperMap Map Display Configuration
+VITE_SUPERMAP_MAP_EXTENT=113.7,29.97,115.08,31.36
+VITE_SUPERMAP_MAP_CENTER=114.37,30.69
+VITE_SUPERMAP_MAP_ZOOM=8
+
+# SuperMap Base Map Services
+VITE_SUPERMAP_BASEMAP_LIGHT=http://localhost:8090/iserver/services/map-china/rest/maps/China_Light?prjCoordSys=%7B%22epsgCode%22:4326%7D
+VITE_SUPERMAP_BASEMAP_DARK=http://localhost:8090/iserver/services/map-china/rest/maps/China_Dark
+
+# ========================================
+# Backend Services Configuration
+# ========================================
+
+# User Service (Python FastAPI) - Port 8088
+VITE_USER_SERVICE_BASE_URL=http://localhost:8088
+VITE_USER_SERVICE_API_PREFIX=/api/v1
+
+# Analysis Service (Node.js) - Port 8087
+VITE_ANALYSIS_SERVICE_BASE_URL=http://localhost:8087
+VITE_ANALYSIS_SERVICE_API_PREFIX=/api/v1/spatial-analysis
+
+# ========================================
+# API Configuration
+# ========================================
+VITE_API_TIMEOUT=10000
+VITE_API_RETRY_COUNT=3
+VITE_DEV_MODE=true
+
+AGENT_API_BASE_URL=http://localhost:8089
+VITE_DASHSCOPE_API_KEY=sk-b494400841214e9aa17baa1d24efec62
+VITE_DASHSCOPE_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+VITE_DASHSCOPE_MODEL=qwen-plus
+VITE_DASHSCOPE_TEMPERATURE=0.6
+VITE_DASHSCOPE_MAX_TOKENS=10000

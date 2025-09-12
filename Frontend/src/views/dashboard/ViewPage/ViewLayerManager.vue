@@ -184,10 +184,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useMapStore } from '@/stores/mapStore'
 import { useLayerUIStore } from '@/stores/layerUIStore'
-import { uselayermanager } from '@/composables/uselayermanager'
+import { uselayermanager } from '@/composables/useLayerManager'
 import { useLayerExport } from '@/composables/useLayerExport'
 import ConfirmDialog from '@/components/UI/ConfirmDialog.vue'
 import LayerItem from '@/components/UI/LayerItem.vue'
@@ -280,7 +280,15 @@ const allLayers = computed(() => {
 
 // 获取指定来源的图层列表
 const getLayersBySource = (source: string): LayerItem[] => {
-  return allLayers.value.filter(item => item.source === source)
+  return allLayers.value
+    .filter(item => item.source === source)
+    .sort((a, b) => {
+      // 已显示的图层排在前面
+      if (a.visible && !b.visible) return -1
+      if (!a.visible && b.visible) return 1
+      // 如果可见性相同，按名称排序
+      return a.displayName.localeCompare(b.displayName)
+    })
 }
 
 
@@ -330,6 +338,11 @@ const handleExportGroup = async (source: string) => {
   await exportLayersAsGeoJSON(layers, groupNames[source] || source)
 }
 
+
+// 组件挂载时自动展开 SuperMap 服务图层组
+onMounted(() => {
+  layerUIStore.toggleGroupExpanded('supermap')
+})
 
 // 暴露关闭面板的方法
 const emit = defineEmits<{

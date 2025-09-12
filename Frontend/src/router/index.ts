@@ -83,6 +83,12 @@ const router = createRouter({
             title: '地图视图'
           },
           children: [
+            // 默认子路由 - 重定向到图层管理
+            {
+              path: '',
+              name: 'view-home-default',
+              redirect: '/dashboard/view/home/layermanage'
+            },
             // 图层管理子路由
             {
               path: 'layermanage',
