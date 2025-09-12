@@ -173,6 +173,7 @@ const {
   saveBufferResultsAsLayer,
   exportBufferResultsAsJSON,
   clearState,
+  lastFeatureCollection,
 } = useBufferAnalysis()
 
 // 使用图层管理 hook
@@ -198,7 +199,7 @@ const defaultlayerName = ref<string>('')
 
 // 显示图层名称输入弹窗
 const showLayerNameModal = () => {
-  if (!bufferResults.value || bufferResults.value.length === 0) {
+  if (!lastFeatureCollection.value || !lastFeatureCollection.value.features || lastFeatureCollection.value.features.length === 0) {
     return
   }
   defaultlayerName.value = generatelayerNameFromBuffer()

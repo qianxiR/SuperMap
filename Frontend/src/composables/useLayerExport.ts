@@ -304,14 +304,40 @@ export function useLayerExport() {
         return
       }
 
+      // 扁平化包含 geometry.type === 'FeatureCollection' 的要素，生成标准GeoJSON Feature数组
+      const flattenedFeatures = (() => {
+        const result: any[] = []
+        for (const f of features) {
+          const geomType = f?.geometry?.type
+          if (geomType === 'FeatureCollection' && Array.isArray(f?.geometry?.features)) {
+            const parentProps = f.properties || {}
+            for (const sf of f.geometry.features) {
+              const mergedProps = {
+                ...(sf?.properties || {}),
+                ...parentProps
+              }
+              result.push({
+                type: 'Feature',
+                id: sf?.id ?? f?.id,
+                geometry: sf?.geometry,
+                properties: mergedProps
+              })
+            }
+          } else {
+            result.push(f)
+          }
+        }
+        return result
+      })()
+
       // 创建GeoJSON FeatureCollection
       const geoJSON = {
         type: 'FeatureCollection',
-        features: features,
+        features: flattenedFeatures,
         properties: {
           exportInfo: {
             fileName: fileName,
-            featureCount: features.length,
+            featureCount: flattenedFeatures.length,
             exportTime: new Date().toISOString(),
             ...exportInfo
           }
@@ -342,7 +368,7 @@ export function useLayerExport() {
       window.dispatchEvent(new CustomEvent('showNotification', {
         detail: {
           title: '导出成功',
-          message: `已导出 ${fileName}，共 ${features.length} 个要素到文件 ${fullFileName}`,
+          message: `已导出 ${fileName}，共 ${flattenedFeatures.length} 个要素到文件 ${fullFileName}`,
           type: 'success',
           duration: 3000
         }
@@ -351,7 +377,7 @@ export function useLayerExport() {
       return {
         success: true,
         fileName: fullFileName,
-        featureCount: features.length
+        featureCount: flattenedFeatures.length
       }
     } catch (error: any) {
       window.dispatchEvent(new CustomEvent('showNotification', {

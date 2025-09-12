@@ -212,14 +212,52 @@ export function useBufferAnalysis() {
 
     const apiResponse = await response.json()
 
-    
-    // 保存结果到store（用于导出JSON功能）- 直接保存API返回的完整FeatureCollection
-    // 注意：setBufferResults期望BufferResult[]类型，但这里我们保存完整的FeatureCollection
-    // 所以这里不调用setBufferResults，只保存到lastFeatureCollection
-    
-    // 直接显示API返回的FeatureCollection
-    lastFeatureCollection.value = apiResponse
-    displayBufferResults(apiResponse)
+    // 规范化：将 geometry.type 为 FeatureCollection 的要素扁平化为标准 Feature（合并父/子属性）
+    const flattenedFeatures = (() => {
+      const result: any[] = []
+      const list = Array.isArray(apiResponse?.features) ? apiResponse.features : []
+      const format = new GeoJSON()
+      list.forEach((feature: any) => {
+        const geomType = feature?.geometry?.type
+        if (geomType === 'FeatureCollection' && Array.isArray(feature?.geometry?.features)) {
+          const parentProps = feature?.properties || {}
+          feature.geometry.features.forEach((sf: any) => {
+            const mergedProps = { ...(sf?.properties || {}), ...parentProps }
+            // 读取并序列化几何，确保为标准 Geometry
+            const geometry = sf?.geometry
+            const olGeom = geometry ? format.readGeometry(geometry) : null
+            const stdGeom = olGeom ? format.writeGeometryObject(olGeom) : geometry
+            result.push({
+              type: 'Feature',
+              id: sf?.id ?? feature?.id,
+              geometry: stdGeom,
+              properties: mergedProps
+            })
+          })
+        } else {
+          // 非嵌套，保持为标准 Feature（确保几何标准化）
+          const geometry = feature?.geometry
+          const olGeom = geometry ? format.readGeometry(geometry) : null
+          const stdGeom = olGeom ? format.writeGeometryObject(olGeom) : geometry
+          result.push({
+            type: 'Feature',
+            id: feature?.id,
+            geometry: stdGeom,
+            properties: feature?.properties || {}
+          })
+        }
+      })
+      return result
+    })()
+
+    const normalized = {
+      type: 'FeatureCollection',
+      features: flattenedFeatures
+    }
+
+    // 保存并展示规范化结果
+    lastFeatureCollection.value = normalized
+    displayBufferResults(normalized)
     bufferAnalysisStore.setIsAnalyzing(false)
     
     } catch (error) {
