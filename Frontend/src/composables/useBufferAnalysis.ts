@@ -257,6 +257,11 @@ export function useBufferAnalysis() {
 
     // 保存并展示规范化结果
     lastFeatureCollection.value = normalized
+    console.log('[BufferAnalysis] 缓冲区分析完成，保存结果到lastFeatureCollection:', {
+      hasData: !!normalized,
+      featuresCount: normalized?.features?.length || 0,
+      normalized: normalized
+    })
     displayBufferResults(normalized)
     bufferAnalysisStore.setIsAnalyzing(false)
     
@@ -271,9 +276,7 @@ export function useBufferAnalysis() {
   const displayBufferResults = (featureCollection: any): void => {
     removeBufferlayers()
     
-
     const bufferFeatures: any[] = []
-    
     featureCollection.features.forEach((feature: any, index: number) => {
 
       
@@ -375,15 +378,7 @@ export function useBufferAnalysis() {
     bufferAnalysisStore.updateBufferSettings(settings)
   }
   
-  const saveBufferAnalysisToDatabase = async (_taskId: string, _layerName: string): Promise<boolean> => {
-    analysisStore.setAnalysisStatus('缓冲区分析结果入库功能已禁用')
-    return false
-  }
 
-  const executeBufferAnalysisAndSave = async (): Promise<void> => {
-    bufferAnalysisStore.setIsAnalyzing(false)
-    analysisStore.setAnalysisStatus('缓冲区分析与入库功能已禁用')
-  }
 
   // ===== 保存为图层 / 导出为JSON =====
   const saveBufferResultsAsLayer = async (layerName?: string): Promise<boolean> => {
@@ -462,8 +457,6 @@ export function useBufferAnalysis() {
     // 方法
     setSelectedAnalysislayer,
     executeBufferAnalysis,
-    executeBufferAnalysisAndSave,
-    saveBufferAnalysisToDatabase,
     clearAllSelections,
     updateBufferSettings,
     removeBufferlayers,

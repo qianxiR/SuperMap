@@ -570,6 +570,8 @@ const sendMessage = async () => {
         const argsStr = call?.args ? JSON.stringify(call.args) : ''
         const resultStr = data?.data?.tool_result != null ? String(data.data.tool_result) : ''
         toolCallInfo.value = { name, argsStr, resultStr }
+        
+        // 调试：打印AI实际调用的工具名称
         // 如果是切换图层可见性的工具，则在前端本地执行具体动作
         if (name === 'toggle_layer_visibility') {
           try {
@@ -763,12 +765,21 @@ const sendMessage = async () => {
             const parsed = call?.args || {}
             const layerName = parsed.layer_name || parsed.layerName
             
+            console.log('[Agent] 准备分发保存缓冲区分析结果事件:', { layerName, parsed })
+            
             if (layerName) {
               const ev = new CustomEvent('agent:saveBufferResultsAsLayer', { 
                 detail: { layerName } 
               })
               window.dispatchEvent(ev)
               console.log('[Agent] dispatched event: agent:saveBufferResultsAsLayer', { layerName })
+              
+              // 测试事件是否被正确分发
+              setTimeout(() => {
+                console.log('[Agent] 事件分发后检查 - 3秒后')
+              }, 3000)
+            } else {
+              console.warn('[Agent] 保存缓冲区分析结果事件分发失败 - 缺少layerName:', { layerName, parsed })
             }
           } catch (error) {
             console.error('[Agent] 处理保存缓冲区分析结果工具调用时出错:', error)
