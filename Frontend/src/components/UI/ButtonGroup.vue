@@ -1,9 +1,12 @@
 <template>
   <div class="toggle-switch">
-    <div class="switch-track">
+    <div class="switch-track" :style="{ width: containerWidth }">
       <div 
         class="switch-slider"
-        :style="{ transform: `translateX(${sliderPosition}px)` }"
+        :style="{ 
+          transform: `translateX(${sliderPosition}px)`,
+          width: sliderWidth
+        }"
       ></div>
       <button
         v-for="(btn, index) in buttons"
@@ -40,8 +43,24 @@ const sliderPosition = computed(() => {
   if (activeIndex === -1) return 0;
   
   // 计算每个按钮的宽度（均分整个容器）
-  const buttonWidth = 100; // 每个按钮的基础宽度
+  const buttonWidth = props.buttons.length === 2 ? 100 : 100; // 每个按钮的基础宽度
   return activeIndex * buttonWidth;
+});
+
+// 计算容器宽度
+const containerWidth = computed(() => {
+  if (props.buttons.length === 2) return '200px';
+  if (props.buttons.length === 3) return '300px';
+  if (props.buttons.length === 4) return '400px';
+  return '300px'; // 默认值
+});
+
+// 计算滑动条宽度
+const sliderWidth = computed(() => {
+  if (props.buttons.length === 2) return 'calc(50% - 4px)';
+  if (props.buttons.length === 3) return 'calc(33.333% - 4px)';
+  if (props.buttons.length === 4) return 'calc(25% - 4px)';
+  return 'calc(33.333% - 4px)'; // 默认值
 });
 </script>
 
@@ -57,7 +76,6 @@ const sliderPosition = computed(() => {
   border-radius: 8px;
   border: 1px solid var(--border);
   padding: 4px;
-  width: 200px; /* 固定宽度，两个按钮均分 */
   overflow: hidden;
 }
 
@@ -65,7 +83,6 @@ const sliderPosition = computed(() => {
   position: absolute;
   top: 4px;
   left: 4px;
-  width: calc(50% - 4px); /* 占据一半宽度 */
   height: calc(100% - 8px);
   background-color: var(--accent);
   border-radius: 6px;

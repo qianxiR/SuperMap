@@ -1,18 +1,13 @@
 <template>
   <div class="view-sub-page">
-    <DashboardViewHeader />
     <div class="view-content">
-      <!-- 返回按钮 -->
-      <div class="back-navigation">
-        <BaseButton 
-          variant="assistant"
-          size="medium"
-          icon="M19 12H5M12 19l-7-7 7-7"
-          title="返回主页面"
-          @click="goBack"
-        >
-          <span>返回</span>
-        </BaseButton>
+      <!-- 子页面切换按钮组 -->
+      <div class="subpage-navigation">
+        <ButtonGroup
+          :buttons="subPageButtons"
+          :active-button="activeSubPage"
+          @select="navigateToSubPage"
+        />
       </div>
       
       <div class="map-container">
@@ -28,30 +23,60 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useMap } from '@/composables/useMap'
 import { useMapStore } from '@/stores/mapStore'
 import { usePageStateStore } from '@/stores/pageStateStore'
-import DashboardViewHeader from '@/views/dashboard/ViewPage/layout/DashboardViewHeader.vue'
 import FeaturePopup from '@/components/Map/FeaturePopup.vue'
 import CoordinateDisplay from '@/components/Map/CoordinateDisplay.vue'
 import ScaleBar from '@/components/Map/ScaleBar.vue'
 import OverviewMap from '@/components/Map/OverviewMap.vue'
-import BaseButton from '@/components/UI/BaseButton.vue'
+import ButtonGroup from '@/components/UI/ButtonGroup.vue'
 
 // 组合式函数
 const router = useRouter()
+const route = useRoute()
 const { mapContainer, initMap, cleanup } = useMap()
 const mapStore = useMapStore()
 const pageStateStore = usePageStateStore()
 
 let resizeObserver: ResizeObserver | null = null
 
-// 返回主页面
-const goBack = () => {
-  router.push('/dashboard/view/home')
+// 子页面按钮配置
+const subPageButtons = [
+  { id: 'home', text: '首页' },
+  { id: 'subpage1', text: '城市总览' },
+  { id: 'subpage2', text: '民生设施' },
+  { id: 'subpage3', text: '生态资源' }
+]
+
+// 当前激活的子页面
+const activeSubPage = ref('subpage1')
+
+// 导航到子页面
+const navigateToSubPage = async (subPageName: string) => {
+  activeSubPage.value = subPageName
+  if (subPageName === 'home') {
+    // 直接跳转到首页并刷新
+    window.location.href = '/dashboard/view/home'
+  } else {
+    router.push(`/dashboard/view/home/${subPageName}`)
+  }
 }
+
+// 监听路由变化，同步激活状态
+watch(() => route.path, (newPath) => {
+  if (newPath === '/dashboard/view' || newPath === '/dashboard/view/home' || newPath.endsWith('/dashboard/view/home/')) {
+    activeSubPage.value = 'home'
+  } else if (newPath.includes('/subpage1')) {
+    activeSubPage.value = 'subpage1'
+  } else if (newPath.includes('/subpage2')) {
+    activeSubPage.value = 'subpage2'
+  } else if (newPath.includes('/subpage3')) {
+    activeSubPage.value = 'subpage3'
+  }
+}, { immediate: true })
 
 // 生命周期
 onMounted(() => {
@@ -90,7 +115,7 @@ onUnmounted(() => {
 <style scoped>
 .view-sub-page {
   width: 100%;
-  height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
   background: var(--bg);
@@ -102,21 +127,16 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-/* 返回按钮区域 */
-.back-navigation {
+/* 子页面切换按钮组区域 */
+.subpage-navigation {
   position: absolute;
   top: 16px;
-  right: 16px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 1000;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--glow);
-  padding: 4px;
-  min-height: fit-content;
+  justify-content: center;
+  align-items: center;
 }
 
 .map-container {
