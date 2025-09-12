@@ -69,6 +69,7 @@ import LLMInputWindow from '@/components/Agent/LLMInputWindow.vue';
 import ChatMessagesPanel from '@/components/Agent/ChatMessagesPanel.vue';
 import SecondaryButton from '@/components/UI/SecondaryButton.vue';
 import { getAgentApiBaseUrl, getLLMApiConfig } from '@/utils/config'
+import { getEnvironmentalBackground, getUseCases } from '@/utils/domainBackground'
 
 interface Message {
   id: number;
@@ -381,6 +382,16 @@ onMounted(() => {
   // 如果没有恢复的状态，则显示初始消息
   if (messages.value.length === 0) {
     maybeAnnounceInitiallayers();
+    // 注入行业与领域背景，便于后续 LLM 推理
+    const bg = getEnvironmentalBackground()
+    const uc = getUseCases()
+    const intro = `${bg}\n\n参考用例：\n${uc}`
+    messages.value.push({ id: Date.now(), text: intro, sender: 'system' })
+    nextTick(() => {
+      messagesPanelRef.value?.scrollToBottom()
+    })
+    // 同步注入给 LLM
+    sendImplicitMessageToLLM('领域背景已注入。' )
   }
   
   // 使用nextTick处理DOM更新
@@ -414,6 +425,17 @@ onMounted(() => {
     window.addEventListener('llm:analysisResultError', handleLLMAnalysisResultError as EventListener)
     window.addEventListener('agent:eraseAnalysisResult', handleEraseAnalysisResult as EventListener)
     window.addEventListener('agent:pathAnalysisResult', handlePathAnalysisResult as EventListener)
+    // 新增：监听图层可见性变化事件
+    window.addEventListener('agent:layerVisibilityChanged', ((e: any) => {
+      const { layerName, visible } = e.detail || {}
+      const msg = visible ? `打开图层：${layerName}` : `关闭图层：${layerName}`
+      messages.value.push({ id: Date.now(), text: msg, sender: 'system' })
+      nextTick(() => {
+        messagesPanelRef.value?.scrollToBottom()
+      })
+      // 同步注入AI上下文，推动后续推理
+      sendImplicitMessageToLLM(msg)
+    }) as EventListener)
   }
 });
 
@@ -440,6 +462,7 @@ onUnmounted(() => {
     window.removeEventListener('agent:intersectionAnalysisResult', handleIntersectionAnalysisResult as EventListener)
     window.removeEventListener('agent:eraseAnalysisResult', handleEraseAnalysisResult as EventListener)
     window.removeEventListener('agent:pathAnalysisResult', handlePathAnalysisResult as EventListener)
+    window.removeEventListener('agent:layerVisibilityChanged', (() => {}) as EventListener)
     window.removeEventListener('llm:analysisResultReceived', handleLLMAnalysisResultReceived as EventListener)
     window.removeEventListener('llm:analysisResultError', handleLLMAnalysisResultError as EventListener)
     ;(window as any).__queryResultListenerRegistered = false

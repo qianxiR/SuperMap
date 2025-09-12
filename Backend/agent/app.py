@@ -29,7 +29,7 @@ os.environ["PYTHONHTTPSVERIFY"] = "0"
 class LLMSettings(BaseModel):
     api_key: str = Field(default_factory=lambda: os.getenv("DASHSCOPE_API_KEY", ""))
     base_url: str = Field(default_factory=lambda: os.getenv("DASHSCOPE_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"))
-    model: str = Field(default_factory=lambda: os.getenv("DASHSCOPE_MODEL", "qwen-plus"))
+    model: str = Field(default_factory=lambda: os.getenv("DASHSCOPE_MODEL", "qwen-max"))
     temperature: float = Field(default_factory=lambda: float(os.getenv("DASHSCOPE_TEMPERATURE", "0.7")))
     max_tokens: int = Field(default_factory=lambda: int(os.getenv("DASHSCOPE_MAX_TOKENS", "3000")))
     cors_origins: str = Field(default_factory=lambda: os.getenv("CORS_ORIGINS", "*"))

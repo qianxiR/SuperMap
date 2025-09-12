@@ -222,6 +222,16 @@ export function uselayermanager() {
         visible: newVisibility
       }
     }
+
+    // 分发图层可见性变化事件，供 ChatAssistant 注入对话与上下文
+    try {
+      window.dispatchEvent(new CustomEvent('agent:layerVisibilityChanged', {
+        detail: {
+          layerName: layerInfo.name,
+          visible: newVisibility
+        }
+      }))
+    } catch {}
   }
 
   // 监听 Agent 工具事件以执行图层显隐 - 只注册一次
