@@ -435,7 +435,23 @@ export function useBufferAnalysis() {
       features: olFeatures
     })
     
-    const result = await saveFeaturesAslayer(olFeatures as any[], layerName || (bufferAnalysisStore.state.layerName || '缓冲区分析结果'), 'buffer')
+    // 生成默认名称（带参数后缀）
+    const defaultName = (() => {
+      const radius = bufferSettings.value.radius
+      const steps = bufferSettings.value.semicircleLineSegment
+      const srcLayer = (() => {
+        const id = selectedAnalysislayerId.value
+        const lyr = id ? mapStore.vectorlayers.find(l => l.id === id) : null
+        return lyr ? lyr.name : '未命名图层'
+      })()
+      return `缓冲区分析结果_${srcLayer}_r${radius}_s${steps}`
+    })()
+
+    const result = await saveFeaturesAslayer(
+      olFeatures as any[],
+      layerName || (bufferAnalysisStore.state.layerName || defaultName),
+      'buffer'
+    )
     console.log('[BufferAnalysis] 保存结果:', result)
     return result
   }

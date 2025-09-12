@@ -517,13 +517,9 @@ export function uselayermanager() {
       }
     })
     
-    // 监听保存查询结果为图层事件
+    // 监听保存查询结果为图层事件（未提供名称则使用默认名）
     window.addEventListener('agent:saveQueryResultsAsLayer', async (e: any) => {
       const { layerName } = e.detail || {}
-      if (!layerName) {
-        console.warn('[Agent] 保存查询结果参数不完整:', { layerName })
-        return
-      }
       
       try {
         // 优先从缓冲区分析结果中获取数据
@@ -611,10 +607,30 @@ export function uselayermanager() {
           return
         }
         
+        // 生成默认查询保存名：查询图层名 + 字段操作表达式
+        const buildDefaultQueryLayerName = async (): Promise<string> => {
+          try {
+            const { useFeatureQuery } = await import('@/composables/useFeatureQuery')
+            const featureQueryCtx = useFeatureQuery()
+            const selId = featureQueryCtx.selectedlayerId.value
+            const cond = featureQueryCtx.queryConfig.value.condition as any
+            const lyr = selId ? mapStore.vectorlayers.find(l => l.id === selId) : null
+            const base = lyr ? lyr.name : '查询图层'
+            const f = cond?.fieldName ?? '字段'
+            const op = cond?.operator ?? 'op'
+            const val = cond?.value ?? '值'
+            return `属性查询结果_${base}_${f}${op}${val}`
+          } catch {
+            return '属性查询结果'
+          }
+        }
+
+        const finalName = layerName || await buildDefaultQueryLayerName()
+
         // 保存结果为新图层
-        const success = await saveFeaturesAslayer(featuresToSave, layerName, sourceType as 'query' | 'buffer')
+        const success = await saveFeaturesAslayer(featuresToSave, finalName, sourceType as 'query' | 'buffer')
         if (success) {
-          const successMessage = `${sourceType === 'buffer' ? '缓冲区分析结果' : '查询结果'}已保存为新图层"${layerName}"，共${featuresToSave.length}个要素`
+          const successMessage = `${sourceType === 'buffer' ? '缓冲区分析结果' : '查询结果'}已保存为新图层"${finalName}"，共${featuresToSave.length}个要素`
           console.log(`[Agent] ${successMessage}`)
           
           // 发送保存成功事件
@@ -622,13 +638,13 @@ export function uselayermanager() {
             detail: {
               success: true,
               message: successMessage,
-              layerName,
+              layerName: finalName,
               count: featuresToSave.length
             }
           })
           window.dispatchEvent(successEvent)
         } else {
-          const errorMessage = `保存图层"${layerName}"失败`
+          const errorMessage = `保存图层"${finalName}"失败`
           console.error(`[Agent] ${errorMessage}`)
           
           // 发送保存失败事件
@@ -636,7 +652,7 @@ export function uselayermanager() {
             detail: {
               success: false,
               message: errorMessage,
-              layerName
+              layerName: finalName
             }
           })
           window.dispatchEvent(errorEvent)
@@ -866,17 +882,25 @@ export function uselayermanager() {
     // ===== 4个分析功能的Agent导出和保存事件监听器 =====
     console.log('[useLayerManager] 开始注册4个分析功能的Agent事件监听器')
     
-    // 监听保存缓冲区分析结果为图层事件
+    // 监听保存缓冲区分析结果为图层事件（未提供名称则使用默认名）
     window.addEventListener('agent:saveBufferResultsAsLayer', async (e: any) => {
       const { layerName } = e.detail || {}
-      if (!layerName) return
       
       try {
         const { useBufferAnalysis } = await import('@/composables/useBufferAnalysis')
         const bufferAnalysis = useBufferAnalysis()
-        await bufferAnalysis.saveBufferResultsAsLayer(layerName)
+        const ok = await bufferAnalysis.saveBufferResultsAsLayer(layerName)
+        const message = `缓冲区分析结果已保存为新图层"${layerName || '[默认命名]'}"`
+        const eventName = 'agent:saveResult'
+        const detail = ok
+          ? { success: true, message, layerName: layerName || '[默认命名]' }
+          : { success: false, message: `保存失败：${layerName || '[默认命名]'}`, layerName: layerName || '[默认命名]' }
+        window.dispatchEvent(new CustomEvent(eventName, { detail }))
       } catch (error) {
         console.error('[Agent] 保存缓冲区分析结果失败:', error)
+        window.dispatchEvent(new CustomEvent('agent:saveResult', {
+          detail: { success: false, message: '保存失败：缓冲区分析结果', layerName: layerName || '[默认命名]' }
+        }))
       }
     })
     
@@ -888,23 +912,38 @@ export function uselayermanager() {
       try {
         const { useBufferAnalysis } = await import('@/composables/useBufferAnalysis')
         const bufferAnalysis = useBufferAnalysis()
-        await bufferAnalysis.exportBufferResultsAsJSON(fileName)
+        const ok = await bufferAnalysis.exportBufferResultsAsJSON(fileName)
+        const eventName = 'agent:exportResult'
+        const detail = ok
+          ? { success: true, message: `已导出为"${fileName}.json"`, fileName }
+          : { success: false, message: `导出失败：${fileName}.json`, fileName }
+        window.dispatchEvent(new CustomEvent(eventName, { detail }))
       } catch (error) {
         console.error('[Agent] 导出缓冲区分析结果失败:', error)
+        window.dispatchEvent(new CustomEvent('agent:exportResult', {
+          detail: { success: false, message: `导出失败：${fileName}.json`, fileName }
+        }))
       }
     })
     
-    // 监听保存相交分析结果为图层事件
+    // 监听保存相交分析结果为图层事件（未提供名称则使用默认名）
     window.addEventListener('agent:saveIntersectionResultsAsLayer', async (e: any) => {
       const { layerName } = e.detail || {}
-      if (!layerName) return
       
       try {
         const { useIntersectionAnalysis } = await import('@/composables/useIntersectionAnalysis')
         const intersectionAnalysis = useIntersectionAnalysis()
-        await intersectionAnalysis.saveIntersectionResultsAsLayer(layerName)
+        const ok = await intersectionAnalysis.saveIntersectionResultsAsLayer(layerName)
+        const message = `相交分析结果已保存为新图层"${layerName || '[默认命名]'}"`
+        const detail = ok
+          ? { success: true, message, layerName: layerName || '[默认命名]' }
+          : { success: false, message: `保存失败：${layerName || '[默认命名]'}`, layerName: layerName || '[默认命名]' }
+        window.dispatchEvent(new CustomEvent('agent:saveResult', { detail }))
       } catch (error) {
         console.error('[Agent] 保存相交分析结果失败:', error)
+        window.dispatchEvent(new CustomEvent('agent:saveResult', {
+          detail: { success: false, message: '保存失败：相交分析结果', layerName: layerName || '[默认命名]' }
+        }))
       }
     })
     
@@ -916,23 +955,37 @@ export function uselayermanager() {
       try {
         const { useIntersectionAnalysis } = await import('@/composables/useIntersectionAnalysis')
         const intersectionAnalysis = useIntersectionAnalysis()
-        await intersectionAnalysis.exportIntersectionResultsAsJSON(fileName)
+        const ok = await intersectionAnalysis.exportIntersectionResultsAsJSON(fileName)
+        const detail = ok
+          ? { success: true, message: `已导出为"${fileName}.json"`, fileName }
+          : { success: false, message: `导出失败：${fileName}.json`, fileName }
+        window.dispatchEvent(new CustomEvent('agent:exportResult', { detail }))
       } catch (error) {
         console.error('[Agent] 导出相交分析结果失败:', error)
+        window.dispatchEvent(new CustomEvent('agent:exportResult', {
+          detail: { success: false, message: `导出失败：${fileName}.json`, fileName }
+        }))
       }
     })
     
-    // 监听保存擦除分析结果为图层事件
+    // 监听保存擦除分析结果为图层事件（未提供名称则使用默认名）
     window.addEventListener('agent:saveEraseResultsAsLayer', async (e: any) => {
       const { layerName } = e.detail || {}
-      if (!layerName) return
       
       try {
         const { useEraseAnalysis } = await import('@/composables/useEraseAnalysis')
         const eraseAnalysis = useEraseAnalysis()
-        await eraseAnalysis.saveEraseResultsAsLayer(layerName)
+        const ok = await eraseAnalysis.saveEraseResultsAsLayer(layerName)
+        const message = `擦除分析结果已保存为新图层"${layerName || '[默认命名]'}"`
+        const detail = ok
+          ? { success: true, message, layerName: layerName || '[默认命名]' }
+          : { success: false, message: `保存失败：${layerName || '[默认命名]'}`, layerName: layerName || '[默认命名]' }
+        window.dispatchEvent(new CustomEvent('agent:saveResult', { detail }))
       } catch (error) {
         console.error('[Agent] 保存擦除分析结果失败:', error)
+        window.dispatchEvent(new CustomEvent('agent:saveResult', {
+          detail: { success: false, message: '保存失败：擦除分析结果', layerName: layerName || '[默认命名]' }
+        }))
       }
     })
     
@@ -944,23 +997,37 @@ export function uselayermanager() {
       try {
         const { useEraseAnalysis } = await import('@/composables/useEraseAnalysis')
         const eraseAnalysis = useEraseAnalysis()
-        await eraseAnalysis.exportEraseResultsAsJSON(fileName)
+        const ok = await eraseAnalysis.exportEraseResultsAsJSON(fileName)
+        const detail = ok
+          ? { success: true, message: `已导出为"${fileName}.json"`, fileName }
+          : { success: false, message: `导出失败：${fileName}.json`, fileName }
+        window.dispatchEvent(new CustomEvent('agent:exportResult', { detail }))
       } catch (error) {
         console.error('[Agent] 导出擦除分析结果失败:', error)
+        window.dispatchEvent(new CustomEvent('agent:exportResult', {
+          detail: { success: false, message: `导出失败：${fileName}.json`, fileName }
+        }))
       }
     })
     
-    // 监听保存最短路径分析结果为图层事件
+    // 监听保存最短路径分析结果为图层事件（未提供名称则使用默认名）
     window.addEventListener('agent:savePathResultsAsLayer', async (e: any) => {
       const { layerName } = e.detail || {}
-      if (!layerName) return
       
       try {
         const { useShortestPathAnalysis } = await import('@/composables/useShortestPathAnalysis')
         const shortestPathAnalysis = useShortestPathAnalysis()
-        await shortestPathAnalysis.savePathResultsAsLayer(layerName)
+        const ok = await shortestPathAnalysis.savePathResultsAsLayer(layerName)
+        const message = `最短路径分析结果已保存为新图层"${layerName || '[默认命名]'}"`
+        const detail = ok
+          ? { success: true, message, layerName: layerName || '[默认命名]' }
+          : { success: false, message: `保存失败：${layerName || '[默认命名]'}`, layerName: layerName || '[默认命名]' }
+        window.dispatchEvent(new CustomEvent('agent:saveResult', { detail }))
       } catch (error) {
         console.error('[Agent] 保存最短路径分析结果失败:', error)
+        window.dispatchEvent(new CustomEvent('agent:saveResult', {
+          detail: { success: false, message: '保存失败：最短路径分析结果', layerName: layerName || '[默认命名]' }
+        }))
       }
     })
     
@@ -972,9 +1039,16 @@ export function uselayermanager() {
       try {
         const { useShortestPathAnalysis } = await import('@/composables/useShortestPathAnalysis')
         const shortestPathAnalysis = useShortestPathAnalysis()
-        await shortestPathAnalysis.exportPathResultsAsJSON(fileName)
+        const ok = await shortestPathAnalysis.exportPathResultsAsJSON(fileName)
+        const detail = ok
+          ? { success: true, message: `已导出为"${fileName}.json"`, fileName }
+          : { success: false, message: `导出失败：${fileName}.json`, fileName }
+        window.dispatchEvent(new CustomEvent('agent:exportResult', { detail }))
       } catch (error) {
         console.error('[Agent] 导出最短路径分析结果失败:', error)
+        window.dispatchEvent(new CustomEvent('agent:exportResult', {
+          detail: { success: false, message: `导出失败：${fileName}.json`, fileName }
+        }))
       }
     })
     

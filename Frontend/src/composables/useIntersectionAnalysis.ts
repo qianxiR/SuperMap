@@ -13,7 +13,6 @@ import { Style, Stroke, Fill } from 'ol/style'
 import GeoJSON from 'ol/format/GeoJSON'
 import { ref as vueRef } from 'vue'
 import { useLayerExport } from '@/composables/useLayerExport'
-import { sendIntersectionResultToLLM } from '@/utils/llmNotification'
 
 declare global {
   interface Window {
@@ -217,19 +216,14 @@ export function useIntersectionAnalysis() {
       
       // 保存结果到lastFeatureCollection（用于导出和保存图层功能）
       lastFeatureCollection.value = apiResponse
+      // 同时保存到状态管理中
+      store.setLastFeatureCollection(apiResponse)
       
       // 直接显示API返回的FeatureCollection
       displayIntersectionResults(apiResponse)
       analysisStore.setAnalysisStatus(`相交分析完成：共生成 ${features.length} 个结果，已渲染到地图。`)
       
-      // 发送分析结果到LLM
-      const resultMessage = `相交分析完成：共生成 ${features.length} 个结果，已渲染到地图。`
-      await sendIntersectionResultToLLM(resultMessage, features.length, {
-        targetLayerId: tId,
-        maskLayerId: mId,
-        resultFeatures: features.length,
-        timestamp: new Date().toISOString()
-      })
+      // 统一交由 ChatAssistant.vue 监听结果事件后发送隐式消息到LLM
 
     } catch (error: any) {
       store.setIsAnalyzing(false)
@@ -367,11 +361,17 @@ export function useIntersectionAnalysis() {
       }).filter(Boolean)
 
       if (features.length > 0) {
-        // 使用图层管理器的保存功能
-        const layerName = `相交分析结果`
-        await saveFeaturesAslayer(features as any[], layerName, 'intersect')
-        
-        console.log(`[Intersection] Saved ${features.length} intersection results as layer: ${layerName}`)
+        const defaultName = (() => {
+          const tId = targetlayerId.value
+          const mId = masklayerId.value
+          const t = tId ? mapStore.vectorlayers.find(l => l.id === tId) : null
+          const m = mId ? mapStore.vectorlayers.find(l => l.id === mId) : null
+          const tn = t ? t.name : '目标'
+          const mn = m ? m.name : '掩膜'
+          return `相交分析结果_${tn}_AND_${mn}`
+        })()
+        await saveFeaturesAslayer(features as any[], defaultName, 'intersect')
+        console.log(`[Intersection] Saved ${features.length} intersection results as layer: ${defaultName}`)
       }
     } catch (error: any) {
       console.error('[Intersection] Failed to save intersection results as layer:', error)
@@ -411,7 +411,14 @@ export function useIntersectionAnalysis() {
 
   // ===== 保存为图层 / 导出为JSON =====
   const saveIntersectionResultsAsLayer = async (layerName?: string): Promise<boolean> => {
-    const fc = lastFeatureCollection.value
+    let fc = lastFeatureCollection.value
+    
+    // 如果composable中的数据为空，尝试从状态管理中读取
+    if (!fc && store.state.lastFeatureCollection) {
+      fc = store.state.lastFeatureCollection
+      console.log('[IntersectionAnalysis] 从状态管理读取相交分析结果数据')
+    }
+    
     if (!fc || !fc.features || fc.features.length === 0) return false
     
     // 将FeatureCollection.features展开并转换为OL Feature后再保存
@@ -436,11 +443,27 @@ export function useIntersectionAnalysis() {
       }
     })
     
-    return saveFeaturesAslayer(olFeatures as any[], layerName || '相交分析结果', 'intersect')
+    const defaultName = (() => {
+      const tId = targetlayerId.value
+      const mId = masklayerId.value
+      const t = tId ? mapStore.vectorlayers.find(l => l.id === tId) : null
+      const m = mId ? mapStore.vectorlayers.find(l => l.id === mId) : null
+      const tn = t ? t.name : '目标'
+      const mn = m ? m.name : '掩膜'
+      return `相交分析结果_${tn}_AND_${mn}`
+    })()
+    return saveFeaturesAslayer(olFeatures as any[], layerName || defaultName, 'intersect')
   }
 
   const exportIntersectionResultsAsJSON = async (fileName?: string): Promise<any> => {
-    const fc = lastFeatureCollection.value
+    let fc = lastFeatureCollection.value
+    
+    // 如果composable中的数据为空，尝试从状态管理中读取
+    if (!fc && store.state.lastFeatureCollection) {
+      fc = store.state.lastFeatureCollection
+      console.log('[IntersectionAnalysis] 从状态管理读取相交分析结果数据用于导出')
+    }
+    
     if (!fc || !fc.features || fc.features.length === 0) return false
     return exportFeaturesAsGeoJSON(fc.features, fileName || '相交分析结果')
   }

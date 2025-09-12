@@ -252,8 +252,10 @@ const handleIntersectionAnalysisResult = (event: CustomEvent) => {
     messagesPanelRef.value?.scrollToBottom()
   })
   
-  // 注意：相交分析的LLM通知现在由useIntersectionAnalysis.ts中的sendIntersectionResultToLLM处理
-  // 这里不再调用sendImplicitMessageToLLM，避免重复发送
+  // 与其他分析保持一致：成功后统一发送隐式消息给LLM
+  if (success) {
+    sendImplicitMessageToLLM(resultMessage)
+  }
 }
 
 // 监听擦除分析结果事件

@@ -207,6 +207,8 @@ export function useEraseAnalysis() {
       
       // 保存结果到lastFeatureCollection（用于导出和保存图层功能）
       lastFeatureCollection.value = apiResponse
+      // 同时保存到状态管理中
+      store.setLastFeatureCollection(apiResponse)
       
       // 直接显示API返回的FeatureCollection
       displayeraseResults(apiResponse)
@@ -358,11 +360,17 @@ export function useEraseAnalysis() {
       }).filter(Boolean)
 
       if (features.length > 0) {
-        // 使用图层管理器的保存功能
-        const layerName = `擦除分析结果`
-        await saveFeaturesAslayer(features as any[], layerName, 'erase')
-        
-        console.log(`[Erase] Saved ${features.length} erase results as layer: ${layerName}`)
+        const defaultName = (() => {
+          const tId = targetlayerId.value
+          const eId = eraselayerId.value
+          const t = tId ? mapStore.vectorlayers.find(l => l.id === tId) : null
+          const e = eId ? mapStore.vectorlayers.find(l => l.id === eId) : null
+          const tn = t ? t.name : '目标'
+          const en = e ? e.name : '擦除'
+          return `擦除分析结果_${tn}_MINUS_${en}`
+        })()
+        await saveFeaturesAslayer(features as any[], defaultName, 'erase')
+        console.log(`[Erase] Saved ${features.length} erase results as layer: ${defaultName}`)
       }
     } catch (error: any) {
       console.error('[Erase] Failed to save erase results as layer:', error)
@@ -371,7 +379,14 @@ export function useEraseAnalysis() {
 
   // ===== 保存为图层 / 导出为JSON =====
   const saveEraseResultsAsLayer = async (layerName?: string): Promise<boolean> => {
-    const fc = lastFeatureCollection.value
+    let fc = lastFeatureCollection.value
+    
+    // 如果composable中的数据为空，尝试从状态管理中读取
+    if (!fc && store.state.lastFeatureCollection) {
+      fc = store.state.lastFeatureCollection
+      console.log('[EraseAnalysis] 从状态管理读取擦除分析结果数据')
+    }
+    
     if (!fc || !fc.features || fc.features.length === 0) return false
     
     // 将FeatureCollection.features展开并转换为OL Feature后再保存
@@ -396,11 +411,27 @@ export function useEraseAnalysis() {
       }
     })
     
-    return saveFeaturesAslayer(olFeatures as any[], layerName || '擦除分析结果', 'erase')
+    const defaultName = (() => {
+      const tId = targetlayerId.value
+      const eId = eraselayerId.value
+      const t = tId ? mapStore.vectorlayers.find(l => l.id === tId) : null
+      const e = eId ? mapStore.vectorlayers.find(l => l.id === eId) : null
+      const tn = t ? t.name : '目标'
+      const en = e ? e.name : '擦除'
+      return `擦除分析结果_${tn}_MINUS_${en}`
+    })()
+    return saveFeaturesAslayer(olFeatures as any[], layerName || defaultName, 'erase')
   }
 
   const exportEraseResultsAsJSON = async (fileName?: string): Promise<any> => {
-    const fc = lastFeatureCollection.value
+    let fc = lastFeatureCollection.value
+    
+    // 如果composable中的数据为空，尝试从状态管理中读取
+    if (!fc && store.state.lastFeatureCollection) {
+      fc = store.state.lastFeatureCollection
+      console.log('[EraseAnalysis] 从状态管理读取擦除分析结果数据用于导出')
+    }
+    
     if (!fc || !fc.features || fc.features.length === 0) return false
     return exportFeaturesAsGeoJSON(fc.features, fileName || '擦除分析结果')
   }

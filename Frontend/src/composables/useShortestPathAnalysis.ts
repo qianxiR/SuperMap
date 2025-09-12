@@ -198,7 +198,14 @@ export function useShortestPathAnalysis() {
 
   // ===== 保存为图层 / 导出为JSON =====
   const savePathResultsAsLayer = async (layerName?: string): Promise<boolean> => {
-    const fc = lastFeatureCollection.value
+    let fc = lastFeatureCollection.value
+    
+    // 如果composable中的数据为空，尝试从状态管理中读取
+    if (!fc && shortestPathStore.state.lastFeatureCollection) {
+      fc = shortestPathStore.state.lastFeatureCollection
+      console.log('[ShortestPathAnalysis] 从状态管理读取最短路径分析结果数据')
+    }
+    
     if (!fc || !fc.features || fc.features.length === 0) return false
     
     // 将FeatureCollection.features展开并转换为OL Feature后再保存
@@ -223,11 +230,23 @@ export function useShortestPathAnalysis() {
       }
     })
     
-    return saveFeaturesAslayer(olFeatures as any[], layerName || '最短路径分析结果', 'path')
+    const defaultName = (() => {
+      const units = state.analysisOptions.units || 'kilometers'
+      const resolution = state.analysisOptions.resolution || 1000
+      return `最短路径分析结果_units-${units}_res-${resolution}`
+    })()
+    return saveFeaturesAslayer(olFeatures as any[], layerName || defaultName, 'path')
   }
 
   const exportPathResultsAsJSON = async (fileName?: string): Promise<any> => {
-    const fc = lastFeatureCollection.value
+    let fc = lastFeatureCollection.value
+    
+    // 如果composable中的数据为空，尝试从状态管理中读取
+    if (!fc && shortestPathStore.state.lastFeatureCollection) {
+      fc = shortestPathStore.state.lastFeatureCollection
+      console.log('[ShortestPathAnalysis] 从状态管理读取最短路径分析结果数据用于导出')
+    }
+    
     if (!fc || !fc.features || fc.features.length === 0) return false
     return exportFeaturesAsGeoJSON(fc.features, fileName || '最短路径分析结果')
   }
@@ -570,6 +589,8 @@ export function useShortestPathAnalysis() {
       
       // 保存结果到lastFeatureCollection（用于导出和保存图层功能）
       lastFeatureCollection.value = apiResponse
+      // 同时保存到状态管理中
+      shortestPathStore.setLastFeatureCollection(apiResponse)
       
       // 直接显示API返回的FeatureCollection
       displayAnalysisResults(apiResponse)
