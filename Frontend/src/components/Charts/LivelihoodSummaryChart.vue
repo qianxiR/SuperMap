@@ -257,7 +257,7 @@ onUnmounted(() => {
 <style scoped>
 .livelihood-summary-chart {
   position: absolute;
-  bottom: 50px;
+  bottom: 20px;
   right: 20px;
   width: 400px;
   height: calc(50vh - 50px);

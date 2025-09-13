@@ -261,7 +261,7 @@ onUnmounted(() => {
 <style scoped>
 .water-surface-chart {
   position: absolute;
-  bottom: 50px;
+  bottom: 20px;
   right: 20px;
   width: 380px;
   height: calc(50vh - 50px);

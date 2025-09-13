@@ -94,9 +94,9 @@ const pieOption = computed(() => ({
     }
   },
   legend: {
-    orient: 'vertical',
+    orient: 'horizontal',
     right: '2%',
-    top: 'center',
+    bottom: '2%',
     textStyle: {
       color: '#0078D4',
       fontSize: 9
@@ -104,13 +104,13 @@ const pieOption = computed(() => ({
     itemWidth: 10,
     itemHeight: 6
   },
-  color: ['#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#001529', '#002766', '#003a8c', '#0050b3'],
+  color: ['#001529', '#002766', '#003a8c', '#0050b3', '#096dd9', '#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#1890ff', '#40a9ff'],
   series: [
     {
       id: 'waterQuality',
       type: 'pie',
       radius: ['30%', '70%'],
-      center: ['35%', '50%'],
+      center: ['50%', '45%'],
       animationDurationUpdate: 1000,
       universalTransition: true,
       data: pieData.value,
@@ -196,7 +196,7 @@ const barOption = computed(() => ({
     itemWidth: 12,
     itemHeight: 8
   },
-  color: ['#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#001529', '#002766', '#003a8c', '#0050b3'],
+  color: ['#001529', '#002766', '#003a8c', '#0050b3', '#096dd9', '#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#1890ff', '#40a9ff'],
   grid: {
     left: '3%',
     right: '4%',
@@ -425,7 +425,7 @@ onUnmounted(() => {
 <style scoped>
 .water-quality-chart {
   position: absolute;
-  top: 50px;
+  top: 10px;
   right: 20px;
   width: 400px;
   height: calc(50vh - 50px);
@@ -465,7 +465,7 @@ onUnmounted(() => {
   .water-quality-chart {
     width: 300px;
     height: calc(50vh - 40px);
-    top: 30px;
+    top: 10px;
     right: 15px;
   }
   

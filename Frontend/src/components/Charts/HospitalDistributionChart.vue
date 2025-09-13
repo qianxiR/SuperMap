@@ -60,22 +60,22 @@ const pieOption = {
   },
   legend: {
     orient: 'vertical',
-    right: '5%',
+    right: '2%',
     top: 'center',
     textStyle: {
       color: '#0078D4',
-      fontSize: 10
+      fontSize: 9
     },
-    itemWidth: 12,
-    itemHeight: 8
+    itemWidth: 10,
+    itemHeight: 6
   },
-  color: ['#001529', '#002766', '#003a8c', '#001529', '#002766', '#003a8c', '#001529', '#002766', '#003a8c', '#001529', '#002766', '#003a8c', '#001529'],
+  color: ['#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#001529', '#002766', '#003a8c', '#0050b3', '#096dd9', '#1890ff', '#40a9ff'],
   series: [
     {
       id: 'hospital',
       type: 'pie',
       radius: ['30%', '70%'],
-      center: ['40%', '50%'],
+      center: ['35%', '50%'],
       animationDurationUpdate: 1000,
       universalTransition: true,
       data: hospitalData,
@@ -192,7 +192,7 @@ const barOption = {
       data: hospitalData.map((item, index) => ({
         value: item.value,
         itemStyle: {
-          color: ['#001529', '#002766', '#003a8c', '#001529', '#002766', '#003a8c', '#001529', '#002766', '#003a8c', '#001529', '#002766', '#003a8c', '#001529'][index],
+          color: ['#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#001529', '#002766', '#003a8c', '#0050b3', '#096dd9', '#1890ff', '#40a9ff'][index],
           borderRadius: [4, 4, 0, 0]
         }
       })),

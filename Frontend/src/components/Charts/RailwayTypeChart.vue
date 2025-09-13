@@ -260,7 +260,7 @@ onUnmounted(() => {
 <style scoped>
 .railway-type-chart {
   position: absolute;
-  bottom: 50px;
+  bottom: 20px;
   left: 20px;
   width: 400px;
   height: calc(50vh - 50px);
