@@ -315,7 +315,7 @@ const loadYangtzeLineLayer = async () => {
 onMounted(async () => {
   // 确保外部库已加载
   if (window.ol && window.ol.supermap) {
-    await initMap(8, ['武汉_市级', '武汉_县级']) // 长江监测预警一体化显示武汉_市级、武汉_县级
+    await initMap(9, ['武汉_市级', '武汉_县级']) // 长江监测预警一体化显示武汉_市级、武汉_县级
     // 加载长江数据图层
     await loadYangtzeSurfaceLayer()
     await loadYangtzeLineLayer()
@@ -324,7 +324,7 @@ onMounted(async () => {
   } else {
     // 如果库还未加载，等待一下再初始化
     setTimeout(async () => {
-      await initMap(8, ['武汉_市级', '武汉_县级'])
+      await initMap(9, ['武汉_市级', '武汉_县级'])
       await loadYangtzeSurfaceLayer()
       await loadYangtzeLineLayer()
       await loadHydrologyLayer()

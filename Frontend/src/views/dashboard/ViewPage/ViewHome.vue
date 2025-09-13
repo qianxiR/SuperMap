@@ -119,10 +119,10 @@ watch(() => route.path, (newPath) => {
 onMounted(() => {
   // 确保外部库已加载
   if (window.ol && window.ol.supermap) {
-    initMap(8) // 城市概况使用缩放等级8，显示城市全貌
+    initMap(9) // 城市概况使用缩放等级9，显示城市全貌
   } else {
     // 如果库还未加载，等待一下再初始化
-    setTimeout(() => initMap(8), 500)
+    setTimeout(() => initMap(9), 500)
   }
 
   // 设置当前页面为视图页面
