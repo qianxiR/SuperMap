@@ -25,7 +25,7 @@
         <DistanceMeasurePanel />
         <!-- 面积量算面板 -->
         <AreaMeasurePanel />
-        <!-- 民生资源相关图表 -->
+        <!-- 民生资源一张图相关图表 -->
         <RegionPopulationChart />
         <EducationLevelChart />
         <GenderRatioChart />
@@ -78,10 +78,10 @@ let eventCleanup: (() => void) | null = null
 
 // 子页面按钮配置
 const subPageButtons = [
-  { id: 'home', text: '城市总览' },
-  { id: 'livelihood-resources', text: '民生资源' },
-  { id: 'traffic-resources', text: '水陆交通' },
-  { id: 'water-resources', text: '长江流域监测预警' }
+  { id: 'home', text: '城市综合态势' },
+  { id: 'livelihood-resources', text: '民生资源一张图' },
+  { id: 'traffic-resources', text: '交通水系一体化' },
+  { id: 'water-resources', text: '长江监测预警一体化' }
 ]
 
 // 当前激活的子页面

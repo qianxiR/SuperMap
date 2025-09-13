@@ -19,7 +19,7 @@
         <OverviewMap />
         <!-- 地图图例 -->
         <MapLegend />
-        <!-- 民生资源统计图表 -->
+        <!-- 民生资源一张图统计图表 -->
         <SchoolDistributionChart />
         <HospitalDistributionChart />
         <ResidentDistributionChart />
@@ -57,10 +57,10 @@ let resizeObserver: ResizeObserver | null = null
 
 // 子页面按钮配置
 const subPageButtons = [
-  { id: 'home', text: '城市总览' },
-  { id: 'livelihood-resources', text: '民生资源' },
-  { id: 'traffic-resources', text: '水陆交通' },
-  { id: 'water-resources', text: '长江流域监测预警' }
+  { id: 'home', text: '城市综合态势' },
+  { id: 'livelihood-resources', text: '民生资源一张图' },
+  { id: 'traffic-resources', text: '交通水系一体化' },
+  { id: 'water-resources', text: '长江监测预警一体化' }
 ]
 
 // 当前激活的子页面
@@ -70,7 +70,7 @@ const activeSubPage = ref('livelihood-resources')
 const navigateToSubPage = async (subPageName: string) => {
   activeSubPage.value = subPageName
   if (subPageName === 'home') {
-    // 直接跳转到城市总览并刷新
+    // 直接跳转到城市综合态势并刷新
     window.location.href = '/dashboard/view/home'
   } else {
     router.push(`/dashboard/view/home/${subPageName}`)
@@ -94,7 +94,7 @@ watch(() => route.path, (newPath) => {
 onMounted(() => {
   // 确保外部库已加载
   if (window.ol && window.ol.supermap) {
-    initMap(8, ['武汉_市级', '武汉_县级', '学校', '医院','居民地地名点']) // 民生资源显示武汉_市级、武汉_县级、学校、医院
+    initMap(8, ['武汉_市级', '武汉_县级', '学校', '医院','居民地地名点']) // 民生资源一张图显示武汉_市级、武汉_县级、学校、医院
   } else {
     // 如果库还未加载，等待一下再初始化
     setTimeout(() => initMap(8, ['武汉_市级', '武汉_县级', '学校', '医院', '居民地地名点']), 500)

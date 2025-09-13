@@ -83,27 +83,27 @@ const router = createRouter({
             title: '地图视图'
           },
           children: [
-            // 水陆交通页面
+            // 交通水系一体化页面
             {
               path: 'traffic-resources',
               name: 'view-traffic-resources',
               component: () => import('@/views/dashboard/ViewPage/ViewSubPage1.vue'),
               meta: {
                 requiresAuth: true,
-                title: '水陆交通'
+                title: '交通水系一体化'
               }
             },
-            // 民生资源页面
+            // 民生资源一张图页面
             {
               path: 'livelihood-resources',
               name: 'view-livelihood-resources',
               component: () => import('@/views/dashboard/ViewPage/ViewSubPage2.vue'),
               meta: {
                 requiresAuth: true,
-                title: '民生资源'
+                title: '民生资源一张图'
               }
             },
-            // 长江流域监测预警页面
+            // 长江流域监测预警一体化页面
             {
               path: 'water-resources',
               name: 'view-water-resources',

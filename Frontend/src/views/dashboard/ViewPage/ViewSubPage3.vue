@@ -19,6 +19,11 @@
         <OverviewMap />
         <!-- 水资源图例 -->
         <WaterLegend />
+        <!-- 水质监测图表 -->
+        <WaterQualityChart1 />
+        <WaterQualityChart2 />
+        <WaterQualityChart3 />
+        <WaterQualityChart4 />
       </div>
     </div>
   </div>
@@ -38,6 +43,10 @@ import ScaleBar from '@/components/Map/ScaleBar.vue'
 import OverviewMap from '@/components/Map/OverviewMap.vue'
 import WaterLegend from '@/components/Map/WaterLegend.vue'
 import ButtonGroup from '@/components/UI/ButtonGroup.vue'
+import WaterQualityChart1 from '@/components/Charts/WaterQualityChart1.vue'
+import WaterQualityChart2 from '@/components/Charts/WaterQualityChart2.vue'
+import WaterQualityChart3 from '@/components/Charts/WaterQualityChart3.vue'
+import WaterQualityChart4 from '@/components/Charts/WaterQualityChart4.vue'
 
 // 组合式函数
 const router = useRouter()
@@ -50,10 +59,10 @@ let resizeObserver: ResizeObserver | null = null
 
 // 子页面按钮配置
 const subPageButtons = [
-  { id: 'home', text: '城市总览' },
-  { id: 'livelihood-resources', text: '民生资源' },
-  { id: 'traffic-resources', text: '水陆交通' },
-  { id: 'water-resources', text: '长江流域监测预警' }
+  { id: 'home', text: '城市综合态势' },
+  { id: 'livelihood-resources', text: '民生资源一张图' },
+  { id: 'traffic-resources', text: '交通水系一体化' },
+  { id: 'water-resources', text: '长江监测预警一体化' }
 ]
 
 // 当前激活的子页面
@@ -63,7 +72,7 @@ const activeSubPage = ref('water-resources')
 const navigateToSubPage = async (subPageName: string) => {
   activeSubPage.value = subPageName
   if (subPageName === 'home') {
-    // 直接跳转到城市总览并刷新
+    // 直接跳转到城市综合态势并刷新
     window.location.href = '/dashboard/view/home'
   } else {
     router.push(`/dashboard/view/home/${subPageName}`)
@@ -103,27 +112,54 @@ const loadHydrologyLayer = async () => {
       features: features
     })
     
-    // 创建水文监测点样式 - 使用蓝色主题
+    // 创建水文监测点样式函数 - 统一蓝色显示
     const css = getComputedStyle(document.documentElement)
-    const hydrologyFillColor = '#4fc3f7' // 蓝色填充
-    const hydrologyStrokeColor = '#0288d1' // 深蓝色描边
+    const hydrologyFillColor = '#1890ff' // 统一蓝色填充
+    const hydrologyStrokeColor = '#0050b3' // 统一深蓝色描边
     
-    const hydrologyStyle = new ol.style.Style({
-      image: new ol.style.Circle({
-        radius: 6, // 减小半径
-        fill: new ol.style.Fill({
-          color: hydrologyFillColor
+    // 特定监测点的名称配置（保持名称显示，但颜色统一）
+    const stationNames = {
+      '湖北省武汉市东西湖区吴家山': '汉口(吴家山)',
+      '湖北省新洲县阳逻镇武湖泵站': '阳逻',
+      '湖北省武汉市南望山': '东湖',
+      '湖北省武昌县金口镇金水闸': '金口'
+    }
+    
+    const hydrologyStyleFunction = (feature: any) => {
+      const address = feature.get('地址')
+      const stationName = feature.get('测站名')
+      const isSpecialStation = !!stationNames[address as keyof typeof stationNames]
+      
+      return new ol.style.Style({
+        image: new ol.style.Circle({
+          radius: isSpecialStation ? 12 : 6, // 特殊监测点半径更大
+          fill: new ol.style.Fill({
+            color: hydrologyFillColor // 统一蓝色填充
+          }),
+          stroke: new ol.style.Stroke({
+            color: hydrologyStrokeColor, // 统一深蓝色描边
+            width: isSpecialStation ? 3 : 2 // 特殊监测点描边更粗
+          })
         }),
-        stroke: new ol.style.Stroke({
-          color: hydrologyStrokeColor,
-          width: 2 // 减小描边宽度
-        })
+        text: isSpecialStation ? new ol.style.Text({
+          text: stationName,
+          font: 'bold 12px Arial',
+          fill: new ol.style.Fill({
+            color: '#000000'
+          }),
+          stroke: new ol.style.Stroke({
+            color: '#ffffff',
+            width: 2
+          }),
+          offsetY: -20,
+          textAlign: 'center'
+        }) : undefined
       })
-    })
+    }
     
     const hydrologyLayer = new ol.layer.Vector({
       source: vectorSource,
-      style: hydrologyStyle,
+      style: hydrologyStyleFunction,
       visible: true,
       zIndex: 100
     })
@@ -279,7 +315,7 @@ const loadYangtzeLineLayer = async () => {
 onMounted(async () => {
   // 确保外部库已加载
   if (window.ol && window.ol.supermap) {
-    await initMap(8, ['武汉_市级', '武汉_县级']) // 长江流域监测预警显示武汉_市级、武汉_县级
+    await initMap(8, ['武汉_市级', '武汉_县级']) // 长江监测预警一体化显示武汉_市级、武汉_县级
     // 加载长江数据图层
     await loadYangtzeSurfaceLayer()
     await loadYangtzeLineLayer()

@@ -98,12 +98,12 @@ const isLayerVisible = (displayName: string) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 12px;
   width: auto;
 }
 
 .legend-title {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text);
   margin-right: 8px;
@@ -112,7 +112,7 @@ const isLayerVisible = (displayName: string) => {
 .legend-items {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
 }
 
 .legend-item {
@@ -164,16 +164,17 @@ const isLayerVisible = (displayName: string) => {
 }
 
 .legend-symbol.hydrology-point {
-  width: 12px;
-  height: 12px;
+  width: 18px;
+  height: 18px;
   background: v-bind('layerColors.水文监测点.fill');
   border: 3px solid v-bind('layerColors.水文监测点.stroke');
   border-radius: 50%;
 }
 
 
+
 .legend-label {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text);
   white-space: nowrap;
 }
@@ -198,17 +199,22 @@ const isLayerVisible = (displayName: string) => {
   }
   
   .legend-items {
-    gap: 16px;
+    gap: 10px;
   }
   
   .legend-symbol {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
+  }
+  
+  .legend-symbol.hydrology-point {
+    width: 16px;
+    height: 16px;
   }
   
   
   .legend-label {
-    font-size: 10px;
+    font-size: 12px;
   }
 }
 </style>

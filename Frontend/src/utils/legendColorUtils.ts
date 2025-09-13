@@ -54,7 +54,7 @@ export const getLegendColors = () => {
 
 /**
  * 获取长江流域相关图层的颜色
- * 专门为长江流域监测预警页面提供颜色配置
+ * 专门为长江监测预警一体化页面提供颜色配置
  */
 export const getYangtzeColors = () => {
   return {

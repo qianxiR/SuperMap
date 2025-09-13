@@ -267,7 +267,7 @@ const useMapStore = defineStore('map', () => {
             // 根据图层名称设置不同的线要素样式
             let lineWidth = 2
             
-            // 水陆交通使用更粗的线条
+            // 交通水系一体化使用更粗的线条
             if (['公路', '铁路'].includes(layerName)) {
               lineWidth = 3
             }

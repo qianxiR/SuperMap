@@ -1,7 +1,7 @@
 <template>
   <div class="livelihood-summary-chart">
     <div class="chart-header">
-      <h3>民生资源总览</h3>
+      <h3>民生资源一张图总览</h3>
     </div>
     <div 
       ref="chartContainer" 
@@ -17,7 +17,7 @@ import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
 import { useThemeStore } from '@/stores/themeStore'
 
-// 民生资源总览数据（按数值从大到小排序）
+// 城市民生一张图总览数据（按数值从大到小排序）
 const livelihoodData = [
   { name: '居民点', value: 1507, color: '#001529' },
   { name: '学校', value: 441, color: '#002766' },
