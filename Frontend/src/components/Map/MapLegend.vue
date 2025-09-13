@@ -34,10 +34,14 @@
 import { computed } from 'vue'
 import { useMapStore } from '@/stores/mapStore'
 import { uselayermanager } from '@/composables/useLayerManager'
+import { getLegendColors } from '@/utils/legendColorUtils'
 
 // 图例组件，显示地图上各种要素的标识
 const mapStore = useMapStore()
 const { togglelayerVisibility } = uselayermanager()
+
+// 获取图层颜色配置
+const layerColors = computed(() => getLegendColors())
 
 // 图层名称映射
 const layerNameMap: Record<string, string> = {
@@ -143,20 +147,20 @@ const isLayerVisible = (displayName: string) => {
 .legend-symbol.triangle {
   width: 16px;
   height: 16px;
-  background: #e3f2fd;
-  border: 2px solid #1976d2;
+  background: v-bind('layerColors.医院.fill');
+  border: 2px solid v-bind('layerColors.医院.stroke');
   clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
 }
 
 .legend-symbol.square {
-  background: #bbdefb;
-  border-color: #1565c0;
+  background: v-bind('layerColors.学校.fill');
+  border-color: v-bind('layerColors.学校.stroke');
   transform: rotate(45deg);
 }
 
 .legend-symbol.diamond {
-  background: #90caf9;
-  border-color: #2196f3;
+  background: v-bind('layerColors.居民地地名点.fill');
+  border-color: v-bind('layerColors.居民地地名点.stroke');
   transform: rotate(45deg);
 }
 
@@ -197,8 +201,8 @@ const isLayerVisible = (displayName: string) => {
   .legend-symbol.triangle {
     width: 14px;
     height: 14px;
-    background: #e3f2fd;
-    border: 2px solid #1976d2;
+    background: v-bind('layerColors.医院.fill');
+    border: 2px solid v-bind('layerColors.医院.stroke');
     clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
   }
   

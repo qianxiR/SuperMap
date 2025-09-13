@@ -42,10 +42,14 @@
 import { computed } from 'vue'
 import { useMapStore } from '@/stores/mapStore'
 import { uselayermanager } from '@/composables/useLayerManager'
+import { getLegendColors } from '@/utils/legendColorUtils'
 
 // 交通图例组件，显示交通设施要素的标识
 const mapStore = useMapStore()
 const { togglelayerVisibility } = uselayermanager()
+
+// 获取图层颜色配置
+const layerColors = computed(() => getLegendColors())
 
 // 图层名称映射
 const layerNameMap: Record<string, string> = {
@@ -152,7 +156,7 @@ const isLayerVisible = (displayName: string) => {
 .legend-symbol.road {
   width: 20px;
   height: 4px;
-  background: #69c0ff;
+  background: v-bind('layerColors.公路.stroke');
   border: none;
   border-radius: 2px;
 }
@@ -160,7 +164,7 @@ const isLayerVisible = (displayName: string) => {
 .legend-symbol.railway {
   width: 20px;
   height: 4px;
-  background: #91d5ff;
+  background: v-bind('layerColors.铁路.stroke');
   border: none;
   border-radius: 2px;
   position: relative;
@@ -180,15 +184,15 @@ const isLayerVisible = (displayName: string) => {
 .legend-symbol.water-area {
   width: 16px;
   height: 12px;
-  background: rgba(0, 50, 115, 0.3);
-  border: 2px solid #003a8c;
+  background: v-bind('layerColors.水系面.fill');
+  border: 2px solid v-bind('layerColors.水系面.stroke');
   border-radius: 2px;
 }
 
 .legend-symbol.water-line {
   width: 20px;
   height: 2px;
-  background: #002766;
+  background: v-bind('layerColors.水系线.stroke');
   border: none;
   border-radius: 1px;
 }

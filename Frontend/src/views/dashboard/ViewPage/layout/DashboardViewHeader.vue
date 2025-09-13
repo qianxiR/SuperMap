@@ -6,7 +6,7 @@
         alt="Logo" 
         class="header-logo" 
       />
-      <div class="screen-title">基于EDA-Agent的多模态实时态势感知地理空间智能可视化平台</div>
+      <div class="screen-title">基于EDA-Agent的地理空间协同感知智能多源信息综合可视化平台</div>
     </div>
     
     <div class="header-right">

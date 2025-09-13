@@ -34,10 +34,14 @@
 import { computed } from 'vue'
 import { useMapStore } from '@/stores/mapStore'
 import { uselayermanager } from '@/composables/useLayerManager'
+import { getYangtzeColors } from '@/utils/legendColorUtils'
 
 // 水资源图例组件，显示水系要素的标识
 const mapStore = useMapStore()
 const { togglelayerVisibility } = uselayermanager()
+
+// 获取长江流域图层颜色配置
+const layerColors = computed(() => getYangtzeColors())
 
 // 图层名称映射
 const layerNameMap: Record<string, string> = {
@@ -146,15 +150,15 @@ const isLayerVisible = (displayName: string) => {
 .legend-symbol.yangtze-surface {
   width: 16px;
   height: 12px;
-  background: rgba(0, 50, 115, 0.3);
-  border: 2px solid #003a8c;
+  background: v-bind('layerColors.长江面.fill');
+  border: 2px solid v-bind('layerColors.长江面.stroke');
   border-radius: 2px;
 }
 
 .legend-symbol.yangtze-line {
   width: 20px;
   height: 3px;
-  background: #002766;
+  background: v-bind('layerColors.长江线.stroke');
   border: none;
   border-radius: 1px;
 }
@@ -162,8 +166,8 @@ const isLayerVisible = (displayName: string) => {
 .legend-symbol.hydrology-point {
   width: 12px;
   height: 12px;
-  background: #4fc3f7;
-  border: 3px solid #0288d1;
+  background: v-bind('layerColors.水文监测点.fill');
+  border: 3px solid v-bind('layerColors.水文监测点.stroke');
   border-radius: 50%;
 }
 

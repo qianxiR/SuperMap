@@ -110,13 +110,13 @@ const loadHydrologyLayer = async () => {
     
     const hydrologyStyle = new ol.style.Style({
       image: new ol.style.Circle({
-        radius: 12, // 增大半径
+        radius: 6, // 减小半径
         fill: new ol.style.Fill({
           color: hydrologyFillColor
         }),
         stroke: new ol.style.Stroke({
           color: hydrologyStrokeColor,
-          width: 3 // 增大描边宽度
+          width: 2 // 减小描边宽度
         })
       })
     })
