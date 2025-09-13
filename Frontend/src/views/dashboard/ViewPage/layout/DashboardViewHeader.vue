@@ -125,7 +125,7 @@ import { useGlobalModalStore } from '@/stores/modalStore'
 import { useMapStore } from '@/stores/mapStore'
 import { safeAddEventListener } from '@/utils/eventUtils'
 import { toggleTheme as toggleThemeUtil, dispatchThemeChangeEvent } from '@/utils/themeUtils'
-import { uselayermanager } from '@/composables/uselayermanager'
+import { uselayermanager } from '@/composables/useLayermanager'
 
 // 主题管理
 const themeStore = useThemeStore()

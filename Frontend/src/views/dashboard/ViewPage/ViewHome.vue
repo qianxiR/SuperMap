@@ -27,8 +27,8 @@
         <DistanceMeasurePanel />
         <!-- 面积量算面板 -->
         <AreaMeasurePanel />
-        <!-- 区域人口数量图表 -->
-        <RegionPopulationChart />
+        <!-- 区域面积分布图表 -->
+        <RegionAreaChart />
       </div>
     </div>
 
@@ -58,7 +58,7 @@ import LayerAssistant from '@/components/Map/LayerAssistant.vue'
 import OverviewMap from '@/components/Map/OverviewMap.vue'
 import DistanceMeasurePanel from '@/components/Map/DistanceMeasurePanel.vue'
 import AreaMeasurePanel from '@/components/Map/AreaMeasurePanel.vue'
-import RegionPopulationChart from '@/components/Charts/RegionPopulationChart.vue'
+import RegionAreaChart from '@/components/Charts/RegionAreaChart.vue'
 import ButtonGroup from '@/components/UI/ButtonGroup.vue'
 
 // 组合式函数
@@ -78,9 +78,9 @@ const layerAssistant = ref()
 // 子页面按钮配置
 const subPageButtons = [
   { id: 'home', text: '城市概况' },
+  { id: 'subpage2', text: '民生管理' },
   { id: 'subpage1', text: '交通总览' },
-  { id: 'subpage2', text: '民生设施' },
-  { id: 'subpage3', text: '水资源' }
+  { id: 'subpage3', text: '水资源监测' }
 ]
 
 // 当前激活的子页面
@@ -118,7 +118,7 @@ watch(() => route.path, (newPath) => {
 onMounted(() => {
   // 确保外部库已加载
   if (window.ol && window.ol.supermap) {
-    initMap(8) // 首页使用缩放等级8，显示城市全貌
+    initMap(8) // 城市概况使用缩放等级8，显示城市全貌
   } else {
     // 如果库还未加载，等待一下再初始化
     setTimeout(() => initMap(8), 500)

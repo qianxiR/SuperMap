@@ -17,6 +17,8 @@
         <CoordinateDisplay />
         <ScaleBar />
         <OverviewMap />
+        <!-- 区域人口数量图表 -->
+        <RegionPopulationChart />
       </div>
     </div>
   </div>
@@ -32,6 +34,7 @@ import FeaturePopup from '@/components/Map/FeaturePopup.vue'
 import CoordinateDisplay from '@/components/Map/CoordinateDisplay.vue'
 import ScaleBar from '@/components/Map/ScaleBar.vue'
 import OverviewMap from '@/components/Map/OverviewMap.vue'
+import RegionPopulationChart from '@/components/Charts/RegionPopulationChart.vue'
 import ButtonGroup from '@/components/UI/ButtonGroup.vue'
 
 // 组合式函数
@@ -45,10 +48,10 @@ let resizeObserver: ResizeObserver | null = null
 
 // 子页面按钮配置
 const subPageButtons = [
-  { id: 'home', text: '首页' },
+  { id: 'home', text: '城市概况' },
+  { id: 'subpage2', text: '民生管理' },
   { id: 'subpage1', text: '交通总览' },
-  { id: 'subpage2', text: '民生设施' },
-  { id: 'subpage3', text: '水资源' }
+  { id: 'subpage3', text: '水资源监测' }
 ]
 
 // 当前激活的子页面
@@ -58,7 +61,7 @@ const activeSubPage = ref('subpage2')
 const navigateToSubPage = async (subPageName: string) => {
   activeSubPage.value = subPageName
   if (subPageName === 'home') {
-    // 直接跳转到首页并刷新
+    // 直接跳转到城市概况并刷新
     window.location.href = '/dashboard/view/home'
   } else {
     router.push(`/dashboard/view/home/${subPageName}`)
@@ -82,7 +85,7 @@ watch(() => route.path, (newPath) => {
 onMounted(() => {
   // 确保外部库已加载
   if (window.ol && window.ol.supermap) {
-    initMap(8, ['武汉_市级', '武汉_县级', '学校', '医院', '居民地地名点']) // 民生设施显示武汉_市级、武汉_县级、学校、医院、居民点
+    initMap(8, ['武汉_市级', '武汉_县级', '学校', '医院', '居民地地名点']) // 民生管理显示武汉_市级、武汉_县级、学校、医院、居民点
   } else {
     // 如果库还未加载，等待一下再初始化
     setTimeout(() => initMap(8, ['武汉_市级', '武汉_县级', '学校', '医院', '居民地地名点']), 500)

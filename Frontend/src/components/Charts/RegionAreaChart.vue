@@ -1,7 +1,7 @@
 <template>
-  <div class="region-population-chart">
+  <div class="region-area-chart">
     <div class="chart-header">
-      <h3>武汉区域人口分布</h3>
+      <h3>武汉区域面积分布</h3>
     </div>
     <div 
       ref="chartContainer" 
@@ -17,21 +17,21 @@ import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import * as echarts from 'echarts'
 import { useThemeStore } from '@/stores/themeStore'
 
-// 区域人口数据（按人口数量排序）
-const populationData = [
-  { name: '江岸区', value: 965260 },
-  { name: '江汉区', value: 647932 },
-  { name: '硚口区', value: 666661 },
-  { name: '汉阳区', value: 837263 },
-  { name: '武昌区', value: 1092750 },
-  { name: '青山区', value: 494772 },
-  { name: '洪山区', value: 2785118 },
-  { name: '东西湖区', value: 845782 },
-  { name: '蔡甸区', value: 554383 },
-  { name: '江夏区', value: 974715 },
-  { name: '黄陂区', value: 1151644 },
-  { name: '新洲区', value: 860377 },
-  { name: '汉南区', value: 626441 }
+// 区域面积数据（按面积大小排序）
+const areaData = [
+  { name: '黄陂区', value: 2256.7 },
+  { name: '江夏区', value: 2018.31 },
+  { name: '新洲区', value: 1463.43 },
+  { name: '蔡甸区', value: 1093.17 },
+  { name: '洪山区', value: 573.28 },
+  { name: '东西湖区', value: 495.34 },
+  { name: '汉南区', value: 287.05 },
+  { name: '汉阳区', value: 111.54 },
+  { name: '江岸区', value: 80.28 },
+  { name: '武昌区', value: 64.58 },
+  { name: '青山区', value: 57.12 },
+  { name: '硚口区', value: 40.06 },
+  { name: '江汉区', value: 28.29 }
 ].sort((a, b) => b.value - a.value)
 
 const chartContainer = ref<HTMLElement>()
@@ -50,7 +50,7 @@ const pieOption = {
     trigger: 'item',
     formatter: function(params: any) {
       const percent = params.percent
-      return `${params.name}<br/>${(params.value / 10000).toFixed(1)}万人 (${percent}%)`
+      return `${params.name}<br/>${params.value.toFixed(1)}平方公里 (${percent}%)`
     },
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
     borderColor: '#1890ff',
@@ -74,13 +74,13 @@ const pieOption = {
   color: ['#001529', '#002766', '#003a8c', '#0050b3', '#096dd9', '#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#1890ff', '#40a9ff'],
   series: [
     {
-      id: 'population',
+      id: 'area',
       type: 'pie',
       radius: ['30%', '70%'],
       center: ['40%', '50%'],
       animationDurationUpdate: 1000,
       universalTransition: true,
-      data: populationData,
+      data: areaData,
       itemStyle: {
         borderRadius: 4,
         borderColor: '#fff',
@@ -127,7 +127,7 @@ const barOption = {
     },
     formatter: function(params: any) {
       const data = params[0]
-      return `${data.name}: ${(data.value / 10000).toFixed(1)}万人`
+      return `${data.name}: ${data.value.toFixed(1)}平方公里`
     },
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
     borderColor: '#1890ff',
@@ -150,7 +150,7 @@ const barOption = {
       color: '#0078D4',
       fontSize: 11,
       formatter: function(value: number) {
-        return (value / 10000).toFixed(0) + '万'
+        return value.toFixed(0) + 'km²'
       }
     },
     axisLine: {
@@ -168,7 +168,7 @@ const barOption = {
   },
   yAxis: {
     type: 'category',
-    data: populationData.map(item => item.name).reverse(),
+    data: areaData.map(item => item.name).reverse(),
     axisLabel: {
       color: '#0078D4',
       fontSize: 10,
@@ -184,8 +184,8 @@ const barOption = {
   animationDurationUpdate: 1000,
   series: {
     type: 'bar',
-    id: 'population',
-    data: populationData.map((item, index) => ({
+    id: 'area',
+    data: areaData.map((item, index) => ({
       value: item.value,
       itemStyle: {
         color: ['#001529', '#002766', '#003a8c', '#0050b3', '#096dd9', '#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#1890ff', '#40a9ff'][index]
@@ -273,10 +273,10 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.region-population-chart {
+.region-area-chart {
   position: absolute;
-  top: 40px;
-  left: 20px;
+  top: 50%;
+  left: 70px;
   width: 400px;
   height: calc(50vh - 50px);
   background: transparent;
@@ -303,7 +303,6 @@ onUnmounted(() => {
   color: #0078D4;
 }
 
-
 .chart-container {
   width: 100%;
   height: calc(100% - 50px);
@@ -313,11 +312,11 @@ onUnmounted(() => {
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .region-population-chart {
+  .region-area-chart {
     width: 300px;
     height: calc(50vh - 40px);
-    top: 30px;
-    left: 15px;
+    top: 50%;
+    left: 60px;
   }
   
   .chart-container {

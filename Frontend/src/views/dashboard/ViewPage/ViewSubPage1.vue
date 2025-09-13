@@ -45,10 +45,10 @@ let resizeObserver: ResizeObserver | null = null
 
 // 子页面按钮配置
 const subPageButtons = [
-  { id: 'home', text: '首页' },
+  { id: 'home', text: '城市概况' },
+  { id: 'subpage2', text: '民生管理' },
   { id: 'subpage1', text: '交通总览' },
-  { id: 'subpage2', text: '民生设施' },
-  { id: 'subpage3', text: '水资源' }
+  { id: 'subpage3', text: '水资源监测' }
 ]
 
 // 当前激活的子页面
@@ -58,7 +58,7 @@ const activeSubPage = ref('subpage1')
 const navigateToSubPage = async (subPageName: string) => {
   activeSubPage.value = subPageName
   if (subPageName === 'home') {
-    // 直接跳转到首页并刷新
+    // 直接跳转到城市概况并刷新
     window.location.href = '/dashboard/view/home'
   } else {
     router.push(`/dashboard/view/home/${subPageName}`)
