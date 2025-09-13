@@ -353,56 +353,47 @@ const emit = defineEmits<{
 <style scoped>
 .view-layer-manager {
   position: absolute;
-  top: 80px;  /* 增加 top 值，避免覆盖 header */
+  top: 80px;
   right: 16px;
   z-index: 1000;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 8px;
-  max-height: calc(100vh - 160px);  /* 相应调整最大高度 */
+  max-height: calc(100vh - 160px);
 }
 
-
 .layer-panel {
-  background: transparent;
+  background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow: var(--glow);
   width: 280px;
   max-height: calc(100vh - 200px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: slideIn 0.2s ease-out;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  animation: none !important;
+  padding: 16px;
 }
 
 .panel-header {
-  padding: 12px 14px;
+  padding: 0 0 12px 0;
   border-bottom: 1px solid var(--border);
   background: transparent;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
+  margin-bottom: 12px;
 }
 
 .panel-title {
-  font-size: 15px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text);
   margin: 0;
+  letter-spacing: 0.5px;
   transition: none !important;
   animation: none !important;
 }
@@ -420,10 +411,10 @@ const emit = defineEmits<{
 .layer-list {
   flex: 1;
   overflow-y: auto;
-  padding: 6px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   max-height: calc(100vh - 200px);
   min-height: 200px;
 }
@@ -431,45 +422,46 @@ const emit = defineEmits<{
 .layer-group {
   display: flex;
   flex-direction: column;
-  gap: 1px;
-  margin-bottom: 6px;
+  gap: 2px;
+  margin-bottom: 4px;
 }
 
 .layer-items-container {
   max-height: 200px;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-right: 3px;
+  padding-right: 4px;
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
 
 .group-header {
-  padding: 8px 12px;
-  background: transparent;
+  padding: 4px 8px;
+  background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   cursor: pointer;
   user-select: none;
-  transition: none !important;
-  animation: none !important;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 40px;
+  min-height: 20px;
   margin-bottom: 4px;
-  box-shadow: none;
+  box-shadow: var(--glow);
 }
 
 .group-header:hover {
   background: var(--accent);
   color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .group-header:active {
-  background: var(--accent);
-  color: white;
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
 .group-toggle {
@@ -483,8 +475,7 @@ const emit = defineEmits<{
   align-items: center;
   justify-content: center;
   border-radius: 4px;
-  transition: none !important;
-  animation: none !important;
+  transition: all 0.2s ease;
   flex-shrink: 0;
 }
 
@@ -497,20 +488,22 @@ const emit = defineEmits<{
 }
 
 .group-title {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 500;
   color: inherit;
   display: flex;
   align-items: center;
   gap: 4px;
   flex: 1;
   text-align: left;
+  line-height: 1.4;
+  letter-spacing: 0.2px;
   transition: none !important;
   animation: none !important;
 }
 
 .group-count {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--accent);
   background: var(--accent-bg, rgba(var(--accent-rgb), 0.1));
@@ -540,9 +533,6 @@ const emit = defineEmits<{
   background: rgba(255, 255, 255, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.4);
 }
-
-
-
 
 .control-btn {
   font-size: 12px;
@@ -601,11 +591,10 @@ const emit = defineEmits<{
   color: var(--sub);
 }
 
-
 /* 响应式设计 */
 @media (max-width: 768px) {
   .view-layer-manager {
-    top: 60px;  /* 移动端也要避免覆盖 header */
+    top: 60px;
     right: 12px;
   }
   
@@ -620,21 +609,25 @@ const emit = defineEmits<{
 }
 
 /* 滚动条样式 */
-.layer-list::-webkit-scrollbar {
-  width: 4px;
+.layer-list::-webkit-scrollbar,
+.layer-items-container::-webkit-scrollbar {
+  width: 3px;
 }
 
-.layer-list::-webkit-scrollbar-track {
+.layer-list::-webkit-scrollbar-track,
+.layer-items-container::-webkit-scrollbar-track {
   background: var(--scrollbar-track, rgba(200, 200, 200, 0.1));
-  border-radius: 2px;
+  border-radius: 1.5px;
 }
 
-.layer-list::-webkit-scrollbar-thumb {
+.layer-list::-webkit-scrollbar-thumb,
+.layer-items-container::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb, rgba(150, 150, 150, 0.3));
-  border-radius: 2px;
+  border-radius: 1.5px;
 }
 
-.layer-list::-webkit-scrollbar-thumb:hover {
+.layer-list::-webkit-scrollbar-thumb:hover,
+.layer-items-container::-webkit-scrollbar-thumb:hover {
   background: var(--scrollbar-thumb-hover, rgba(150, 150, 150, 0.5));
 }
 </style>

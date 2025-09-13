@@ -83,50 +83,34 @@ const router = createRouter({
             title: '地图视图'
           },
           children: [
-            // 默认子路由 - 重定向到图层管理
+            // 交通资源页面
             {
-              path: '',
-              name: 'view-home-default',
-              redirect: '/dashboard/view/home/layermanage'
-            },
-            // 图层管理子路由
-            {
-              path: 'layermanage',
-              name: 'view-layer-manage',
-              component: () => import('@/views/dashboard/ViewPage/ViewLayerManager.vue'),
-              meta: {
-                requiresAuth: true,
-                title: '图层管理'
-              }
-            },
-            // 子页面1
-            {
-              path: 'subpage1',
-              name: 'view-subpage1',
+              path: 'traffic-resources',
+              name: 'view-traffic-resources',
               component: () => import('@/views/dashboard/ViewPage/ViewSubPage1.vue'),
               meta: {
                 requiresAuth: true,
-                title: '子页面1'
+                title: '交通资源'
               }
             },
-            // 子页面2
+            // 民生资源页面
             {
-              path: 'subpage2',
-              name: 'view-subpage2',
+              path: 'livelihood-resources',
+              name: 'view-livelihood-resources',
               component: () => import('@/views/dashboard/ViewPage/ViewSubPage2.vue'),
               meta: {
                 requiresAuth: true,
-                title: '子页面2'
+                title: '民生资源'
               }
             },
-            // 子页面3
+            // 水文资源页面
             {
-              path: 'subpage3',
-              name: 'view-subpage3',
+              path: 'water-resources',
+              name: 'view-water-resources',
               component: () => import('@/views/dashboard/ViewPage/ViewSubPage3.vue'),
               meta: {
                 requiresAuth: true,
-                title: '子页面3'
+                title: '水文资源'
               }
             }
           ]

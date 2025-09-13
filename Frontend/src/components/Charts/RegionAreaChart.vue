@@ -104,7 +104,7 @@ const pieOption = {
       label: {
         show: true,
         formatter: function(params: any) {
-          return params.percent > 5 ? params.name : ''
+          return params.percent > 5 ? `${params.value.toFixed(1)}km²` : ''
         },
         fontSize: 10,
         color: '#0078D4'

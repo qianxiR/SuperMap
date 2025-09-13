@@ -266,7 +266,7 @@ onUnmounted(() => {
 <style scoped>
 .water-line-chart {
   position: absolute;
-  top: 50px;
+  top: 10px;
   left: 20px;
   width: 380px;
   height: calc(50vh - 50px);

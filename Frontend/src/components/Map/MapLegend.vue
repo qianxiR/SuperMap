@@ -143,20 +143,20 @@ const isLayerVisible = (displayName: string) => {
 .legend-symbol.triangle {
   width: 16px;
   height: 16px;
-  background: #ffb3b3;
-  border: 2px solid #ff6666;
+  background: #e3f2fd;
+  border: 2px solid #1976d2;
   clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
 }
 
 .legend-symbol.square {
-  background: #b3ffb3;
-  border-color: #66cc66;
+  background: #bbdefb;
+  border-color: #1565c0;
   transform: rotate(45deg);
 }
 
 .legend-symbol.diamond {
-  background: #ffb3e6;
-  border-color: #ff66cc;
+  background: #90caf9;
+  border-color: #2196f3;
   transform: rotate(45deg);
 }
 
@@ -197,8 +197,8 @@ const isLayerVisible = (displayName: string) => {
   .legend-symbol.triangle {
     width: 14px;
     height: 14px;
-    background: #ffb3b3;
-    border: 2px solid #ff6666;
+    background: #e3f2fd;
+    border: 2px solid #1976d2;
     clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
   }
   

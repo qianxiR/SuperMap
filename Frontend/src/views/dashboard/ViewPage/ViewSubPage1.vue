@@ -54,13 +54,13 @@ let resizeObserver: ResizeObserver | null = null
 // 子页面按钮配置
 const subPageButtons = [
   { id: 'home', text: '城市总览' },
-  { id: 'subpage2', text: '民生资源' },
-  { id: 'subpage1', text: '交通资源' },
-  { id: 'subpage3', text: '水文资源' }
+  { id: 'livelihood-resources', text: '民生资源' },
+  { id: 'traffic-resources', text: '交通资源' },
+  { id: 'water-resources', text: '水文资源' }
 ]
 
 // 当前激活的子页面
-const activeSubPage = ref('subpage1')
+const activeSubPage = ref('traffic-resources')
 
 // 导航到子页面
 const navigateToSubPage = async (subPageName: string) => {
@@ -77,12 +77,12 @@ const navigateToSubPage = async (subPageName: string) => {
 watch(() => route.path, (newPath) => {
   if (newPath === '/dashboard/view' || newPath === '/dashboard/view/home' || newPath.endsWith('/dashboard/view/home/')) {
     activeSubPage.value = 'home'
-  } else if (newPath.includes('/subpage1')) {
-    activeSubPage.value = 'subpage1'
-  } else if (newPath.includes('/subpage2')) {
-    activeSubPage.value = 'subpage2'
-  } else if (newPath.includes('/subpage3')) {
-    activeSubPage.value = 'subpage3'
+  } else if (newPath.includes('/traffic-resources')) {
+    activeSubPage.value = 'traffic-resources'
+  } else if (newPath.includes('/livelihood-resources')) {
+    activeSubPage.value = 'livelihood-resources'
+  } else if (newPath.includes('/water-resources')) {
+    activeSubPage.value = 'water-resources'
   }
 }, { immediate: true })
 

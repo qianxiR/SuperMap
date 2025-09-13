@@ -218,19 +218,19 @@ const useMapStore = defineStore('map', () => {
                 imageType = 'diamond' // 居民地使用菱形
               }
               
-              // 为不同民生设施设置特定颜色
+              // 为不同民生设施设置蓝色系渐变颜色
               let fillColor = fillVar
               let strokeColor = strokeVar
               
               if (layerName === '医院') {
-                fillColor = '#ffb3b3' // 浅红色
-                strokeColor = '#ff6666' // 红色描边
+                fillColor = '#e3f2fd' // 浅蓝色填充
+                strokeColor = '#1976d2' // 中蓝色描边
               } else if (layerName === '学校') {
-                fillColor = '#b3ffb3' // 浅绿色
-                strokeColor = '#66cc66' // 绿色描边
+                fillColor = '#bbdefb' // 中蓝色填充
+                strokeColor = '#1565c0' // 深蓝色描边
               } else if (layerName === '居民地地名点') {
-                fillColor = '#ffb3e6' // 浅粉色
-                strokeColor = '#ff66cc' // 粉色描边
+                fillColor = '#90caf9' // 亮蓝色填充
+                strokeColor = '#2196f3' // 浅蓝色描边
               }
               
               return {

@@ -461,7 +461,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  background: var(--surface);
+  background: white;
   border-bottom: 1px solid var(--border);
   min-width: 240px;
   /* 禁用过渡动画 */

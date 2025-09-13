@@ -13,8 +13,6 @@
       
       <div class="map-container">
         <div ref="mapContainer" class="map-view"></div>
-        <!-- 图层辅助控件（左上角） -->
-        <LayerAssistant ref="layerAssistant" />
         <!-- 要素弹窗 -->
         <FeaturePopup />
         <!-- 坐标显示（左下角） -->
@@ -27,8 +25,11 @@
         <DistanceMeasurePanel />
         <!-- 面积量算面板 -->
         <AreaMeasurePanel />
-        <!-- 区域面积分布图表 -->
-        <RegionAreaChart />
+        <!-- 民生资源相关图表 -->
+        <RegionPopulationChart />
+        <EducationLevelChart />
+        <GenderRatioChart />
+        <AgeDistributionChart />
       </div>
     </div>
 
@@ -54,11 +55,13 @@ import AIManagement from '@/views/dashboard/management-analysis/management/AIMan
 import FeaturePopup from '@/components/Map/FeaturePopup.vue'
 import CoordinateDisplay from '@/components/Map/CoordinateDisplay.vue'
 import ScaleBar from '@/components/Map/ScaleBar.vue'
-import LayerAssistant from '@/components/Map/LayerAssistant.vue'
 import OverviewMap from '@/components/Map/OverviewMap.vue'
 import DistanceMeasurePanel from '@/components/Map/DistanceMeasurePanel.vue'
 import AreaMeasurePanel from '@/components/Map/AreaMeasurePanel.vue'
-import RegionAreaChart from '@/components/Charts/RegionAreaChart.vue'
+import RegionPopulationChart from '@/components/Charts/RegionPopulationChart.vue'
+import EducationLevelChart from '@/components/Charts/EducationLevelChart.vue'
+import GenderRatioChart from '@/components/Charts/GenderRatioChart.vue'
+import AgeDistributionChart from '@/components/Charts/AgeDistributionChart.vue'
 import ButtonGroup from '@/components/UI/ButtonGroup.vue'
 
 // 组合式函数
@@ -72,15 +75,13 @@ const pageStateStore = usePageStateStore()
 let resizeObserver: ResizeObserver | null = null
 let eventCleanup: (() => void) | null = null
 
-// 图层辅助控件引用
-const layerAssistant = ref()
 
 // 子页面按钮配置
 const subPageButtons = [
   { id: 'home', text: '城市总览' },
-  { id: 'subpage2', text: '民生资源' },
-  { id: 'subpage1', text: '交通资源' },
-  { id: 'subpage3', text: '水资源监测' }
+  { id: 'livelihood-resources', text: '民生资源' },
+  { id: 'traffic-resources', text: '交通资源' },
+  { id: 'water-resources', text: '水资源监测' }
 ]
 
 // 当前激活的子页面
@@ -105,12 +106,12 @@ const navigateToSubPage = async (subPageName: string) => {
 watch(() => route.path, (newPath) => {
   if (newPath === '/dashboard/view' || newPath === '/dashboard/view/home' || newPath.endsWith('/dashboard/view/home/')) {
     activeSubPage.value = 'home'
-  } else if (newPath.includes('/subpage1')) {
-    activeSubPage.value = 'subpage1'
-  } else if (newPath.includes('/subpage2')) {
-    activeSubPage.value = 'subpage2'
-  } else if (newPath.includes('/subpage3')) {
-    activeSubPage.value = 'subpage3'
+  } else if (newPath.includes('/traffic-resources')) {
+    activeSubPage.value = 'traffic-resources'
+  } else if (newPath.includes('/livelihood-resources')) {
+    activeSubPage.value = 'livelihood-resources'
+  } else if (newPath.includes('/water-resources')) {
+    activeSubPage.value = 'water-resources'
   }
 }, { immediate: true })
 
