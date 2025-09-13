@@ -52,24 +52,26 @@ const pieOption = {
       const percent = params.percent
       return `${params.name}<br/>${(params.value / 10000).toFixed(1)}万人 (${percent}%)`
     },
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
     borderColor: '#1890ff',
-    borderWidth: 1,
+    borderWidth: 2,
     textStyle: {
       color: '#fff',
-      fontSize: 12
+      fontSize: 14,
+      fontWeight: 'bold'
     }
   },
   legend: {
-    orient: 'vertical',
-    right: '5%',
-    top: 'center',
+    orient: 'horizontal',
+    bottom: '5%',
+    left: 'center',
     textStyle: {
-      color: '#0078D4',
-      fontSize: 10
+      color: '#1890ff',
+      fontSize: 12,
+      fontWeight: 'bold'
     },
-    itemWidth: 12,
-    itemHeight: 8
+    itemWidth: 14,
+    itemHeight: 10
   },
   color: ['#001529', '#002766', '#003a8c', '#0050b3', '#096dd9', '#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#1890ff', '#40a9ff'],
   series: [
@@ -77,7 +79,7 @@ const pieOption = {
       id: 'population',
       type: 'pie',
       radius: ['30%', '70%'],
-      center: ['40%', '50%'],
+      center: ['50%', '40%'],
       animationDurationUpdate: 1000,
       universalTransition: true,
       data: populationData,
@@ -96,9 +98,9 @@ const pieOption = {
         },
         label: {
           show: true,
-          fontSize: 12,
+          fontSize: 14,
           fontWeight: 'bold',
-          color: '#0078D4'
+          color: '#1890ff'
         }
       },
       label: {
@@ -106,8 +108,8 @@ const pieOption = {
         formatter: function(params: any) {
           return `${params.percent}%`
         },
-        fontSize: 12,
-        color: '#0078D4',
+        fontSize: 14,
+        color: '#1890ff',
         fontWeight: 'bold'
       },
       labelLine: {
@@ -130,12 +132,13 @@ const barOption = {
       const data = params[0]
       return `${data.name}: ${(data.value / 10000).toFixed(1)}万人`
     },
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
     borderColor: '#1890ff',
-    borderWidth: 1,
+    borderWidth: 2,
     textStyle: {
       color: '#fff',
-      fontSize: 12
+      fontSize: 14,
+      fontWeight: 'bold'
     }
   },
   grid: {
@@ -148,8 +151,9 @@ const barOption = {
   xAxis: {
     type: 'value',
     axisLabel: {
-      color: '#0078D4',
-      fontSize: 11,
+      color: '#1890ff',
+      fontSize: 13,
+      fontWeight: 'bold',
       formatter: function(value: number) {
         return (value / 10000).toFixed(0) + '万'
       }
@@ -171,8 +175,9 @@ const barOption = {
     type: 'category',
     data: populationData.map(item => item.name).reverse(),
     axisLabel: {
-      color: '#0078D4',
-      fontSize: 10,
+      color: '#1890ff',
+      fontSize: 12,
+      fontWeight: 'bold',
       rotate: 0
     },
     axisLine: {
@@ -299,9 +304,10 @@ onUnmounted(() => {
 
 .chart-header h3 {
   margin: 0;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   color: #1890ff;
+  text-shadow: 0 1px 2px rgba(24, 144, 255, 0.3);
 }
 
 

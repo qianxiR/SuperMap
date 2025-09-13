@@ -55,7 +55,7 @@ const sliderPosition = computed(() => {
 const containerWidth = computed(() => {
   if (props.buttons.length === 2) return '200px';
   if (props.buttons.length === 3) return '300px';
-  if (props.buttons.length === 4) return '600px';
+  if (props.buttons.length === 4) return '550px';
   return '300px'; // 默认值
 });
 

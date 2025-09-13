@@ -61,7 +61,7 @@ const subPageButtons = [
   { id: 'home', text: '城市综合态势' },
   { id: 'livelihood-resources', text: '民生资源一张图' },
   { id: 'traffic-resources', text: '交通水系一体化' },
-  { id: 'water-resources', text: '长江监测预警一体化' }
+  { id: 'water-resources', text: '监测预警一体化' }
 ]
 
 // 当前激活的子页面
@@ -95,10 +95,10 @@ watch(() => route.path, (newPath) => {
 onMounted(() => {
   // 确保外部库已加载
   if (window.ol && window.ol.supermap) {
-    initMap(9, ['武汉_市级', '武汉_县级', '公路', '铁路', '水系面', '水系线']) // 交通水系一体化显示武汉_市级、武汉_县级、道路、铁路、水系面、水系线
+    initMap(8, ['武汉_市级', '武汉_县级', '公路', '铁路', '水系面', '水系线']) // 交通水系一体化显示武汉_市级、武汉_县级、道路、铁路、水系面、水系线
   } else {
     // 如果库还未加载，等待一下再初始化
-    setTimeout(() => initMap(9, ['武汉_市级', '武汉_县级', '公路', '铁路', '水系面', '水系线']), 500)
+    setTimeout(() => initMap(8, ['武汉_市级', '武汉_县级', '公路', '铁路', '水系面', '水系线']), 500)
   }
 
   // 设置当前页面为视图页面

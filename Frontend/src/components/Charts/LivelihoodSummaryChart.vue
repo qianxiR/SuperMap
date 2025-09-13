@@ -37,24 +37,26 @@ const pieOption = {
       const percent = params.percent
       return `${params.name}<br/>${params.value}个 (${percent}%)`
     },
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
     borderColor: '#1890ff',
-    borderWidth: 1,
+    borderWidth: 2,
     textStyle: {
       color: '#fff',
-      fontSize: 12
+      fontSize: 14,
+      fontWeight: 'bold'
     }
   },
   legend: {
-    orient: 'vertical',
-    right: '5%',
-    top: 'center',
+    orient: 'horizontal',
+    bottom: '5%',
+    left: 'center',
     textStyle: {
-      color: '#0078D4',
-      fontSize: 10
+      color: '#1890ff',
+      fontSize: 12,
+      fontWeight: 'bold'
     },
-    itemWidth: 12,
-    itemHeight: 8
+    itemWidth: 14,
+    itemHeight: 10
   },
   color: ['#001529', '#002766', '#003a8c'],
   series: [
@@ -62,7 +64,7 @@ const pieOption = {
       id: 'livelihood',
       type: 'pie',
       radius: ['30%', '70%'],
-      center: ['40%', '50%'],
+      center: ['50%', '40%'],
       animationDurationUpdate: 1000,
       universalTransition: true,
       data: livelihoodData,
@@ -91,8 +93,8 @@ const pieOption = {
         formatter: function(params: any) {
           return `${params.percent}%`
         },
-        fontSize: 12,
-        color: '#0078D4',
+        fontSize: 14,
+        color: '#1890ff',
         fontWeight: 'bold'
       },
       labelLine: {
@@ -118,12 +120,13 @@ const barOption = {
     formatter: function(params: any) {
       return `${params[0].name}<br/>${params[0].marker}数量: ${params[0].value}个`
     },
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
     borderColor: '#1890ff',
-    borderWidth: 1,
+    borderWidth: 2,
     textStyle: {
       color: '#fff',
-      fontSize: 12
+      fontSize: 14,
+      fontWeight: 'bold'
     }
   },
   grid: {
@@ -151,7 +154,8 @@ const barOption = {
     type: 'value',
     axisLabel: {
       color: '#0078D4',
-      fontSize: 11,
+      fontSize: 13,
+      fontWeight: 'bold',
       formatter: function(value: number) {
         return value + '个'
       }
@@ -280,9 +284,10 @@ onUnmounted(() => {
 
 .chart-header h3 {
   margin: 0;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   color: #1890ff;
+  text-shadow: 0 1px 2px rgba(24, 144, 255, 0.3);
 }
 
 .chart-container {

@@ -50,32 +50,34 @@ const pieOption = {
       const percent = params.percent
       return `${params.name}<br/>${params.value}家医院 (${percent}%)`
     },
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
     borderColor: '#1890ff',
-    borderWidth: 1,
+    borderWidth: 2,
     textStyle: {
       color: '#fff',
-      fontSize: 12
+      fontSize: 14,
+      fontWeight: 'bold'
     }
   },
   legend: {
-    orient: 'vertical',
-    right: '2%',
-    top: 'center',
+    orient: 'horizontal',
+    bottom: '5%',
+    left: 'center',
     textStyle: {
-      color: '#0078D4',
-      fontSize: 9
+      color: '#1890ff',
+      fontSize: 12,
+      fontWeight: 'bold'
     },
-    itemWidth: 10,
-    itemHeight: 6
+    itemWidth: 14,
+    itemHeight: 10
   },
-  color: ['#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#001529', '#002766', '#003a8c', '#0050b3', '#096dd9', '#1890ff', '#40a9ff'],
+  color: ['#001529', '#002766', '#003a8c', '#0050b3', '#096dd9', '#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#1890ff', '#40a9ff'],
   series: [
     {
       id: 'hospital',
       type: 'pie',
       radius: ['30%', '70%'],
-      center: ['35%', '50%'],
+      center: ['50%', '40%'],
       animationDurationUpdate: 1000,
       universalTransition: true,
       data: hospitalData,
@@ -131,12 +133,13 @@ const barOption = {
     formatter: function(params: any) {
       return `${params[0].name}<br/>${params[0].marker}医院数量: ${params[0].value}家`
     },
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
     borderColor: '#1890ff',
-    borderWidth: 1,
+    borderWidth: 2,
     textStyle: {
       color: '#fff',
-      fontSize: 12
+      fontSize: 14,
+      fontWeight: 'bold'
     }
   },
   grid: {
@@ -192,7 +195,7 @@ const barOption = {
       data: hospitalData.map((item, index) => ({
         value: item.value,
         itemStyle: {
-          color: ['#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#001529', '#002766', '#003a8c', '#0050b3', '#096dd9', '#1890ff', '#40a9ff'][index],
+          color: ['#001529', '#002766', '#003a8c', '#0050b3', '#096dd9', '#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#1890ff', '#40a9ff'][index],
           borderRadius: [4, 4, 0, 0]
         }
       })),
@@ -292,9 +295,10 @@ onUnmounted(() => {
 
 .chart-header h3 {
   margin: 0;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   color: #1890ff;
+  text-shadow: 0 1px 2px rgba(24, 144, 255, 0.3);
 }
 
 .chart-container {

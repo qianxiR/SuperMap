@@ -51,15 +51,16 @@ const pieOption = {
     }
   },
   legend: {
-    orient: 'vertical',
-    right: '5%',
-    top: 'center',
+    orient: 'horizontal',
+    bottom: '5%',
+    left: 'center',
     textStyle: {
-      color: '#0078D4',
-      fontSize: 10
+      color: '#1890ff',
+      fontSize: 12,
+      fontWeight: 'bold'
     },
-    itemWidth: 12,
-    itemHeight: 8
+    itemWidth: 14,
+    itemHeight: 10
   },
   color: ['#001529', '#002766', '#003a8c', '#0050b3', '#096dd9', '#1890ff', '#40a9ff'],
   series: [
@@ -67,7 +68,7 @@ const pieOption = {
       id: 'waterLine',
       type: 'pie',
       radius: ['30%', '70%'],
-      center: ['40%', '50%'],
+      center: ['50%', '40%'],
       animationDurationUpdate: 1000,
       universalTransition: true,
       data: waterLineData.map(item => ({
@@ -290,9 +291,10 @@ onUnmounted(() => {
 
 .chart-header h3 {
   margin: 0;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   color: #1890ff;
+  text-shadow: 0 1px 2px rgba(24, 144, 255, 0.3);
 }
 
 .chart-container {
