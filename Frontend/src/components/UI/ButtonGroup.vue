@@ -43,7 +43,11 @@ const sliderPosition = computed(() => {
   if (activeIndex === -1) return 0;
   
   // 计算每个按钮的宽度（均分整个容器）
-  const buttonWidth = props.buttons.length === 2 ? 100 : 100; // 每个按钮的基础宽度
+  let buttonWidth = 100; // 默认宽度
+  if (props.buttons.length === 2) buttonWidth = 100;
+  else if (props.buttons.length === 3) buttonWidth = 100;
+  else if (props.buttons.length === 4) buttonWidth = 150; // 4个选项时每个按钮150px
+  
   return activeIndex * buttonWidth;
 });
 
@@ -51,7 +55,7 @@ const sliderPosition = computed(() => {
 const containerWidth = computed(() => {
   if (props.buttons.length === 2) return '200px';
   if (props.buttons.length === 3) return '300px';
-  if (props.buttons.length === 4) return '400px';
+  if (props.buttons.length === 4) return '600px';
   return '300px'; // 默认值
 });
 

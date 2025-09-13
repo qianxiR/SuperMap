@@ -102,10 +102,11 @@ const pieOption = {
       label: {
         show: true,
         formatter: function(params: any) {
-          return `${params.name}\n${params.percent}%`
+          return `${params.percent}%`
         },
-        fontSize: 10,
-        color: '#0078D4'
+        fontSize: 12,
+        color: '#0078D4',
+        fontWeight: 'bold'
       },
       labelLine: {
         show: true,
@@ -184,12 +185,14 @@ const barOption = {
       name: '学校数量',
       type: 'bar',
       id: 'school',
-      data: schoolData.map(item => item.value),
+      data: schoolData.map((item, index) => ({
+        value: item.value,
+        itemStyle: {
+          color: ['#e6f7ff', '#bae7ff', '#91d5ff', '#69c0ff', '#40a9ff', '#1890ff', '#096dd9', '#0050b3', '#003a8c', '#002766', '#001529', '#1890ff', '#40a9ff'][index],
+          borderRadius: [4, 4, 0, 0]
+        }
+      })),
       universalTransition: true,
-      itemStyle: {
-        borderRadius: [4, 4, 0, 0],
-        color: '#1890ff'
-      }
     }
   ]
 }

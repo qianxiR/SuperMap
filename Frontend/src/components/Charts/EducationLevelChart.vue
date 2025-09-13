@@ -113,10 +113,11 @@ const pieOption = {
       label: {
         show: true,
         formatter: function(params: any) {
-          return `${params.name}\n${params.percent}%`
+          return `${params.percent}%`
         },
-        fontSize: 10,
-        color: '#0078D4'
+        fontSize: 12,
+        color: '#0078D4',
+        fontWeight: 'bold'
       },
       labelLine: {
         show: true,

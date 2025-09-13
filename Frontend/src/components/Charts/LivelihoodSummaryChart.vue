@@ -19,9 +19,9 @@ import { useThemeStore } from '@/stores/themeStore'
 
 // 民生资源总览数据（按数值从大到小排序）
 const livelihoodData = [
-  { name: '居民点', value: 1507, color: '#1890ff' },
-  { name: '学校', value: 441, color: '#40a9ff' },
-  { name: '医院', value: 441, color: '#69c0ff' }
+  { name: '居民点', value: 1507, color: '#001529' },
+  { name: '学校', value: 441, color: '#002766' },
+  { name: '医院', value: 441, color: '#003a8c' }
 ]
 
 const chartContainer = ref<HTMLElement>()
@@ -56,7 +56,7 @@ const pieOption = {
     itemWidth: 12,
     itemHeight: 8
   },
-  color: ['#1890ff', '#40a9ff', '#69c0ff'],
+  color: ['#001529', '#002766', '#003a8c'],
   series: [
     {
       id: 'livelihood',
@@ -89,15 +89,20 @@ const pieOption = {
       label: {
         show: true,
         formatter: function(params: any) {
-          return `${params.name}\n${params.percent}%`
+          return `${params.percent}%`
         },
-        fontSize: 10,
-        color: '#0078D4'
+        fontSize: 12,
+        color: '#0078D4',
+        fontWeight: 'bold'
       },
       labelLine: {
         show: true,
         length: 8,
-        length2: 5
+        length2: 5,
+        lineStyle: {
+          color: '#0078D4',
+          width: 1
+        }
       }
     }
   ]

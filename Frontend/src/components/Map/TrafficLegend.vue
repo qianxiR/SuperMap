@@ -18,6 +18,22 @@
         <div class="legend-symbol railway"></div>
         <span class="legend-label">铁路</span>
       </div>
+      <div 
+        class="legend-item" 
+        @click="toggleLayer('水系面')" 
+        :class="{ disabled: !isLayerVisible('水系面') }"
+      >
+        <div class="legend-symbol water-area"></div>
+        <span class="legend-label">水系面</span>
+      </div>
+      <div 
+        class="legend-item" 
+        @click="toggleLayer('水系线')" 
+        :class="{ disabled: !isLayerVisible('水系线') }"
+      >
+        <div class="legend-symbol water-line"></div>
+        <span class="legend-label">水系线</span>
+      </div>
     </div>
   </div>
 </template>
@@ -34,7 +50,9 @@ const { togglelayerVisibility } = uselayermanager()
 // 图层名称映射
 const layerNameMap: Record<string, string> = {
   '公路': '公路',
-  '铁路': '铁路'
+  '铁路': '铁路',
+  '水系面': '水系面',
+  '水系线': '水系线'
 }
 
 // 切换图层显示/隐藏
@@ -134,7 +152,7 @@ const isLayerVisible = (displayName: string) => {
 .legend-symbol.road {
   width: 20px;
   height: 4px;
-  background: #1890ff;
+  background: #69c0ff;
   border: none;
   border-radius: 2px;
 }
@@ -142,7 +160,7 @@ const isLayerVisible = (displayName: string) => {
 .legend-symbol.railway {
   width: 20px;
   height: 4px;
-  background: #40a9ff;
+  background: #91d5ff;
   border: none;
   border-radius: 2px;
   position: relative;
@@ -157,6 +175,22 @@ const isLayerVisible = (displayName: string) => {
   height: 1px;
   background: #ffffff;
   transform: translateY(-50%);
+}
+
+.legend-symbol.water-area {
+  width: 16px;
+  height: 12px;
+  background: rgba(0, 50, 115, 0.3);
+  border: 2px solid #003a8c;
+  border-radius: 2px;
+}
+
+.legend-symbol.water-line {
+  width: 20px;
+  height: 2px;
+  background: #002766;
+  border: none;
+  border-radius: 1px;
 }
 
 .legend-label {
@@ -197,6 +231,16 @@ const isLayerVisible = (displayName: string) => {
   .legend-symbol.railway {
     width: 18px;
     height: 3px;
+  }
+  
+  .legend-symbol.water-area {
+    width: 14px;
+    height: 10px;
+  }
+  
+  .legend-symbol.water-line {
+    width: 18px;
+    height: 2px;
   }
   
   .legend-label {

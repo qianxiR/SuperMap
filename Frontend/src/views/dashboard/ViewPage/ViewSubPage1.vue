@@ -19,9 +19,14 @@
         <OverviewMap />
         <!-- 交通图例 -->
         <TrafficLegend />
+        <!-- 水系图例 -->
+        <WaterLegend />
         <!-- 统计图表 -->
         <RoadLevelChart />
         <RailwayTypeChart />
+        <!-- 水系图表 -->
+        <WaterSurfaceChart />
+        <WaterLineChart />
       </div>
     </div>
   </div>
@@ -38,9 +43,12 @@ import CoordinateDisplay from '@/components/Map/CoordinateDisplay.vue'
 import ScaleBar from '@/components/Map/ScaleBar.vue'
 import OverviewMap from '@/components/Map/OverviewMap.vue'
 import TrafficLegend from '@/components/Map/TrafficLegend.vue'
+import WaterLegend from '@/components/Map/WaterLegend.vue'
 import ButtonGroup from '@/components/UI/ButtonGroup.vue'
 import RoadLevelChart from '@/components/Charts/RoadLevelChart.vue'
 import RailwayTypeChart from '@/components/Charts/RailwayTypeChart.vue'
+import WaterSurfaceChart from '@/components/Charts/WaterSurfaceChart.vue'
+import WaterLineChart from '@/components/Charts/WaterLineChart.vue'
 
 // 组合式函数
 const router = useRouter()
@@ -55,8 +63,8 @@ let resizeObserver: ResizeObserver | null = null
 const subPageButtons = [
   { id: 'home', text: '城市总览' },
   { id: 'livelihood-resources', text: '民生资源' },
-  { id: 'traffic-resources', text: '交通资源' },
-  { id: 'water-resources', text: '水文资源' }
+  { id: 'traffic-resources', text: '水陆交通' },
+  { id: 'water-resources', text: '长江流域监测预警' }
 ]
 
 // 当前激活的子页面
@@ -90,10 +98,10 @@ watch(() => route.path, (newPath) => {
 onMounted(() => {
   // 确保外部库已加载
   if (window.ol && window.ol.supermap) {
-    initMap(8, ['武汉_市级', '武汉_县级', '公路', '铁路']) // 交通资源显示武汉_市级、武汉_县级、道路、铁路
+    initMap(8, ['武汉_市级', '武汉_县级', '公路', '铁路', '水系面', '水系线']) // 水陆交通显示武汉_市级、武汉_县级、道路、铁路、水系面、水系线
   } else {
     // 如果库还未加载，等待一下再初始化
-    setTimeout(() => initMap(8, ['武汉_市级', '武汉_县级', '公路', '铁路']), 500)
+    setTimeout(() => initMap(8, ['武汉_市级', '武汉_县级', '公路', '铁路', '水系面', '水系线']), 500)
   }
 
   // 设置当前页面为视图页面

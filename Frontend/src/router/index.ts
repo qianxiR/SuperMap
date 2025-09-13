@@ -83,14 +83,14 @@ const router = createRouter({
             title: '地图视图'
           },
           children: [
-            // 交通资源页面
+            // 水陆交通页面
             {
               path: 'traffic-resources',
               name: 'view-traffic-resources',
               component: () => import('@/views/dashboard/ViewPage/ViewSubPage1.vue'),
               meta: {
                 requiresAuth: true,
-                title: '交通资源'
+                title: '水陆交通'
               }
             },
             // 民生资源页面
@@ -103,14 +103,14 @@ const router = createRouter({
                 title: '民生资源'
               }
             },
-            // 水文资源页面
+            // 长江流域监测预警页面
             {
               path: 'water-resources',
               name: 'view-water-resources',
               component: () => import('@/views/dashboard/ViewPage/ViewSubPage3.vue'),
               meta: {
                 requiresAuth: true,
-                title: '水文资源'
+                title: '长江流域监测预警'
               }
             }
           ]

@@ -80,8 +80,8 @@ let eventCleanup: (() => void) | null = null
 const subPageButtons = [
   { id: 'home', text: '城市总览' },
   { id: 'livelihood-resources', text: '民生资源' },
-  { id: 'traffic-resources', text: '交通资源' },
-  { id: 'water-resources', text: '水资源监测' }
+  { id: 'traffic-resources', text: '水陆交通' },
+  { id: 'water-resources', text: '长江流域监测预警' }
 ]
 
 // 当前激活的子页面

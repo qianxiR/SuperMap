@@ -19,10 +19,6 @@
         <OverviewMap />
         <!-- 水资源图例 -->
         <WaterLegend />
-        <!-- 水系面分类统计图表 -->
-        <WaterSurfaceChart />
-        <!-- 水系线分类统计图表 -->
-        <WaterLineChart />
       </div>
     </div>
   </div>
@@ -35,13 +31,12 @@ import { useMap } from '@/composables/useMap'
 import { useMapStore } from '@/stores/mapStore'
 import { usePageStateStore } from '@/stores/pageStateStore'
 import { getHydrologyData, getHydrologyLayerInfo } from '@/api/hydrologyData'
+import { getYangtzeSurfaceData, getYangtzeLineData, getYangtzeSurfaceLayerInfo, getYangtzeLineLayerInfo } from '@/api/yangtzeData'
 import FeaturePopup from '@/components/Map/FeaturePopup.vue'
 import CoordinateDisplay from '@/components/Map/CoordinateDisplay.vue'
 import ScaleBar from '@/components/Map/ScaleBar.vue'
 import OverviewMap from '@/components/Map/OverviewMap.vue'
 import WaterLegend from '@/components/Map/WaterLegend.vue'
-import WaterSurfaceChart from '@/components/Charts/WaterSurfaceChart.vue'
-import WaterLineChart from '@/components/Charts/WaterLineChart.vue'
 import ButtonGroup from '@/components/UI/ButtonGroup.vue'
 
 // 组合式函数
@@ -57,8 +52,8 @@ let resizeObserver: ResizeObserver | null = null
 const subPageButtons = [
   { id: 'home', text: '城市总览' },
   { id: 'livelihood-resources', text: '民生资源' },
-  { id: 'traffic-resources', text: '交通资源' },
-  { id: 'water-resources', text: '水文资源' }
+  { id: 'traffic-resources', text: '水陆交通' },
+  { id: 'water-resources', text: '长江流域监测预警' }
 ]
 
 // 当前激活的子页面
@@ -156,17 +151,146 @@ const loadHydrologyLayer = async () => {
   }
 }
 
+// 加载长江面图层
+const loadYangtzeSurfaceLayer = async () => {
+  if (!mapStore.map) return
+  
+  try {
+    // 获取长江面数据
+    const yangtzeSurfaceData = await getYangtzeSurfaceData()
+    const layerInfo = await getYangtzeSurfaceLayerInfo()
+    
+    // 创建OpenLayers要素
+    const ol = window.ol
+    const features = new ol.format.GeoJSON().readFeatures(yangtzeSurfaceData, {
+      featureProjection: mapStore.map.getView().getProjection()
+    })
+    
+    // 创建矢量图层源
+    const vectorSource = new ol.source.Vector({
+      features: features
+    })
+    
+    // 创建长江面样式 - 使用蓝色主题
+    const yangtzeSurfaceFillColor = 'rgba(0, 50, 115, 0.3)' // 半透明蓝色填充
+    const yangtzeSurfaceStrokeColor = '#003a8c' // 深蓝色描边
+    
+    const yangtzeSurfaceStyle = new ol.style.Style({
+      fill: new ol.style.Fill({
+        color: yangtzeSurfaceFillColor
+      }),
+      stroke: new ol.style.Stroke({
+        color: yangtzeSurfaceStrokeColor,
+        width: 2
+      })
+    })
+    
+    const yangtzeSurfaceLayer = new ol.layer.Vector({
+      source: vectorSource,
+      style: yangtzeSurfaceStyle,
+      visible: true,
+      zIndex: 50
+    })
+    
+    // 添加到地图
+    mapStore.map.addLayer(yangtzeSurfaceLayer)
+    
+    // 添加到图层管理
+    mapStore.vectorlayers.push({
+      id: '长江面',
+      name: '长江面',
+      layer: yangtzeSurfaceLayer,
+      visible: true,
+      type: 'vector',
+      source: 'yangtze_surface',
+      featureCount: layerInfo.featureCount,
+      bounds: layerInfo.bounds,
+      fields: layerInfo.fields
+    })
+    
+    console.log('长江面图层加载完成:', layerInfo.featureCount, '个要素')
+    
+  } catch (error) {
+    console.error('加载长江面图层失败:', error)
+  }
+}
+
+// 加载长江线图层
+const loadYangtzeLineLayer = async () => {
+  if (!mapStore.map) return
+  
+  try {
+    // 获取长江线数据
+    const yangtzeLineData = await getYangtzeLineData()
+    const layerInfo = await getYangtzeLineLayerInfo()
+    
+    // 创建OpenLayers要素
+    const ol = window.ol
+    const features = new ol.format.GeoJSON().readFeatures(yangtzeLineData, {
+      featureProjection: mapStore.map.getView().getProjection()
+    })
+    
+    // 创建矢量图层源
+    const vectorSource = new ol.source.Vector({
+      features: features
+    })
+    
+    // 创建长江线样式 - 使用蓝色主题
+    const yangtzeLineStrokeColor = '#002766' // 深蓝色描边
+    
+    const yangtzeLineStyle = new ol.style.Style({
+      stroke: new ol.style.Stroke({
+        color: yangtzeLineStrokeColor,
+        width: 3
+      })
+    })
+    
+    const yangtzeLineLayer = new ol.layer.Vector({
+      source: vectorSource,
+      style: yangtzeLineStyle,
+      visible: true,
+      zIndex: 60
+    })
+    
+    // 添加到地图
+    mapStore.map.addLayer(yangtzeLineLayer)
+    
+    // 添加到图层管理
+    mapStore.vectorlayers.push({
+      id: '长江线',
+      name: '长江线',
+      layer: yangtzeLineLayer,
+      visible: true,
+      type: 'vector',
+      source: 'yangtze_line',
+      featureCount: layerInfo.featureCount,
+      bounds: layerInfo.bounds,
+      fields: layerInfo.fields
+    })
+    
+    console.log('长江线图层加载完成:', layerInfo.featureCount, '个要素')
+    
+  } catch (error) {
+    console.error('加载长江线图层失败:', error)
+  }
+}
+
 // 生命周期
 onMounted(async () => {
   // 确保外部库已加载
   if (window.ol && window.ol.supermap) {
-    await initMap(8, ['武汉_市级', '武汉_县级', '水系面', '水系线']) // 水文资源显示武汉_市级、武汉_县级、水系面和水系线
+    await initMap(8, ['武汉_市级', '武汉_县级']) // 长江流域监测预警显示武汉_市级、武汉_县级
+    // 加载长江数据图层
+    await loadYangtzeSurfaceLayer()
+    await loadYangtzeLineLayer()
     // 加载水文监测点图层
     await loadHydrologyLayer()
   } else {
     // 如果库还未加载，等待一下再初始化
     setTimeout(async () => {
-      await initMap(8, ['武汉_市级', '武汉_县级', '水系面', '水系线'])
+      await initMap(8, ['武汉_市级', '武汉_县级'])
+      await loadYangtzeSurfaceLayer()
+      await loadYangtzeLineLayer()
       await loadHydrologyLayer()
     }, 500)
   }

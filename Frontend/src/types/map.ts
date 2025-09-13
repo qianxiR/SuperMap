@@ -61,7 +61,7 @@ export interface Maplayer {
   layer: any; // ol.layer.Base
   visible: boolean;
   type: 'vector' | 'raster' | 'tile';
-  source?: 'supermap' | 'local' | 'external' | 'hydrology';
+  source?: 'supermap' | 'local' | 'external' | 'hydrology' | 'yangtze_surface' | 'yangtze_line';
   error?: string;
   isLazyLoaded?: boolean; // 是否为懒加载图层
   isLoaded?: boolean; // 是否已加载数据

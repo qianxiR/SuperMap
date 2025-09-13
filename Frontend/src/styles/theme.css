@@ -363,7 +363,7 @@ html {
   --layer-stroke-武汉_县级: var(--accent);
   --layer-fill-武汉_县级: var(--accent-light);
 
-  /* ===== 交通资源 (使用蓝色系) ===== */
+  /* ===== 水陆交通 (使用蓝色系) ===== */
   /* 公路 - 蓝色 */
   --layer-stroke-公路: #1890ff;
   --layer-fill-公路: rgba(24, 144, 255, 0.15);
@@ -411,7 +411,7 @@ html {
   --layer-stroke-武汉_县级: var(--accent);
   --layer-fill-武汉_县级: var(--accent-light);
 
-  /* ===== 交通资源 (使用蓝色系) ===== */
+  /* ===== 水陆交通 (使用蓝色系) ===== */
   /* 公路 - 亮蓝色 */
   --layer-stroke-公路: #1890ff;
   --layer-fill-公路: rgba(24, 144, 255, 0.18);

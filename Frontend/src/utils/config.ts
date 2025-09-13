@@ -95,7 +95,7 @@ export const createAPIConfig = (): APIConfig => {
         lazyLoad: false // 默认显示，不懒加载
       },
     
-      // ===== 交通资源图层组 =====
+      // ===== 水陆交通图层组 =====
       // 调用者: useMap.ts -> loadVectorlayer()
       // 服务器地址: ${baseUrl}/${dataService}/datasources/${workspace}/datasets/公路
       // 作用: 提供公路网络数据，用于交通分析和路径规划

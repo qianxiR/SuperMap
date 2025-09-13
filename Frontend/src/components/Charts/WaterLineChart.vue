@@ -97,10 +97,11 @@ const pieOption = {
       label: {
         show: true,
         formatter: function(params: any) {
-          return `${params.name}\n${params.percent}%`
+          return `${params.percent}%`
         },
-        fontSize: 10,
-        color: '#0078D4'
+        fontSize: 12,
+        color: '#0078D4',
+        fontWeight: 'bold'
       }
     }
   ]
@@ -267,7 +268,7 @@ onUnmounted(() => {
 .water-line-chart {
   position: absolute;
   top: 10px;
-  left: 20px;
+  right: 20px;
   width: 380px;
   height: calc(50vh - 50px);
   background: transparent;

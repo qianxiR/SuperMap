@@ -4,19 +4,19 @@
     <div class="legend-items">
       <div 
         class="legend-item" 
-        @click="toggleLayer('水系面')" 
-        :class="{ disabled: !isLayerVisible('水系面') }"
+        @click="toggleLayer('长江面')" 
+        :class="{ disabled: !isLayerVisible('长江面') }"
       >
-        <div class="legend-symbol water-area"></div>
-        <span class="legend-label">水系面</span>
+        <div class="legend-symbol yangtze-surface"></div>
+        <span class="legend-label">长江面</span>
       </div>
       <div 
         class="legend-item" 
-        @click="toggleLayer('水系线')" 
-        :class="{ disabled: !isLayerVisible('水系线') }"
+        @click="toggleLayer('长江线')" 
+        :class="{ disabled: !isLayerVisible('长江线') }"
       >
-        <div class="legend-symbol water-line"></div>
-        <span class="legend-label">水系线</span>
+        <div class="legend-symbol yangtze-line"></div>
+        <span class="legend-label">长江线</span>
       </div>
       <div 
         class="legend-item" 
@@ -41,8 +41,8 @@ const { togglelayerVisibility } = uselayermanager()
 
 // 图层名称映射
 const layerNameMap: Record<string, string> = {
-  '水系面': '水系面',
-  '水系线': '水系线',
+  '长江面': '长江面',
+  '长江线': '长江线',
   '水文监测点': '水文监测点'
 }
 
@@ -93,7 +93,9 @@ const isLayerVisible = (displayName: string) => {
   z-index: 1000;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 16px;
+  width: auto;
 }
 
 .legend-title {
@@ -140,27 +142,31 @@ const isLayerVisible = (displayName: string) => {
   justify-content: center;
 }
 
-.legend-symbol.water-area {
-  background: #4fc3f7;
-  border-color: #0288d1;
-  border-radius: 3px;
-}
 
-.legend-symbol.water-line {
-  width: 20px;
-  height: 3px;
-  background: #4fc3f7;
-  border: none;
+.legend-symbol.yangtze-surface {
+  width: 16px;
+  height: 12px;
+  background: rgba(0, 50, 115, 0.3);
+  border: 2px solid #003a8c;
   border-radius: 2px;
 }
 
-.legend-symbol.hydrology-point {
-  background: #4fc3f7;
-  border-color: #0288d1;
-  border-radius: 50%;
-  width: 18px;
-  height: 18px;
+.legend-symbol.yangtze-line {
+  width: 20px;
+  height: 3px;
+  background: #002766;
+  border: none;
+  border-radius: 1px;
 }
+
+.legend-symbol.hydrology-point {
+  width: 12px;
+  height: 12px;
+  background: #4fc3f7;
+  border: 3px solid #0288d1;
+  border-radius: 50%;
+}
+
 
 .legend-label {
   font-size: 11px;
@@ -196,10 +202,6 @@ const isLayerVisible = (displayName: string) => {
     height: 14px;
   }
   
-  .legend-symbol.water-line {
-    width: 18px;
-    height: 2px;
-  }
   
   .legend-label {
     font-size: 10px;

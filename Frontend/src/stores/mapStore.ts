@@ -267,7 +267,7 @@ const useMapStore = defineStore('map', () => {
             // 根据图层名称设置不同的线要素样式
             let lineWidth = 2
             
-            // 交通资源使用更粗的线条
+            // 水陆交通使用更粗的线条
             if (['公路', '铁路'].includes(layerName)) {
               lineWidth = 3
             }
@@ -276,11 +276,21 @@ const useMapStore = defineStore('map', () => {
               lineWidth = 2.5
             }
             
+            // 根据图层名称设置特定的颜色
+            let lineColor = strokeVar
+            if (layerName === '公路') {
+              lineColor = '#69c0ff' // 浅蓝色
+            } else if (layerName === '铁路') {
+              lineColor = '#91d5ff' // 更浅的蓝色
+            } else if (layerName === '水系线') {
+              lineColor = '#002766' // 深蓝色
+            }
+            
             return {
               name: layer.name,
               style: {
                 ...baseStyle,
-                stroke: { width: lineWidth, color: strokeVar },
+                stroke: { width: lineWidth, color: lineColor },
                 fill: { color: 'rgba(0, 0, 0, 0)' },
               }
             }
@@ -297,12 +307,21 @@ const useMapStore = defineStore('map', () => {
               polygonStrokeWidth = 2
             }
             
+            // 根据图层名称设置特定的颜色
+            let polygonStrokeColor = strokeVar
+            let polygonFillColor = fillVar
+            
+            if (layerName === '水系面') {
+              polygonStrokeColor = '#003a8c' // 深蓝色边框
+              polygonFillColor = 'rgba(0, 50, 115, 0.3)' // 深蓝色半透明填充
+            }
+            
             return {
               name: layer.name,
               style: {
                 ...baseStyle,
-                stroke: { width: polygonStrokeWidth, color: strokeVar },
-                fill: { color: fillVar },
+                stroke: { width: polygonStrokeWidth, color: polygonStrokeColor },
+                fill: { color: polygonFillColor },
               }
             }
           default:
