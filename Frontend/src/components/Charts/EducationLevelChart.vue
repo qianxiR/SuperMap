@@ -6,6 +6,8 @@
     <div 
       ref="chartContainer" 
       class="chart-container"
+      @mouseenter="switchToBarChart"
+      @mouseleave="switchToPieChart"
     ></div>
   </div>
 </template>
@@ -35,7 +37,14 @@ const educationData = [
 // 获取区县名称列表
 const districtNames = educationData.map(item => item.name)
 
+// 计算各区县总教育程度人数
+const districtTotalData = educationData.map(item => ({
+  name: item.name,
+  value: item.大学 + item.高中 + item.初中 + item.小学
+}))
+
 const chartContainer = ref<HTMLElement>()
+const chartType = ref<'pie' | 'bar'>('pie')
 let chartInstance: echarts.ECharts | null = null
 const themeStore = useThemeStore()
 
@@ -44,8 +53,82 @@ const getThemeColor = (cssVar: string) => {
   return getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim()
 }
 
-// 堆叠柱状图配置选项
-const stackedBarOption = {
+// 饼图配置选项（显示各区县总教育程度人数分布）
+const pieOption = {
+  tooltip: {
+    trigger: 'item',
+    formatter: function(params: any) {
+      const percent = params.percent
+      return `${params.name}<br/>${(params.value / 10000).toFixed(1)}万人 (${percent}%)`
+    },
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    borderColor: '#1890ff',
+    borderWidth: 1,
+    textStyle: {
+      color: '#fff',
+      fontSize: 12
+    }
+  },
+  legend: {
+    orient: 'vertical',
+    right: '5%',
+    top: 'center',
+    textStyle: {
+      color: '#0078D4',
+      fontSize: 10
+    },
+    itemWidth: 12,
+    itemHeight: 8
+  },
+  color: ['#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#001529', '#002766', '#003a8c', '#0050b3', '#096dd9', '#1890ff', '#40a9ff'],
+  series: [
+    {
+      id: 'education',
+      type: 'pie',
+      radius: ['30%', '70%'],
+      center: ['40%', '50%'],
+      animationDurationUpdate: 1000,
+      universalTransition: true,
+      data: districtTotalData,
+      itemStyle: {
+        borderRadius: 4,
+        borderColor: '#fff',
+        borderWidth: 2,
+        shadowBlur: 3,
+        shadowColor: 'rgba(0, 0, 0, 0.3)'
+      },
+      emphasis: {
+        itemStyle: {
+          shadowBlur: 8,
+          shadowOffsetX: 0,
+          shadowColor: 'rgba(24, 144, 255, 0.5)'
+        },
+        label: {
+          show: true,
+          fontSize: 12,
+          fontWeight: 'bold',
+          color: '#0078D4'
+        }
+      },
+      label: {
+        show: true,
+        formatter: function(params: any) {
+          return `${params.name}\n${params.percent}%`
+        },
+        fontSize: 10,
+        color: '#0078D4'
+      },
+      labelLine: {
+        show: true,
+        length: 8,
+        length2: 5
+      }
+    }
+  ]
+}
+
+// 柱状图配置选项
+const barOption = {
   tooltip: {
     trigger: 'axis',
     axisPointer: {
@@ -76,7 +159,7 @@ const stackedBarOption = {
     itemWidth: 12,
     itemHeight: 8
   },
-  color: ['#001529', '#002766', '#003a8c', '#0050b3', '#096dd9', '#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#1890ff', '#40a9ff'],
+  color: ['#1890ff', '#40a9ff', '#69c0ff', '#91d5ff'],
   grid: {
     left: '3%',
     right: '4%',
@@ -127,12 +210,11 @@ const stackedBarOption = {
       name: '大学(大专及以上)',
       type: 'bar',
       stack: 'education',
+      id: 'education',
       data: educationData.map((item, index) => ({
-        value: item.大学,
-        itemStyle: {
-          color: ['#001529', '#002766', '#003a8c', '#0050b3', '#096dd9', '#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#1890ff', '#40a9ff'][index]
-        }
+        value: item.大学
       })),
+      universalTransition: true,
       itemStyle: {
         borderRadius: [0, 0, 0, 0]
       }
@@ -142,11 +224,9 @@ const stackedBarOption = {
       type: 'bar',
       stack: 'education',
       data: educationData.map((item, index) => ({
-        value: item.高中,
-        itemStyle: {
-          color: ['#001529', '#002766', '#003a8c', '#0050b3', '#096dd9', '#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#1890ff', '#40a9ff'][index]
-        }
+        value: item.高中
       })),
+      universalTransition: true,
       itemStyle: {
         borderRadius: [0, 0, 0, 0]
       }
@@ -156,11 +236,9 @@ const stackedBarOption = {
       type: 'bar',
       stack: 'education',
       data: educationData.map((item, index) => ({
-        value: item.初中,
-        itemStyle: {
-          color: ['#001529', '#002766', '#003a8c', '#0050b3', '#096dd9', '#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#1890ff', '#40a9ff'][index]
-        }
+        value: item.初中
       })),
+      universalTransition: true,
       itemStyle: {
         borderRadius: [0, 0, 0, 0]
       }
@@ -170,11 +248,9 @@ const stackedBarOption = {
       type: 'bar',
       stack: 'education',
       data: educationData.map((item, index) => ({
-        value: item.小学,
-        itemStyle: {
-          color: ['#001529', '#002766', '#003a8c', '#0050b3', '#096dd9', '#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#1890ff', '#40a9ff'][index]
-        }
+        value: item.小学
       })),
+      universalTransition: true,
       itemStyle: {
         borderRadius: [4, 4, 0, 0]
       }
@@ -183,10 +259,24 @@ const stackedBarOption = {
 }
 
 
+// 切换到柱状图
+const switchToBarChart = () => {
+  chartType.value = 'bar'
+  updateChart()
+}
+
+// 切换到饼图
+const switchToPieChart = () => {
+  chartType.value = 'pie'
+  updateChart()
+}
+
 // 更新图表
 const updateChart = () => {
   if (!chartInstance) return
-  chartInstance.setOption(stackedBarOption, true)
+  
+  const option = chartType.value === 'pie' ? pieOption : barOption
+  chartInstance.setOption(option, true)
 }
 
 // 初始化图表
@@ -196,8 +286,8 @@ const initChart = async () => {
   // 初始化图表实例
   chartInstance = echarts.init(chartContainer.value)
   
-  // 设置初始选项（显示堆叠柱状图）
-  chartInstance.setOption(stackedBarOption)
+  // 设置初始选项（默认显示饼图）
+  chartInstance.setOption(pieOption)
   
   // 监听窗口大小变化
   window.addEventListener('resize', handleResize)
@@ -262,7 +352,7 @@ onUnmounted(() => {
   margin: 0;
   font-size: 14px;
   font-weight: 600;
-  color: #0078D4;
+  color: #1890ff;
 }
 
 .chart-container {
@@ -286,3 +376,4 @@ onUnmounted(() => {
   }
 }
 </style>
+

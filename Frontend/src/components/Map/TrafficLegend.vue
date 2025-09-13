@@ -134,7 +134,7 @@ const isLayerVisible = (displayName: string) => {
 .legend-symbol.road {
   width: 20px;
   height: 4px;
-  background: #ff6b35;
+  background: #1890ff;
   border: none;
   border-radius: 2px;
 }
@@ -142,7 +142,7 @@ const isLayerVisible = (displayName: string) => {
 .legend-symbol.railway {
   width: 20px;
   height: 4px;
-  background: #4a90e2;
+  background: #40a9ff;
   border: none;
   border-radius: 2px;
   position: relative;

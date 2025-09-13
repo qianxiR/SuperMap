@@ -290,7 +290,7 @@ onUnmounted(() => {
   margin: 0;
   font-size: 14px;
   font-weight: 600;
-  color: #0078D4;
+  color: #1890ff;
 }
 
 .chart-container {

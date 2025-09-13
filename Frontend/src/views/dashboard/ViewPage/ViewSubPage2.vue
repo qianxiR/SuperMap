@@ -19,8 +19,11 @@
         <OverviewMap />
         <!-- 地图图例 -->
         <MapLegend />
-        <!-- 区域面积统计图表 -->
-        <RegionAreaChart />
+        <!-- 民生资源统计图表 -->
+        <SchoolDistributionChart />
+        <HospitalDistributionChart />
+        <ResidentDistributionChart />
+        <LivelihoodSummaryChart />
       </div>
     </div>
   </div>
@@ -37,7 +40,10 @@ import CoordinateDisplay from '@/components/Map/CoordinateDisplay.vue'
 import ScaleBar from '@/components/Map/ScaleBar.vue'
 import OverviewMap from '@/components/Map/OverviewMap.vue'
 import MapLegend from '@/components/Map/MapLegend.vue'
-import RegionAreaChart from '@/components/Charts/RegionAreaChart.vue'
+import SchoolDistributionChart from '@/components/Charts/SchoolDistributionChart.vue'
+import HospitalDistributionChart from '@/components/Charts/HospitalDistributionChart.vue'
+import ResidentDistributionChart from '@/components/Charts/ResidentDistributionChart.vue'
+import LivelihoodSummaryChart from '@/components/Charts/LivelihoodSummaryChart.vue'
 import ButtonGroup from '@/components/UI/ButtonGroup.vue'
 
 // 组合式函数

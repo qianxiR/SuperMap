@@ -40,7 +40,7 @@ const pieOption = {
       return `${params.name}<br/>长度: ${(params.value / 1000).toFixed(1)}公里<br/>数量: ${data?.count}条 (${percent}%)`
     },
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    borderColor: '#48c9b0',
+    borderColor: '#1890ff',
     borderWidth: 1,
     textStyle: {
       color: '#fff',
@@ -52,13 +52,13 @@ const pieOption = {
     right: '5%',
     top: 'center',
     textStyle: {
-      color: '#48c9b0',
+      color: '#1890ff',
       fontSize: 10
     },
     itemWidth: 12,
     itemHeight: 8
   },
-  color: ['#0d4f3c', '#16a085', '#1abc9c', '#48c9b0'],
+  color: ['#001529', '#002766', '#003a8c', '#0050b3', '#096dd9', '#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#1890ff', '#40a9ff'],
   series: [
     {
       id: 'railway',
@@ -82,13 +82,13 @@ const pieOption = {
         itemStyle: {
           shadowBlur: 8,
           shadowOffsetX: 0,
-          shadowColor: 'rgba(72, 201, 176, 0.5)'
+          shadowColor: 'rgba(24, 144, 255, 0.5)'
         },
         label: {
           show: true,
           fontSize: 12,
           fontWeight: 'bold',
-          color: '#48c9b0'
+          color: '#1890ff'
         }
       },
       label: {
@@ -97,7 +97,7 @@ const pieOption = {
           return `${params.name}\n${params.percent}%`
         },
         fontSize: 10,
-        color: '#48c9b0'
+        color: '#1890ff'
       },
       labelLine: {
         show: true,
@@ -121,7 +121,7 @@ const barOption = {
       return `${data.name}<br/>长度: ${(data.value / 1000).toFixed(1)}公里<br/>数量: ${railwayInfo?.count}条`
     },
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    borderColor: '#48c9b0',
+    borderColor: '#1890ff',
     borderWidth: 1,
     textStyle: {
       color: '#fff',
@@ -138,7 +138,7 @@ const barOption = {
   xAxis: {
     type: 'value',
     axisLabel: {
-      color: '#48c9b0',
+      color: '#1890ff',
       fontSize: 11,
       formatter: function(value: number) {
         return (value / 1000).toFixed(0) + 'km'
@@ -161,7 +161,7 @@ const barOption = {
     type: 'category',
     data: railwayData.map(item => item.name).reverse(),
     axisLabel: {
-      color: '#48c9b0',
+      color: '#1890ff',
       fontSize: 10,
       rotate: 0
     },
@@ -179,19 +179,19 @@ const barOption = {
     data: railwayData.map((item, index) => ({
       value: item.length,
       itemStyle: {
-        color: ['#0d4f3c', '#16a085', '#1abc9c', '#48c9b0'][index]
+        color: ['#001529', '#002766', '#003a8c', '#0050b3', '#096dd9', '#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#1890ff', '#40a9ff'][index]
       }
     })).reverse(),
     universalTransition: true,
     itemStyle: {
       borderRadius: [0, 4, 4, 0],
       shadowBlur: 3,
-      shadowColor: 'rgba(72, 201, 176, 0.3)'
+      shadowColor: 'rgba(24, 144, 255, 0.3)'
     },
     emphasis: {
       itemStyle: {
         shadowBlur: 5,
-        shadowColor: 'rgba(72, 201, 176, 0.5)'
+        shadowColor: 'rgba(24, 144, 255, 0.5)'
       }
     },
     barWidth: '95%'
@@ -284,7 +284,7 @@ onUnmounted(() => {
   margin: 0;
   font-size: 14px;
   font-weight: 600;
-      color: #48c9b0;
+  color: #1890ff;
 }
 
 .chart-container {
