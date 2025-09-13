@@ -2,7 +2,7 @@
   <div class="screen-header">
     <div class="header-left">
       <img 
-        src="/logoContent.png" 
+        src="/logo.jpg" 
         alt="Logo" 
         class="header-logo" 
       />
@@ -198,10 +198,17 @@ const goToProfile = () => {
 }
 
 const goToView = () => {
-  router.push('/dashboard/view/home').then(() => {
-    // 路由切换后刷新页面
-    window.location.reload()
-  })
+  try {
+    router.push('/dashboard/view/home').catch((error) => {
+      console.error('路由跳转失败:', error)
+      // 如果路由跳转失败，尝试使用window.location
+      window.location.href = '/dashboard/view/home'
+    })
+  } catch (error) {
+    console.error('路由跳转异常:', error)
+    // 如果出现异常，直接使用window.location
+    window.location.href = '/dashboard/view/home'
+  }
 }
 
 const goToAIManagement = () => {

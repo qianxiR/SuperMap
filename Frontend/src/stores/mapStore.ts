@@ -764,6 +764,7 @@ const useMapStore = defineStore('map', () => {
   // 鹰眼控制方法
   function toggleOverviewMap() {
     overviewMapVisible.value = !overviewMapVisible.value
+    console.log('鹰眼状态切换:', overviewMapVisible.value)
   }
   
   function setOverviewMapVisible(visible: boolean) {

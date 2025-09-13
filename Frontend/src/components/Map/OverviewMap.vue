@@ -35,9 +35,12 @@ const shouldShowOverview = computed(() => {
     return false
   }
   
-  // 仅在图层管理页面显示鹰眼
+  // 在以下页面显示鹰眼：
+  // 1. 图层管理页面
+  // 2. 管理分析系统的所有页面
   const currentPath = route.path
-  return currentPath === '/dashboard/view/home/layermanage'
+  return currentPath === '/dashboard/view/home/layermanage' || 
+         currentPath.includes('/dashboard/management-analysis')
 })
 
 
@@ -461,7 +464,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  background: white;
+  background: var(--panel);
   border-bottom: 1px solid var(--border);
   min-width: 240px;
   /* 禁用过渡动画 */

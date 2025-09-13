@@ -272,7 +272,9 @@ const toggleDistanceMeasure = () => {
 }
 
 const toggleOverviewMap = () => {
+  console.log('点击鹰眼按钮，当前状态:', mapStore.overviewMapVisible)
   mapStore.toggleOverviewMap()
+  console.log('点击鹰眼按钮，切换后状态:', mapStore.overviewMapVisible)
 }
 
 const toggleAreaMeasure = () => {

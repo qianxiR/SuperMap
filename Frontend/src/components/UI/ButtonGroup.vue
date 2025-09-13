@@ -42,11 +42,15 @@ const sliderPosition = computed(() => {
   const activeIndex = props.buttons.findIndex(btn => btn.id === props.activeButton);
   if (activeIndex === -1) return 0;
   
-  // 计算每个按钮的宽度（均分整个容器）
-  let buttonWidth = 100; // 默认宽度
-  if (props.buttons.length === 2) buttonWidth = 100;
-  else if (props.buttons.length === 3) buttonWidth = 100;
-  else if (props.buttons.length === 4) buttonWidth = 150; // 4个选项时每个按钮150px
+  // 根据按钮数量计算每个按钮的宽度
+  let buttonWidth = 0;
+  if (props.buttons.length === 2) {
+    buttonWidth = 100; // 200px / 2 = 100px per button
+  } else if (props.buttons.length === 3) {
+    buttonWidth = 100; // 300px / 3 = 100px per button
+  } else if (props.buttons.length === 4) {
+    buttonWidth = 137.5; // 550px / 4 = 137.5px per button
+  }
   
   return activeIndex * buttonWidth;
 });

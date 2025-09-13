@@ -218,7 +218,25 @@ const updateChart = () => {
   if (!chartInstance) return
   
   const option = chartType.value === 'pie' ? pieOption : barOption
-  chartInstance.setOption(option, true)
+  
+  // 添加渐显动画效果
+  if (chartType.value === 'pie') {
+    // 饼图切换：渐显效果
+    chartInstance.setOption({
+      ...option,
+      animationDuration: 1000,
+      animationEasing: 'quadInOut' as any,
+      animationDelay: (idx) => idx * 100
+    }, true)
+  } else {
+    // 柱状图切换：渐显式生长
+    chartInstance.setOption({
+      ...option,
+      animationDuration: 1000,
+      animationEasing: 'quadInOut' as any,
+      animationDelay: (idx) => idx * 100
+    }, true)
+  }
 }
 
 // 初始化图表
