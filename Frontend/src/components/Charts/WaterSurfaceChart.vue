@@ -1,7 +1,7 @@
 <template>
-  <div class="region-population-chart">
+  <div class="water-surface-chart">
     <div class="chart-header">
-      <h3>武汉区域人口数量</h3>
+      <h3>面状水系分布概况</h3>
     </div>
     <div 
       ref="chartContainer" 
@@ -13,36 +13,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
 import { useThemeStore } from '@/stores/themeStore'
 
-// 区域人口数据（按人口数量排序）
-const populationData = [
-  { name: '江岸区', value: 965260 },
-  { name: '江汉区', value: 647932 },
-  { name: '硚口区', value: 666661 },
-  { name: '汉阳区', value: 837263 },
-  { name: '武昌区', value: 1092750 },
-  { name: '青山区', value: 494772 },
-  { name: '洪山区', value: 2785118 },
-  { name: '东西湖区', value: 845782 },
-  { name: '蔡甸区', value: 554383 },
-  { name: '江夏区', value: 974715 },
-  { name: '黄陂区', value: 1151644 },
-  { name: '新洲区', value: 860377 },
-  { name: '汉南区', value: 626441 }
-].sort((a, b) => b.value - a.value)
+// 水系面统计数据
+const waterSurfaceData = [
+  { name: '湖类水系面', value: 1472.70, count: 111, avg: 13267.55 },
+  { name: '海类水系面', value: 103.58, count: 13, avg: 7967.82 },
+  { name: '港类水系面', value: 34.17, count: 5, avg: 6833.91 },
+  { name: '水库类水系面', value: 163.77, count: 5, avg: 32754.79 }
+]
 
 const chartContainer = ref<HTMLElement>()
 const chartType = ref<'pie' | 'bar'>('pie')
 let chartInstance: echarts.ECharts | null = null
 const themeStore = useThemeStore()
-
-// 获取当前主题的实际颜色值
-const getThemeColor = (cssVar: string) => {
-  return getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim()
-}
 
 // 饼图配置选项
 const pieOption = {
@@ -50,7 +36,8 @@ const pieOption = {
     trigger: 'item',
     formatter: function(params: any) {
       const percent = params.percent
-      return `${params.name}<br/>${(params.value / 10000).toFixed(1)}万人 (${percent}%)`
+      const data = waterSurfaceData.find(item => item.name === params.name)
+      return `${params.name}<br/>周长: ${params.value}公里<br/>数量: ${data?.count}个 (${percent}%)`
     },
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
     borderColor: '#1890ff',
@@ -71,16 +58,19 @@ const pieOption = {
     itemWidth: 12,
     itemHeight: 8
   },
-  color: ['#001529', '#002766', '#003a8c', '#0050b3', '#096dd9', '#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#1890ff', '#40a9ff'],
+  color: ['#001529', '#002766', '#003a8c', '#0050b3'],
   series: [
     {
-      id: 'population',
+      id: 'waterSurface',
       type: 'pie',
       radius: ['30%', '70%'],
       center: ['40%', '50%'],
       animationDurationUpdate: 1000,
       universalTransition: true,
-      data: populationData,
+      data: waterSurfaceData.map(item => ({
+        name: item.name,
+        value: item.value
+      })),
       itemStyle: {
         borderRadius: 4,
         borderColor: '#fff',
@@ -104,15 +94,10 @@ const pieOption = {
       label: {
         show: true,
         formatter: function(params: any) {
-          return params.percent > 5 ? params.name : ''
+          return `${params.name}\n${params.percent}%`
         },
         fontSize: 10,
         color: '#0078D4'
-      },
-      labelLine: {
-        show: true,
-        length: 8,
-        length2: 5
       }
     }
   ]
@@ -126,8 +111,8 @@ const barOption = {
       type: 'shadow'
     },
     formatter: function(params: any) {
-      const data = params[0]
-      return `${data.name}: ${(data.value / 10000).toFixed(1)}万人`
+      const data = waterSurfaceData[params[0].dataIndex]
+      return `${params[0].name}<br/>周长: ${params[0].value}公里<br/>数量: ${data.count}个`
     },
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
     borderColor: '#1890ff',
@@ -137,20 +122,39 @@ const barOption = {
       fontSize: 12
     }
   },
+  legend: {
+    show: false
+  },
+  color: ['#001529'],
   grid: {
-    left: '2%',
-    right: '1%',
-    bottom: '4%',
-    top: '2%',
-    containLabel: false
+    left: '3%',
+    right: '4%',
+    bottom: '15%',
+    top: '5%',
+    containLabel: true
   },
   xAxis: {
+    type: 'category',
+    data: waterSurfaceData.map(item => item.name),
+    axisLabel: {
+      color: '#0078D4',
+      fontSize: 9,
+      rotate: 45
+    },
+    axisLine: {
+      lineStyle: {
+        color: 'var(--border)',
+        width: 1
+      }
+    }
+  },
+  yAxis: {
     type: 'value',
     axisLabel: {
       color: '#0078D4',
       fontSize: 11,
       formatter: function(value: number) {
-        return (value / 10000).toFixed(0) + '万'
+        return value.toFixed(0) + '公里'
       }
     },
     axisLine: {
@@ -166,63 +170,44 @@ const barOption = {
       }
     }
   },
-  yAxis: {
-    type: 'category',
-    data: populationData.map(item => item.name).reverse(),
-    axisLabel: {
-      color: '#0078D4',
-      fontSize: 10,
-      rotate: 0
-    },
-    axisLine: {
-      lineStyle: {
-        color: 'var(--border)',
-        width: 1
+  animationDurationUpdate: 1000,
+  series: [
+    {
+      id: 'waterSurface',
+      name: '周长',
+      type: 'bar',
+      universalTransition: true,
+      data: waterSurfaceData.map((item, index) => ({
+        value: item.value,
+        itemStyle: {
+          color: ['#001529', '#002766', '#003a8c', '#0050b3'][index],
+          borderRadius: [4, 4, 0, 0]
+        }
+      })),
+      itemStyle: {
+        borderRadius: [4, 4, 0, 0]
       }
     }
-  },
-  animationDurationUpdate: 1000,
-  series: {
-    type: 'bar',
-    id: 'population',
-    data: populationData.map((item, index) => ({
-      value: item.value,
-      itemStyle: {
-        color: ['#001529', '#002766', '#003a8c', '#0050b3', '#096dd9', '#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#1890ff', '#40a9ff'][index]
-      }
-    })).reverse(),
-    universalTransition: true,
-    itemStyle: {
-      borderRadius: [0, 4, 4, 0],
-      shadowBlur: 3,
-      shadowColor: 'rgba(24, 144, 255, 0.3)'
-    },
-    emphasis: {
-      itemStyle: {
-        shadowBlur: 5,
-        shadowColor: 'rgba(24, 144, 255, 0.5)'
-      }
-    },
-    barWidth: '95%'
-  }
-}
-
-// 切换到柱状图
-const switchToBarChart = () => {
-  chartType.value = 'bar'
-  updateChart()
+  ]
 }
 
 // 切换到饼图
 const switchToPieChart = () => {
+  if (!chartInstance) return
   chartType.value = 'pie'
-  updateChart()
+  chartInstance.setOption(pieOption, true)
+}
+
+// 切换到柱状图
+const switchToBarChart = () => {
+  if (!chartInstance) return
+  chartType.value = 'bar'
+  chartInstance.setOption(barOption, true)
 }
 
 // 更新图表
 const updateChart = () => {
   if (!chartInstance) return
-  
   const option = chartType.value === 'pie' ? pieOption : barOption
   chartInstance.setOption(option, true)
 }
@@ -234,7 +219,7 @@ const initChart = async () => {
   // 初始化图表实例
   chartInstance = echarts.init(chartContainer.value)
   
-  // 设置初始选项（默认显示饼图）
+  // 设置初始选项（显示饼图）
   chartInstance.setOption(pieOption)
   
   // 监听窗口大小变化
@@ -273,11 +258,11 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.region-population-chart {
+.water-surface-chart {
   position: absolute;
-  top: 10px;
+  bottom: 50px;
   left: 20px;
-  width: 400px;
+  width: 380px;
   height: calc(50vh - 50px);
   background: transparent;
   border: 1px solid var(--border);
@@ -303,7 +288,6 @@ onUnmounted(() => {
   color: #0078D4;
 }
 
-
 .chart-container {
   width: 100%;
   height: calc(100% - 50px);
@@ -313,11 +297,11 @@ onUnmounted(() => {
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .region-population-chart {
+  .water-surface-chart {
     width: 300px;
     height: calc(50vh - 40px);
     top: 30px;
-    left: 15px;
+    right: 15px;
   }
   
   .chart-container {

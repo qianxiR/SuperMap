@@ -1,7 +1,7 @@
 <template>
-  <div class="region-population-chart">
+  <div class="railway-type-chart">
     <div class="chart-header">
-      <h3>武汉区域人口数量</h3>
+      <h3>铁路长度统计</h3>
     </div>
     <div 
       ref="chartContainer" 
@@ -13,36 +13,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
 import { useThemeStore } from '@/stores/themeStore'
 
-// 区域人口数据（按人口数量排序）
-const populationData = [
-  { name: '江岸区', value: 965260 },
-  { name: '江汉区', value: 647932 },
-  { name: '硚口区', value: 666661 },
-  { name: '汉阳区', value: 837263 },
-  { name: '武昌区', value: 1092750 },
-  { name: '青山区', value: 494772 },
-  { name: '洪山区', value: 2785118 },
-  { name: '东西湖区', value: 845782 },
-  { name: '蔡甸区', value: 554383 },
-  { name: '江夏区', value: 974715 },
-  { name: '黄陂区', value: 1151644 },
-  { name: '新洲区', value: 860377 },
-  { name: '汉南区', value: 626441 }
-].sort((a, b) => b.value - a.value)
+// 铁路类型统计数据（基于SQL查询结果）
+const railwayData = [
+  { name: '高铁', length: 240916.15, count: 37 },
+  { name: '高铁/高架', length: 155779.73, count: 35 },
+  { name: '电气化铁路', length: 359458.28, count: 54 },
+  { name: '其他', length: 310508.80, count: 52 }
+]
 
 const chartContainer = ref<HTMLElement>()
 const chartType = ref<'pie' | 'bar'>('pie')
 let chartInstance: echarts.ECharts | null = null
 const themeStore = useThemeStore()
-
-// 获取当前主题的实际颜色值
-const getThemeColor = (cssVar: string) => {
-  return getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim()
-}
 
 // 饼图配置选项
 const pieOption = {
@@ -50,7 +36,8 @@ const pieOption = {
     trigger: 'item',
     formatter: function(params: any) {
       const percent = params.percent
-      return `${params.name}<br/>${(params.value / 10000).toFixed(1)}万人 (${percent}%)`
+      const data = railwayData.find(item => item.name === params.name)
+      return `${params.name}<br/>长度: ${(params.value / 1000).toFixed(1)}公里<br/>数量: ${data?.count}条 (${percent}%)`
     },
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
     borderColor: '#1890ff',
@@ -71,16 +58,19 @@ const pieOption = {
     itemWidth: 12,
     itemHeight: 8
   },
-  color: ['#001529', '#002766', '#003a8c', '#0050b3', '#096dd9', '#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#1890ff', '#40a9ff'],
+  color: ['#001529', '#002766', '#003a8c', '#0050b3'],
   series: [
     {
-      id: 'population',
+      id: 'railway',
       type: 'pie',
       radius: ['30%', '70%'],
       center: ['40%', '50%'],
       animationDurationUpdate: 1000,
       universalTransition: true,
-      data: populationData,
+      data: railwayData.map(item => ({
+        name: item.name,
+        value: item.length
+      })),
       itemStyle: {
         borderRadius: 4,
         borderColor: '#fff',
@@ -104,7 +94,7 @@ const pieOption = {
       label: {
         show: true,
         formatter: function(params: any) {
-          return params.percent > 5 ? params.name : ''
+          return `${params.name}\n${params.percent}%`
         },
         fontSize: 10,
         color: '#0078D4'
@@ -127,7 +117,8 @@ const barOption = {
     },
     formatter: function(params: any) {
       const data = params[0]
-      return `${data.name}: ${(data.value / 10000).toFixed(1)}万人`
+      const railwayInfo = railwayData.find(item => item.name === data.name)
+      return `${data.name}<br/>长度: ${(data.value / 1000).toFixed(1)}公里<br/>数量: ${railwayInfo?.count}条`
     },
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
     borderColor: '#1890ff',
@@ -150,7 +141,7 @@ const barOption = {
       color: '#0078D4',
       fontSize: 11,
       formatter: function(value: number) {
-        return (value / 10000).toFixed(0) + '万'
+        return (value / 1000).toFixed(0) + 'km'
       }
     },
     axisLine: {
@@ -168,7 +159,7 @@ const barOption = {
   },
   yAxis: {
     type: 'category',
-    data: populationData.map(item => item.name).reverse(),
+    data: railwayData.map(item => item.name).reverse(),
     axisLabel: {
       color: '#0078D4',
       fontSize: 10,
@@ -184,11 +175,11 @@ const barOption = {
   animationDurationUpdate: 1000,
   series: {
     type: 'bar',
-    id: 'population',
-    data: populationData.map((item, index) => ({
-      value: item.value,
+    id: 'railway',
+    data: railwayData.map((item, index) => ({
+      value: item.length,
       itemStyle: {
-        color: ['#001529', '#002766', '#003a8c', '#0050b3', '#096dd9', '#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#1890ff', '#40a9ff'][index]
+        color: ['#001529', '#002766', '#003a8c', '#0050b3'][index]
       }
     })).reverse(),
     universalTransition: true,
@@ -231,13 +222,8 @@ const updateChart = () => {
 const initChart = async () => {
   if (!chartContainer.value) return
   
-  // 初始化图表实例
   chartInstance = echarts.init(chartContainer.value)
-  
-  // 设置初始选项（默认显示饼图）
   chartInstance.setOption(pieOption)
-  
-  // 监听窗口大小变化
   window.addEventListener('resize', handleResize)
 }
 
@@ -258,8 +244,6 @@ const handleThemeChange = () => {
 onMounted(async () => {
   await nextTick()
   initChart()
-  
-  // 监听主题变化
   themeStore.$subscribe(handleThemeChange)
 })
 
@@ -273,9 +257,9 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.region-population-chart {
+.railway-type-chart {
   position: absolute;
-  top: 10px;
+  bottom: 50px;
   left: 20px;
   width: 400px;
   height: calc(50vh - 50px);
@@ -303,7 +287,6 @@ onUnmounted(() => {
   color: #0078D4;
 }
 
-
 .chart-container {
   width: 100%;
   height: calc(100% - 50px);
@@ -311,12 +294,11 @@ onUnmounted(() => {
   cursor: pointer;
 }
 
-/* 响应式设计 */
 @media (max-width: 768px) {
-  .region-population-chart {
+  .railway-type-chart {
     width: 300px;
     height: calc(50vh - 40px);
-    top: 30px;
+    bottom: 15px;
     left: 15px;
   }
   

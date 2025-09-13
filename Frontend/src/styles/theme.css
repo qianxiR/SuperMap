@@ -359,11 +359,11 @@ html {
   --layer-stroke-武汉_市级: #0078D4;
   --layer-fill-武汉_市级: rgba(0, 120, 212, 0.05);
 
-  /* 县级边界 - 深蓝灰色 */
-  --layer-stroke-武汉_县级: #34495e;
-  --layer-fill-武汉_县级: rgba(52, 73, 94, 0.08);
+  /* 县级边界 - 主题蓝色 */
+  --layer-stroke-武汉_县级: var(--accent);
+  --layer-fill-武汉_县级: var(--accent-light);
 
-  /* ===== 交通设施 (使用水系颜色) ===== */
+  /* ===== 交通资源 (使用水系颜色) ===== */
   /* 公路 - 青蓝色 */
   --layer-stroke-公路: #16a085;
   --layer-fill-公路: rgba(22, 160, 133, 0.15);
@@ -407,11 +407,11 @@ html {
   --layer-stroke-武汉_市级: #0078D4;
   --layer-fill-武汉_市级: rgba(0, 120, 212, 0.08);
 
-  /* 县级边界 - 浅蓝灰色 */
-  --layer-stroke-武汉_县级: #bdc3c7;
-  --layer-fill-武汉_县级: rgba(189, 195, 199, 0.10);
+  /* 县级边界 - 主题蓝色 */
+  --layer-stroke-武汉_县级: var(--accent);
+  --layer-fill-武汉_县级: var(--accent-light);
 
-  /* ===== 交通设施 (使用水系颜色) ===== */
+  /* ===== 交通资源 (使用水系颜色) ===== */
   /* 公路 - 亮青蓝色 */
   --layer-stroke-公路: #1abc9c;
   --layer-fill-公路: rgba(26, 188, 156, 0.18);

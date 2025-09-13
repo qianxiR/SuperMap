@@ -4,6 +4,7 @@ import { useAnalysisStore } from '@/stores/analysisStore'
 import { useMapStore } from '@/stores/mapStore'
 import { useSelectionStore } from '@/stores/selectionStore'
 import { useModeStateStore } from '@/stores/modeStateStore'
+import { useLayerDataStore } from '@/stores/layerDataStore'
 import type { QueryCondition, QueryConfig, FieldInfo } from '@/types/query'
 import { formatPropertyValue } from '@/utils/featureUtils'
 
@@ -18,6 +19,7 @@ export const useFeatureQueryStore = defineStore('featureQuery', () => {
   const analysisStore = useAnalysisStore()
   const mapStore = useMapStore()
   const modeStateStore = useModeStateStore()
+  const layerDataStore = useLayerDataStore()
 
   const selectedlayerId = ref<string>('')
   const queryResults = ref<any[]>([])
@@ -235,6 +237,17 @@ export const useFeatureQueryStore = defineStore('featureQuery', () => {
     queryResults.value = unique
     selectedFeatureIndex.value = -1
     highlightQueryResults()
+    
+    // 保存查询结果到layerDataStore
+    if (unique.length > 0) {
+      const layerName = getSelectedlayerName(selectedlayerId.value)
+      const queryLayerName = `查询结果_${layerName}_${Date.now()}`
+      const featuresData = unique.map((feature: any, index: number) => ({
+        id: feature.getId() || `query_${Date.now()}_${index}`,
+        properties: feature.getProperties ? feature.getProperties() : feature.properties || {}
+      }))
+      layerDataStore.setLayerAttributes(queryLayerName, featuresData)
+    }
     
     // 自动选中第一个要素并触发高亮效果
     if (unique.length > 0) {

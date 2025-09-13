@@ -1,7 +1,7 @@
 <template>
-  <div class="region-population-chart">
+  <div class="age-distribution-chart">
     <div class="chart-header">
-      <h3>武汉区域人口数量</h3>
+      <h3>武汉年龄人口分布</h3>
     </div>
     <div 
       ref="chartContainer" 
@@ -17,22 +17,12 @@ import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import * as echarts from 'echarts'
 import { useThemeStore } from '@/stores/themeStore'
 
-// 区域人口数据（按人口数量排序）
-const populationData = [
-  { name: '江岸区', value: 965260 },
-  { name: '江汉区', value: 647932 },
-  { name: '硚口区', value: 666661 },
-  { name: '汉阳区', value: 837263 },
-  { name: '武昌区', value: 1092750 },
-  { name: '青山区', value: 494772 },
-  { name: '洪山区', value: 2785118 },
-  { name: '东西湖区', value: 845782 },
-  { name: '蔡甸区', value: 554383 },
-  { name: '江夏区', value: 974715 },
-  { name: '黄陂区', value: 1151644 },
-  { name: '新洲区', value: 860377 },
-  { name: '汉南区', value: 626441 }
-].sort((a, b) => b.value - a.value)
+// 年龄人口分布数据
+const ageData = [
+  { name: '15-59岁', value: 8593995 },
+  { name: '60岁及以上', value: 2124397 },
+  { name: '0-14岁', value: 1608126 }
+]
 
 const chartContainer = ref<HTMLElement>()
 const chartType = ref<'pie' | 'bar'>('pie')
@@ -71,16 +61,16 @@ const pieOption = {
     itemWidth: 12,
     itemHeight: 8
   },
-  color: ['#001529', '#002766', '#003a8c', '#0050b3', '#096dd9', '#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#1890ff', '#40a9ff'],
+  color: ['#1890ff', '#40a9ff', '#69c0ff'],
   series: [
     {
-      id: 'population',
+      id: 'age',
       type: 'pie',
       radius: ['30%', '70%'],
       center: ['40%', '50%'],
       animationDurationUpdate: 1000,
       universalTransition: true,
-      data: populationData,
+      data: ageData,
       itemStyle: {
         borderRadius: 4,
         borderColor: '#fff',
@@ -104,7 +94,7 @@ const pieOption = {
       label: {
         show: true,
         formatter: function(params: any) {
-          return params.percent > 5 ? params.name : ''
+          return `${params.name}\n${params.percent}%`
         },
         fontSize: 10,
         color: '#0078D4'
@@ -168,7 +158,7 @@ const barOption = {
   },
   yAxis: {
     type: 'category',
-    data: populationData.map(item => item.name).reverse(),
+    data: ageData.map(item => item.name).reverse(),
     axisLabel: {
       color: '#0078D4',
       fontSize: 10,
@@ -184,11 +174,11 @@ const barOption = {
   animationDurationUpdate: 1000,
   series: {
     type: 'bar',
-    id: 'population',
-    data: populationData.map((item, index) => ({
+    id: 'age',
+    data: ageData.map((item, index) => ({
       value: item.value,
       itemStyle: {
-        color: ['#001529', '#002766', '#003a8c', '#0050b3', '#096dd9', '#1890ff', '#40a9ff', '#69c0ff', '#91d5ff', '#bae7ff', '#e6f7ff', '#1890ff', '#40a9ff'][index]
+        color: ['#1890ff', '#40a9ff', '#69c0ff'][index]
       }
     })).reverse(),
     universalTransition: true,
@@ -273,10 +263,10 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.region-population-chart {
+.age-distribution-chart {
   position: absolute;
   top: 10px;
-  left: 20px;
+  right: 20px;
   width: 400px;
   height: calc(50vh - 50px);
   background: transparent;
@@ -303,7 +293,6 @@ onUnmounted(() => {
   color: #0078D4;
 }
 
-
 .chart-container {
   width: 100%;
   height: calc(100% - 50px);
@@ -313,11 +302,11 @@ onUnmounted(() => {
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .region-population-chart {
+  .age-distribution-chart {
     width: 300px;
     height: calc(50vh - 40px);
-    top: 30px;
-    left: 15px;
+    bottom: 15px;
+    right: 15px;
   }
   
   .chart-container {

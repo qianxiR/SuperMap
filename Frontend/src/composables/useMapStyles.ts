@@ -23,6 +23,7 @@ const createOLStyleFromConfig = (styleConfig: any, layerName?: string): any => {
     if (color.startsWith('var(')) {
       return css.getPropertyValue(color.replace('var(', '').replace(')', '')).trim() || color;
     }
+    // 直接返回颜色值，不进行额外处理
     return color;
   };
   
@@ -49,9 +50,13 @@ const createOLStyleFromConfig = (styleConfig: any, layerName?: string): any => {
       // 处理点要素的image样式
       if (styleConfig.image) {
         const radius = styleConfig.image.radius || 6;
-        const strokeColor = styleConfig.stroke ? parseColor(styleConfig.stroke.color) : '#000000';
-        const strokeWidth = styleConfig.stroke ? styleConfig.stroke.width : 2;
-        const fillColor = styleConfig.fill ? parseColor(styleConfig.fill.color) : '#ffffff';
+        // 优先使用image样式中的颜色，如果没有则使用外层样式
+        const strokeColor = styleConfig.image.stroke ? parseColor(styleConfig.image.stroke.color) : 
+                           (styleConfig.stroke ? parseColor(styleConfig.stroke.color) : '#000000');
+        const strokeWidth = styleConfig.image.stroke ? styleConfig.image.stroke.width : 
+                           (styleConfig.stroke ? styleConfig.stroke.width : 2);
+        const fillColor = styleConfig.image.fill ? parseColor(styleConfig.image.fill.color) : 
+                         (styleConfig.fill ? parseColor(styleConfig.fill.color) : '#ffffff');
         
         if (styleConfig.image.type === 'circle') {
           styleObj.image = new ol.style.Circle({
@@ -169,9 +174,13 @@ const createOLStyleFromConfig = (styleConfig: any, layerName?: string): any => {
   // 处理点要素的image样式
   if (styleConfig.image) {
     const radius = styleConfig.image.radius || 6;
-    const strokeColor = styleConfig.stroke ? parseColor(styleConfig.stroke.color) : '#000000';
-    const strokeWidth = styleConfig.stroke ? styleConfig.stroke.width : 2;
-    const fillColor = styleConfig.fill ? parseColor(styleConfig.fill.color) : '#ffffff';
+    // 优先使用image样式中的颜色，如果没有则使用外层样式
+    const strokeColor = styleConfig.image.stroke ? parseColor(styleConfig.image.stroke.color) : 
+                       (styleConfig.stroke ? parseColor(styleConfig.stroke.color) : '#000000');
+    const strokeWidth = styleConfig.image.stroke ? styleConfig.image.stroke.width : 
+                       (styleConfig.stroke ? styleConfig.stroke.width : 2);
+    const fillColor = styleConfig.image.fill ? parseColor(styleConfig.image.fill.color) : 
+                     (styleConfig.fill ? parseColor(styleConfig.fill.color) : '#ffffff');
     
     if (styleConfig.image.type === 'circle') {
       styleObj.image = new ol.style.Circle({

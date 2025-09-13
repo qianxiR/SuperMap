@@ -95,7 +95,7 @@ export const createAPIConfig = (): APIConfig => {
         lazyLoad: false // 默认显示，不懒加载
       },
     
-      // ===== 交通设施图层组 =====
+      // ===== 交通资源图层组 =====
       // 调用者: useMap.ts -> loadVectorlayer()
       // 服务器地址: ${baseUrl}/${dataService}/datasources/${workspace}/datasets/公路
       // 作用: 提供公路网络数据，用于交通分析和路径规划
@@ -145,11 +145,11 @@ export const createAPIConfig = (): APIConfig => {
       { 
         name: `建筑物面@${workspace}@@${mapName}`, 
         type: 'polygon', 
-        visible: false, 
+        visible: true, 
         group: '城市基本信息',
         datasetName: '建筑物面',
         dataService: `${mapService}/maps/${mapName}`,
-        lazyLoad: true // 懒加载，点击显示时才加载
+        lazyLoad: false // 城市总览默认显示，不懒加载
       },
       
       // 基础设施图层组 - 居民地信息

@@ -1,7 +1,7 @@
 <template>
   <div class="region-area-chart">
     <div class="chart-header">
-      <h3>武汉区域面积分布</h3>
+      <h3>武汉市辖区面积</h3>
     </div>
     <div 
       ref="chartContainer" 
@@ -275,7 +275,7 @@ onUnmounted(() => {
 <style scoped>
 .region-area-chart {
   position: absolute;
-  top: 50%;
+  top: calc(50% - 30px);
   left: 70px;
   width: 400px;
   height: calc(50vh - 50px);

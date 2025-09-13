@@ -17,6 +17,12 @@
         <CoordinateDisplay />
         <ScaleBar />
         <OverviewMap />
+        <!-- 水资源图例 -->
+        <WaterLegend />
+        <!-- 水系面分类统计图表 -->
+        <WaterSurfaceChart />
+        <!-- 水系线分类统计图表 -->
+        <WaterLineChart />
       </div>
     </div>
   </div>
@@ -28,10 +34,14 @@ import { useRouter, useRoute } from 'vue-router'
 import { useMap } from '@/composables/useMap'
 import { useMapStore } from '@/stores/mapStore'
 import { usePageStateStore } from '@/stores/pageStateStore'
+import { getHydrologyData, getHydrologyLayerInfo } from '@/api/hydrologyData'
 import FeaturePopup from '@/components/Map/FeaturePopup.vue'
 import CoordinateDisplay from '@/components/Map/CoordinateDisplay.vue'
 import ScaleBar from '@/components/Map/ScaleBar.vue'
 import OverviewMap from '@/components/Map/OverviewMap.vue'
+import WaterLegend from '@/components/Map/WaterLegend.vue'
+import WaterSurfaceChart from '@/components/Charts/WaterSurfaceChart.vue'
+import WaterLineChart from '@/components/Charts/WaterLineChart.vue'
 import ButtonGroup from '@/components/UI/ButtonGroup.vue'
 
 // 组合式函数
@@ -45,10 +55,10 @@ let resizeObserver: ResizeObserver | null = null
 
 // 子页面按钮配置
 const subPageButtons = [
-  { id: 'home', text: '城市概况' },
-  { id: 'subpage2', text: '民生管理' },
-  { id: 'subpage1', text: '交通总览' },
-  { id: 'subpage3', text: '水资源监测' }
+  { id: 'home', text: '城市总览' },
+  { id: 'subpage2', text: '民生资源' },
+  { id: 'subpage1', text: '交通概况' },
+  { id: 'subpage3', text: '水文资源' }
 ]
 
 // 当前激活的子页面
@@ -58,7 +68,7 @@ const activeSubPage = ref('subpage3')
 const navigateToSubPage = async (subPageName: string) => {
   activeSubPage.value = subPageName
   if (subPageName === 'home') {
-    // 直接跳转到城市概况并刷新
+    // 直接跳转到城市总览并刷新
     window.location.href = '/dashboard/view/home'
   } else {
     router.push(`/dashboard/view/home/${subPageName}`)
@@ -78,14 +88,87 @@ watch(() => route.path, (newPath) => {
   }
 }, { immediate: true })
 
+// 加载水文监测点图层
+const loadHydrologyLayer = async () => {
+  if (!mapStore.map) return
+  
+  try {
+    // 获取水文监测点数据
+    const hydrologyData = await getHydrologyData()
+    const layerInfo = getHydrologyLayerInfo()
+    
+    // 创建OpenLayers要素
+    const ol = window.ol
+    const features = new ol.format.GeoJSON().readFeatures(hydrologyData, {
+      featureProjection: mapStore.map.getView().getProjection()
+    })
+    
+    // 创建矢量图层
+    const vectorSource = new ol.source.Vector({
+      features: features
+    })
+    
+    // 创建水文监测点样式 - 使用蓝色主题
+    const css = getComputedStyle(document.documentElement)
+    const hydrologyFillColor = '#4fc3f7' // 蓝色填充
+    const hydrologyStrokeColor = '#0288d1' // 深蓝色描边
+    
+    const hydrologyStyle = new ol.style.Style({
+      image: new ol.style.Circle({
+        radius: 12, // 增大半径
+        fill: new ol.style.Fill({
+          color: hydrologyFillColor
+        }),
+        stroke: new ol.style.Stroke({
+          color: hydrologyStrokeColor,
+          width: 3 // 增大描边宽度
+        })
+      })
+    })
+    
+    const hydrologyLayer = new ol.layer.Vector({
+      source: vectorSource,
+      style: hydrologyStyle,
+      visible: true,
+      zIndex: 100
+    })
+    
+    // 添加到地图
+    mapStore.map.addLayer(hydrologyLayer)
+    
+    // 添加到图层管理
+    mapStore.vectorlayers.push({
+      id: '水文监测点',
+      name: '水文监测点',
+      layer: hydrologyLayer,
+      visible: true,
+      type: 'vector',
+      source: 'hydrology',
+      featureCount: layerInfo.featureCount,
+      bounds: layerInfo.bounds,
+      fields: layerInfo.fields
+    })
+    
+    console.log('水文监测点图层加载完成:', layerInfo.featureCount, '个监测点')
+    
+  } catch (error) {
+    console.error('加载水文监测点图层失败:', error)
+  }
+}
+
 // 生命周期
-onMounted(() => {
+onMounted(async () => {
   // 确保外部库已加载
   if (window.ol && window.ol.supermap) {
-    initMap(8, ['武汉_市级', '武汉_县级', '水系面', '水系线']) // 水资源监测显示武汉_市级、武汉_县级、水系面和水系线
+    await initMap(8, ['武汉_市级', '武汉_县级', '水系面', '水系线']) // 水文资源显示武汉_市级、武汉_县级、水系面和水系线
+    // 加载水文监测点图层
+    await loadHydrologyLayer()
   } else {
     // 如果库还未加载，等待一下再初始化
-    setTimeout(() => initMap(8, ['武汉_市级', '武汉_县级', '水系面', '水系线']), 500)
+    setTimeout(async () => {
+      await initMap(8, ['武汉_市级', '武汉_县级', '水系面', '水系线'])
+      await loadHydrologyLayer()
+    }, 500)
   }
 
   // 设置当前页面为视图页面

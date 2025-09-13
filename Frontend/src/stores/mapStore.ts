@@ -218,6 +218,21 @@ const useMapStore = defineStore('map', () => {
                 imageType = 'diamond' // 居民地使用菱形
               }
               
+              // 为不同民生设施设置特定颜色
+              let fillColor = fillVar
+              let strokeColor = strokeVar
+              
+              if (layerName === '医院') {
+                fillColor = '#ffb3b3' // 浅红色
+                strokeColor = '#ff6666' // 红色描边
+              } else if (layerName === '学校') {
+                fillColor = '#b3ffb3' // 浅绿色
+                strokeColor = '#66cc66' // 绿色描边
+              } else if (layerName === '居民地地名点') {
+                fillColor = '#ffb3e6' // 浅粉色
+                strokeColor = '#ff66cc' // 粉色描边
+              }
+              
               return {
                 name: layer.name,
                 style: {
@@ -225,22 +240,13 @@ const useMapStore = defineStore('map', () => {
                     type: imageType,
                     radius: pointRadius,
                     stroke: {
-                      color: strokeVar,
+                      color: strokeColor,
                       width: pointStrokeWidth
                     },
                     fill: {
-                      color: fillVar
+                      color: fillColor
                     }
                   },
-                  text: {
-                    text: `{NAME}`, // 显示NAME字段
-                    font: '12px sans-serif',
-                    fill: { color: strokeVar }, // 使用描边颜色作为文字颜色
-                    stroke: { color: '#ffffff', width: 2 }, // 白色描边
-                    offsetY: -pointRadius - 5, // 在点上方显示
-                    textAlign: 'center',
-                    textBaseline: 'bottom'
-                  }
                 }
               }
             }
@@ -255,22 +261,13 @@ const useMapStore = defineStore('map', () => {
                   type: 'circle',
                   radius: pointRadius
                 },
-                text: {
-                  text: `{NAME}`, // 显示NAME字段
-                  font: '12px sans-serif',
-                  fill: { color: strokeVar }, // 使用描边颜色作为文字颜色
-                  stroke: { color: '#ffffff', width: 2 }, // 白色描边
-                  offsetY: -pointRadius - 5, // 在点上方显示
-                  textAlign: 'center',
-                  textBaseline: 'bottom'
-                }
               }
             }
           case 'line':
             // 根据图层名称设置不同的线要素样式
             let lineWidth = 2
             
-            // 交通设施使用更粗的线条
+            // 交通资源使用更粗的线条
             if (['公路', '铁路'].includes(layerName)) {
               lineWidth = 3
             }
@@ -285,15 +282,6 @@ const useMapStore = defineStore('map', () => {
                 ...baseStyle,
                 stroke: { width: lineWidth, color: strokeVar },
                 fill: { color: 'rgba(0, 0, 0, 0)' },
-                text: {
-                  text: `{NAME}`, // 显示NAME字段
-                  font: '12px sans-serif',
-                  fill: { color: strokeVar }, // 使用描边颜色作为文字颜色
-                  stroke: { color: '#ffffff', width: 2 }, // 白色描边
-                  offsetY: 0, // 在线要素上显示
-                  textAlign: 'center',
-                  textBaseline: 'middle'
-                }
               }
             }
           case 'polygon':
@@ -315,15 +303,6 @@ const useMapStore = defineStore('map', () => {
                 ...baseStyle,
                 stroke: { width: polygonStrokeWidth, color: strokeVar },
                 fill: { color: fillVar },
-                text: {
-                  text: `{NAME}`, // 显示NAME字段
-                  font: '12px sans-serif',
-                  fill: { color: strokeVar }, // 使用描边颜色作为文字颜色
-                  stroke: { color: '#ffffff', width: 2 }, // 白色描边
-                  offsetY: 0, // 在面要素中心显示
-                  textAlign: 'center',
-                  textBaseline: 'middle'
-                }
               }
             }
           default:
@@ -332,15 +311,6 @@ const useMapStore = defineStore('map', () => {
               style: {
                 stroke: { width: 1.5, color: strokeVar },
                 fill: { color: fillVar },
-                text: {
-                  text: `{NAME}`, // 显示NAME字段
-                  font: '12px sans-serif',
-                  fill: { color: strokeVar }, // 使用描边颜色作为文字颜色
-                  stroke: { color: '#ffffff', width: 2 }, // 白色描边
-                  offsetY: 0, // 在要素中心显示
-                  textAlign: 'center',
-                  textBaseline: 'middle'
-                }
               }
             }
         }
@@ -429,7 +399,7 @@ const useMapStore = defineStore('map', () => {
    */
   function clearSuperMapLayers() {
     if (map.value) {
-      // 只清理SuperMap服务图层，保留本地图层
+      // 只清理SuperMap服务图层，保留本地图层和水文图层
       vectorlayers.value
         .filter(item => item.source === 'supermap')
         .forEach(item => {
@@ -446,6 +416,27 @@ const useMapStore = defineStore('map', () => {
     const afterCount = vectorlayers.value.length
     
     console.log(`清理SuperMap图层完成，移除 ${beforeCount - afterCount} 个图层`)
+  }
+
+  function clearHydrologyLayers() {
+    if (map.value) {
+      // 清理水文监测点图层
+      vectorlayers.value
+        .filter(item => item.source === 'hydrology')
+        .forEach(item => {
+          try { 
+            map.value.removeLayer(item.layer) 
+            console.log(`已从地图中移除水文图层: ${item.name}`)
+          } catch (_) { /* noop */ }
+        })
+    }
+    
+    // 从数组中移除水文图层
+    const beforeCount = vectorlayers.value.length
+    vectorlayers.value = vectorlayers.value.filter(item => item.source !== 'hydrology')
+    const afterCount = vectorlayers.value.length
+    
+    console.log(`清理水文图层完成，移除 ${beforeCount - afterCount} 个图层`)
   }
 
   function reloadConfig() {
@@ -800,6 +791,7 @@ const useMapStore = defineStore('map', () => {
     getSelectedFeatures,
     clearAlllayers,
     clearSuperMapLayers,
+    clearHydrologyLayers,
     reloadConfig,
     clearCoordinate,
     // 距离量算方法

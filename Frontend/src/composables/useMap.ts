@@ -66,17 +66,20 @@ export function useMap() {
       // 1. 清理SuperMap服务图层
       mapStore.clearSuperMapLayers()
       
-      // 2. 清理选择状态
+      // 2. 清理水文监测点图层
+      mapStore.clearHydrologyLayers()
+      
+      // 3. 清理选择状态
       selectionStore.clearSelection()
       
-      // 3. 清理分析状态
+      // 4. 清理分析状态
       analysisStore.closeTool()
       analysisStore.setDrawMode('')
       
-      // 4. 清理最短路径分析状态
+      // 5. 清理最短路径分析状态
       shortestPathStore.clearAll()
       
-      // 5. 清理地图量测状态
+      // 6. 清理地图量测状态
       if (mapStore.distanceMeasureMode) {
         mapStore.clearDistanceMeasure()
       }

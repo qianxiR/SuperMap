@@ -61,10 +61,13 @@ export interface Maplayer {
   layer: any; // ol.layer.Base
   visible: boolean;
   type: 'vector' | 'raster' | 'tile';
-  source?: 'supermap' | 'local' | 'external';
+  source?: 'supermap' | 'local' | 'external' | 'hydrology';
   error?: string;
   isLazyLoaded?: boolean; // 是否为懒加载图层
   isLoaded?: boolean; // 是否已加载数据
+  featureCount?: number; // 要素数量
+  bounds?: [number, number, number, number]; // 图层边界
+  fields?: Array<{ name: string; type: string }>; // 字段信息
 }
 
 export interface FeatureInfo {

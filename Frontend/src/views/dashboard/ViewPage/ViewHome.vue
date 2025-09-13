@@ -77,9 +77,9 @@ const layerAssistant = ref()
 
 // 子页面按钮配置
 const subPageButtons = [
-  { id: 'home', text: '城市概况' },
-  { id: 'subpage2', text: '民生管理' },
-  { id: 'subpage1', text: '交通总览' },
+  { id: 'home', text: '城市总览' },
+  { id: 'subpage2', text: '民生资源' },
+  { id: 'subpage1', text: '交通资源' },
   { id: 'subpage3', text: '水资源监测' }
 ]
 

@@ -3,6 +3,7 @@ import { useMapStore } from '@/stores/mapStore'
 import { useSelectionStore } from '@/stores/selectionStore'
 import { usePopupStore } from '@/stores/popupStore'
 import { useAnalysisStore } from '@/stores/analysisStore'
+import { useLayerDataStore } from '@/stores/layerDataStore'
 import type { Maplayer, DrawlayerSaveType, Polygon, Feature, FeatureCollection } from '@/types/map';
 
 export function uselayermanager() {
@@ -10,6 +11,7 @@ export function uselayermanager() {
   const selectionStore = useSelectionStore()
   const popupStore = usePopupStore()
   const analysisStore = useAnalysisStore()
+  const layerDataStore = useLayerDataStore()
   
   // 确认对话框状态
   const confirmDialogVisible = ref(false)
@@ -1447,7 +1449,12 @@ export function uselayermanager() {
       // 强制触发响应式更新
       mapStore.vectorlayers = [...mapStore.vectorlayers]
 
-      
+      // 保存属性数据到layerDataStore
+      const featuresData = validFeatures.map((feature: any, index: number) => ({
+        id: feature.getId() || `${sourceType}_${Date.now()}_${index}`,
+        properties: feature.getProperties()
+      }))
+      layerDataStore.setLayerAttributes(layerName, featuresData)
 
       // 显示成功通知
       window.dispatchEvent(new CustomEvent('showNotification', {

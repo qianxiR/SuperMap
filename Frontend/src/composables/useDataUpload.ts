@@ -1,7 +1,8 @@
 import { ref, computed } from 'vue'
 import { useAnalysisStore } from '@/stores/analysisStore'
-import { uselayermanager } from '@/composables/uselayermanager'
+import { uselayermanager } from '@/composables/useLayerManager'
 import { useMapStore } from '@/stores/mapStore'
+import { useLayerDataStore } from '@/stores/layerDataStore'
 
 interface UploadedFile {
   id: string
@@ -23,6 +24,7 @@ export function useDataUpload() {
   const analysisStore = useAnalysisStore()
   const layermanager = uselayermanager()
   const mapStore = useMapStore()
+  const layerDataStore = useLayerDataStore()
   
   // 状态管理
   const uploadedFiles = ref<UploadedFile[]>([])
@@ -99,6 +101,13 @@ export function useDataUpload() {
       // 使用用户指定的图层名称
       const finallayerName = files.length === 1 ? layerName : `${layerName}_${file.name.replace(/\.(geojson|json)$/i, '')}`
       await layermanager.saveFeaturesAslayer(features, finallayerName, 'upload')
+      
+      // 保存属性数据到layerDataStore
+      const featuresData = features.map((feature: any) => ({
+        id: feature.getId() || `${finallayerName}_${Date.now()}_${Math.random()}`,
+        properties: feature.getProperties()
+      }))
+      layerDataStore.setLayerAttributes(finallayerName, featuresData)
 
       if (options.zoomTolayer) {
         const extent = ol.extent.createEmpty()

@@ -17,6 +17,11 @@
         <CoordinateDisplay />
         <ScaleBar />
         <OverviewMap />
+        <!-- 交通图例 -->
+        <TrafficLegend />
+        <!-- 统计图表 -->
+        <RoadLevelChart />
+        <RailwayTypeChart />
       </div>
     </div>
   </div>
@@ -32,7 +37,10 @@ import FeaturePopup from '@/components/Map/FeaturePopup.vue'
 import CoordinateDisplay from '@/components/Map/CoordinateDisplay.vue'
 import ScaleBar from '@/components/Map/ScaleBar.vue'
 import OverviewMap from '@/components/Map/OverviewMap.vue'
+import TrafficLegend from '@/components/Map/TrafficLegend.vue'
 import ButtonGroup from '@/components/UI/ButtonGroup.vue'
+import RoadLevelChart from '@/components/Charts/RoadLevelChart.vue'
+import RailwayTypeChart from '@/components/Charts/RailwayTypeChart.vue'
 
 // 组合式函数
 const router = useRouter()
@@ -45,10 +53,10 @@ let resizeObserver: ResizeObserver | null = null
 
 // 子页面按钮配置
 const subPageButtons = [
-  { id: 'home', text: '城市概况' },
-  { id: 'subpage2', text: '民生管理' },
-  { id: 'subpage1', text: '交通总览' },
-  { id: 'subpage3', text: '水资源监测' }
+  { id: 'home', text: '城市总览' },
+  { id: 'subpage2', text: '民生资源' },
+  { id: 'subpage1', text: '交通资源' },
+  { id: 'subpage3', text: '水文资源' }
 ]
 
 // 当前激活的子页面
@@ -58,7 +66,7 @@ const activeSubPage = ref('subpage1')
 const navigateToSubPage = async (subPageName: string) => {
   activeSubPage.value = subPageName
   if (subPageName === 'home') {
-    // 直接跳转到城市概况并刷新
+    // 直接跳转到城市总览并刷新
     window.location.href = '/dashboard/view/home'
   } else {
     router.push(`/dashboard/view/home/${subPageName}`)
@@ -82,7 +90,7 @@ watch(() => route.path, (newPath) => {
 onMounted(() => {
   // 确保外部库已加载
   if (window.ol && window.ol.supermap) {
-    initMap(8, ['武汉_市级', '武汉_县级', '公路', '铁路']) // 交通总览显示武汉_市级、武汉_县级、道路、铁路
+    initMap(8, ['武汉_市级', '武汉_县级', '公路', '铁路']) // 交通资源显示武汉_市级、武汉_县级、道路、铁路
   } else {
     // 如果库还未加载，等待一下再初始化
     setTimeout(() => initMap(8, ['武汉_市级', '武汉_县级', '公路', '铁路']), 500)
