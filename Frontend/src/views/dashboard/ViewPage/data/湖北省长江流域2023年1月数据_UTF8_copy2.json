@@ -1,0 +1,27 @@
+{
+  "RECORDS": [
+    {
+      "province": "湖北省",
+      "watershed": "长江流域",
+      "site_name": "朱家河口",
+      "monitor_time": "2023/1/1 2:53",
+      "water_quality_class": "Ⅲ",
+      "water_temperature": "9.1",
+      "ph_value": "7.46",
+      "dissolved_oxygen": "10.56",
+      "conductivity": "604.2",
+      "turbidity": "27.9",
+      "permanganate_index": "5.78",
+      "ammonia_nitrogen": "0.665",
+      "total_phosphorus": "0.163",
+      "total_nitrogen": "4.5",
+      "chlorophyll_a": "*",
+      "algae_density": "*",
+      "site_status": "正常",
+      "longitude": "114.375611",
+      "latitude": "31.137739",
+      "formatted_address": "湖北省武汉市黄陂区朱家河",
+      "match_level": "村庄"
+    }
+  ]
+}
