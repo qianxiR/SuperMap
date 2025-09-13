@@ -18,22 +18,6 @@
         <div class="legend-symbol railway"></div>
         <span class="legend-label">铁路</span>
       </div>
-      <div 
-        class="legend-item" 
-        @click="toggleLayer('水系面')" 
-        :class="{ disabled: !isLayerVisible('水系面') }"
-      >
-        <div class="legend-symbol water-area"></div>
-        <span class="legend-label">水系面</span>
-      </div>
-      <div 
-        class="legend-item" 
-        @click="toggleLayer('水系线')" 
-        :class="{ disabled: !isLayerVisible('水系线') }"
-      >
-        <div class="legend-symbol water-line"></div>
-        <span class="legend-label">水系线</span>
-      </div>
     </div>
   </div>
 </template>
@@ -44,7 +28,7 @@ import { useMapStore } from '@/stores/mapStore'
 import { uselayermanager } from '@/composables/useLayerManager'
 import { getLegendColors } from '@/utils/legendColorUtils'
 
-// 交通图例组件，显示交通设施要素的标识
+// 交通图例组件，显示交通设施要素的标识（公路、铁路）
 const mapStore = useMapStore()
 const { togglelayerVisibility } = uselayermanager()
 
@@ -54,9 +38,7 @@ const layerColors = computed(() => getLegendColors())
 // 图层名称映射
 const layerNameMap: Record<string, string> = {
   '公路': '公路',
-  '铁路': '铁路',
-  '水系面': '水系面',
-  '水系线': '水系线'
+  '铁路': '铁路'
 }
 
 // 切换图层显示/隐藏
@@ -95,7 +77,7 @@ const isLayerVisible = (displayName: string) => {
 <style scoped>
 .traffic-legend {
   position: absolute;
-  bottom: 20px;
+  bottom: 15px;
   left: 50%;
   transform: translateX(-50%);
   background: transparent;
@@ -181,21 +163,6 @@ const isLayerVisible = (displayName: string) => {
   transform: translateY(-50%);
 }
 
-.legend-symbol.water-area {
-  width: 16px;
-  height: 12px;
-  background: v-bind('layerColors.水系面.fill');
-  border: 2px solid v-bind('layerColors.水系面.stroke');
-  border-radius: 2px;
-}
-
-.legend-symbol.water-line {
-  width: 20px;
-  height: 2px;
-  background: v-bind('layerColors.水系线.stroke');
-  border: none;
-  border-radius: 1px;
-}
 
 .legend-label {
   font-size: 11px;
@@ -237,15 +204,6 @@ const isLayerVisible = (displayName: string) => {
     height: 3px;
   }
   
-  .legend-symbol.water-area {
-    width: 14px;
-    height: 10px;
-  }
-  
-  .legend-symbol.water-line {
-    width: 18px;
-    height: 2px;
-  }
   
   .legend-label {
     font-size: 10px;

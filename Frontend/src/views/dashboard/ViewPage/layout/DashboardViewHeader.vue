@@ -6,7 +6,7 @@
         alt="Logo" 
         class="header-logo" 
       />
-      <div class="screen-title">基于EDA-Agent的多源信息综合可视化及长江监测预警一体化平台（武汉段） </div>
+      <div class="screen-title">基于EDA-Agent的多源信息综合可视化及长江监测预警一体化平台 </div>
     </div>
     
     <div class="header-right">
@@ -125,7 +125,7 @@ import { useGlobalModalStore } from '@/stores/modalStore'
 import { useMapStore } from '@/stores/mapStore'
 import { safeAddEventListener } from '@/utils/eventUtils'
 import { toggleTheme as toggleThemeUtil, dispatchThemeChangeEvent } from '@/utils/themeUtils'
-import { uselayermanager } from '@/composables/useLayermanager'
+import { uselayermanager } from '@/composables/useLayerManager'
 
 // 主题管理
 const themeStore = useThemeStore()

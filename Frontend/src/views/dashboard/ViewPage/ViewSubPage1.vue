@@ -17,10 +17,8 @@
         <CoordinateDisplay />
         <ScaleBar />
         <OverviewMap />
-        <!-- 交通图例 -->
-        <TrafficLegend />
-        <!-- 水系图例 -->
-        <WaterLegend />
+        <!-- 交通水系一体化图例 -->
+        <TrafficWaterLegend />
         <!-- 统计图表 -->
         <RoadLevelChart />
         <RailwayTypeChart />
@@ -42,8 +40,7 @@ import FeaturePopup from '@/components/Map/FeaturePopup.vue'
 import CoordinateDisplay from '@/components/Map/CoordinateDisplay.vue'
 import ScaleBar from '@/components/Map/ScaleBar.vue'
 import OverviewMap from '@/components/Map/OverviewMap.vue'
-import TrafficLegend from '@/components/Map/TrafficLegend.vue'
-import WaterLegend from '@/components/Map/WaterLegend.vue'
+import TrafficWaterLegend from '@/components/Map/TrafficWaterLegend.vue'
 import ButtonGroup from '@/components/UI/ButtonGroup.vue'
 import RoadLevelChart from '@/components/Charts/RoadLevelChart.vue'
 import RailwayTypeChart from '@/components/Charts/RailwayTypeChart.vue'

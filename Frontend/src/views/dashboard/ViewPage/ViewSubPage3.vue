@@ -17,8 +17,8 @@
         <CoordinateDisplay />
         <ScaleBar />
         <OverviewMap />
-        <!-- 水资源图例 -->
-        <WaterLegend />
+        <!-- 长江监测图例 -->
+        <YangtzeLegend />
         <!-- 水质监测图表 -->
         <WaterQualityChart1 />
         <WaterQualityChart2 />
@@ -41,7 +41,7 @@ import FeaturePopup from '@/components/Map/FeaturePopup.vue'
 import CoordinateDisplay from '@/components/Map/CoordinateDisplay.vue'
 import ScaleBar from '@/components/Map/ScaleBar.vue'
 import OverviewMap from '@/components/Map/OverviewMap.vue'
-import WaterLegend from '@/components/Map/WaterLegend.vue'
+import YangtzeLegend from '@/components/Map/YangtzeLegend.vue'
 import ButtonGroup from '@/components/UI/ButtonGroup.vue'
 import WaterQualityChart1 from '@/components/Charts/WaterQualityChart1.vue'
 import WaterQualityChart2 from '@/components/Charts/WaterQualityChart2.vue'

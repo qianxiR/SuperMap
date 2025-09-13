@@ -1,30 +1,22 @@
 <template>
-  <div class="map-legend">
+  <div class="admin-legend">
     <div class="legend-title">图例</div>
     <div class="legend-items">
       <div 
         class="legend-item" 
-        @click="toggleLayer('医院')" 
-        :class="{ disabled: !isLayerVisible('医院') }"
+        @click="toggleLayer('市级行政区')" 
+        :class="{ disabled: !isLayerVisible('市级行政区') }"
       >
-        <div class="legend-symbol triangle"></div>
-        <span class="legend-label">医院</span>
+        <div class="legend-symbol admin-municipal"></div>
+        <span class="legend-label">市级行政区</span>
       </div>
       <div 
         class="legend-item" 
-        @click="toggleLayer('学校')" 
-        :class="{ disabled: !isLayerVisible('学校') }"
+        @click="toggleLayer('县级行政区')" 
+        :class="{ disabled: !isLayerVisible('县级行政区') }"
       >
-        <div class="legend-symbol square"></div>
-        <span class="legend-label">学校</span>
-      </div>
-      <div 
-        class="legend-item" 
-        @click="toggleLayer('居民地地名点')" 
-        :class="{ disabled: !isLayerVisible('居民地地名点') }"
-      >
-        <div class="legend-symbol diamond"></div>
-        <span class="legend-label">居民地</span>
+        <div class="legend-symbol admin-county"></div>
+        <span class="legend-label">县级行政区</span>
       </div>
     </div>
   </div>
@@ -36,18 +28,17 @@ import { useMapStore } from '@/stores/mapStore'
 import { uselayermanager } from '@/composables/useLayerManager'
 import { getLegendColors } from '@/utils/legendColorUtils'
 
-// 图例组件，显示地图上各种要素的标识
+// 行政区划图例组件，显示武汉市市级和县级行政区
 const mapStore = useMapStore()
 const { togglelayerVisibility } = uselayermanager()
 
-// 获取图层颜色配置
+// 获取图层颜色配置，确保与地图图层颜色一致
 const layerColors = computed(() => getLegendColors())
 
 // 图层名称映射
 const layerNameMap: Record<string, string> = {
-  '医院': '医院',
-  '学校': '学校', 
-  '居民地': '居民地地名点'
+  '市级行政区': '武汉_市级',
+  '县级行政区': '武汉_县级'
 }
 
 // 切换图层显示/隐藏
@@ -84,7 +75,7 @@ const isLayerVisible = (displayName: string) => {
 </script>
 
 <style scoped>
-.map-legend {
+.admin-legend {
   position: absolute;
   bottom: 15px;
   left: 50%;
@@ -106,6 +97,7 @@ const isLayerVisible = (displayName: string) => {
   color: var(--text);
   margin-right: 8px;
 }
+
 
 .legend-items {
   display: flex;
@@ -138,30 +130,20 @@ const isLayerVisible = (displayName: string) => {
 .legend-symbol {
   width: 16px;
   height: 16px;
-  border: 2px solid;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: 2px;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-.legend-symbol.triangle {
-  width: 16px;
-  height: 16px;
-  background: v-bind('layerColors.医院.fill');
-  border: 2px solid v-bind('layerColors.医院.stroke');
-  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+.legend-symbol.admin-municipal {
+  background: v-bind('layerColors.武汉_市级?.fill || "rgba(0, 120, 212, 0.08)"');
+  border: 3px solid v-bind('layerColors.武汉_市级?.stroke || "#0078D4"');
 }
 
-.legend-symbol.square {
-  background: v-bind('layerColors.学校.fill');
-  border-color: v-bind('layerColors.学校.stroke');
-  transform: rotate(45deg);
-}
-
-.legend-symbol.diamond {
-  background: v-bind('layerColors.居民地地名点.fill');
-  border-color: v-bind('layerColors.居民地地名点.stroke');
-  transform: rotate(45deg);
+.legend-symbol.admin-county {
+  background: v-bind('layerColors.武汉_县级?.fill || "rgba(0, 120, 212, 0.1)"');
+  border-color: v-bind('layerColors.武汉_县级?.stroke || "#0078D4"');
 }
 
 .legend-label {
@@ -170,27 +152,23 @@ const isLayerVisible = (displayName: string) => {
   white-space: nowrap;
 }
 
-/* 深色主题适配 */
-[data-theme="dark"] .map-legend {
-  background: transparent;
-  border: none;
-}
-
-[data-theme="dark"] .legend-title,
-[data-theme="dark"] .legend-label {
-  color: var(--text);
-}
-
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .map-legend {
-    bottom: 15px;
+  .admin-legend {
+    bottom: 10px;
     padding: 8px 12px;
-    gap: 12px;
+  }
+  
+  .legend-title {
+    font-size: 11px;
   }
   
   .legend-items {
     gap: 16px;
+  }
+  
+  .legend-item {
+    gap: 6px;
   }
   
   .legend-symbol {
@@ -198,12 +176,8 @@ const isLayerVisible = (displayName: string) => {
     height: 14px;
   }
   
-  .legend-symbol.triangle {
-    width: 14px;
-    height: 14px;
-    background: v-bind('layerColors.医院.fill');
-    border: 2px solid v-bind('layerColors.医院.stroke');
-    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  .legend-symbol.admin-municipal {
+    border-width: 2px;
   }
   
   .legend-label {

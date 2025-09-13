@@ -29,6 +29,10 @@ export const getLayerColors = (layerName: string) => {
  */
 export const getLegendColors = () => {
   return {
+    // 行政区划图层
+    '武汉_市级': getLayerColors('武汉_市级'),
+    '武汉_县级': getLayerColors('武汉_县级'),
+    
     // 交通图层
     '公路': getLayerColors('公路'),
     '铁路': getLayerColors('铁路'),

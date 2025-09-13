@@ -25,6 +25,8 @@
         <DistanceMeasurePanel />
         <!-- 面积量算面板 -->
         <AreaMeasurePanel />
+        <!-- 地图图例 -->
+        <AdminLegend />
         <!-- 民生资源一张图相关图表 -->
         <RegionPopulationChart />
         <EducationLevelChart />
@@ -58,6 +60,7 @@ import ScaleBar from '@/components/Map/ScaleBar.vue'
 import OverviewMap from '@/components/Map/OverviewMap.vue'
 import DistanceMeasurePanel from '@/components/Map/DistanceMeasurePanel.vue'
 import AreaMeasurePanel from '@/components/Map/AreaMeasurePanel.vue'
+import AdminLegend from '@/components/Map/AdminLegend.vue'
 import RegionPopulationChart from '@/components/Charts/RegionPopulationChart.vue'
 import EducationLevelChart from '@/components/Charts/EducationLevelChart.vue'
 import GenderRatioChart from '@/components/Charts/GenderRatioChart.vue'

@@ -98,7 +98,7 @@ const pieOption = {
       labelLine: {
         show: true,
         length: 8,
-        length2: 5,
+        length2: -5,
         lineStyle: {
           color: '#0078D4',
           width: 1

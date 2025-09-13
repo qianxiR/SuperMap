@@ -122,7 +122,7 @@ const pieOption = {
       labelLine: {
         show: true,
         length: 8,
-        length2: 5
+        length2: -5
       }
     }
   ]

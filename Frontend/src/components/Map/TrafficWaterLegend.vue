@@ -1,30 +1,40 @@
 <template>
-  <div class="map-legend">
+  <div class="traffic-water-legend">
     <div class="legend-title">图例</div>
     <div class="legend-items">
+      <!-- 交通图例 -->
       <div 
         class="legend-item" 
-        @click="toggleLayer('医院')" 
-        :class="{ disabled: !isLayerVisible('医院') }"
+        @click="toggleLayer('公路')" 
+        :class="{ disabled: !isLayerVisible('公路') }"
       >
-        <div class="legend-symbol triangle"></div>
-        <span class="legend-label">医院</span>
+        <div class="legend-symbol road"></div>
+        <span class="legend-label">公路</span>
       </div>
       <div 
         class="legend-item" 
-        @click="toggleLayer('学校')" 
-        :class="{ disabled: !isLayerVisible('学校') }"
+        @click="toggleLayer('铁路')" 
+        :class="{ disabled: !isLayerVisible('铁路') }"
       >
-        <div class="legend-symbol square"></div>
-        <span class="legend-label">学校</span>
+        <div class="legend-symbol railway"></div>
+        <span class="legend-label">铁路</span>
+      </div>
+      <!-- 水系图例 -->
+      <div 
+        class="legend-item" 
+        @click="toggleLayer('水系面')" 
+        :class="{ disabled: !isLayerVisible('水系面') }"
+      >
+        <div class="legend-symbol water-area"></div>
+        <span class="legend-label">水系面</span>
       </div>
       <div 
         class="legend-item" 
-        @click="toggleLayer('居民地地名点')" 
-        :class="{ disabled: !isLayerVisible('居民地地名点') }"
+        @click="toggleLayer('水系线')" 
+        :class="{ disabled: !isLayerVisible('水系线') }"
       >
-        <div class="legend-symbol diamond"></div>
-        <span class="legend-label">居民地</span>
+        <div class="legend-symbol water-line"></div>
+        <span class="legend-label">水系线</span>
       </div>
     </div>
   </div>
@@ -36,7 +46,7 @@ import { useMapStore } from '@/stores/mapStore'
 import { uselayermanager } from '@/composables/useLayerManager'
 import { getLegendColors } from '@/utils/legendColorUtils'
 
-// 图例组件，显示地图上各种要素的标识
+// 交通水系一体化图例组件，显示交通和水系要素的标识
 const mapStore = useMapStore()
 const { togglelayerVisibility } = uselayermanager()
 
@@ -45,9 +55,10 @@ const layerColors = computed(() => getLegendColors())
 
 // 图层名称映射
 const layerNameMap: Record<string, string> = {
-  '医院': '医院',
-  '学校': '学校', 
-  '居民地': '居民地地名点'
+  '公路': '公路',
+  '铁路': '铁路',
+  '水系面': '水系面',
+  '水系线': '水系线'
 }
 
 // 切换图层显示/隐藏
@@ -84,7 +95,7 @@ const isLayerVisible = (displayName: string) => {
 </script>
 
 <style scoped>
-.map-legend {
+.traffic-water-legend {
   position: absolute;
   bottom: 15px;
   left: 50%;
@@ -144,24 +155,50 @@ const isLayerVisible = (displayName: string) => {
   justify-content: center;
 }
 
-.legend-symbol.triangle {
+/* 交通图例样式 */
+.legend-symbol.road {
+  width: 20px;
+  height: 4px;
+  background: v-bind('layerColors.公路.stroke');
+  border: none;
+  border-radius: 2px;
+}
+
+.legend-symbol.railway {
+  width: 20px;
+  height: 4px;
+  background: v-bind('layerColors.铁路.stroke');
+  border: none;
+  border-radius: 2px;
+  position: relative;
+}
+
+.legend-symbol.railway::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #ffffff;
+  transform: translateY(-50%);
+}
+
+/* 水系图例样式 */
+.legend-symbol.water-area {
   width: 16px;
-  height: 16px;
-  background: v-bind('layerColors.医院.fill');
-  border: 2px solid v-bind('layerColors.医院.stroke');
-  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  height: 12px;
+  background: v-bind('layerColors.水系面.fill');
+  border: 2px solid v-bind('layerColors.水系面.stroke');
+  border-radius: 2px;
 }
 
-.legend-symbol.square {
-  background: v-bind('layerColors.学校.fill');
-  border-color: v-bind('layerColors.学校.stroke');
-  transform: rotate(45deg);
-}
-
-.legend-symbol.diamond {
-  background: v-bind('layerColors.居民地地名点.fill');
-  border-color: v-bind('layerColors.居民地地名点.stroke');
-  transform: rotate(45deg);
+.legend-symbol.water-line {
+  width: 20px;
+  height: 2px;
+  background: v-bind('layerColors.水系线.stroke');
+  border: none;
+  border-radius: 1px;
 }
 
 .legend-label {
@@ -171,7 +208,7 @@ const isLayerVisible = (displayName: string) => {
 }
 
 /* 深色主题适配 */
-[data-theme="dark"] .map-legend {
+[data-theme="dark"] .traffic-water-legend {
   background: transparent;
   border: none;
 }
@@ -183,7 +220,7 @@ const isLayerVisible = (displayName: string) => {
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .map-legend {
+  .traffic-water-legend {
     bottom: 15px;
     padding: 8px 12px;
     gap: 12px;
@@ -198,12 +235,20 @@ const isLayerVisible = (displayName: string) => {
     height: 14px;
   }
   
-  .legend-symbol.triangle {
+  .legend-symbol.road,
+  .legend-symbol.railway {
+    width: 18px;
+    height: 3px;
+  }
+  
+  .legend-symbol.water-area {
     width: 14px;
-    height: 14px;
-    background: v-bind('layerColors.医院.fill');
-    border: 2px solid v-bind('layerColors.医院.stroke');
-    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    height: 10px;
+  }
+  
+  .legend-symbol.water-line {
+    width: 18px;
+    height: 2px;
   }
   
   .legend-label {

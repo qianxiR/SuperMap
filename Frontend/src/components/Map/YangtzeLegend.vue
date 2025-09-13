@@ -1,30 +1,30 @@
 <template>
-  <div class="map-legend">
+  <div class="yangtze-legend">
     <div class="legend-title">图例</div>
     <div class="legend-items">
       <div 
         class="legend-item" 
-        @click="toggleLayer('医院')" 
-        :class="{ disabled: !isLayerVisible('医院') }"
+        @click="toggleLayer('长江面')" 
+        :class="{ disabled: !isLayerVisible('长江面') }"
       >
-        <div class="legend-symbol triangle"></div>
-        <span class="legend-label">医院</span>
+        <div class="legend-symbol yangtze-surface"></div>
+        <span class="legend-label">长江面</span>
       </div>
       <div 
         class="legend-item" 
-        @click="toggleLayer('学校')" 
-        :class="{ disabled: !isLayerVisible('学校') }"
+        @click="toggleLayer('长江线')" 
+        :class="{ disabled: !isLayerVisible('长江线') }"
       >
-        <div class="legend-symbol square"></div>
-        <span class="legend-label">学校</span>
+        <div class="legend-symbol yangtze-line"></div>
+        <span class="legend-label">长江线</span>
       </div>
       <div 
         class="legend-item" 
-        @click="toggleLayer('居民地地名点')" 
-        :class="{ disabled: !isLayerVisible('居民地地名点') }"
+        @click="toggleLayer('水文监测点')" 
+        :class="{ disabled: !isLayerVisible('水文监测点') }"
       >
-        <div class="legend-symbol diamond"></div>
-        <span class="legend-label">居民地</span>
+        <div class="legend-symbol hydrology-point"></div>
+        <span class="legend-label">水文监测点</span>
       </div>
     </div>
   </div>
@@ -34,20 +34,20 @@
 import { computed } from 'vue'
 import { useMapStore } from '@/stores/mapStore'
 import { uselayermanager } from '@/composables/useLayerManager'
-import { getLegendColors } from '@/utils/legendColorUtils'
+import { getYangtzeColors } from '@/utils/legendColorUtils'
 
-// 图例组件，显示地图上各种要素的标识
+// 长江监测图例组件，显示长江流域相关要素的标识
 const mapStore = useMapStore()
 const { togglelayerVisibility } = uselayermanager()
 
-// 获取图层颜色配置
-const layerColors = computed(() => getLegendColors())
+// 获取长江流域图层颜色配置
+const layerColors = computed(() => getYangtzeColors())
 
 // 图层名称映射
 const layerNameMap: Record<string, string> = {
-  '医院': '医院',
-  '学校': '学校', 
-  '居民地': '居民地地名点'
+  '长江面': '长江面',
+  '长江线': '长江线',
+  '水文监测点': '水文监测点'
 }
 
 // 切换图层显示/隐藏
@@ -84,7 +84,7 @@ const isLayerVisible = (displayName: string) => {
 </script>
 
 <style scoped>
-.map-legend {
+.yangtze-legend {
   position: absolute;
   bottom: 15px;
   left: 50%;
@@ -97,11 +97,13 @@ const isLayerVisible = (displayName: string) => {
   z-index: 1000;
   display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: center;
+  gap: 12px;
+  width: auto;
 }
 
 .legend-title {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text);
   margin-right: 8px;
@@ -110,7 +112,7 @@ const isLayerVisible = (displayName: string) => {
 .legend-items {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
 }
 
 .legend-item {
@@ -144,34 +146,38 @@ const isLayerVisible = (displayName: string) => {
   justify-content: center;
 }
 
-.legend-symbol.triangle {
+.legend-symbol.yangtze-surface {
   width: 16px;
-  height: 16px;
-  background: v-bind('layerColors.医院.fill');
-  border: 2px solid v-bind('layerColors.医院.stroke');
-  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  height: 12px;
+  background: v-bind('layerColors.长江面.fill');
+  border: 2px solid v-bind('layerColors.长江面.stroke');
+  border-radius: 2px;
 }
 
-.legend-symbol.square {
-  background: v-bind('layerColors.学校.fill');
-  border-color: v-bind('layerColors.学校.stroke');
-  transform: rotate(45deg);
+.legend-symbol.yangtze-line {
+  width: 20px;
+  height: 3px;
+  background: v-bind('layerColors.长江线.stroke');
+  border: none;
+  border-radius: 1px;
 }
 
-.legend-symbol.diamond {
-  background: v-bind('layerColors.居民地地名点.fill');
-  border-color: v-bind('layerColors.居民地地名点.stroke');
-  transform: rotate(45deg);
+.legend-symbol.hydrology-point {
+  width: 18px;
+  height: 18px;
+  background: v-bind('layerColors.水文监测点.fill');
+  border: 3px solid v-bind('layerColors.水文监测点.stroke');
+  border-radius: 50%;
 }
 
 .legend-label {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text);
   white-space: nowrap;
 }
 
 /* 深色主题适配 */
-[data-theme="dark"] .map-legend {
+[data-theme="dark"] .yangtze-legend {
   background: transparent;
   border: none;
 }
@@ -183,31 +189,28 @@ const isLayerVisible = (displayName: string) => {
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .map-legend {
+  .yangtze-legend {
     bottom: 15px;
     padding: 8px 12px;
     gap: 12px;
   }
   
   .legend-items {
-    gap: 16px;
+    gap: 10px;
   }
   
   .legend-symbol {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
   }
   
-  .legend-symbol.triangle {
-    width: 14px;
-    height: 14px;
-    background: v-bind('layerColors.医院.fill');
-    border: 2px solid v-bind('layerColors.医院.stroke');
-    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  .legend-symbol.hydrology-point {
+    width: 16px;
+    height: 16px;
   }
   
   .legend-label {
-    font-size: 10px;
+    font-size: 12px;
   }
 }
 </style>

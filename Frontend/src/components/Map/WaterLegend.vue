@@ -4,19 +4,19 @@
     <div class="legend-items">
       <div 
         class="legend-item" 
-        @click="toggleLayer('长江面')" 
-        :class="{ disabled: !isLayerVisible('长江面') }"
+        @click="toggleLayer('水系面')" 
+        :class="{ disabled: !isLayerVisible('水系面') }"
       >
-        <div class="legend-symbol yangtze-surface"></div>
-        <span class="legend-label">长江面</span>
+        <div class="legend-symbol water-area"></div>
+        <span class="legend-label">水系面</span>
       </div>
       <div 
         class="legend-item" 
-        @click="toggleLayer('长江线')" 
-        :class="{ disabled: !isLayerVisible('长江线') }"
+        @click="toggleLayer('水系线')" 
+        :class="{ disabled: !isLayerVisible('水系线') }"
       >
-        <div class="legend-symbol yangtze-line"></div>
-        <span class="legend-label">长江线</span>
+        <div class="legend-symbol water-line"></div>
+        <span class="legend-label">水系线</span>
       </div>
       <div 
         class="legend-item" 
@@ -34,19 +34,19 @@
 import { computed } from 'vue'
 import { useMapStore } from '@/stores/mapStore'
 import { uselayermanager } from '@/composables/useLayerManager'
-import { getYangtzeColors } from '@/utils/legendColorUtils'
+import { getLegendColors } from '@/utils/legendColorUtils'
 
-// 水资源图例组件，显示水系要素的标识
+// 水资源图例组件，显示一般水系要素的标识
 const mapStore = useMapStore()
 const { togglelayerVisibility } = uselayermanager()
 
-// 获取长江流域图层颜色配置
-const layerColors = computed(() => getYangtzeColors())
+// 获取图层颜色配置，只包含一般水系图层
+const layerColors = computed(() => getLegendColors())
 
 // 图层名称映射
 const layerNameMap: Record<string, string> = {
-  '长江面': '长江面',
-  '长江线': '长江线',
+  '水系面': '水系面',
+  '水系线': '水系线',
   '水文监测点': '水文监测点'
 }
 
@@ -86,7 +86,7 @@ const isLayerVisible = (displayName: string) => {
 <style scoped>
 .water-legend {
   position: absolute;
-  bottom: 20px;
+  bottom: 15px;
   left: 50%;
   transform: translateX(-50%);
   background: transparent;
@@ -147,21 +147,6 @@ const isLayerVisible = (displayName: string) => {
 }
 
 
-.legend-symbol.yangtze-surface {
-  width: 16px;
-  height: 12px;
-  background: v-bind('layerColors.长江面.fill');
-  border: 2px solid v-bind('layerColors.长江面.stroke');
-  border-radius: 2px;
-}
-
-.legend-symbol.yangtze-line {
-  width: 20px;
-  height: 3px;
-  background: v-bind('layerColors.长江线.stroke');
-  border: none;
-  border-radius: 1px;
-}
 
 .legend-symbol.hydrology-point {
   width: 18px;
@@ -169,6 +154,22 @@ const isLayerVisible = (displayName: string) => {
   background: v-bind('layerColors.水文监测点.fill');
   border: 3px solid v-bind('layerColors.水文监测点.stroke');
   border-radius: 50%;
+}
+
+.legend-symbol.water-area {
+  width: 16px;
+  height: 12px;
+  background: v-bind('layerColors.水系面.fill');
+  border: 2px solid v-bind('layerColors.水系面.stroke');
+  border-radius: 2px;
+}
+
+.legend-symbol.water-line {
+  width: 20px;
+  height: 2px;
+  background: v-bind('layerColors.水系线.stroke');
+  border: none;
+  border-radius: 1px;
 }
 
 
@@ -212,6 +213,15 @@ const isLayerVisible = (displayName: string) => {
     height: 16px;
   }
   
+  .legend-symbol.water-area {
+    width: 14px;
+    height: 10px;
+  }
+  
+  .legend-symbol.water-line {
+    width: 18px;
+    height: 2px;
+  }
   
   .legend-label {
     font-size: 12px;
